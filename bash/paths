@@ -1,0 +1,35 @@
+pathmunge () {
+    case ":${PATH}:" in
+        *:"$1":*)
+            ;;
+        *)
+            if [ "$2" = "after" ] ; then
+                PATH=$PATH:$1
+            else
+                PATH=$1:$PATH
+            fi
+    esac
+}
+
+## PATH
+
+# Adapting PATH environment variable for use with MacPorts.
+[[ -d /opt/local/bin ]] && pathmunge /opt/local/sbin && pathmunge /opt/local/bin
+
+
+# Add MAMP bin directory to PATH environment
+[[ -d /Applications/MAMP/Library/bin ]] && pathmunge /Applications/MAMP/Library/bin after
+
+# Add dotfiles bin directory to PATH environment
+pathmunge ~/.bin
+
+# Add local bin directory to PATH environment
+[[ -d ~/bin ]] && pathmunge ~/bin
+
+
+## MANPATH
+
+[[ -d /usr/local/man ]] && export MANPATH="/usr/local/man:$MANPATH"
+
+# Adapting MANPATH environment variable for use with MacPorts.
+[[ -d /opt/local/share/man ]] && export MANPATH="/opt/local/share/man:$MANPATH"

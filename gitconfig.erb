@@ -1,0 +1,36 @@
+[user]
+	name = <%= print("Your Name: "); STDOUT.flush; STDIN.gets.chomp %>
+	email = <%= print("Your Email: "); STDOUT.flush; STDIN.gets.chomp %>
+[core]
+	excludesfile = <%= ENV['HOME'] %>/.gitignore
+	pager = less -FRX
+	editor = vim
+[color]
+	ui = auto
+	wtf = auto
+[color "branch"]
+	current = green
+	local = yellow
+	remote = red
+[color "status"]
+	added = yellow
+	changed = green
+	untracked = cyan
+[push]
+	default = current
+[apply]
+	whitespace = nowarn
+[branch]
+	autosetupmerge = true
+[log]
+	decorate = short
+[rebase]
+	autosquash = true
+[alias]
+	st = status
+[github]
+	user = <%= print("GitHub Username: "); STDOUT.flush; STDIN.gets.chomp %>
+	token = <%= print("GitHub API Token: "); STDOUT.flush; STDIN.gets.chomp %>
+[mergetool.ediff]
+	cmd = xemacs --eval \"(progn (setq ediff-quit-hook 'kill-emacs) (ediff-merge-files-with-ancestor \\\"$LOCAL\\\" \\\"$REMOTE\\\" \\\"$BASE\\\" nil \\\"$MERGED\\\"))\"
+	trustExitCode = false

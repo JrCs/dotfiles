@@ -1,0 +1,16 @@
+= JrCs Dot Files
+
+These are config files to set up a system the way I like it.
+
+
+== Installation
+
+  git clone git://github.com/jrcs/dotfiles ~/.dotfiles
+  cd ~/.dotfiles
+  rake install
+
+
+== Environment
+
+I am running on Mac OS X, but it will likely work on Linux as well with 
+minor fiddling.

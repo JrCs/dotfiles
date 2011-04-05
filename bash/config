@@ -1,0 +1,32 @@
+
+#########
+# PROMPT
+#########
+export PS1='${debian_chroot:+($debian_chroot) }<~~~ \[\e[1;33m\]\u\[\e[0m\] sur \[\e[1;32m\]\H\[\e[0m\] -( \t )- #\!: \[\e[1;36m\]${PWD}\[\e[0m\] ~~~>\n\[\e[1;36m\]\w\[\e[0m\]${__git_log_date_formats:+$(__git_ps1 "(%s)")} \$ '
+
+##########
+# Color
+##########
+export GREP_COLOR='3;32'
+export GREP_OPTIONS='--color=auto'
+
+##########
+# History
+##########
+HISTFILESIZE=5000
+HISTSIZE=5000
+# don't put duplicate lines in the history. See bash(1) for more options
+export HISTCONTROL=ignoreboth:erasedups
+
+# append to the history file, don't overwrite it
+shopt -s histappend
+
+##########
+# Editor
+##########
+export EDITOR=vim
+
+# Autojump
+if [[ ! $PROMPT_COMMAND =~ autojump ]]; then
+    . /etc/profile.d/autojump.bash
+fi
