@@ -1,3 +1,6 @@
 [submodule "autojump"]
 	path = autojump
 	url = https://github.com/joelthelion/autojump.git
+[submodule "git-tools/willgit"]
+	path = git-tools/willgit
+	url = git://gitorious.org/willgit/mainline.git
