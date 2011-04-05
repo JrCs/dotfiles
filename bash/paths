@@ -1,3 +1,5 @@
+#!/bin/bash
+
 pathmunge () {
     case ":${PATH}:" in
         *:"$1":*)
@@ -21,7 +23,7 @@ pathmunge () {
 [[ -d /Applications/MAMP/Library/bin ]] && pathmunge /Applications/MAMP/Library/bin after
 
 # Add dotfiles bin directory to PATH environment
-pathmunge ~/.bin
+pathmunge "$DOTFILES_DIR/bin"
 
 # Add local bin directory to PATH environment
 [[ -d ~/bin ]] && pathmunge ~/bin
@@ -33,3 +35,7 @@ pathmunge ~/.bin
 
 # Adapting MANPATH environment variable for use with MacPorts.
 [[ -d /opt/local/share/man ]] && export MANPATH="/opt/local/share/man:$MANPATH"
+
+# Add dotfiles man directory
+export MANPATH="$DOTFILES_DIR/man:$MANPATH"
+

@@ -1,12 +1,15 @@
-# .bash_rc
+#!/bin/bash
 
 # If not running interactively, don't do anything
 [ -z "$PS1" ] && return
 
 # Source global definitions
 if [ -f /etc/bashrc ]; then
-	. /etc/bashrc
+  . /etc/bashrc
 fi
+
+# Declare dotfiles directory
+DOTFILES_DIR=<%= File.dirname(File.expand_path(__FILE__)) %>
 
 source ~/.bash/aliases
 source ~/.bash/completions
@@ -15,5 +18,7 @@ source ~/.bash/config
 
 # use .localrc for settings specific to one system
 if [ -f ~/.localrc ]; then
-    source ~/.localrc
+  source ~/.localrc
 fi
+
+unset DOTFILES_DIR

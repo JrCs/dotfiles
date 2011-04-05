@@ -1,3 +1,5 @@
+#!/bin/bash
+# A basically sane bash environment.
 
 #########
 # PROMPT
@@ -13,8 +15,8 @@ export GREP_OPTIONS='--color=auto'
 ##########
 # History
 ##########
-HISTFILESIZE=5000
-HISTSIZE=5000
+HISTFILESIZE=10000
+HISTSIZE=10000
 # don't put duplicate lines in the history. See bash(1) for more options
 export HISTCONTROL=ignoreboth:erasedups
 
@@ -22,11 +24,27 @@ export HISTCONTROL=ignoreboth:erasedups
 shopt -s histappend
 
 ##########
-# Editor
+# Misc
 ##########
-export EDITOR=vim
+HAVE_VIM=$(command -v vim)
+[[ -n "$HAVE_VIM" ]] && export EDITOR=vim
+HAVE_LESS=$(command -v less)
+if [[ -n "$HAVE_LESS" ]];then
+    PAGER="less -FiRwX"
+	MANPAGER="less -FiRsX"
+else
+	PAGER=more
+	MANPAGER="$PAGER"
+fi
+export PAGER MANPAGER
 
+# Ack
+ACK_PAGER="$PAGER"
+ACK_PAGER_COLOR="$PAGER"
+
+##########
 # Autojump
-if [[ ! $PROMPT_COMMAND =~ autojump ]]; then
-    . /etc/profile.d/autojump.bash
+##########
+if [[ -f "$DOTFILES_DIR/autojump/autojump.bash" ]];then
+    source "$DOTFILES_DIR/autojump/autojump.bash"
 fi

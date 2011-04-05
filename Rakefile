@@ -6,7 +6,7 @@ task :install do
   replace_all = false
   update_submodules()
   Dir['*'].each do |file|
-    next if %w[Rakefile README.rdoc LICENSE autojump].include? file
+    next if %w[Rakefile README.rdoc LICENSE bin autojump man].include? file
     
     if File.exist?(File.join(ENV['HOME'], ".#{file.sub('.erb', '')}"))
       if File.identical? file, File.join(ENV['HOME'], ".#{file.sub('.erb', '')}")
