@@ -4,8 +4,9 @@ require 'erb'
 desc "install the dot files into user's home directory"
 task :install do
   replace_all = false
+  update_submodules()
   Dir['*'].each do |file|
-    next if %w[Rakefile README.rdoc LICENSE].include? file
+    next if %w[Rakefile README.rdoc LICENSE autojump].include? file
     
     if File.exist?(File.join(ENV['HOME'], ".#{file.sub('.erb', '')}"))
       if File.identical? file, File.join(ENV['HOME'], ".#{file.sub('.erb', '')}")
@@ -32,6 +33,11 @@ task :install do
   end
 end
 
+desc "update submodules"
+task :update do
+    update_submodules()
+end
+
 def replace_file(file)
   system %Q{rm -rf "$HOME/.#{file.sub('.erb', '')}"}
   link_file(file)
@@ -47,4 +53,8 @@ def link_file(file)
     puts "linking ~/.#{file}"
     system %Q{ln -s "$PWD/#{file}" "$HOME/.#{file}"}
   end
+end
+
+def update_submodules()
+    system %Q{git submodule update}
 end

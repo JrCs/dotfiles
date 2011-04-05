@@ -1,0 +1,3 @@
+[submodule "autojump"]
+	path = autojump
+	url = https://github.com/joelthelion/autojump.git
