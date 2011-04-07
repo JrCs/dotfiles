@@ -1,12 +1,14 @@
 require 'rake'
 require 'erb'
 
+excludes = %w[Rakefile README.rdoc LICENSE bin autojump man git-tools]
+
 desc "install the dot files into user's home directory"
 task :install do
   replace_all = false
   update_submodules()
   Dir['*'].each do |file|
-    next if %w[Rakefile README.rdoc LICENSE bin autojump man].include? file
+    next if excludes.include? file
     
     new_filename = ".#{file.sub('.erb', '')}"
     if File.exist?(File.join(ENV['HOME'], "#{new_filename}"))
@@ -41,8 +43,9 @@ end
 
 desc "remove backup files"
 task :clean do
-  Dir['*.erb'].each do |file|
-    backup_filename = ".#{file.sub('.erb', '.old')}"
+  Dir['*'].each do |file|
+    next if excludes.include? file
+    backup_filename = ".#{file.sub('.erb', '')}.old"
     if File.exist?(File.join(ENV['HOME'], "#{backup_filename}"))
       puts "Removing ~/#{backup_filename}"
       system %Q{rm -f "$HOME/#{backup_filename}"}
