@@ -4,3 +4,6 @@
 [submodule "git-tools/willgit"]
 	path = git-tools/willgit
 	url = git://gitorious.org/willgit/mainline.git
+[submodule "git-tools/git-bzr-ng"]
+	path = git-tools/git-bzr-ng
+	url = git://github.com/termie/git-bzr-ng.git
