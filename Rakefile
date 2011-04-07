@@ -51,7 +51,7 @@ task :clean do
 end
 
 def replace_file(file, new_filename)
-  if file =~ /.erb$/
+  if not File.symlink?(File.join(ENV['HOME'], "#{new_filename}"))
     backup = "#{new_filename}.old"
     puts "backuping ~/#{new_filename} to ~/#{backup}"
     system %Q{mv -f "$HOME/#{new_filename}" "$HOME/#{backup}"}
