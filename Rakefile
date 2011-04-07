@@ -8,23 +8,24 @@ task :install do
   Dir['*'].each do |file|
     next if %w[Rakefile README.rdoc LICENSE bin autojump man].include? file
     
-    if File.exist?(File.join(ENV['HOME'], ".#{file.sub('.erb', '')}"))
-      if File.identical? file, File.join(ENV['HOME'], ".#{file.sub('.erb', '')}")
-        puts "identical ~/.#{file.sub('.erb', '')}"
+    new_filename = ".#{file.sub('.erb', '')}"
+    if File.exist?(File.join(ENV['HOME'], "#{new_filename}"))
+      if File.identical? file, File.join(ENV['HOME'], "#{new_filename}")
+        puts "identical ~/#{new_filename}"
       elsif replace_all
-        replace_file(file)
+        replace_file(file, new_filename)
       else
-        print "overwrite ~/.#{file.sub('.erb', '')}? [ynaq] "
+        print "overwrite ~/#{new_filename} ? [ynaq] "
         case $stdin.gets.chomp
         when 'a'
           replace_all = true
-          replace_file(file)
+          replace_file(file, new_filename)
         when 'y'
-          replace_file(file)
+          replace_file(file, new_filename)
         when 'q'
           exit
         else
-          puts "skipping ~/.#{file.sub('.erb', '')}"
+          puts "skipping ~/#{new_filename}"
         end
       end
     else
@@ -38,8 +39,25 @@ task :update do
     update_submodules()
 end
 
-def replace_file(file)
-  system %Q{rm -rf "$HOME/.#{file.sub('.erb', '')}"}
+desc "remove backup files"
+task :clean do
+  Dir['*.erb'].each do |file|
+    backup_filename = ".#{file.sub('.erb', '.old')}"
+    if File.exist?(File.join(ENV['HOME'], "#{backup_filename}"))
+      puts "Removing ~/#{backup_filename}"
+      system %Q{rm -f "$HOME/#{backup_filename}"}
+    end
+  end
+end
+
+def replace_file(file, new_filename)
+  if file =~ /.erb$/
+    backup = "#{new_filename}.old"
+    puts "backuping ~/#{new_filename} to ~/#{backup}"
+    system %Q{mv -f "$HOME/#{new_filename}" "$HOME/#{backup}"}
+  else
+    system %Q{rm -f "$HOME/#{new_filename}"}
+  end
   link_file(file)
 end
 
