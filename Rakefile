@@ -77,5 +77,5 @@ def link_file(file)
 end
 
 def update_submodules()
-    system %Q{git submodule update}
+    system %Q{git submodule sync && git submodule update}
 end
