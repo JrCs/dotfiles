@@ -29,15 +29,19 @@ syn case match
 " Action examples: ACCEPT DENY AllowFTP ACCEPT:info LOG:info ACCEPT:info:ftp
 
 syn match  swActionError    "^\s*\S\+" nextgroup=swSrcZone
-syn match  swAction         "^\s*\w\+\(:\w\+\)\?\(:\w\+\)\?\(\s\|$\)"        nextgroup=swSrcZone,swSrcZoneError skipwhite
+syn match  swAction         "^\s*\w\+\(\([:/]\w\+\)\|\((\w\+)\)\)\?\(:\w\+\)\?\(\s\+\)"  nextgroup=swSrcZone,swSrcZoneVar,swSrcZoneError skipwhite
+
+"Action comment: COMMENT
+syn match  swAction         "^COMMENT" nextgroup=swComment
 
 " According to http://www.shorewall.net/Documentation.htm#Zones
-" Zones shuold be 5 lowercase characters or less in length, but we'll only
+" Zones should be 5 lowercase characters or less in length, but we'll only
 " check for the structure to avoid annoying *smart* users
 " Zone examples: $FW all none net loc net2 zone1!zon12,zon23
 
 syn match  swDstZoneError   "\s\+\S\+" contained nextgroup=swSrcHost,swDstZone
-syn match  swSrcZone        "\$FW\|all\|none\|\w\+\!\w\+\(,\w\+\)*\|\w\+" nextgroup=swSrcHost,swSrcHostError,swDstZone contained 
+syn match  swSrcZone        "all\|none\|-\|\w\+\!\w\+\(,\w\+\)*\|\w\+" nextgroup=swSrcHost,swSrcHostError,swDstZone,swDstZoneVar contained 
+syn match  swSrcZoneVar     "\$\w\+" contained nextgroup=swSrcHost,swSrcHostError,swDstZone,swDstZoneVar
 
 " Host is host_spec,host_spec,...
 " host_spec examples:
@@ -52,10 +56,11 @@ syn match  swSrcHostError   "\S\+" contained nextgroup=DstZone
 syn match  swSrcHost        ":\(\w\|[,-:~/\.]\)\+\(\s\|$\)" nextgroup=swDstZone,swDstZoneError contained skipwhite
 
 syn match  swDstZoneError   "\s\+\S\+" contained nextgroup=swDstHost,swProto
-syn match  swDstZone        "\s\+\(\$FW\|all\|none\|\w\+\!\w\+\(,\w\+\)*\|\w\+\)" nextgroup=swDstHost,swDstHostError,swProto contained 
+syn match  swDstZone        "\s\+\(all\|none\|\w\+\!\w\+\(,\w\+\)*\|\w\+\)" nextgroup=swDstHost,swDstHostError,swProto contained 
+syn match  swDstZoneVar     "\s\+\$\w\+" contained nextgroup=swDstHost,swDstHostError,swProto
 
 syn match  swDstHostError   "\S\+" contained nextgroup=swProto
-syn match  swDstHost        ":\(\w\|[,-:~/\.]\)\+\(\s\|$\)" nextgroup=swProto,swProtoError contained skipwhite
+syn match  swDstHost        ":\(\$\?\w\|[,-:~/\.]\)\+\(\s\|$\)" nextgroup=swProto,swProtoError contained skipwhite
 
 " (EXPERIMENTAL) Restrict protocols to: tcp, udp, icmp or all to minimize 
 " spelling errors. However, any protocol from /etc/protocols is allowed.
@@ -85,6 +90,7 @@ syn match  swUser           "\s*!\?\(\w\+\|:\w\+\|+\w\+\)\s*$"     contained
 
 " Last but not least, comments
 syn match  swComment /\s*#.*/
+syn match  swComment /\s*.*/ contained
 
 
 " Define the default highlighting.
@@ -101,14 +107,16 @@ if version >= 508 || !exists("did_shorewall_syn_inits")
   HiLink swAction        Statement
   HiLink swSrcZone       Type
   HiLink swDstZone       Type
-" HiLink swSrcHost       Normal
-" HiLink swDstHost       Normal
+  HiLink swSrcHost       Normal
+  HiLink swDstHost       Constant
   HiLink swDstPort       Statement
   HiLink swSrcPort       Identifier
   HiLink swProto         Constant
   HiLink swUser          Constant
   HiLink swRate          PreProc
 
+  HiLink swSrcZoneVar    PreProc
+  HiLink swDstZoneVar    PreProc
   HiLink swComment       Comment
 
   HiLink swActionError   Error
