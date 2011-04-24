@@ -95,6 +95,10 @@ if has("autocmd")
     \   exe "normal g`\"" |
     \ endif
 
+  " DetectIndent for automatically detecting indent settings
+  " URL=https://github.com/ciaranm/detectindent
+  autocmd BufReadPost * :DetectIndent
+
   augroup END
 
 else
@@ -129,6 +133,12 @@ set shiftwidth=4
 set expandtab
 " makes the backspace key treat the spaces like a tab
 set softtabstop=4
+
+" DetectIndent plugin
+" prefer expand tab when detection is impossible
+let g:detectindent_preferred_expandtab = 1
+" preferred indent level when detection is impossible
+let g:detectindent_preferred_indent = &shiftwidth
 
 " That awful mixed mode with the half-tabs-are-spaces:
 map \M <Esc>:set tabstop=8 shiftwidth=8 softtabstop=8<CR>
