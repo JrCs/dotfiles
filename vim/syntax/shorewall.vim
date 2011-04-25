@@ -23,75 +23,102 @@ endif
 " Shorewall rules file syntax match according to:
 " http://www.shorewall.net/Documentation.htm#Rules
 
+" Set the local value of the 'iskeyword' option
+if version >= 600
+  setlocal iskeyword=@,+,-,!,$
+else
+  set iskeyword=@,+,-,!,$
+endif
+
+let s:cpo_save = &cpo
+set cpo-=C  " Allow line continuations
+
 " We want case sensitive matchs
 syn case match
 
-" Action examples: ACCEPT DENY AllowFTP ACCEPT:info LOG:info ACCEPT:info:ftp
+" Keywords
+syn keyword swAction ACCEPT ACCEPT+ ACCEPT! NONAT DROP DROP! REJECT REJECT! contained
+syn keyword swAction DNAT DNAT- REDIRECT REDIRECT- CONTINUE CONTINUE! contained
+syn keyword swAction LOG QUEUE QUEUE! NFQUEUE NFQUEUE! COUNT ADD DEL contained
 
-syn match  swActionError    "^\s*\S\+" nextgroup=swSrcZone
-syn match  swAction         "^\s*\w\+\(\([:/]\w\+\)\|\((\w\+)\)\)\?\(:\w\+\)\?\(\s\+\)"  nextgroup=swSrcZone,swSrcZoneVar,swSrcZoneError skipwhite
+syn keyword swZoneConst $FW all all+ all- all+- any any+ any- none contained containedin=swComment,swSrcZone,swSrcHost
+syn keyword swRandConst random contained containedin=swDstPort
 
-"Action comment: COMMENT
-syn match  swAction         "^COMMENT" nextgroup=swComment
+" Action Field
+syn cluster swAction  contains=swTargetError,swTarget,swMacro
+syn region  swActionField start="^\s*\w"  end="\ze\%(\_s\|\\\)" contains=@swAction nextgroup=swLineCont1,swSrcField skipwhite
+syn match   swTargetError /\S\+/ contained
+syn match   swTarget      /\w\+/ contained contains=swTargetError,swAction nextgroup=swTargetLog
+" old macro syntax: macro/action
+syn match   swMacro       /^\w\+[/]\%(\w\|,\)\+\>/ contained contains=swAction nextgroup=swTargetLog
+" new macro syntax: macro(action)
+syn match   swMacro       /^\w\+(\%(\w\|,\)\+)/ contained contains=swAction nextgroup=swTargetLog
+syn match   swTargetLog   ":$\?\w\+[!]\?"hs=s+1 contained nextgroup=swTargetTag
+syn match   swTargetTag   ":$\?\w\+"hs=s+1 contained
 
-" According to http://www.shorewall.net/Documentation.htm#Zones
-" Zones should be 5 lowercase characters or less in length, but we'll only
-" check for the structure to avoid annoying *smart* users
-" Zone examples: $FW all none net loc net2 zone1!zon12,zon23
+" Source Field
+syn region  swSrcField  start="\S" end="\ze\%(\_s\|\\\)"  contained contains=swSrcError,swSrcZone nextgroup=swLineCont2,swDstField skipwhite
+syn match   swSrcError  /\S\+/ contained
+syn match   swSrcZone   /-\|\$\?\w\+[+]\?[-]\?\>/ contained nextgroup=swSrcHost
+syn match   swSrcHost   /:\%($\?\w\|[-!,~&/\[\].+]\)\+/hs=s+1 contained
 
-syn match  swDstZoneError   "\s\+\S\+" contained nextgroup=swSrcHost,swDstZone
-syn match  swSrcZone        "all\|none\|-\|\w\+\!\w\+\(,\w\+\)*\|\w\+" nextgroup=swSrcHost,swSrcHostError,swDstZone,swDstZoneVar contained 
-syn match  swSrcZoneVar     "\$\w\+" contained nextgroup=swSrcHost,swSrcHostError,swDstZone,swDstZoneVar
+" Destination Field
+syn region  swDstField  start="\S" end="\ze\%(\_s\|\\\)"  contained contains=swDstError,swDstZone nextgroup=swLineCont3,swProtoField skipwhite
+syn match   swDstError  /\S\+/ contained
+" A zone without variable. Examples: dmz -
+syn match   swDstZone   /-\|\w\+[+]\?[-]\?\>/ contained nextgroup=swDstHost
+syn match   swDstHost   /:\%($\?\w\|[-!,~&/\[\].+]\)\+/hs=s+1 contained nextgroup=swDstZonePort
+" A zone:host defined in a variable. Examples: $SERVER1
+syn match   swDstZone   /\$\w\+\>/ contained nextgroup=swDstZonePort
+" Port examples: 21,80,ssh,moira_db,7070-7090
+" We'll just check for numbers + legal services characters (-_)
+syn match   swDstZonePort   /:\%(\%(\$\?\%(\w\|-\)\+\)[,]\?\)\+\%(:random\)\?/hs=s+1 contained
 
-" Host is host_spec,host_spec,...
-" host_spec examples:
-" eth4 
-" eth4:192.168.4.22
-" 155.186.235.151
-" ~02-00-08-E3-FA-55
-" 10.0.0.1-10.0.1.255 10.0.0.1/16
-" Too complicated!. Let's just filter the valid characters to keep it simple.
+" Proto Field
+syn region  swProtoField  start=/\S/ end=/\ze\%(\_s\|\\\)/  contained contains=swProtoError,swProto nextgroup=swLineCont4,swDstPortField skipwhite
+syn match   swProtoError  /\S\+/ contained
+syn match   swProto       "-\|\%(\w\|,\)\+" contained
 
-syn match  swSrcHostError   "\S\+" contained nextgroup=DstZone
-syn match  swSrcHost        ":\(\w\|[,-:~/\.]\)\+\(\s\|$\)" nextgroup=swDstZone,swDstZoneError contained skipwhite
+" Destination Port Field
+syn region  swDstPortField start=/\S/ end=/\ze\%(\_s\|\\\)/  contained contains=swDstPortError,swDstPort nextgroup=swLineCont5,swSrcPortField skipwhite
+syn match   swDstPortError /\S\+/ contained
+" Port examples: ssh,1024:1030,!1026
+" for ICMP: 3/4
+syn match   swDstPort     "\$\?\%(\h\|-\)\+[,]\?" contained
+syn match   swDstPort     "[!]\?\d\{1,5}\%([:/]\d\{1,5}\)\?[,]\?" contained
 
-syn match  swDstZoneError   "\s\+\S\+" contained nextgroup=swDstHost,swProto
-syn match  swDstZone        "\s\+\(all\|none\|\w\+\!\w\+\(,\w\+\)*\|\w\+\)" nextgroup=swDstHost,swDstHostError,swProto contained 
-syn match  swDstZoneVar     "\s\+\$\w\+" contained nextgroup=swDstHost,swDstHostError,swProto
+" Source Port Field
+syn region  swSrcPortField start=/\S/ end=/\ze\%(\_s\|\\\)/  contained contains=swSrcPortError,swSrcPort nextgroup=swLineCont6,swOrigDstField skipwhite
+syn match   swSrcPortError /\S\+/ contained
+" Port examples: ssh,1024:1030
+syn match   swSrcPort     "\$\?\%(\h\|-\)\+[,]\?" contained
+syn match   swSrcPort     "\d\{1,5}\%([:]\d\{1,5}\)\?[,]\?" contained
 
-syn match  swDstHostError   "\S\+" contained nextgroup=swProto
-syn match  swDstHost        ":\(\$\?\w\|[,-:~/\.]\)\+\(\s\|$\)" nextgroup=swProto,swProtoError contained skipwhite
+" Original destination Field
+syn region  swOrigDstField start=/\S/ end=/\ze\%(\_s\|\\\)/  contained contains=swOrigDstError,swOrigDst
+syn match   swOrigDstError /\S\+/ contained
+syn match   swOrigDst      /\%($\?\w\|[-!,&/\[\].]\)\+/ contained
 
-" (EXPERIMENTAL) Restrict protocols to: tcp, udp, icmp or all to minimize 
-" spelling errors. However, any protocol from /etc/protocols is allowed.
-syn match  swProtoError     "\<\S\+\>" contained nextgroup=swDstPort
-syn match  swProto          "\s*\(tcp\|udp\|icmp\|all\)"  nextgroup=swDstPort,swComment,swDstPortError contained
+" Other Directive
+syn region  swCommentAction matchgroup=swSpecial start="^\s*COMMENT" end="\_$"
+syn region  swSectionAction matchgroup=swSpecial start="^\s*SECTION" end="\_$"
+syn region  swIncludeAction matchgroup=swSpecial start="^\s*INCLUDE" end="\_$"
+syn region  swScriptAction  matchgroup=swSpecial start="^\s*\%(SHELL\|PERL\)" end="\_$"
+syn region  swScriptAction  matchgroup=swSpecial start="^\s*BEGIN\s\+\z(SHELL\|PERL\)" end="END\(\s\+\%(\z1\)\)\?"
 
-" Port examples: 22,80 ssh,http 7070:7090 - 
-" We'll just check for numbers + legal services characters (+-._)
+" Line Break
+syn match   swLineCont1 "\\$" contained nextgroup=swSrcField   skipwhite skipnl
+syn match   swLineCont2 "\\$" contained nextgroup=swDstField   skipwhite skipnl
+syn match   swLineCont3 "\\$" contained nextgroup=swProtoField skipwhite skipnl
+syn match   swLineCont4 "\\$" contained nextgroup=swDstPortField  skipwhite skipnl
+syn match   swLineCont5 "\\$" contained nextgroup=swSrcPortField  skipwhite skipnl
+syn match   swLineCont6 "\\$" contained nextgroup=swOrigDstField  skipwhite skipnl
 
-syn match  swDstPortError   "\s\+\S\+" contained nextgroup=swSrcPort
-syn match  swDstPort        "\s*\(\w\|[+-\._\,]\)\+\(\s\|$\)" nextgroup=swSrcPort,swComment,swSrcPortError contained
-
-syn match  swSrcPortError   "\s\+\S\+" contained nextgroup=swRate
-syn match  swSrcPort        "\s*\(\w\|[+-\._\,]\)\+\(\s\|$\)" nextgroup=swRate,swRateError contained
-
-" Seventh colum is RATE LIMIT () for ACCEPT, DENY, and custom rules 
-" and ORIGINAL DESTINATION in DNAT/REDIRECT rules.
-" RATE LIMIT is <rate>/<interval>[:<burst>]
-" ORIGINAL DESTINATION is ipaddr,ipaddr,...
-
-syn match  swRateError      "\s\+\S\+" contained nextgroup=swUser
-syn match  swRate           "\s*\(\d\+\/\(min\|sec\)\(:\d\+\)\?\)\|\([0-9\.\/\!,-]\+\)"    nextgroup=swUser,swUserError contained
-
-" User/group is:
-" [!][<user name or number>][:<group name or number>][+<program name>]
-syn match  swUser           "\s*!\?\(\w\+\|:\w\+\|+\w\+\)\s*$"     contained
+" Variables
+syn match   swVariable  "\$\w\+" containedin=swComment,swMacro,swTargetLog,swTargetTag,swSrcZone,swSrcHost,swDstZone,swDstHost,swDstZonePort,swDstPort,swSrcPort,swOrigDst
 
 " Last but not least, comments
-syn match  swComment /\s*#.*/
-syn match  swComment /\s*.*/ contained
-
+syn match   swComment /\s*#.*/ contains=swZoneConst
 
 " Define the default highlighting.
 " For version 5.7 and earlier: only when not done already
@@ -104,31 +131,62 @@ if version >= 508 || !exists("did_shorewall_syn_inits")
     command -nargs=+ HiLink hi def link <args>
   endif
 
+  HiLink swShellAction   Todo
+  HiLink swZoneConst     Constant
+
+  HiLink swActionField   PreProc
   HiLink swAction        Statement
+  HiLink swTargetError   Error
+  HiLink swTarget        Type
+  HiLink swMacro         Constant
+  HiLink swTargetLog     Special
+  HiLink swTargetTag     Identifier
+
+  " HiLink swCommentAction String
+  HiLink swSectionAction Type
+  " HiLink swIncludeAction String
+  HiLink swScriptAction  Special
+
+  HiLink swSrcField      Normal
+  HiLink swSrcError      Error
   HiLink swSrcZone       Type
+  HiLink swSrcHost       Special
+
+  "HiLink swDstField      Normal
+  HiLink swDstField      Preproc
+  HiLink swDstError      Error
   HiLink swDstZone       Type
-  HiLink swSrcHost       Normal
-  HiLink swDstHost       Constant
-  HiLink swDstPort       Statement
-  HiLink swSrcPort       Identifier
-  HiLink swProto         Constant
-  HiLink swUser          Constant
-  HiLink swRate          PreProc
+  HiLink swDstHost       Special
+  HiLink swDstZonePort   Identifier
+  HiLink swRandConst     Constant
 
-  HiLink swSrcZoneVar    PreProc
-  HiLink swDstZoneVar    PreProc
-  HiLink swComment       Comment
-
-  HiLink swActionError   Error
-  HiLink swSrcZoneError  Error
-  HiLink swDstZoneError  Error
-  HiLink swSrcHostError  Error
-  HiLink swDstHostError  Error
-  HiLink swSrcPortError  Error
-  HiLink swDstPortError  Error
+  HiLink swProtoField    Preproc
   HiLink swProtoError    Error
-  HiLink swUserError     Error
-  HiLink swRateError     Error
+  HiLink swProto         Constant
+
+  HiLink swDstPortField  Preproc
+  HiLink swDstPortError  Error
+  HiLink swDstPort       Constant
+
+  HiLink swSrcPortField  Preproc
+  HiLink swSrcPortError  Error
+  HiLink swSrcPort       Constant
+
+  HiLink swOrigDstField  Preproc
+  HiLink swOrigDstError  Error
+  HiLink swOrigDst       Constant
+
+  HiLink swComment       Comment
+  HiLink swVariable      PreProc
+  HiLink swSpecial       Special
+  HiLink swConstant      Constant
+
+  HiLink swLineCont1     Special
+  HiLink swLineCont2     Special
+  HiLink swLineCont3     Special
+  HiLink swLineCont4     Special
+  HiLink swLineCont5     Special
+  HiLink swLineCont6     Special
 
   delcommand HiLink
 endif
