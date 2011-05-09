@@ -11,3 +11,6 @@ type -P ack-grep >/dev/null 2>&1 && ( alias ack >/dev/null 2>&1 || alias ack=ack
 # misc
 alias reload='. ~/.bash_profile'
 alias profileme="history | awk '{print \$2}' | awk 'BEGIN{FS=\"|\"}{print \$1}' | sort | uniq -c | sort -n | tail -n 20 | sort -nr"
+# ls
+alias ll='ls -alF --color=auto'
+alias ls='ls --color=auto'
