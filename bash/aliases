@@ -6,7 +6,7 @@ alias github='br=$(git branch --contains HEAD | sed -En "s/^\* //p"); if ! git l
 alias vi >/dev/null 2>&1 || alias vi=vim
 
 # set alias for ack, if ack-grep exist and no alias is already set
-type -P ack-grep >/dev/null 2>&1 && alias ack >/dev/null 2>&1 || alias ack=ack-grep
+type -P ack-grep >/dev/null 2>&1 && ( alias ack >/dev/null 2>&1 || alias ack=ack-grep )
 
 # misc
 alias reload='. ~/.bash_profile'
