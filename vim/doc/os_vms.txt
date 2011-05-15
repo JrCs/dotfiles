@@ -1,0 +1,826 @@
+*os_vms.txt*    Pour Vim version 6.2.  Dernière modification : 12 mai 2003
+
+
+		MANUEL de RÉFÉRENCE VIM - par Zoltan Arpadffy 
+
+
+							*VMS* *vms*
+Ce fichier documente les particularités de la version VMS de Vim. Vous pouvez
+consulter ce fichier de documentation en tapant ":help VMS" à l'invite de
+commmande Vim.
+
+ 1. Pour commencer				|vms-started|
+ 2. Téléchargement des fichiers			|vms-download|
+ 3. Compilation					|vms-compiling|
+ 4. Problèmes					|vms-problems|
+ 5. Deploiement					|vms-deploy|
+ 6. Utilisation pratique			|vms-usage|
+ 7. À propos du mode graphique			|vms-gui|
+ 8. Notes utiles				|vms-notes|
+ 9. Historique des modifications pour VMS	|vms-changes|
+10. Auteurs					|vms-authors|
+
+==============================================================================
+1. Pour commencer					*vms-started*
+
+Vim ("Vi IMproved", c'est-à-dire VI aMélioré) est un éditeur de texte
+compatible avec Vi, qui fonctionne sur la majorité des systèmes d'exploitation
+connus. Maintenant, vous pouvez aussi utiliser Vim sur OpenVMS, en mode
+caractère ou dans un environnement X/Motif. Il est pleinement fonctionnel et
+complètement compatible avec le Vim des autres systèmes d'exploitation.
+
+==============================================================================
+2. Téléchargement des fichiers				*vms-download*
+
+Vous pouvez télécharger les codes source de Vim par FTP sur le site officiel
+de Vim : 
+	
+	ftp://ftp.vim.org/pub/vim/ ~
+
+ou utiliser l'un des mirroirs :
+
+	ftp://ftp.vim.org/pub/vim/MIRRORS ~
+
+Vous aurez besoin des deux archives "Unix" et "Extra" pour construire
+"vim.exe" pour VMS. Pour profiter de toute la puissance de Vim, vous aurez
+également besoin des fichiers de support.
+
+Vous pouvez télécharger des exécutables précompilés sur :
+
+	http://www.polarfox.com/vim/ ~
+	ftp://ftp.polarfox.com/pub/vim/ ~
+
+Le mirroir officiel de polarfox.com peut être trouvé sur polarhome.com.
+
+==============================================================================
+3. Compilation						*vms-compiling*
+
+Consultez le fichier [.SRC]INSTALLVMS.TXT.
+
+==============================================================================
+4. Problèmes						*vms-problems*
+
+Le code a été testé avec Open VMS 6.2 - 7.3 sur des plates-formes Alpha et
+VAX, en utilisant le compilateur DECC. Cela devrait fonctionner sans problèmes
+majeurs. S'il apparaît que votre système ne possède pas certaines des
+bibliothèques à inclure, vous pouvez ajuster le fichier "OS_VMS_CONF.H".
+
+Si vous décidez de compiler Vim avec les fonctionnalités +perl, +python, etc.,
+vous devez d'abord télécharger les distributions OpenVMS de Perl et Python.
+Compilez et déployez les bibliothèques, puis changez les lignes appropriées
+dans le fichier "MAKE_VMS.MMS". Il ne devrait pas y avoir de problème du côté
+de Vim.
+
+NOTE : Sur VAX, cela devrait fonctionner sans problème avec le compilateur C
+DEC. Le compilateur VAXC n'est pas pleinement compatible ANSI en ce qui
+concerne la sémantique des directives du préprocesseur, par conséquent, vous
+devez utiliser un programme de conversion pour effectuer la majeure partie de
+ce travail. Des instructions détaillées figurent dans le fichier
+"INSTALLvms.txt".
+
+"MMS_VIM.EXE" est compilé en même temps que "VIM.EXE", mais pour "XXD.EXE",
+vous devez changer de répertoire et le compiler séparément.
+
+CTAGS ne fait plus partie de la distribution des sources de Vim. Toutefois, la
+distribution spécifique des sources de Vim pour OpenVMS peut contenir les
+fichiers source de CTAGS tel que décrit plus haut. Vous pouvez trouver
+davantage d'informations à propos de CTAGS sur VMS sur
+http://www.polarfox.com/ctags/.
+
+Les utilisateurs expérimentés peuvent également tenter des modifications
+acrobatiques dans le fichier "FEATURE.H".
+
+Il est également possible de compiler les fonctionnalités +xfontset et +xim,
+mais vous devrez alors paramétrer correctement les polices, etc. Voir
+":help xim" depuis l'invite de commande Vim.
+
+Pour utiliser l'IHM graphique avec les icônes GTK, vous devez télécharger et
+installer GTK pour OpenVMS, ou au minimum des images de l'environnement
+d'exécution partagé - LIBGTK sur polarfox.com.
+
+Pour les questions plus pointues, merci d'envoyer votre problème Vim sur la
+liste de diffusion VMS <vim-vms@polarhome.com>. Davantage d'informations sur la liste vim-vms sur :
+
+	http://www.polarhome.com/mailman/listinfo/vim-vms ~
+
+==============================================================================
+5. Deploiement						*vms-deploy*
+
+Vim utilise une structure de répertoire particulière pour organiser les
+fichiers de documentation et de support :
+
+   vim (ou quoi que ce soit)
+    |- tmp
+    |- vim57
+    |----- doc
+    |----- syntax
+    |- vim60
+    |----- doc
+    |----- syntax
+    |- vim61
+    |----- doc
+    |----- syntax
+    vimrc    (fichier rc système)
+    gvimrc
+
+Utilisez : >
+
+	define/nolog VIM	device:[path.vim]
+	define/nolog VIMRUNTIME device:[path.vim.vim60]
+	define/nolog TMP	device:[path.tmp]
+
+pour que "vim.exe" trouve sa documentations, les greffons de type de fichiers,
+les fichiers de syntaxe, et pour spécifier un répertoire dans lequel les
+fichiers temporaires seront situés. Copiez le sous-répertoire "runtime" de la
+distribution Vim dans VIMRUNTIME.
+
+Les noms logiques $VIMRUNTIME et $TMP sont optionnels.
+
+Si $VIMRUNTIME n'est pas défini, Vim tentera de le déterminer puis de le
+définir automatiquement. Plus d'informations avec ":help runtime".
+
+Si $TMP n'est pas défini, certaines fonctionnalités telles CTAGS, XXD,
+l'impression, etc. ne seront pas utilisables, car elles nécessitent un
+répertoire temporaire pour leur fonctionnement normal. L'utilisateur doit
+posséder les droits de lecture et d'écriture dans le répertoire $TMP. La
+manière la plus simple pour définir $TMP est de définir un nom logique : >
+
+	define/nolog TMP SYS$SCRATCH
+
+ou encore : >
+
+	define/nolog TMP SYS$LOGIN
+
+==============================================================================
+6. Utilisation pratique					*vms-usage*
+
+Habituellement, vous ne souhaiter faire fonctionner qu'une seule version de
+Vim sur votre système. Par conséquent, dédier un unique répertoire pour Vim
+est suffisant.
+   Copiez toute la structure du répertoire "runtime" vers la cible du
+déploiement. Ajoutez les lignes suivantes dans votre "LOGIN.COM" (dans le
+répertoire "SYS$LOGIN"). Définissez le nom logique $VIM de cette façon : >
+
+	$ define VIM device:<chemin>
+
+Définissez quelques symboles : >
+
+	$ ! vi démarre Vim en mode caractère.
+	$ vi*m  :== mcr VIM:VIM.EXE
+
+	$ !gv démarre Vim mode graphique.
+	$ gv*im :== spawn/nowait mcr VIM:VIM.EXE -g
+
+Consultez s'il vous plaît les notes à propos de la configuration et de la
+personnalisation des symboles.
+
+Vous pourriez vouloir créer des fichiers ".vimrc" et ".gvimrc" dans votre
+répertoire personnel "SYS$LOGIN" pour recouvrir la valeur par défaut des
+paramètres.
+
+La façon la plus simple est de renommer les fichiers d'exemple. Vous pouvez
+laisser le fichier de menus "MENU.VIM" et les fichiers "vimrc" et "gvimrc"
+dans le répertoire $VIM d'origine. Ils serviront de paramètres par défaut pour
+tous les utilisateurs, ces derniers pouvant ajouter leur propres modifications
+dans les fichiers ".vimrc" et ".gvimrc" de leur répertoire personnel. Cela
+devrait fonctionner sans problème.
+
+NOTE : N'oubliez pas, les fichiers rc pour le système (paramètres par défaut
+pour tous les utilisateurs) ne prennent pas de "." initial. Ainsi, les
+fichiers rc systèmes sont : >
+
+	$VIM:vimrc
+	$VIM:gvimrc
+	$VIM:menu.vim
+
+et les fichiers personnalisés de l'utilisateur sont : >
+
+	sys$login:.vimrc
+	sys$login:.gvimrc
+
+Vous pouvez vérifier que tout est au bon endroit avec la commande ":version".
+
+Exemple de LOGIN.COM : >
+
+	$ define/nolog VIM RF10:[UTIL.VIM]
+	$ vi*m :== mcr VIM:VIM.EXE
+	$ gv*im:== spawn/nowait/input=NLA0 mcr VIM:VIM.EXE -g -GEOMETRY 80x40
+	$ set disp/create/node=192.168.5.223/trans=tcpip
+
+NOTE : Cet exemple devrait suffire si vous travaillez sur un serveur isolé ou
+dans un environnement en XXX cluster, mais si vous voulez Vim comme éditeur
+XXX internode dans un environnement DECNET, cela ira aussi. Vous devez juste
+définir le chemin « complet » : >
+
+	$ define VIM "<nom_serveur>[""mot de passe""]::device:<chemin>"
+	$ vi*m :== "mcr VIM:VIM.EXE"
+
+Par exemple : >
+
+	$ define VIM "PLUTO::RF10:[UTIL.VIM]"
+	$ define VIM "PLUTO""ZAY motpasse""::RF10:[UTIL.VIM]" ! si mot de passe
+
+Vous pouvez aussi utiliser le nom logique $VIMRUNTIME pour désigner la bonne
+version de Vim si vous avez installé plusieurs versions simultanément. Si
+$VIMRUNTIME n'est pas défini, Vim utilisera la valeur de $VIM. Vous pouvez
+trouver des informations supplémentaires à propos de $VIMRUNTIME en tapant
+":help runtime" dans Vim.
+
+Les administrateurs système peuvent mettre en oeuvre une installation de Vim
+pour l'ensemble du système. Pour cela, ajoutez les lignes suivantes dans
+"SYS$STARTUP:SYLOGICALS.COM" : >
+
+	$ define/nolog/sys VIM device:<chemin>
+	$ define/nolog/sys TMP SYS$SCRATCH
+
+et dans "SYS$STARTUP:SYLOGIN.COM" : >
+
+	$ vi*m :== mcr VIM:VIM.EXE
+	$ gv*im:== spawn/nowait/input=NLA0 mcr VIM:VIM.EXE -g -GEOMETRY 80x40
+
+Cela mettra à disposition un environnement de travail Vim pour tous les
+utilisateurs du système.
+
+==============================================================================
+7. Mode graphique					*vms-gui*
+
+OpenVMS est vrai système d'exploitation pour XXX mainframe, par conséquent,
+même s'ils disposent d'une console graphique, la plupart des utilisateurs
+n'utilisent pas l'environnement X/Window natif en utilisation normale. Il est
+impossible de démarrer Vim en mode graphique « juste comme cela ». Mais ce
+n'est tout de même pas très compliqué.
+
+Premièrement : votre exécutable doit être compilé avec la fonctionnalité IHM
+graphique.
+
+Deuxièmement : DECW/Motif doit être installé sur votre serveur VMS, sinon vous
+obtiendrez des erreurs à propos de bibliothèques partagées manquantes.
+
+Troisièmement : si vous choisissez de faire fonctionner Vim avec des
+fonctionnalités supplémentaires comme GTK, alors GTK doit être aussi installé,
+ou au moins l'environnement d'exécution GTK (LIBGTK, etc.).
+
+1° Si vous travaillez dans une console VMS X/Motif, démarrez Vim avec cette
+   commande : >
+
+	$ mc device:<path>VIM.EXE -g
+<
+   ou tapez ":gui" dans Vim. Pour plus d'informations : ":help gui".
+
+2° Si vous travaillez dans un autre environnement X/Window tel qu'Unix ou sur
+   certaines consoles VMS distantes, fixez l'affichage de votre hôte avec : >
+
+	$ set disp/create/node=<votre.addresse.IP>/trans=<nom-transport>
+<
+   et démarrez Vim comme dans le 1°. Vous pouvez trouver de l'aide dans la
+   documentation VMS ou en tapant "help set disp" à l'invite VMS.
+   Exemples: >
+
+	$ set disp/create/node=192.168.5.159	! DECnet = trans par défaut
+	$ set disp/create/node=192.168.5.159/trans=tcpip ! réseau TCP/IP
+	$ set disp/create/node=192.168.5.159/trans=local ! sur le même noeud
+<
+   NOTE : vous devez choisir l'une de ces tranport. Pour plus d'informations,
+   tapez "help set disp" à l'invite VMS.
+
+3° Une autre solution élégante est XDM, XXX s'il est installé sur un système
+   OpenVMS. Il est possible de travailler depuis un client XDM comme depuis la
+   console graphique.
+
+4° Si vous travaillez sur MS-Windows ou sur tout autre environnement non
+   X/Window, vous devez installer un serveur X et faire fonctionner Vim comme
+   décrit dans le 2°.
+   Il existe des serveurs X gratuit XXX libre ? pour MS-Windows, comme MIX,
+   Omni X, etc. ainsi que d'excellents produits commerciaux tels que eXcursion
+   ou ReflectionX, avec le support de DEC intégré.
+
+Notez bien que les exécutables sans IHM graphique sont légèrement plus rapides
+au démarrage en mode caractère que ceux avec l'IHM graphique. Par conséquent,
+si vous n'utilisez pas le mode graphique, il est valable de choisir les
+exécutables sans l'IHM graphique.
+
+==============================================================================
+8. Notes utiles						*vms-notes*
+
+8.01. RETOUR ARRIÈRE ET SUPPR
+8.02. FILTRES
+8.03. NUMÉRO DE VERSION DES FICHIERS VMS
+8.04. CONVERSION DES RÉPERTOIRES
+8.05. INVOCATION À DISTANCE
+8.06. PROBLÈMES DU TERMINAL
+8.07. ÉDITION HEXADÉCIMALE ET AUTRES OUTILS EXTERNES
+8.08. SOURCER LES FICHIERS VIMRC ET GVIMRC
+8.09. IMPRESSION DEPUIS VIM
+8.10. DÉFINIR LES SYMBOLES
+8.11. DIFF ET AUTRES PROGRAMMES GNU
+8.12. MODE DIFF
+8.13. AUTORISER '$' DANS LES MOTS-CLÉS
+8.14. VIMTUTOR POUR LES DÉBUTANTS
+
+
+8.01. RETOUR ARRIÈRE ET SUPPR
+
+Dans VMS, il existe de incohérences avec les touches RetArr et Suppr.
+":fixdel" ne résoud pas ce problème, mais voici une solution : >
+
+	:inoremap ^? ^H		" pour le mode terminal
+	:inoremap <Del> ^H	" pour le mode graphique
+
+Plus d'informations au chapitre 8.6. (Problèmes du terminal).
+
+(Bruce Hunsaker <BNHunsaker@chq.byu.edu>, Vim 5.3)
+
+
+8.02. FILTRES
+
+Vim supporte les filtres : si vous avez un programme `sort` qui gère la
+redirection des entrées/sorties comme Unix ("<fichierentrée >fichiersortie"),
+vous pouvez utiliser : >
+
+	:map \s 0!'aqsort<CR>
+
+(Charles E. Campbell, Jr. <cec@gryphon.gsfc.nasa.gov>, Vim 5.4)
+
+
+8.03. NUMÉRO DE VERSION DES FICHIERS VMS
+
+Vim enregistre les fichiers dans un nouveau fichier avec le numéro de version
+immédiatement supérieur. Essayez ces réglages : >
+
+	:set nobackup	     " ne crée par de fichier de sauvegarde *.*_
+	:set nowritebackup   " aucun intérêt sur VMS, comportement par défaut.
+
+Le recouvrement fonctionne aussi parfaitement avec le fichier d'échange par
+défaut. Plus d'informations avec ":help swapfile".
+
+(Claude Marinier <ClaudeMarinier@xwavesolutions.com>, Vim 5.5,
+Zoltan Arpadffy, Vim 5.6)
+
+
+8.04. CONVERSION DES RÉPERTOIRES
+
+Vim convertit de manière interne les chemins de style unix et même les chemins
+mélangeant les styles Unix et VMS en chemins de style VMS. Les conversions
+typiques ressemblent à :
+
+	/abc/def/ghi		-> abc:[def]ghi.
+	/abc/def/ghi.j		-> abc:[def]ghi.j
+	/abc/def/ghi.j;2	-> abc:[def]ghi.j;2
+	/abc/def/ghi/jkl/mno	-> abc:[def.ghi.jkl]mno.
+	abc:[def.ghi]jkl/mno	-> abc:[def.ghi.jkl]mno.
+	  ./			-> répertoire courant
+	  ../			-> répertoire parent relatif
+	  [.def.ghi]		-> sous-répertoire relatif
+	   ./def/ghi		-> sous-répertoire relatif
+
+NOTE : Vous pouvez également utiliser les chevrons <>
+(device:<chemin>fichier.ext;version), par exemple
+"rf10:<user.zay.work>test.c;1".
+
+(David Elins <delins@foliage.com>, Jerome Lauret
+<JLAURET@mail.chem.sunysb.edu> Vim 5.6 )
+
+
+8.05. INVOCATION À DISTANCE
+
+Il est possible d'utiliser Vim comme éditeur XXX internode.
+
+1° Éditez des fichiers depuis un noeud distant : >
+
+	vi "<serveur>""nom_util motpass""::<device>:<chemin><nomfich>;<version>"
+<
+   exemple : >
+	
+	vi "pluto""zay motpass""::RF10:<USER.ZAY.WORK>TEST.C;1"
+<
+   NOTE : la syntaxe est très importante, sinon VMS reconnaîtra plusieurs
+   paramètres au lieu d'un seul (aboutissant à : "file not found").
+
+2° Faites de Vim votre éditeur internode. Si Vim n'est pas installé sur votre
+   station, utilisez votre adresse IP, suivie du chemin complet de Vim
+   comprenant le nom du serveur, et lancez la commande ci-dessous : >
+
+	$ if (p1 .eqs. "") .OR. (p2 .eqs. "") then goto usage
+	$ set disp/create/node=<your_IP_here>/trans=tcpip
+	$ define "VIM "<serveur_vim>""''p1' ''p2'""::<device>:<chemin_vim>"
+	$  vi*m :== "mcr VIM:VIM.EXE"
+	$ gv*im :== "spawn/nowait mcr VIM:VIM.EXE -g"
+	$ goto end
+	$ usage:
+	$ write sys$output " Entrez votre nom d'utilisateur et votre mot de"
+	$ write sys$output " passe en paramètre"
+	$ write sys$output " Exemple : @SETVIM.COM nomutil motpasse"
+	$ end:
+<
+    Note : n'utilisez jamais cela dans un environnement XXX clustered (cela
+    n'est pas nécessaire), et la chargement pourrait se révéler très-très
+    lent, mais heureusement rien de comparable avec un Emacs, même local :-)
+
+(Zoltan Arpadffy, Vim 5.6)
+
+
+8.06. PROBLÈMES DU TERMINAL
+
+Si le nom de votre terminal est inconnu de Vim et qu'il tente de trouver celui
+par défaut, vous obtiendrez le message suivant au moment du démarrage :
+
+	Terminal entry not found in termcap ~
+	'unknown-terminal' not known. Available built-in terminals are: ~
+	    builtin_gui ~
+	    builtin_riscos ~
+	    builtin_amiga ~
+	    builtin_beos-ansi ~
+	    builtin_ansi ~
+	    builtin_vt320 ~
+	    builtin_vt52 ~
+	    builtin_pcansi ~
+	    builtin_win32 ~
+	    builtin_xterm ~
+	    builtin_iris-ansi ~
+	    builtin_debug ~
+	    builtin_dumb ~
+	defaulting to 'vt320' ~
+
+La solution est de définir le nom par défaut du terminal : >
+
+	$ ! Nom du terminal inconnu. Utilisons vt320 ou ansi à la place.
+	$ ! Note : la casse doit être respectée.
+	$ define term "vt320"
+
+Les terminaux du VT100 au VT320 (tels que VT300, VT220, VT200) ne nécessitent
+aucun mappage de clavier supplémentaire. Ils devraient fonctionner
+parfaitement tels quels, y compris les touches fléchées, Inser, Suppr, etc. à
+l'exception de RetArr en mode graphique. Pour résoudre ce problème, ajoutez
+ceci dans votre fichier ".gvimrc" : >
+
+	inoremap <Del> <BS>
+
+Vim reconnaîtra égalemement que ce sont des terminaux rapides.
+
+Si vous constatez des sauts de lignes gênants sur l'écran entre les fenêtres,
+ajoutez cette ligne dans votre fichier ".vimrc" : >
+
+	set ttyfast	" terminal rapide
+
+NOTE : si vous utilisez Vim sur une station distante ou au travers d'une
+connexion très lente, il est recommandé de désactiver l'option 'ttyfast' 
+avec : >
+
+	set nottyfast   " terminal lent
+
+(Zoltan Arpadffy, Vim 5.6)
+
+
+8.07. ÉDITION HEXADÉCIMALE ET AUTRES OUTILS EXTERNES
+
+Une différence très importante entre OpenVMS et les autres systèmes est que
+VMS utilise des commandes particulières pour lancer les exécutables : >
+
+	RUN <chemin>nomfich
+	MCR <chemin>nomfich <parametres>
+
+Les utilisateurs de OpenVMS doivent toujours avoir à l'esprit que la commande
+Vim ":!" leur fournit simplement une invite DCL. Cette fonctionnalité est
+utilisable avec toutes les commandes DCL, mais si vous souhaitez utiliser
+certains programmes comme XXD, CTAGS, JTAGS, etc. vous allez au devant de
+problèmes si vous suivez scrupuleusement les conseils de la documentation Vim
+(voir ":help xxd").
+
+Solution : exécuter à l'aide de la commande MC et ajouter le chemin complet de
+l'exécutable. Par exemple : à la place de la commande ":%!xxd", utilisez : >
+
+	:%!mc vim:xxd
+
+ou, plus généralement : >
+
+	:!mc <chemin>nomfich <parametres>
+
+NOTE : vous pouvez utiliser XXD et CTAGS depuis le menu graphique.
+
+Pour personaliser `ctags`, il est possible de définir le nom logique $CTAGS
+avec des paramètres standards : >
+
+	define/nolog CTAGS "--totals -o sys$login:tags"
+
+Davantage d'informations avec ":help tagsearch" et dans la documentation de
+CTAGS sur http://ctags.sourceforge.net/ctags.html.
+
+(Zoltan Arpadffy, Vim 5.6-70)
+
+
+8.08. SOURCER LES FICHIERS VIMRC ET GVIMRC
+
+Si vous voulez utiliser vos fichiers ".vimrc" et ".gvimrc" depuis d'autres
+plates-formes (par exemple MS-Windows), vous pouvez rencontrer des problèmes
+si vous les transférez par FTP : VMS utilise des fins-de-lignes différentes.
+   Le symptôme est que Vim ne source pas vos fichiers, même quand vous
+faites : >
+>
+	:so sys$login:.vimrc
+
+L'astuce est de compresser (par exemple avec `zip`) les fichiers sur l'autre
+plate-forme et de le décompresser sur VMS ; si les symptômes persistent,
+essayez de créer les fichiers en les copiant/collant (pour cela, vous devez
+avoir accès aux deux systèmes d'exploitation sur la même machine, par exemple
+un Xterm sur MS-Windows ou un `telnet` de VMS vers MS-Windows).
+
+(Sandor Kopanyi <sandor.kopanyi@mailbox.hu>, Vim 6.0a)
+
+
+8.09. IMPRESSION DEPUIS VIM
+
+Pour pouvoir imprimer sous Vim (fonctionnant en mode graphique), vous devez
+définir les noms logiques $TMP et SYS$PRINT, pour qu'ils désignent
+respectivement  un répertoire temporaire et la queue d'impression par défaut.
+Exemple : >
+
+	$define SYS$PRINT HP5ANSI
+
+Vous pouvez imprimer un tampon entier ou juste une zone sélectionnée. Plus
+d'informations avec ":help hardcopy".
+
+(Zoltan Arpadffy, Vim 6.0c)
+
+
+8.10. DÉFINIR LES SYMBOLES
+
+Quand GVIM est utilisé et que CTRL-Y est pressé dans le terminal parent, Vim
+quitte. Un autre symbole peut être utilisé, qui semble fonctionner et qui
+corrige le problème. Suggestion : >
+
+	$ GV*IM:==SPAWN/NOWAIT/INPUT=NLA0: MCR VIM:VIM.EXE -G -GEOMETRY 80X40
+
+"/INPUT=NLA0:" détache l'entrée standard du processus `gvim` du terminal
+parent, pour bloquer les signaux en provenance de la fenêtre parente. Sans
+l'argument -GEOMETRY, la taille de la fenêtre GVIM serait minimale et le menu
+perturbé après un redimensionnement.
+
+(Carlo Mekenkamp, Coen Engelbarts, Vim 6.0ac)
+
+
+8.11. DIFF ET AUTRES PROGRAMMES GNU
+
+La fonctionnalité d'affichage des différences de Vim 6.0 a été implémentée,
+mais OpenVMS n'utilise pas le `diff` de GNU/Unix, de ce fait, le `diff`
+intégré ne fonctionne pas.
+   Il existe une solution simple à ce problème. Installez un `diff` Unix et
+Vim fonctionnera parfaitement en mode diff. Vous devez juste redéfinir votre
+programme `diff` : >
+
+	define /nolog diff <GNU_PATH>diff.exe
+
+Une autre solution, plus sophistiquée, est décrite ci-dessous (8.12.). Il
+existe d'autres programmes, tels que `patch`, `make`, etc. qui peuvent poser
+des problèmes. Sur www.polarhome.com, il est possible de télécharger un
+paquetage GNU pour systèmes Alpha et VAX prévu pour résoudre les problèmes
+avec GNU sur OpenVMS.
+
+(Zoltan Arpadffy, Vim 6.1)
+
+
+8.12. MODE DIFF
+
+Vim 6.0 et ultérieur supporte le mode diff (voir |new-diff-mode|, |diff-mode|
+et |08.7|). Le programme externe `diff` est utilisé et un format de sortie de
+type Unix est attendu. Mais le `diff` standard de VMS génère un format
+différent. Pour utiliser Vim en mode diff sur VMS, vous devez :
+    1° Installer un programme un programme `diff` Unix, par exemple GNU diff
+    2° Indiquer à Vim d'utiliser le `diff` Unix pour le mode diff
+
+Vous pouvez télécharger GNU diff sur le site Internet VIM-VMS, c'est l'un des
+outils GNU de http://www.polarfox.com/vim/files/gnu_tools.zip. Il est suggéré
+de le désarchiver dans un répertoire "GNU" séparé et créer un nom logique GNU:
+désignant ce répertoire. Par exemple : >
+
+   DEFINE GNU    <DISQUE>:[<REPERTOIRE>.BIN.GNU]
+
+Vous pouvez aussi définir un symbole GDIFF, pour utiliser GNU diff depuis
+l'invite DCL : >
+
+   GDIFF :==     $GNU:DIFF.EXE
+
+Maintenant, vous devez dire à Vim d'utiliser le nouveau programme `diff`.
+Reprenez l'exemple de configuration de |diff-diffexpr| et modifiez l'appel au
+programme externe `diff` pour qu'il utilise le nouveau `diff`. Ajoutez ceci
+dans votre fichier ".vimrc" : >
+
+     " Paramétrer les options vimdiff.
+       if v:version >= 600
+	" Utiliser GNU diff sur VMS.
+	set diffexpr=MyDiff()
+	function MyDiff()
+	   let opt = ""
+	   if &diffopt =~ "icase"
+	     let opt = opt . "-i "
+	   endif
+	   if &diffopt =~ "iwhite"
+	     let opt = opt . "-b "
+	   endif
+	   silent execute "!mc GNU:diff.exe -a " . opt . v:fname_in .
+		\ " " .  v:fname_new . " > " . v:fname_out
+	endfunction
+      endif
+
+Vous pouvez maintenant utiliser Vim en mode diff, par exemple pour comparer
+deux fichiers en mode lecture seule : >
+
+    $ VIM -D/R <FICHIER1> <FICHIER2>
+
+Vous pouvez aussi définir de nouveaux symboles pour `vimdiff` : >
+
+    $ VIMDIFF     :== 'VIM' -D/R
+    $ GVIMDIFF    :== 'GVIM' -D/R
+
+Vous disposez maintenant de quatre manières de comparer des fichiers :
+
+    1° VMS  diff : >
+	    $ DIFF     <FICHIER1> <FICHIER2>
+<   2° GNU  diff : >
+	    $ GDIFF    <FICHIER1> <FICHIER2>
+<   3° VIM  diff : >
+	    $ VIMDIFF  <FICHIER1> <FICHIER2>
+<   4° GVIM diff : >
+	    $ GVIMDIFF <FICHIER1> <FICHIER2>
+
+( Coen Engelbarts, Vim 6.1)
+
+
+8.13. AUTORISER '$' DANS LES MOTS-CLÉS
+
+DEC C utilise de nombreux identifiants contenant '$'. Cela n'est pas autorisé
+par le C ANSI et Vim identifie un '$' comme la fin de l'identifiant. Vous
+pouvez changer cela avec l'option |'iskeyword'|. Ajoutez cette commande dans
+votre fichier ".vimrc" : >
+
+	autocmd FileType c,cpp,cs  set iskeyword+=$
+
+Vous pouvez aussi créer le fichier $VIM/FTPLUGIN/C.VIM (et/ou CPP.VIM et
+CS.VIM) et y mettre cette commande : >
+
+	set iskeyword+=$
+
+À présent, les commandes travaillant sur les mots, par exemple la commande de
+recherche "*" et la recherche de marqueurs CTRL-], prennent en compte les
+identifiants en entier. CTAGS sur VMS supporte également les '$' dans les
+mots-clés C depuis CTAGS version 5.1. 
+
+(Coen Engelbarts, Vim 6.1)
+
+
+8.14. VIMTUTOR POUR LES DÉBUTANTS
+
+Il existe un script DCL VIMTUTOR.COM qui peut aider les débutants sous Vim à
+faire leurs premiers pas avec Vim sur VMS. Selon la distribution binaire, vous
+pouvez le démarrer avec : >
+
+	@vim:vimtutor
+
+(Thomas.R.Wyant III, Vim 6.1)
+
+==============================================================================
+9. Historique des modifications pour VMS		*vms-changes*
+
+Version 6.2 (2003 May 7)
+    - Correction des résultats des appels système VMS.
+    - Réécriture de l'entrée bas niveau des caractères.
+    - Correction dans la gestion des marqueurs et de quickfix.
+    - Première compilation GTK.
+    - Modification du Makefile :
+	- Ajout de la fonctionnalité GTK.
+	- Define pour OLD_VMS.
+	- OpenVMS version 6.2 ou ultérieure.
+    - Mise à jour de la documentation avec la fonctionnalité GTK.
+    - Inclusion de CTAGS v5.5.
+    - Création du tutoriel VMS VIM.
+
+Version 6.1 (2002 mar 25)
+    - Correction du problème TCL init_tcl().
+    - Inclusion de CTAGS v5.4.
+    - Outils binaires GNU pour OpenVMS.
+    - Modification du Makefile :
+	- Amélioration du support de PERL, PYTHON et TCL.
+	- InstallVMS.txt décrit avec détails les étapes de la compilation.
+    - Réécriture de la gestion des fichiers VMS/Unix.
+    - Corrections mineures de bogues et transtypage.
+
+Version 6.0 (2001 sep 28)
+    - Les codes Unix et VMS ont été fusionnés :
+	- Séparation du code « vraiment » VMS.
+	- Inclusion de toutes les fonctionnalités Unix possibles.
+	- Simplification ou suppression des fichiers de configuration.
+	- Revue du Makefile MAKE_VMS.MMS.
+    - Modification des menus (correction pour l'impression, CTAGS et XXD).
+    - Correction de l'anomalie dans la gestion du format de l'enregistrement
+      RMS variable XXX Heu...
+    - Correction du chargement des fichiers de syntaxe, ftplugin, etc.
+    - Modifications des fonctions expand_wildcards et expandpath pour les
+      rendre plus générales.
+    - Création de OS_VMS_FILTER.COM - script de conversion DECC->VAXC des
+      directives pour le préprocesseur.
+    - Amélioration de la compatibilité des codes pour compilateurs VAXC et
+      DECC récents.
+    - Modification des paramètres quickfix :
+	- Format de errormessage adapté à DECC.
+	- commandes (recherche, make et autres) adaptée au système VMS.
+    - Mise à jour et renommage des fichier make MMS pour Vim et CTAGS.
+    - CTAGS a été retiré de la distribution source de Vim mais reste dans les
+      distributions binaires pour VMS.
+    - Simlification de la procédure de configuration/compilation.
+    - Création de INSTALLvms.txt - instructions de compilation détaillées pour
+      VMS.
+    - Mise à jour des scripts de test.
+
+Version 5.8 (2001 jun 1)
+    - Mise à jour de OS_VMS.TXT avec de nouvelles fonctionnalités.
+    - Autres corrections mineures.
+    - Mise à jour de la documentation.
+    - cette version a été testée bien plus intensivement que toutes les
+      versions OpenVMS précédentes.
+
+Version 5.7 (2000 jun 24)
+    - Nouveau CTAGS v5.0 dans la distribution.
+    - Mise à jour de la documentation.
+
+Version 5.6 (2000 jan 17)
+    - Modifications pour les noms de fichier VMS :
+	- Prise en charge de la version (ouvre tout, enregistre dans une
+	  nouvelle version).
+	- Correction de la correspondance des extensions pour la syntaxe
+	  (problème de version).
+	- Prise en charge des caractères < et > et des mots de passe dans
+	  la définition des répertoires.
+	- Prise en charge de l'invocation XXX internode/distante et de
+	  l'édition avec des mots de passe.
+	- Les fichiers OpenVMS sont maintenant traités sans tenir compte
+	  de la casse.
+	- Correction de la réponse de expand("%:."), des fonctions
+	  relatives aux chemins, etc. (en un mot : gestion des répertoires
+	  VMS en interne).
+    - Commande de version :
+	- Correction des informations (+, -).
+	- Ajout des versions du compilateur et du système.
+	- Ajout des informations sur l'utilisateur et l'hôte.
+	- Résolution des noms logiques $VIM et $VIMRUNTIME.
+    - Le portage VMS entre au club des MAX_FEAT (maximum de fonctionnalités)
+      avec Unix, Win32 et OS/2.
+	- activation des fonctionnalités +farsi, +rightleft, etc.
+	- niveau d'annulation élevé à 1000.
+    - Mise à jour du fichier OS_VMS.MMS :
+	- Maximum de fonctionnalités par défaut.
+	- Vim est compilable avec les fonctionnalités +perl, +python et
+	  +tcl.
+	- Améliorations de la compatibilité MMK.
+    - Création de MAKEFILE_VMS.MMS, Makefile pour tester Vim durant le
+      développement.
+    - Définition du terminal DEC VT320 :
+	- compatibilité avec les terminaux VT3*0, VT2*0 and VT1*0 - ANSI
+	  précédents, mais pas avec VT340 et plus récents gérant la
+	  couleur.
+	- VT320 est le terminal par défaut pour OpenVMS.
+	- ces nouveaux terminaux sont aussi des "fast ttys" (par défaut
+	  pour OpenVMS).
+	- dec_mouse de ttym autorisée.
+    - Fichiers vimrc et gvimrc mis à jour avec des suggestions spécifiques
+      VMS.
+    - OS_VMS.TXT mis à jour avec de nouvelles fonctionnalités.
+
+Version 5.5 (1999 déc 3)
+    - Correstion du plantage avec le menu contextuel.
+    - Gestion des noms de fichiers complets avec les numéros de version.
+    - Gestion des répertoires (commande CD, etc.).
+    - Correction de la conversion des noms de fichier vers unix et
+      inversement.
+    - Réponse correcte de l'expansion des jokers.
+    - Le recouvrement fonctionne aussi depuis cette version avec VMS.
+    - Amélioration de la gestion des signaux et du terminal.
+    - Amélioration de OS_VMS.TXT.
+
+Version 5.4 (1999 sep 9)
+    - Correction des disparités de copier/coller.
+    - Correction des répertoires Motif durant l'ouverture et l'enregistrement.
+
+Version 5.3 (1998 oct 12)
+    - Modifications mineures dans le code.
+    - Distribution standard avec la fonctionnalité +GUI.
+
+Version 5.1 (1998 avr 21)
+    - Modifications de la syntaxe et du C DEC dans le code.
+    - Correction des problèmes avec le sous-répertoire "/doc".
+    - Amélioration de OS_VMS.MMS.
+
+Version 4.5 (1996 déc 16)
+    - Premier portage VMS par Henk Elbers <henk@xs4all.nl>.
+
+==============================================================================
+10. Auteurs						*vms-authors*
+
+La documentation OpenVMS et les exécutables cont maintenus par :
+	Zoltan Arpadffy <arpadffy@polarfox.com>
+
+Ce document reprend des parties et des remarques de précédents auteurs et
+contributeurs de OS_VMS.TXT :
+	Charles E. Campbell, Jr. <cec@gryphon.gsfc.nasa.gov>
+	Bruce Hunsaker <BNHunsaker@chq.byu.edu>
+	Sandor Kopanyi <sandor.kopanyi@mailbox.hu>
+
+ vim:tw=78:ts=8:ft=help:norl:

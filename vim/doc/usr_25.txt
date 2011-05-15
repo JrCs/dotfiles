@@ -1,0 +1,618 @@
+*usr_25.txt*    Pour Vim version 6.2.  Dernière modification : 12 oct 2002
+
+	       MANUEL de l'UTILISATEUR VIM - par Bram Moolenaar
+
+			 Éditer du texte mis en forme
+
+
+Un texte est rarement composé d'une seule phrase par ligne. Ce chapitre
+explique comment couper les phrases pour qu'elles tiennent dans la page et
+comment obtenir d'autres mises en forme. Vim dispose également de
+fonctionnalités pratiques pour éditer les paragraphes d'une ligne et les
+tableaux.
+
+|25.1|  Revenir à la ligne
+|25.2|  Aligner du texte
+|25.3|  Indentations et tabulations
+|25.4|  Manipuler de longues lignes
+|25.5|  Éditer des tableaux
+
+  Chapitre suivant : |usr_26.txt|  Répéter des commandes
+Chapitre précédent : |usr_24.txt|  Insérer rapidement du texte
+Table des matières : |usr_toc.txt|
+
+==============================================================================
+*25.1*  Revenir à la ligne
+
+Vim possède un certain nombre de fonctionnalités qui facilitent la
+manipulation du texte. Par défaut, l'éditeur ne revient pas automatiquement à
+la ligne. Autrement dit, vous devez appuyer sur <Entree> vous-même. C'est
+pratique quand vous écrivez des programmes et que vous voulez décider
+vous-même où doivent finir les lignes. C'est déjà moins bien quand vous
+rédigez de la documentation et que vous voulez que les lignes n'excèdent pas
+70 caractères de large.
+   Si vous fixez l'option 'textwidth', Vim insérera lui-même des coupures de
+ligne. Imaginez, par exemple, que vous vouliez une colonne de texte très
+étroite de 30 caractères de large seulement. Vous devrez alors exécuter la
+commande suivante : >
+
+        :set textwidth=30
+
+Maintenant vous commencez à taper (la règle a été ajoutée) :
+
+                 1         2         3
+        12345678901234567890123456789012345
+        Faut pas gonfler Gérard Lamber ~
+
+Si ensuite vous tapez "t", la ligne dépassera la limite des 30 caractères. Dès
+que Vim s'en rend compte, il insère une coupure de ligne et vous obtenez ce
+qui suit :
+
+                 1         2         3
+        12345678901234567890123456789012345
+        Faut pas gonfler Gérard ~
+        Lambert ~
+
+Vous pouvez ensuite continuer à taper le reste du paragraphe :
+
+                 1         2         3
+        12345678901234567890123456789012345
+        Faut pas gonfler Gérard ~
+        Lambert quand il répare sa ~
+        mobylette. C'est la morale de ~
+	ma chanson. Moi je la trouve ~
+	chouette. Pas vous ? Ah bon.~
+
+Vous n'avez pas besoin de taper les sauts-de-ligne ; Vim les ajoute
+automatiquement.
+
+        NOTE :
+        L'option 'wrap' indique à Vim d'afficher les lignes avec une coupure,
+        mais n'insère pas de sauts-de-ligne dans le fichier.
+
+
+REMISE EN FORME
+
+L'éditeur Vim n'est pas un traitement de texte. Avec un traitement de texte,
+si vous supprimez le début d'un paragraphe, les coupures de ligne sont
+ajustées. Avec Vim, elles ne le sont pas ; donc, si vous supprimez le mot
+"Gérard" de la première ligne, tout ce que vous obtiendrez est une ligne plus
+courte que les autres :
+
+                 1         2         3
+        12345678901234567890123456789012345
+        Faut pas gonfler ~
+        Lambert quand il répare sa ~
+        mobylette. C'est la morale de ~
+	ma chanson. Moi je la trouve ~
+	chouette. Pas vous ? Ah bon.~
+
+Ce n'est pas très beau. Pour remettre le paragraphe en forme, vous pouvez
+utiliser l'opérateur "gq".
+   Essayons-le d'abord avec une sélection Visuel. En partant de la première
+ligne, tapez : >
+
+        v4jgq
+
+"v" pour passer en mode Visuel, "4j" pour aller jusqu'à la fin du paragraphe
+et enfin l'opérateur "gq". Et voilà le résultat :
+
+                 1         2         3
+        12345678901234567890123456789012345
+        Faut pas gonfler Lambert quand ~
+        il répare sa mobylette. C'est ~
+        la morale de ma chanson. Moi ~
+        je la trouve chouette. Pas ~
+        vous ? Ah bon. ~
+
+Comme "gq" est un opérateur, vous pouvez sélectionner le texte sur lequel
+il opère de trois façons différentes : grâce au mode Visuel, grâce à un
+déplacement ou grâce à un objet textuel.
+   Pour l'exemple ci-dessus, on aurait également pu utiliser "gq4j". C'est
+moins long à taper, mais vous devez compter les lignes. Il existe une commande
+de mouvement plus pratique, qui vous amène à la fin du paragraphe : "}". Ainsi
+"gq}" met le texte en forme depuis la position courante du curseur jusqu'à la
+fin du paragraphe dans lequel il se trouve.
+   Vous disposez également d'un objet textuel très utile : le paragraphe.
+Essayez ceci : >
+
+        gqap
+
+"ap" signifie "a-paragraph" en anglais, c'est-à-dire "un paragraphe". Ceci met
+en forme le texte d'un paragraphe (délimité par des lignes vides). Y compris
+la partie située avant le curseur.
+   Si tous vos paragraphes sont séparés par des lignes vides, vous pouvez
+mettre en forme la totalité du fichier en tapant : >
+
+        gggqG
+
+"gg" pour aller sur la première ligne, "gqG" pour mettre en forme jusqu'à la
+dernière ligne.
+   Attention : Si vos paragraphes ne sont pas séparés correctement, ils seront
+fusionnés. Une erreur classique est d'avoir une ligne contenant un espace ou
+une tabulation. C'est une ligne blanche, mais pas une ligne vide.
+
+Vim peut mettre en forme autre chose que du texte brut. Voir |fo-table| pour
+changer ceci. Voir l'option 'joinspaces' pour changer le nombre d'espaces
+utilisés après une fin de phrase.
+   Il est possible d'utiliser un programme externe pour la mise en forme.
+Ceci peut s'avérer utile si les commandes internes de Vim ne parviennent pas à
+mettre correctement en forme votre texte. Voir l'option 'formatprg'.
+
+==============================================================================
+*25.2*  Aligner du texte
+
+Pour centrer une plage de lignes, utilisez la commande suivante : >
+
+        :{plage}center [largeur]
+
+{plage} désigne la plage de lignes usuelle de la ligne de commande. [largeur]
+est optionnel et spécifie la largeur de ligne à utiliser pour centrer le
+texte. Si [largeur] n'est pas précisé, la valeur par défaut est celle de
+'textwidth'. (Si 'textwidth' est nul, la valeur par défaut est 80.)
+   Par exemple : >
+
+        :1,5center 40
+
+donne le résultat suivant:
+
+    Faut pas gonfler Gérard Lambert~
+     quand il répare sa mobylette.~
+    C'est la morale de ma chanson.~
+      Moi je la trouve chouette.~
+           Pas vous ? Ah bon.~
+
+
+ALIGNEMENT À DROITE
+
+D'une manière similaire, la commande ":right" aligne le texte à droite : >
+
+        :1,5right 37
+
+donne le résultat suivant :
+
+     Faut pas gonfler Gérard Lambert~
+       quand il répare sa mobylette.~
+      C'est la morale de ma chanson.~
+          Moi je la trouve chouette.~
+                  Pas vous ? Ah bon.~
+
+
+ALIGNEMENT À GAUCHE
+
+Enfin, il existe cette commande : >
+
+        :{plage}left [marge]
+
+Toutefois, contrairement à ":center" et à ":right", l'argument de ":left"
+n'est pas la largeur de la ligne mais la marge à gauche. Si elle est omise, le
+texte sera collé au bord gauche de l'écran (c'est également ce qui se
+produirait avec une marge à zéro). Avec une marge de 5, le texte sera indenté
+de 5 espaces.
+Par exemple, en utilisant ces commandes : >
+
+        :1left 5
+        :2,5left
+
+on obtient :
+
+     Faut pas gonfler Lambert~
+quand il répare sa mobylette.~
+C'est la morale de ma chanson.~
+Moi je la trouve chouette.~
+Pas vous ? Ah bon.~
+
+
+JUSTIFIER LE TEXTE
+
+Vim n'a pas de fonction intégrée pour justifier le texte. Néanmoins, il existe
+un paquetage de macros qui effectue cette tâche. Pour utiliser ce paquetage,
+exécutez la commande suivante : >
+
+        :runtime macros/justify.vim
+
+Ce script Vim définit la nouvelle commande "_j" pour le mode Visuel. Pour
+justifier un bloc de texte, sélectionnez-le en mode Visuel puis exécutez la
+commande "_j".
+   Jetez un coup d'oeil au fichier pour de plus amples explications. pour y
+aller, faites "gf" sur ce nom : $VIMRUNTIME/macros/justify.vim.
+
+Une autre solution consiste à filtrer le texte avec un programme externe.
+Exemple : >
+
+        :%!fmt
+
+==============================================================================
+*25.3*  Indentations et tabulations
+
+Les indentations peuvent être utilisée pour faire ressortir une partie du
+texte. Le texte des exemples de ce manuel, par exemple, est indenté de huit
+espaces, soit une tabulation. Vous pouvez obtenir ceci normalement en tapant
+une tabulation au début de chaque ligne. Prenons ce texte :
+        la première ligne ~
+        la seconde ligne ~
+
+Il est obtenu en tapant une tabulation, du texte, <Entree>, une tabulation et
+encore du texte.
+   L'option 'autoindent' indente le texte automatiquement : >
+
+        :set autoindent
+
+Quand une nouvelle ligne commence, elle prend la même indentation que la ligne
+précédente. Dans l'exemple ci-dessus, la tabulation après <Entree> n'est plus
+nécessaire.
+
+
+AUGMENTER L'INDENTATION
+
+Pour augmenter le nombre d'indentations d'une ligne, utilisez l'opérateur ">".
+On l'utilise souvent sous la forme ">>", ce qui ajoute une indentation à la
+ligne courante.
+   La taille de l'indentation est spécifiée grâce à l'option 'shiftwidth'. La
+valeur par défaut est 8. Par exemple, pour que ">>" insère une indentation de
+quatre espaces, tapez ceci : >
+
+        :set shiftwidth=4
+
+En l'utilisant sur la seconde ligne du texte donné en exemple, voici ce que
+vous obtenez :
+
+        la première ligne ~
+            la seconde ligne ~
+
+La commande "4>>" augmentera l'indentation de quatre lignes.
+
+
+TABULATION
+
+Si vous voulez que la taille des indentations soit multiple de 4, vous devez
+fixer la valeur de 'shiftwidth' à 4. Mais en appuyant sur la touche <Tab>,
+vous obtenez toujours une indentation équivalente à 8 espaces. Pour changer
+ceci, modifiez la valeur de l'option 'softtabstop' : >
+
+        :set softtabstop=4
+
+Ainsi, la touche <Tab> insérera des indentations de 4 espaces. S'il y a déjà
+quatre espaces, un caractère <Tab> sera utilisé (économisant ainsi sept
+caractères dans le fichier). (Si vous ne voulez que des espaces et pas de
+caractères de tabulation, activez l'option 'expandtab'.)
+
+        NOTE :
+        Vous pouvez attribuer la valeur 4 à l'option 'tabstop'. Cependant, si
+        vous voulez éditer le fichier ultérieurement, avec 'tabstop' à sa
+        valeur par défaut, le contenu du fichier ne sera pas affiché
+        correctement. Avec d'autres logiciels et lors de l'impression,
+        l'indentation ne sera pas correcte non plus. Il est donc conseillé de
+        laisser la valeur de 'tabstop' à 8 tout le temps. C'est en général la
+        valeur standard utilisée partout.
+
+
+CHANGER LES TABULATIONS
+
+Vous éditez un fichier qui a été écrit avec une taille de tabulation égale à
+3. Dans Vim, c'est disgracieux, parce que la taille normale des tabulations
+est de 8. Vous pouvez arranger ceci en donnant la valeur 3 à 'tabstop'. Mais
+vous devrez le faire chaque fois que vous éditez ce fichier.
+   Vim peut changer l'utilisation des tabulations dans votre fichier. D'abord,
+changez la valeur de 'tabstop' pour que l'indentation ait une apparence
+convenable, puis utilisez la commande ":retab" : >
+
+        :set tabstop=3
+        :retab 8
+
+La commande ":retab" mettra la valeur de 'tabstop' à 8, tout en modifiant le
+texte pour qu'il garde la même apparence. Elle modifiera les blocs d'espaces
+blancs en jouant sur les tabulations et les espaces pour ce faire. Vous pouvez
+maintenant enregistrer le fichier. La prochaine fois que vous l'éditerez,
+l'indentation sera correcte sans modifier la moindre option.
+   Attention : Lorsque vous utilisez ":retab" dans un programme, cela pourrait
+changer les espaces blancs à l'intérieur d'une chaîne de caractères constante.
+D'où l'intérêt de prendre la bonne habitude d'utiliser "\t" au lieu d'une
+vraie tabulation.
+
+==============================================================================
+*25.4*  Manipuler de longues lignes
+
+Vous aurez parfois à éditer une ligne plus large que le nombre de colonnes de
+la fenêtre. Quand cela se produit, Vim enroule la ligne pour qu'elle tienne
+entièrement dans l'écran.
+   Si vous désactivez l'option 'wrap', chaque ligne du fichier s'affiche sur
+une seule ligne à l'écran. Ainsi, la fin des longues lignes disparaît à droite
+de l'écran.
+   Quand vous déplacez le curseur sur un caractère qu'on ne peut pas voir, Vim
+fait défiler le texte pour l'afficher. C'est comme si l'on faisait défiler
+horizontalement une fenêtre au-dessus du texte.
+   Par défaut, Vim n'affiche pas de barre de défilement horizontale dans
+l'interface graphique. Si vous en voulez une, utilisez la commande suivante :
+>
+        :set guioptions+=b
+
+Une barre de défilement apparaîtra au bas de la fenêtre de Vim.
+
+Si vous n'avez pas de barre de défilement ou que vous n'en voulez pas,
+utilisez ces commandes pour faire défiler le texte. Le curseur restera à la
+même position, mais sera déplacé dans le texte visible si nécessaire. 
+
+    zh     fait défiler le texte vers la droite
+    4zh    fait défiler le texte de quatre caractères vers la droite
+    zH     fait défiler le texte vers la droite d'une demie largeur de fenêtre
+    ze     fait défiler le texte afin que le curseur soit à la fin
+    zl     fait défiler le texte vers la gauche
+    4zl    fait défiler le texte de quatre caractères vers la gauche
+    zL     fait défiler le texte vers la gauche d'une demie largeur de fenêtre
+    zs     fait défiler le texte afin que le curseur soit au début
+
+Tâchons d'illustrer ceci avec une ligne de texte. Le curseur se trouve sur le
+"t" du mot "partie". La "fenêtre initiale" au-dessus de la ligne indique le
+texte initialement visible. Les "fenêtre"s en dessous indique le texte
+visible après la saisie de la commande située à gauche.
+
+                           |<-- fenêtre initiale -->|
+            Un long texte dont une partie est visible dans la fenêtre~
+    ze        |<--      fenêtre     -->|
+    zH        |<--      fenêtre     -->|
+    4zh                |<--      fenêtre     -->|
+    zh                    |<--      fenêtre     -->|
+    zl                      |<--      fenêtre     -->|
+    4zl                        |<--      fenêtre     -->|
+    zL                                 |<--      fenêtre     -->|
+    zs                               |<--      fenêtre     -->|
+
+
+SE DÉPLACER AVEC L'ENROULEMENT DÉSACTIVÉ
+
+Quand l'option 'wrap' est désactivée et que le texte défile horizontalement,
+vous pouvez utiliser les commandes suivantes pour déplacer le curseur sur un
+caractère visible. Par conséquent, le texte situé à gauche et à droite de la
+fenêtre est ignoré. Elles ne provoquent jamais de défilement :
+
+        g0           jusqu'au premier caractère visible de la ligne
+	g^           jusqu'au premier caractère visible non-blanc de la ligne
+        gm           jusqu'au milieu de la ligne
+        g$           jusqu'au dernier caractère visible de la ligne
+
+                |<--     fenêtre    -->|
+          Un long    texte, partiellement visible ~
+                 g0  g^     gm        g$
+
+
+COUPURES DE MOTS                                *edit-no-break*
+
+Quand vous préparez du texte destiné à être utilisé par un autre programme,
+vous pouvez avoir à faire des paragraphes sans coupure de ligne.
+L'inconvénient de l'option 'nowrap', c'est que vous ne pouvez pas voir la
+phrase que vous écrivez en entier. Quand l'option 'wrap' est activée, les
+mots peuvent être coupés en deux, ce qui les rend difficile à lire.
+   Un bon compromis pour éditer ce type de paragraphe consiste à activer
+l'option 'linebreak'. Vim coupera alors les lignes aux endroits appropriée
+lors de leur affichage, le texte du fichier restant inchangé. Sans l'option
+'linebreak', le texte apparaîtrait ainsi :
+
+        +-----------------------------+
+        |Faut pas gonfler Gérard Lambe|
+        |rt quand il répare sa mobylet|
+        |te. C'est la morale de ma cha|
+        |nson. Moi je la trouve chouet|
+        |te. Pas vous ? Ah bon.       |
+        +-----------------------------+
+Après ceci : >
+
+        :set linebreak
+
+voici à quoi il ressemble :
+
+        +-----------------------------+
+        |Faut pas gonfler Gérard      |
+        |Lambert quand il répare sa   |
+        |mobylette. C'est la morale   |
+        |de ma chanson. Moi je la     |
+        |trouve chouette. Pas vous ?  |
+        |Ah bon.                      |
+        +-----------------------------+
+
+Options associées :
+'breakat' précise les caractères où une coupure peut être insérée. 'showbreak'
+indique une chaîne de caractères à afficher en début d'une ligne ainsi coupée.
+Fixez 'textwidth' à zéro pour éviter qu'un paragraphe soit coupé.
+
+
+SE DÉPLACER PARMI LES LIGNES APPARENTES
+
+Les commandes "j" et "k" déplacent le curseur aux lignes suivante et
+précédente. Sur une ligne très longue, cela représente de nombreuses lignes à
+l'écran en une seule fois.
+   Pour déplacer le curseur d'une seule ligne à l'écran, utilisez les
+commandes "gj" et "gk". Utilisées sur ligne qui n'est pas enroulée, elles se
+comportent comme "j" et "k". Quand la ligne est enroulée, elles déplacent le
+curseur sur le caractère affiché dans la ligne du dessous ou du dessus.
+   Vous pourriez trouver ces mappages bien pratiques ; ils donnent aux
+touches fléchées le comportement de ces nouvelles commandes : >
+
+        :map <Up> gk
+        :map <Down> gj
+
+
+CHANGER UN PARAGRAPHE EN UNE LIGNE UNIQUE
+
+Si vous voulez importer du texte dans un programme comme MS-Word, chaque
+paragraphe doit consister en une seule ligne. Si vos paragraphes sont
+actuellement séparés par des lignes vides, voici comment transformer chaque
+paragraphe en une seule ligne : >
+
+        :g/./,/^$/join
+
+Ça semble compliqué. Décomposons :
+
+        :g/./           Une commande ":global"e qui trouve toute les lignes
+                        contenant au moins un caractère.
+             ,/^$/      Une plage allant de la ligne courante (la ligne
+                        non-vide) jusqu'à une ligne vide.
+                  join  La commande ":join" qui fusionne les lignes de la
+                        plage définie en une seule ligne.
+
+En partant de ce texte contenant huit lignes coupées :
+
+        +---------------------------------+
+        |Faut pas gonfler                 |
+        |Gérard Lambert                   |
+        |quand il répare sa mobylette.    |
+        |                                 |
+        |C'est la morale de ma chanson.   |
+        |Moi je la trouve chouette.       |
+	|Pas vous ?                       |
+        |Ah bon.                          |
+        +---------------------------------+
+
+Vous obtenez finalement deux lignes :
+
+        +---------------------------------+
+        |Faut pas gonfler Gérard Lambert  |
+        |quand il répare sa mobylette.    |
+        |C'est la morale de ma chanson.   |
+        |Moi je la trouve chouette. Pas   |
+        |vous ? Ah bon.                   |
+        +---------------------------------+
+
+Notez que ceci ne fonctionne pas les lignes ne sont pas vides mais contiennent
+des caractères d'espacement. La commande suivante fonctionne avec de telles
+lignes : >
+        :g/\S/,/^\s*$/join
+
+Cela nécessite toujours une ligne vide ou ne contenant que des caractères
+d'espacement en fin de fichier pour que le dernier paragraphe fusionne.
+
+==============================================================================
+*25.5*  Éditer des tableaux
+
+Supposez que vous éditiez un tableau à quatre colonnes :
+
+        beau tableau      test 1        test 2      test 3 ~
+        ligne A           0.534 ~
+        ligne B           0.913 ~
+
+Vous devez saisir des nombres dans la troisième colonne. Vous pourriez
+déplacer le curseur sur la deuxième ligne, utiliser "A", saisir de nombreux
+espaces et enfin taper votre texte.
+   Pour ce type d'édition, il existe une option spéciale : >
+
+        set virtualedit=all
+
+À présent vous pouvez déplacer le curseur là où il n'y a pas de texte. On
+appelle ça l'"espace virtuel". L'édition d'un tableau est bien plus facile
+ainsi.
+   Déplacez le curseur en cherchant l'intitulé de la dernière colonne : >
+
+        /test 3
+
+À présent, appuyez sur "j" : vous êtes juste à l'endroit où vous pouvez saisir
+la valeur pour "ligne A". Ainsi, entrer "0.693" donnera :
+
+        beau tableau      test 1        test 2      test 3 ~
+        ligne A           0.534                     0.693 ~
+        ligne B           0.913 ~
+
+Vim a automatiquement rempli le vide devant le nouveau texte à votre place.
+Maintenant, pour compléter la case suivante de cette colonne utilisez "Bj".
+"B" déplace le curseur vers l'arrière, sur le premier caractère suivant un
+caractère d'espacement. Ensuite, "j" dépalce le curseur d'un caractère vers le
+bas, juste à l'endroit où la valeur suivante peut être saisie.
+
+        NOTE :
+        Vous pouvez déplacer le curseur n'importe où dans la fenêtre
+        d'affichage, y compris au-delà de la fin d'une ligne. Cependant, Vim
+        n'insèrera pas d'espaces tant que vous n'insérerez pas de caractère à
+        cet endroit.
+
+
+COPIER UNE COLONNE
+
+Vous voulez ajouter une colonne qui doit être une copie de la troisième
+colonne et se situer avant la colonne "test 1". Faites-le en 7 étapes :
+1°  Déplacez le curseur dans le coin supérieur gauche de cette colonne avec la
+    commande "/test 3" par exemple.
+2°  Appuyez sur CTRL-V pour passer en mode bloc visuel.
+3°  Faîtes descendre le curseur de deux lignes avec "2j". Vous êtes à présent
+    en "espace virtuel" : la ligne "ligne B" de la colonne "test 3".
+4°  Déplacez le curseur vers la droite pour inclure la totalité de la colonne
+    dans la sélection, plus l'espace que vous voulez entre les colonnes. La
+    commande "9l" devrait le faire.
+5°  Copiez le rectangle sélectionné avec "y".
+6°  Déplacez le curseur sur "test 1", là où la nouvelle colonne doit être
+    placée.
+7°  Appuyez sur "P".
+
+Le résultat devrait être le suivant :
+
+        beau tableau      test 3    test 1     test 2      test 3 ~
+        ligne A           0.693     0.534                  0.693 ~
+        ligne B                     0.913 ~
+
+Notez que la colonne "test 1" a été intégralement décalée vers la droite, y
+compris la ligne où la colonne "test 3" n'avait pas de texte.
+
+Quittez le mode de déplacement virtuel en tapant : >
+
+        :set virtualedit=
+
+
+MODE REMPLACEMENT VIRTUEL
+
+L'inconvénient lors de l'utilisation de 'virtualedit' est que l'on n'est pas
+habitué à cette façon de se déplacer dans la fenêtre d'édition. Vous ne pouvez
+distinguer ni les tabulations, ni les espaces en fin de ligne en y déplaçant
+simplement le curseur. Une autre méthode peut être utilisée : le mode
+Remplacement Virtuel. 
+   Imaginez que vous ayez une ligne dans un tableau qui contient à la fois des
+tabulations et d'autres caractères. Utilisez "rx" sur la première tabulation :
+
+        inp     0.693   0.534   0.693 ~
+
+               |
+           rx  |
+               V
+
+        inpx0.693   0.534       0.693 ~
+
+L'alignement est rompu. Pour éviter cela, utilisez la commande "gr" :
+
+        inp     0.693   0.534   0.693 ~
+
+               |
+          grx  |
+               V
+
+        inpx    0.693   0.534   0.693 ~
+
+La commande "gr" s'assure que le nouveau caractère prend la bonne quantité de
+place à l'écran. Des espaces et des tabulations supplémentaires sont insérés
+pour combler le vide. Ainsi, ce qui se passe en réalité est qu'une tabulation
+est remplacée par "x" et que des blancs sont ajoutés pour que le texte situé
+après celui-ci reste en place. Dans ce cas, une tabulation est ajoutée.
+   Si vous devez remplacer plusieurs caractères, vous utilisez la commande "R"
+pour passer en mode Remplacement (voir |04.9|). Se produit alors un problème
+d'alignement, ce ne sont pas les bons caractères qui sont remplacés.
+
+        inp     0       0.534   0.693 ~
+
+                |
+         R0.786 |
+                V
+
+        inp     0.78634 0.693 ~
+
+La commande "gR" utilise le mode Remplacement Virtuel, ce qui préserve
+l'alignement :
+
+        inp     0       0.534   0.693 ~
+
+                |
+        gR0.786 |
+                V
+
+        inp     0.786   0.534   0.693 ~
+
+==============================================================================
+
+Chapitre suivant : |usr_26.txt|  Répéter des commandes
+
+Copyright : voir |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:

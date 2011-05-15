@@ -1,0 +1,1513 @@
+*editing.txt*   Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+Édition de fichiers					*edit-files*
+
+ 1. Introduction		    |edit-intro|
+ 2. Éditer un fichier		    |edit-a-file|
+ 3. Dialogues   		    |edit-dialogs|
+ 4. Le répertoire courant	    |current-directory|
+ 5. La liste des arguments	    |argument-list|
+ 6. Enregistrer			    |writing|
+ 7. Enregistrer et quitter	    |write-quit|
+ 8. Éditer des fichiers binaires    |edit-binary|
+ 9. Chiffrement			    |encryption|
+10. Horodatages 		    |timestamps|
+
+==============================================================================
+1. Introduction						*edit-intro*
+
+Éditer un fichier avec Vim signifie :
+
+1° Lire le fichier dans un tampon interne ;
+2° Modifier le tampon avec les commandes de l'éditeur ;
+3° Écrire le tampon dans un fichier (enregistrer le fichier).
+
+							*current-file*
+Tant que vous n'écrivez pas le tampon, le fichier original reste inchangé. Si
+vous démarrez l'édition d'un fichier (le fichier est lu dans un tampon), le
+nom de ce fichier est désigné par « nom du fichier courant ».
+
+							*alternate-file*
+Si un nom de fichier courant existait déjà, celui-ci devient le nom de fichier
+alternatif. Tous les noms de fichiers sont mémorisés dans la liste des
+fichiers XXX. Lorsque vous entrez un nom de fichier, pour l'édition (p. ex., avec
+":e nomfich") ou l'enregistrement (p. ex., avec ":w nomfich"), ce nom est
+ajouté à la liste. Vous pouvez vous servir de cette liste pour vous rappeler
+les fichiers que vous éditez et pour sauter rapidement de l'un à l'autre grâce
+à la commande CTRL-^ (p. ex., pour copier du texte). Tapez d'abord le numéro
+du fichier, puis CTRL-^. {Vi supporte un seul fichier alternatif}
+
+CTRL-G		ou				*CTRL-G* *:f* *:fi* *:file*
+:f[ile]			Affiche le nom du fichier courant (tel que tapé), la
+			position du curseur (sauf si 'ruler' est activé), et
+			l'état du fichier (lecture seule, modifié, erreurs de
+			lecture, nouveau fichier). Voir l'option 'shortmess'
+			pour rendre ce message plus court. {Vi ne donne pas le
+			numéro de colonne}
+
+{quant}CTRL-G		Comme CTRL-G, mais affiche le nom du fichier courant
+			avec son chemin absolu. Si {quant} est supérieur à 1,
+			le numéro du tampon courant est également donné.
+			{absent de Vi}
+
+					*g_CTRL-G* *word-count* *byte-count*
+g CTRL-G		Affiche la position courante du curseur de quatre
+			façons : Colonne, Ligne, Mot et Octet. Si des
+			caractères sur la ligne prennent plus d'une colonne à
+			l'écran (<Tab> ou des caractères spéciaux), les
+			colonnes « réelles » et d'écran sont affichées toutes
+			deux, séparées par un tiret. Voir aussi l'option
+			'ruler'. {absent de Vi}
+
+							*v_g_CTRL-G*
+{Visuel}g CTRL-G	Identique à "g CTRL-G" : affiche les informations Mot,
+			Ligne et Octet pour la zone sélectionnée. En mode
+			Visuel par blocs, Colonne est également donnée.
+			Sur {Visuel}, voir |Visual-mode|. {absent de Vi}
+
+							*:file_f*
+:f[ile] {nomfich}	Change le nom du fichier courant pour {nomfich}.
+
+:buffers
+:files
+:ls			Liste tous les noms de fichiers actuellement
+			répertoriés. Voir "windows.txt", |:files|, |:buffers|
+			et |:ls|. {absent de Vi}
+
+Vim mémorisera le chemin absolu du fichier que vous éditez. La plupart du
+temps, quand le nom du fichier est affiché, seul le nom que vous avez tapé est
+montré, mais le chemin complet sera employé si vous avez utilisé la commande
+":cd" |:cd|.
+
+							*home-replace*
+Si la variable d'environnement $HOME est définie et que le nom de fichier
+débute par cette chaîne, alors '~' remplace souvent $HOME (afin de raccourcir
+les noms de fichiers). Lors de la lecture ou de l'enregistrement des fichiers,
+le chemin absolu est utilisé à nouveau, le '~' ne servant que pour
+l'affichage. Au cas où cette substitution réduirait le nom de fichier à un
+simple "~", "~/" est utilisé à la place (afin d'éviter la confusion avec
+'backupext' valant "~" par défaut).
+
+Lors de l'écriture du tampon, le nom du fichier courant est utilisé par
+défaut. Ainsi quand vous saisissez les commandes "ZZ" ou ":wq", le fichier
+original sera écrasé. Si vous ne le souhaitez pas, le tampon peut être écrit
+dans un autre fichier en donnant un nom de fichier comme argument à la
+commande ":write". Par exemple >
+	vim toto
+<	... modification du tampon avec les commandes de l'éditeur ... >
+	:w titi
+	:q
+créera un fichier "titi", qui sera une copie modifiée de "toto". Le fichier
+"toto" restera lui inchangé.
+
+De toute façon, si l'option 'backup' est activée, Vim renomme ou copie le
+fichier original avant de l'écraser. Vous pourrez donc le réutiliser au
+besoin. Voir aussi l'option 'patchmode'. Le nom du fichier de sauvegarde est
+normalement le même que celui du fichier original, auquel on a rajouté
+l'extension 'backupext'. La valeur par défaut ("~") est choisie pour sa rareté
+afin d'éviter un écrasement accidentel. Si vous préférez ".bak", fixez
+l'option 'backupext' à cette valeur.
+   Sur MS-DOS, les points supplémentaires seront remplacés par '_' lorsque Vim
+a détecté qu'un système de fichiers MS-DOS ou apparenté (messydos ou crossdos
+par exemple) est utilisé et lorsque l'option 'shortname' est activée. Le
+fichier de sauvegarde peut être dans n'importe quel répertoire en fixant
+l'option 'backupdir'.
+
+Détails techniques :					*auto-shortname*
+	Sur Amiga, la longueur des noms de fichiers est limitée à 30
+	caractères. Mais pour les systèmes de fichiers compatibles MS-DOS,
+	seuls 8 plus 3 caractères sont autorisés. Vim essaie de détecter le
+	type du système de fichiers à la création du fichier ".swp". Si un
+	système de fichiers MS-DOS ou apparenté est détecté, un drapeau est
+	positionné qui a le même effet que d'activer l'option 'shortname'. Ce
+	drapeau disparaîtra dès que vous commencerez l'édition d'un nouveau
+	fichier. Il sera utilisé au moment de créer les noms des fichiers
+	".swp" et ".~" pour le fichier courant. Mais si vous souhaitez
+	enregistrer dans un système de fichiers MS-DOS ou apparenté un fichier
+	que vous avez édité dans un système de fichiers normal, ce drapeau
+	n'aura pas été positionné. Dans ce cas, la création du fichier ".~"
+	peut échouer et renvoyer un message d'erreur : utilisez alors l'option
+	'shortname'.
+
+Si vous avez démarré l'édition sans préciser de nom de fichier, "No File"
+est affiché en message. Si la commande ":write" est utilisée avec un nom de
+fichier comme argument, celui-ci devient le nom du fichier courant (à
+condition que le drapeau 'F' soit inclus dans 'cpoptions', ce qui est le cas
+par défaut). Cela est utile lorsqu'on démarre avec un tampon vide, que l'on
+veut ensuite écrire dans un fichier. Si 'cpoptions' inclut le drapeau 'f' (ce
+qui n'est PAS le cas par défaut), le nom du fichier courant est déterminé par
+l'argument de la commande ":read". Cela est utile lorsqu'on lance Vim sans
+argument et qu'on tape ensuite ":read fichier" pour démarrer l'édition.
+
+							*not-edited*
+Lorsqu'un nom de fichier est défini sans que l'édition de ce fichier ait
+vraiment débuté, vous êtes protégé contre l'écrasement de ce fichier. Cela est
+fait en positionnant le drapeau "notedited". Vous pouvez voir si ce drapeau
+est positionné avec les commandes CTRL-G ou ":file" : elles incluront "[Not
+edited]" si c'est le cas. Lors de l'écriture du tampon sous le nom de fichier
+courant (avec ":w!"), le drapeau "notedited" est désactivé.
+
+							*abandon*
+Vim se souvient si vous avez modifié un tampon ou non. Vous êtes protégé
+contre la perte de ces modifications : si vous essayez de quitter sans
+enregistrer, ou d'éditer un autre fichier, Vim le refusera. Pour forcer
+l'action malgré tout, ajoutez un '!' après la commande. Les modifications
+seront alors perdues. Par exemple : ":q" n'agira pas si le tampon a été
+modifié, il faudrait saisir ":q!".
+   Pour voir si un tampon est modifié ou non, utilisez la commande CTRL-G. Si
+l'indication "[Modified]" est présente, c'est que le tampon a été modifié.
+
+Si vous souhaitez que les modifications soient enregistrées automatiquement
+sans confirmation, activez l'option 'autowriteall'. 'autowrite' est l'option
+compatible Vi associée, qui ne fonctionne pas pour toutes les commandes.
+
+Si vous souhaitez garder le tampon modifié sans enregistrement, activez
+l'option 'hidden'. Voir |hidden-buffer|.
+
+==============================================================================
+2. Éditer un fichier					*edit-a-file*
+
+							*:e* *:edit*
+:e[dit] [++opt] [+cmd]	Édite le fichier courant. Cela est utile si on veut le
+			rééditer, après qu'il a été modifié en dehors de Vim.
+			Échoue si des modifications avaient été effectuées sur
+			le tampon et que 'autowriteall' n'est pas activé ou
+			que le fichier ne peut pas être écrit.
+			Voir aussi |++opt| et |+cmd|. {Vi : ++opt absent}
+
+							*:edit!*
+:e[dit]! [++opt] [+cmd]	Édite toujours le fichier courant. Ignore toute
+			modification du tampon courant. Cela est utile si vous
+			voulez en reprendre l'édition à zéro.
+			Voir aussi |++opt| et |+cmd|. {Vi : ++opt absent}
+
+							*:edit_f*
+:e[dit] [++opt] [+cmd] {fichier}
+			Édite {fichier}. Échoue si des modifications ont été
+			effectuées sur le tampon courant, à moins que 'hidden'
+			ne soit activé ou que 'autowriteall' soit activée et
+			que le fichier puisse être écrit.
+			Voir aussi |++opt| et |+cmd|. {Vi : ++opt absent}
+
+							*:edit!_f*
+:e[dit]! [++opt] [+cmd] {fichier}
+			Édite toujours {fichier}. Ignore toute modification du
+			tampon courant.
+			Voir aussi |++opt| et |+cmd|. {Vi : ++opt absent}
+
+:e[dit] [++opt] [+cmd] #[quant]
+			Édite le [quant]-ième de fichier alternatif (comme
+			donné par ":files"). Cette commande est identique à
+			[quant] CTRL-^, mais ":e #" ne marche pas si le tampon
+			alternatif n'a pas de nom de fichier, tandis que
+			CTRL-^ marche quand même.
+			Voir aussi |++opt| et |+cmd|. {Vi : ++opt absent}
+
+							*:ene* *:enew*
+:ene[w]			Édite un nouveau tampon, sans nom. Échoue si des
+			modifications ont été effectuées sur le tampon
+			courant, à moins que 'hidden' ne soit activé ou que
+			'autowriteall' soit activé et que le fichier puisse
+			être écrit.
+			Si 'fileformats' n'est pas vide, le premier format
+			donné sera utilisé pour le nouveau tampon. Sinon, la
+			valeur 'fileformat' du tampon courant sera utilisée.
+			{absent de Vi}
+
+							*:ene!* *:enew!*
+:ene[w]!		Édite un nouveau tampon, sans nom. Ignore les
+			modifications du tampon courant.
+			'fileformat' sera fixé comme pour |:enew|.
+			{absent de Vi}
+
+							*:fin* *:find*
+:fin[d][!] [++opt] [+cmd] {fichier}
+			Cherche {fichier} dans 'path', puis l'édite |:edit|.
+			{absent de Vi} {uniquement si compilé avec la
+			fonctionnalité |+file_in_path|}
+
+:{quant}fin[d][!] [++opt] [+cmd] {fichier}
+			Comme ":find", mais en utilisant la {quant}-ième
+			correspondance dans 'path'. Ainsi ":2find toto"
+			éditera le deuxième fichier "toto" trouvé dans 'path'.
+			S'il y a moins d'occurrences pour le fichier dans
+			'path' que ce que vous avez demandé, vous obtiendrez
+			un message d'erreur.
+
+							*:ex*
+:ex [++opt] [+cmd] [fichier]
+			Comme |:edit|.
+
+							*:vi* *:visual*
+:vi[sual][!] [++opt] [+cmd] [fichier]
+			En mode Ex : quitte le mode Ex |Ex-mode|, retourne en
+			mode Normal. Sinon, comme |:edit|.
+
+							*:vie* *:view*
+:vie[w] [++opt] [+cmd] [fichier]
+			En mode Ex : quitte le mode Ex |Ex-mode|, retourne en
+			mode Normal. Sinon, comme |:edit|, mais active
+			l'option 'readonly' pour le tampon. {absent de Vi}
+
+							*CTRL-^*
+[quant]CTRL-^		Édite le [quant]-ième fichier alternatif (équivalent à
+			":e #[quant]"). Sans quantificateur, c'est le fichier
+			précédemment édité qui est utilisé. C'est un moyen
+			rapide de passer d'un fichier à un autre (ou plus). Si
+			l'option 'autowrite' ou 'autowriteall' est activée et
+			que le tampon a été modifié, il est enregistré.
+
+[quant]]f						*]f* *[f*
+[quant][f		Obsolète. Comme "gf".
+
+							*gf* *E446* *E447*
+[quant]gf		Édite le fichier dont le nom est sous le curseur.
+			- Utilise l'option 'isfname' pour définir quels
+			  caractères sont utilisés dans un nom de fichier. Les
+			  caractères finaux de ponctuation ".,:;!" sont
+			  ignorés.
+			- Utilise l'option 'path' comme une liste de noms
+			  de répertoires où rechercher le fichier. Recherche
+			  aussi dans le répertoire courant.
+			- Utilise l'option 'suffixesadd' pour rechercher les
+			  noms de fichiers avec des suffixes ajoutés.
+			- Si le fichier ne peut pas être trouvé, utilise
+			  'includeexpr' pour modifier le nom et faire un
+			  nouvel essai.
+			Si [quant] est donné, le [quant]-ième fichier trouvé
+			dans 'path' est édité.
+			Cette commande échoue si Vim refuse d'|abandon|ner le
+			fichier courant.
+			Si vous voulez éditer un nouveau fichier, utilisez : >
+				:e <cfile>
+<			Si vous voulez remapper "gf" dans ce sens : >
+				:map gf :e <cfile><CR>
+<			Si le nom est un lien hypertexte, du genre
+			"protocole://machine/chemin", vous aurez besoin du
+			greffon |netrw|.
+			Pour Unix, le caractère '~' sera étendu, comme dans
+			"~utilisateur/fichier". Le variables d'environnement
+			seront elles aussi étendues |expand-env|.
+			{absent de Vi}
+			{uniquement si compilé avec la fonctionnalité
+			|+file_in_path|}			  ["Goto File"]
+
+							*v_gf*
+{Visuel}[quant]gf	Comme "gf", mais le texte sélectionné est considéré
+			comme le nom du fichier à éditer. 'isfname' est
+			ignorée. Les espaces blancs de début sont supprimés,
+			sinon, tous les autres caractères blancs ou spéciaux
+			sont inclus dans le nom du fichier.
+			Sur {Visuel}, voir |Visual-mode|. {absent de Vi}
+
+Ces commandes servent à démarrer l'édition d'un fichier unique. Cela signifie
+que le fichier est lu dans le tampon et que le nom du fichier courant est
+fixé. Le fichier qui est ouvert dépend du répertoire courant, voir |:cd|.
+
+Voir |read-messages| pour une explication du message émis après la lecture
+d'un fichier.
+
+Vous pouvez utilisez la commande ":e!" si vous avez corrompu le tampon et que
+vous voulez en reprendre l'édition du début. La commande ":e" est utile
+uniquement si le nom du fichier courant a été changé.
+
+				    *:filename* *{file}* *{fichier}* *{fich}*
+NOTE pour les systèmes autres que Unix et MS-DOS : Lorsque vous utilisez des
+commandes qui acceptent un seul nom de fichier (comme ":edit fichier"), les
+espaces dans le nom de fichier sont autorisés, mais les espaces l'encadrant
+sont ignorés. Cela est utile pour les systèmes qui autorisent des espaces à
+l'intérieur des noms de fichiers (comme Amiga). Exemple : la commande
+":e   Nom De Fichier Long " éditera le fichier "Nom De Fichier Long". Si vous
+utilisez une commande qui accepte plusieurs noms de fichiers (comme
+":next fichier1 fichier2"), les espaces intérieurs doivent être protégés par
+un '\' (contre-oblique).
+
+Les caractères d'englobement (jokers) dans {fichier} sont étendus. Les jokers
+supportés dépendent du système. Voici les plus courants :
+	*	correspond à tout, y compris une chaîne vide
+	?	correspond à un caractère
+	[abc]   correspond à 'a', 'b' ou 'c'
+Pour annuler la signification spéciale d'un joker, faites-le précéder par une
+contre-oblique ('\'). Cependant, sous MS-Windows, le '\' sert de séparateur de
+chemin et "chemin\[abc]" est toujours considéré comme un motif d'englobement
+lorsque '[' est inclus dans l'option 'isfname'. Un moyen simple d'éviter ceci
+est d'utiliser "chemin\[[]abc]" : cela désigne littéralement le fichier
+"chemin[abc]".
+
+	    			    *backtick-expansion* *`-expansion*
+Sur Unix, vous pouvez aussi utiliser des contre-apostrophes dans le nom de
+fichier, par exemple : >
+	:e `find . -name ver\\*.c -print`
+La contre-oblique double avant l'étoile est nécessaire afin que "ver*.c" ne
+soit pas étendu par le shell avant l'exécution du programme `find`.
+   Cela fonctionne aussi pour la plupart des autres systèmes, avec la
+restriction que les contre-apostrophes doivent englober tout l'argument de la
+commande. Il n'est pas possible d'avoir du texte juste avant la première ou
+juste après la dernière contre-apostrophe.
+
+Vous pouvez faire étendre les contre-apostrophes comme expression Vim, plutôt
+que comme commande externe, en utilisant la syntaxe `={expr}`. Par exemple >
+	:let toto='titi'
+	:e `=toto . ".c" `
+édite le fichier "titi.c".
+   NOTE : L'expression ne peut pas contenir de contre-apostrophe.
+
+							*++opt* *[++opt]*
+L'argument [++opt] peut être utilisé pour spécifier une valeur de 'fileformat'
+ou 'fileencoding' sur une commande. La syntaxe est >
+
+	++{nomoption}={valeur}
+
+où {nomoption} vaut :					*++ff* *++enc*
+	ff   ou  fileformat	    pour forcer 'fileformat'
+	enc  ou  encoding	    pour forcer 'fileencoding'
+
+{valeur} ne peut pas contenir de caractères blancs. Il peut valoir n'importe
+quelle spécification valide pour chaque option. Exemples : >
+	:e ++ff=unix
+Réédite le fichier courant avec 'fileformat' valant "unix". >
+	:w ++enc=latin1 nouveaufichier
+Écrit le tampon courant dans "nouveaufichier" avec l'encodage Latin-1.
+
+NOTE : Lors de la lecture, les options 'fileformat' et 'fileencoding' seront
+fixées au format utilisé. Lors de l'écriture, ce n'est pas le cas, ainsi une
+écriture ultérieure reprendra l'ancienne valeur de l'option.
+
+Il peut y avoir plusieurs arguments ++opt, séparés par des espaces blancs.
+Tous doivent apparaître avant l'argument |+cmd|.
+
+							*+cmd* *[+cmd]*
+L'argument [+cmd] peut être utilisé pour placer le curseur dans le fichier
+à ouvrir, ou pour exécuter toute autre commande :
+	+		curseur à la dernière ligne
+	+{no}		curseur à la ligne {no}
+	+/{motif}	curseur à la première ligne contenant {motif}
+	+{commande}	exécute {commande} après l'ouverture du fichier ;
+			   {commande} est une commande Ex
+Pour inclure un espace blanc dans {motif} ou {commande}, il faut le faire
+précéder de '\' (contre-oblique). Doublez le nombre de contre-obliques. >
+	:edit  +/Le\ livre	      fichier
+	:edit  +/répertoire\ toto\\   fichier
+	:edit  +set\ dir=c:\\\\temp   fichier
+NOTE : Dans le dernier exemple, le nombre de contre-obliques est doublé deux
+fois : une fois pour l'argument "+cmd" et une fois pour la commande ":set".
+
+							*file-formats*
+L'option 'fileformat' définit le style des <EOL> pour un fichier :
+	'fileformat'   CARACTÈRES	  NOM	     ~
+	"dos"	       <CR><NL> ou <NL>   format DOS	*DOS-format*
+	"unix"	       <NL>		  format Unix   *Unix-format*
+	"mac"	       <CR>		  format Mac	*Mac-format*
+L'option 'textmode', qui était utilisée auparavant, est aujourd'hui obsolète.
+
+À la lecture d'un fichier, les caractères ci-mentionnés sont interprétés comme
+<EOL>. En format DOS (par défaut sous MS-DOS, OS/2 et Win32), <CR><NL> et <NL>
+sont tous deux interprétés comme <EOL>.
+   NOTE : Lors de l'écriture d'un fichier en format DOS, des caractères <CR>
+seront ajoutés à chaque <NL> seuls. Voir aussi |file-read|.
+
+Lors de l'enregistrement d'un fichier, les caractères ci-mentionnés sont
+utilisés comme <EOL>. En format DOS, <CR><NL> est employé. Voir aussi
+|DOS-format-write|.
+
+Vous pouvez lire un fichier en format DOS et l'écrire en format Unix. Ainsi,
+tous les couples <CR><NL> seront remplacés par <NL> (à condition que
+'fileformats' incluse "dos") : >
+	:e fichier
+	:set fileformat=unix
+	:w
+Si à l'inverse vous lisez un fichier en format Unix et souhaitez l'écrire en
+format DOS, tous le caractères <NL> seront remplacés par <CR><NL> (à condition
+que 'fileformats' incluse "unix") : >
+	:e fichier
+	:set fileformat=dos
+	:w
+
+Si vous démarrez l'édition d'un nouveau fichier et que l'option 'fileformats'
+n'est pas vide (ce qui est le cas par défaut), Vim essaiera de détecter le
+format des séparateurs de lignes pour ce fichier. Si l'option est fixée à
+"unix,dos", Vim cherchera des lignes avec un simple <NL> (comme pour Unix et
+Amiga), ou avec une paire <CR><NL> (MS-DOS). L'option 'fileformat' sera alors
+fixée à "dos" si et seulement si TOUTES les lignes se terminent par <CR><NL>
+(elle vaudra sinon "unix"). Si l'option 'fileformats' inclut "mac", et
+qu'aucun caractère <NL> n'est trouvé dans le fichier, 'fileformat' est fixé à
+"mac".
+
+Si l'option 'fileformat' est fixée à "dos" sur des systèmes non-MS-DOS, le
+message "[dos format]" est affiché pour rappeler l'aspect inhabituel de ce
+paramètre. Sur les systèmes MS-DOS, vous obtenez le message "[unix format]"
+si 'fileformat' vaut "unix". Et sur tous les systèmes (sauf Macintosh),
+"[mac format]" est affiché pour 'fileformat' valant "mac".
+
+Si l'option 'fileformats' est vide et que le format DOS est utilisé, mais qu'à
+la lecture d'un fichier il apparaît que des lignes ne se finissent pas en
+<CR><NL>, le message "[CR missing]" est ajouté aux autres.
+   Si l'option 'fileformats' est vide et que format Mac est utilisé, mais qu'à
+la lecture d'un fichier un <NL> est trouvé, "[NL missing]" est ajouté aux
+autres messages.
+
+Si un nouveau fichier est créé et que 'fileformats' est vide, son format est
+déterminé selon la valeur de 'fileformat' pour le tampon courant. Sinon, le
+premier format de 'fileformats' est utilisé pour le nouveau fichier.
+
+Avant d'éditer des fichiers binaires ou des exécutables, vous devriez activer
+l'option 'binary'. Lancer Vim avec l'argument "-b" donnera un résultat
+identique. L'option 'fileformat' restera inutilisée. Sans cela, le risque est
+que des caractères simples <NL> soient remplacés inopinément par <CR><NL>.
+
+Vous pouvez chiffrer des fichiers enregistrés en fixant l'option 'key'. Cela
+fournit une sécurité contre d'autres utilisateurs qui essaieraient de lire vos
+fichiers. |encryption|
+
+
+RECHERCHER UN FICHIER					*file-searching*
+
+{uniquement si compilé avec la fonctionnalité |+path_extra|}
+
+Actuellement, la recherche de fichier est utilisée pour les options 'path',
+'cdpath' et 'tags'. Il existe trois types de recherches différentes :
+
+1° Recherche descendante :
+--------------------------
+La recherche descendante utilise les caractères d'englobement '*', '**', et
+d'autres éventuellement selon votre système d'exploitation. '*' et '**' sont
+gérés en interne par Vim, ils fonctionneront donc partout.
+
+La signification de '*' est simple : '*' correspond à 0 caractère ou plus.
+
+'**' est plus complexe :
+- Il correspond UNIQUEMENT aux répertoires.
+- Il peut correspondre jusqu'à 30 répertoires de profondeur, vous pouvez donc
+  l'utiliser pour une arborescence entière.
+- Le nombre maximum de niveaux correspondants peut être spécifié en accolant
+  un nombre à '**'.
+  Ainsi, "/usr/**2" peut correspondre à :
+	/usr ~
+	/usr/include ~
+	/usr/include/sys ~
+	/usr/include/g++ ~
+	/usr/lib ~
+	/usr/lib/X11 ~
+	... ~
+  Mais ne peut PAS correspondre à "/usr/include/g++/std" puisque qu'il y a
+  3 trois niveaux.
+  La plage de nombres autorisée va de 0 ("**0" est supprimé) à 255. Si le
+  nombre donné est inférieur à 0, il vaudra 30 par défaut ; s'il est supérieur
+  à 255, il vaudra 255 par défaut.
+- '**' peut être placé uniquement en fin de chemin, ou être suivi par un
+  séparateur de répertoire ou par un nombre et un séparateur de répertoire.
+
+Vous pouvez combiner '*' et '**' dans n'importe quel ordre :
+	/usr/**/sys/* ~
+	/usr/*/sys/** ~
+	/usr/**2/sys/* ~
+
+2° Recherche ascendante :
+-------------------------
+Ici, vous pouvez donner un répertoire et rechercher un fichier dans son
+arborescence « vers le haut ». Vous pouvez spécifier des répertoires d'arrêt,
+pour faire cesser la recherche. Les répertoires d'arrêt doivent être accolés
+au chemin (pour l'option 'path') ou au nom de fichier (option 'tags') avec
+';'. Ils doivent être séparés entre eux par un ';'. Si vous ne désirez pas de
+répertoires d'arrêt (recherche ascendante jusqu'à la racine), utilisez juste
+';'. >
+	:set path=/usr/include/sys;/usr
+recherchera dans :
+	/usr/include/sys ~
+	/usr/include ~
+	/usr ~
+
+Si vous utilisez un chemin relatif, la recherche ascendante débute dans le
+répertoire courant de Vim ou dans le répertoire du fichier courant (si le
+chemin relatif débute par './' et que 'cpoptions' ne contient pas 'd').
+
+Si le répertoire courant de Vim est "/u/ulysse/docu/version" et que vous
+tapez >
+	:set path=include;/u/ulysse
+puis recherchez ensuite un fichier avec |gf|, le fichier sera recherché
+dans :
+	/u/ulysse/docu/version/include ~
+	/u/ulysse/docu/include ~
+	/u/ulysse/include ~
+
+3° Recherche combinée ascendante et descendante :
+-------------------------------------------------
+Si le répertoire courant de Vim est "/u/ulysse/docu/version" et que vous
+tapez >
+	:set path=**;/u/ulysse
+puis recherchez ensuite un fichier avec |gf|, le fichier sera recherché dans :
+	/u/ulysse/docu/version/** ~
+	/u/ulysse/docu/** ~
+	/u/ulysse/** ~
+
+ATTENTION ! Cela peut prendre beaucoup de temps, puisque la recherche de
+"/u/ulysse/**" inclut "/u/ulysse/docu/**" et "/u/ulysse/docu/version/**".
+   Ainsi, "/u/ulysse/docu/version/**" est recherché trois fois, et
+"/u/ulysse/docu/**" l'est deux fois.
+
+Dans l'exemple ci-dessus, vous voudrez peut-être essayer : >
+	:set path=**,/u/ulysse/**
+Ceci recherche dans :
+	/u/ulysse/docu/version/** ~
+	/u/ulysse/** ~
+Ce sont donc les mêmes répertoires, mais dans un ordre différent.
+
+==============================================================================
+3. Dialogues						*edit-dialogs*
+
+							*:confirm* *:conf*
+:conf[irm] {commande}	Exécute {commande} et demande confirmation lorsqu'une
+			opération doit être confirmée. Peut être utilisé pour
+			les commandes ":q", ":qa" et ":w" (avec celle-ci, pour
+			annuler un paramètre de lecture seule).
+
+Exemples : >
+	:confirm w toto
+<		Demande confirmation si "toto" existe déjà. >
+	:confirm q
+<		Demande confirmation s'il y a des changements. >
+	:confirm qa
+<		Si des tampons modifiés et non écrits existent, une invite
+		vous proposera pour chacun de les enregistrer ou abandonner.
+		Vous pourrez aussi choisir "Save all" ou "Discard all".
+
+Si vous désirez toujours utiliser ":confirm", activez l'option 'confirm'.
+
+			*:browse* *:bro* *E338* *E614* *E615* *E616* *E578*
+:bro[wse] {commande}	Ouvre un sélecteur de fichier pour donner l'argument
+			de la {commande}. Cela fonctionne actuellement pour
+			":e", ":w", ":r", ":sp", ":mkexrc", ":mkvimrc" et
+			":mksession".
+			{uniquement pour Win32, Motif et IHM graphique Athena}
+			NOTE : Si ":browse" n'est pas supporté, il est ignoré
+			et la {commande} est exécutée sans dialogue.
+
+La syntaxe est mieux illustrée à travers quelques exemples : >
+	:browse e $vim/toto
+<		Ouvre le sélecteur dans le répertoire "$vim/toto" XXX et édite le
+		fichier choisi. >
+	:browse e
+<		Ouvre le sélecteur dans le répertoire du tampon courant, et
+		édite le fichier choisi. >
+	:browse w
+<		Ouvre le sélecteur dans le répertoire du tampon courant, avec
+		le nom de fichier du tampon courant par défaut, et en
+		enregistrant le tampon sous le nom de fichier choisi. >
+	:browse w C:/titi
+<		Ouvre le sélecteur dans le répertoire "C:/titi", avec le nom
+		de fichier du tampon courant par défaut, et enregistre le
+		tampon sous le nom de fichier choisi.
+
+Voir aussi l'option 'browsedir'.
+   Pour les versions de Vim qui ne supportent pas le sélecteur de fichiers, la
+{commande} est exécutée sans changement.
+
+							*browsefilter*
+Pour MS-Windows, vous pouvez modifier les filtres utilisés avec le sélecteur
+de fichier. En fixant les variables "g:browsefilter" ou "b:browsefilter", vous
+pouvez modifier les filtres globalement ou localement pour votre tampon. Ces
+variables doivent être de la forme "{nomfiltre}\t{motif};{motif}\n", où
+{nomfiltre} est le texte qui apparaît dans la liste déroulante "Files of
+Type", et {motif} est le motif qui filtre les noms de fichiers. Plusieurs
+motifs peuvent être donnés, séparés par ';'.
+
+Pour Motif, le même format est utilisé, mais seul le tout premier motif est
+en fait utilisé (Motif offre un seul motif, mais qui peut être édité).
+
+Par exemple, pour avoir uniquement des fichiers Vim dans le sélecteur, vous
+pouvez utiliser la commande suivante : >
+
+  :let g:browsefilter="Scripts Vim\t*.vim\nFichiers de config Vim\t*vimrc\n"
+
+Vous pouvez modifier les paramètres du filtre en fonction des tampons édités
+en fixant la variable "b:browsefilter". Vous voudrez certainement utiliser
+"b:browsefilter" dans un greffon de type de fichier, afin que le sélecteur
+contienne des entrées relatives au fichier en cours d'édition.
+   Inconvénient : Il devient alors plus difficile de lancer l'édition d'un
+fichier différent. Afin de surmonter cela, vous pouvez ajouter
+"Tous les fichiers\t*.*\n" comme filtre final, pour que l'utilisateur puisse
+continuer à accéder à n'importe quel fichier.
+
+==============================================================================
+4. Le répertoire courant				*current-directory*
+
+Vous pouvez utilisez les commandes |:cd| ou |:lcd| pour changer de répertoire
+(vous n'aurez pas ainsi à saisir ce nom devant le nom des fichiers que vous
+voulez éditer). Cela produit également une différence pour l'exécution de
+commandes externes, p. ex. ":!ls".
+
+							*:cd* *E472*
+:cd			Systèmes non-Unix : affiche le nom du répertoire
+			courant. Systèmes Unix : change le répertoire courant
+			pour le répertoire maison.
+			Utilisez |:pwd| pour afficher le répertoire courant
+			sur tous les systèmes.
+
+:cd {chemin}		Change le répertoire courant pour {chemin}.
+			Si le {chemin} est relatif, il est recherché dans la
+			liste des répertoires précisés dans 'cdpath'.
+			Cela n'affecte pas les fichiers déjà édités, car leurs
+			chemins absolus sont mémorisés. Les fichiers de la
+			liste des arguments pourront changer cependant !
+			Sur MS-DOS, permet également de changer le
+			périphérique courant.
+			Pour changer pour le répertoire du fichier courant : >
+				:cd %:h
+<
+							*:cd-* *E186*
+:cd -			Retourne au répertoire courant précédent (d'avant la
+			commande ":cd {chemin}" précédente). {absent de Vi}
+
+							*:chd* *:chdir*
+:chd[ir] [chemin]	Comme |:cd|.
+
+							*:lc* *:lcd*
+:lc[d] {chemin}		Comme |:cd|, mais change le répertoire courant pour la
+			fenêtre courante uniquement. Pour les autres fenêtres,
+			le répertoire ne changera pas. {absent de Vi}
+
+							*:lch* *:lchdir*
+:lch[dir]		Comme |:lcd|. {absent de Vi}
+
+							*:pw* *:pwd* *E187*
+:pw[d]			Affiche le nom du répertoire courant.
+			Voir aussi |getcwd()|. {absent de Vi}
+
+Tant qu'une commande |:lcd| n'a pas été utilisée, toutes les fenêtres
+partagent le même répertoire courant. Sauter à une autre fenêtre ne change
+rien pour le répertoire courant.
+   Lorsqu'une commande |:lcd| a été utilisée dans une fenêtre, le répertoire
+spécifié devient le répertoire courant pour cette fenêtre. Les fenêtres où la
+commande |:lcd| n'a pas été utilisée partagent toujours le même répertoire
+courant global. Si on saute à une autre fenêtre, le répertoire courant
+deviendra le dernier répertoire courant local spécifié. S'il n'y en a aucun,
+le répertoire courant global sera utilisé.
+   Lorsqu'une commande |:cd| est utilisée, la fenêtre courante perdra son
+répertoire courant local et utilisera le répertoire courant global dès
+maintenant.
+
+Après une commande |:cd|, c'est le chemin absolu du fichier qui sera utilisé
+pour lire ou écrire. Cela peut poser des problèmes sur certains systèmes
+de fichiers en réseau. L'utilisation du chemin absolu permet que les noms de
+fichiers actuellement chargés continuent à faire référence au même fichier.
+   Exemple : si vous avez un fichier a:test et un répertoire a:vim, les
+commandes ":e test" ":cd vim" ":w" enregistreront le fichier a:test et non pas
+a:vim/test. Mais si vous tapez ":w test", c'est le fichier a:vim/test qui sera
+enregistré, car vous donnez un nouveau nom de fichier, qui ne fait pas
+référence au nom du fichier avant le ":cd".
+
+==============================================================================
+5. La liste des arguments			    *argument-list* *arglist*
+
+Si vous donnez plus d'un nom de fichier au lancement de Vim, la liste des noms
+est mémorisée comme liste des arguments. Vous pouvez sauter à chaque fichier
+de cette liste.
+
+Ne la confondez pas avec la liste des tampons, que vous pouvez afficher par la
+commande |:buffers|. La liste des arguments était déjà présente dans Vi, la
+liste des tampons est un apport de Vim. Les noms de fichiers de la liste des
+arguments seront présents dans la liste des fichiers (à moins qu'ils n'aient
+été supprimés avec ":bdel").
+
+Ce sujet est abordé dans la section |07.2| du Manuel de l'utilisateur.
+
+Il existe une liste des arguments globale, utilisée par défaut dans toutes les
+fenêtres. Mais il est possible de créer une nouvelle liste des arguments
+locale à une fenêtre, voir |:arglocal|.
+
+Vous pouvez manipuler la liste des arguments à l'aide des commandes suivantes,
+et aussi des fonctions internes |argc()| et |argv()|. Elles fonctionnent pour
+la liste des arguments de la fenêtre courante.
+
+							*:ar* *:args*
+:ar[gs]			Affiche la liste des arguments, avec le fichier
+			courant entre crochets.
+							*:args_f*
+:ar[gs] [++opt] [+cmd] {listearg}
+			Définit {listearg} comme la nouvelle liste des
+			arguments et édite le premier. Cela échoue lorsque des
+			modifications ont été faites et que Vim ne veut pas
+			|abandon|ner le tampon courant.
+			Voir aussi |++opt| et |+cmd|. {Vi : ++opt absent}
+							*:args_f!*
+:ar[gs]! [++opt] [+cmd] {listearg}
+			Définit {listearg} comme la nouvelle liste des
+			arguments et édite le premier. Ne tient pas compte des
+			modifications du tampon courant.
+			Voir aussi |++opt| et |+cmd|. {Vi : ++opt absent}
+
+							*:arge* *:argedit*
+:[quant]arge[dit][!] [++opt] [+cmd] {nom}
+			Ajoute {nom} à la liste des arguments et l'édite.
+			Si {nom} existe déjà dans la liste des arguments,
+			cette entrée est éditée.
+			C'est équivalent à utiliser |:argadd| puis |:edit|.
+			NOTE : Un seul nom de fichier est accepté, et les
+			espaces dans ce nom sont permis, comme avec |:edit|.
+			[quant] est utilisé comme avec |:argadd|.
+			[!] est nécessaire si le fichier courant ne peut pas
+			être |abandon|né.
+			Voir aussi |++opt| et |+cmd|. {absent de Vi}
+
+						*:arga* *:argadd* *E479*
+:[quant]arga[dd] {nom} ...
+			Ajoute les {nom}s à la liste des arguments.
+			Si [quant] est omis, les {nom}s sont ajoutés juste
+			après l'entrée courante dans la liste des arguments.
+			Sinon, ils sont ajoutés après le [quant]-ième fichier.
+			Si la liste des arguments est "a b c" et que "b" est
+			l'argument courant, alors les commandes suivantes
+			donnent :
+				COMMANDE    -->	 LISTE DES ARGUMENTS  ~
+				:argadd x	 a b x c
+				:0argadd x	 x a b c
+				:1argadd x	 a x b c
+				:99argadd x	 a b c x
+			Il n'y a pas de test pour les doublons : il est
+			possible d'ajouter un fichier déjà présent dans la
+			liste des arguments.
+			Le fichier courant n'est pas changé.
+			{absent de Vi} {uniquement si compilé avec la
+			fonctionnalité |+listcmds|}
+			NOTE : Vous pouvez aussi utiliser cette méthode : >
+				:args ## x
+<			Ceci ajoutera l'élément 'x' et triera la nouvelle
+			liste.
+
+						*:argd* *:argdelete* *E480*
+:argd[elete] {motif} ...
+			Supprime de la liste des arguments les fichiers
+			correspondant aux {motif}s. {motif} est interprété
+			comme un motif d'englobement, voir |file-pattern|. "%"
+			peut être utilisé pour supprimer l'entrée courante.
+			Cette commande conserve le fichier courant, même
+			lorsqu'il est supprimé de la liste des arguments.
+			{absent de Vi} {uniquement si compilé avec la
+			fonctionnalité |+listcmds|}
+
+:{plage}argd[elete]	Supprime de la liste des arguments la {plage} de
+			fichiers. Lorsque le dernier nombre de la plage est
+			trop élevé, les arguments seront supprimés jusqu'au
+			dernier. Par exemple >
+				:10,1000argdel
+<			supprime les arguments 10 et plus, gardant les 1-9.
+			{absent de Vi} {uniquement si compilé avec la
+			fonctionnalité |+listcmds|}
+
+							*:argu* *:argument*
+:[quant]argu[ment] [quant] [++opt] [+cmd]
+			Édite le [quant]-ième fichier de la liste d'aguments.
+			Si [quant] est omis, l'entrée courante est utilisée.
+			Cela échoue lorsque des modifications ont été faites
+			et que Vim ne veut pas |abandon|ner le tampon courant.
+			Voir aussi |++opt| et |+cmd|.
+			{absent de Vi} {uniquement si compilé avec la
+			fonctionnalité |+listcmds|}
+
+:[quant]argu[ment]! [quant] [++opt] [+cmd]
+			Édite le [quant]-ième fichier de la liste des
+			arguments, sans tenir compte des modifications du
+			tampon courant. Si [quant] est omis, l'entrée courante
+			est utilisée. Voir aussi |++opt| et |+cmd|.
+			{absent de Vi} {uniquement si compilé avec la
+			fonctionnalité |+listcmds|}
+
+					    *:n* *:ne* *:next* *E165* *E163*
+:[quant]n[ext] [++opt] [+cmd]
+			Édite le [quant]-ième fichier suivant. Cela échoue
+			lorsque des modifications ont été faites et que Vim ne
+			veut pas |abandon|ner le tampon courant. Voir aussi
+			|++opt| et |+cmd|. {Vi : ++opt et [quant] absents}
+
+:[quant]n[ext]! [+cmd]	Édite le [quant]-ième fichier suivant, sans tenir
+			compte des modifications du tampon courant. Voir aussi
+			|++opt| et |+cmd|. {Vi : ++opt et [quant] absents}
+							*:next_f*
+:n[ext] [++opt] [+cmd] {listearg}
+			Comme |:args_f|.
+
+:n[ext]! [++opt] [+cmd] {listearg}
+			Comme |:args_f!|.
+
+							*:Next* *:N* *E164*
+:[quant]N[ext] [quant] [++opt] [+cmd]
+			Édite le [quant]-ième fichier précédent. Cela échoue
+			lorsque des modifications ont été faites et que Vim ne
+			veut pas |abandon|ner le tampon courant. Voir aussi
+			|++opt| et |+cmd|. {Vi : ++opt et [quant] absents}
+
+:[quant]N[ext]! [quant] [++opt] [+cmd]
+			Édite le [quant]-ième fichier précédent. Ne pas tenir
+			compte des modifications du tampon courant. Voir aussi
+			|++opt| et |+cmd|. {Vi : ++opt et [quant] absents}
+
+							*:prev* *:previous*
+:[quant]prev[ious] [quant] [++opt] [+cmd]
+			Comme ":Next". Voir aussi |++opt| et |+cmd|.
+			{Vi : uniquement dans certaines versions}
+
+							*:rew* *:rewind*
+:rew[ind] [++opt] [+cmd]
+			Édite le premier fichier de la liste des arguments.
+			Cela échoue lorsque des modifications ont été faites
+			et que Vim ne veut pas |abandon|ner le tampon courant.
+			Voir aussi |++opt| et |+cmd|. {Vi : ++opt absent}
+
+:rew[ind]! [++opt] [+cmd]
+			Édite le premier fichier de la liste des arguments. Ne
+			pas tenir compte des modifications du tampon courant.
+			Voir aussi |++opt| et |+cmd|. {Vi : ++opt absent}
+
+							*:fir* *:first*
+:fir[st][!] [++opt] [+cmd]
+			Autre nom de ":rewind". {absent de Vi}
+
+							*:la* *:last*
+:la[st] [++opt] [+cmd]	Édite le dernier fichier de la liste des arguments.
+			Cela échoue lorsque des modifications ont été faites
+			et que Vim ne veut pas |abandon|ner le tampon courant.
+			Voir aussi |++opt| et |+cmd|. {absent de Vi}
+
+:la[st]! [++opt] [+cmd]	Édite le dernier fichier de la liste des arguments. Ne
+			pas tenir compte des modifications du tampon courant.
+			Voir aussi |++opt| et |+cmd|. {absent de Vi}
+
+							*:wn* *:wnext*
+:[quant]wn[ext] [++opt] [+cmd]
+			Enregistre le fichier courant et démarre l'édition du
+			[quant]-ième fichier suivant.
+			Voir aussi |++opt| et |+cmd|. {absent de Vi}
+
+:[quant]wn[ext] [++opt] [+cmd] {fichier}
+			Écrit le tampon courant dans {fichier} et démarre
+			l'édition du [quant]-ième fichier suivant, à moins que
+			{fichier} n'existe déjà et que l'option 'writeany'
+			soit désactivée.
+			Voir aussi |++opt| et |+cmd|. {absent de Vi}
+
+:[quant]wn[ext]! [++opt] [+cmd] {fichier}
+			Écrit le tampon courant dans {fichier} et démarre
+			l'édition du [quant]-ième fichier suivant.
+			Voir aussi |++opt| et |+cmd|. {absent de Vi}
+
+:[quant]wN[ext][!] [++opt] [+cmd] [fichier]		*:wN* *:wNext*
+:[quant]wp[revous][!] [++opt] [+cmd] [fichier]		*:wp* *:wprevious*
+			Comme ":wnext[!]", mais en prenant les fichiers
+			précédents plutôt que suivants.
+			Voir aussi |++opt| et |+cmd|. {absent de Vi}
+
+La valeur par défaut pour [quant] dans toutes les commandes ci-dessus est un.
+Sur certaines commandes, il est possible de spécifier deux quantificateurs. Le
+dernier (plus à droite) est alors utilisé.
+
+Si aucun argument [+cmd] n'est présent, le curseur est placé sur la dernière
+position connue pour le fichier. Si 'startofline' est activé, le curseur sera
+placé sur le premier non-blanc de la ligne, sinon à la dernière colonne
+connue. S'il n'y a pas de dernière position connue pour le fichier, le curseur
+sera sur la première ligne (la dernière en mode Ex).
+
+Les motifs d'englobement dans la liste des arguments sont étendus, et les noms
+de fichiers triés. Ainsi, vous pouvez utiliser la commande `vim *.c` pour
+éditer tous vos fichiers C. Depuis Vim, la commande ":n *.c" aura le même
+effet. Sur Unix, vous pouvez en outre utiliser des contre-apostrophes, par
+exemple : >
+	:n `find . -name \\*.c -print`
+La contre-oblique double avant l'étoile est nécessaire afin que "*.c" ne soit
+pas étendu par le shell avant l'exécution du programme `find`.
+
+							*arglist-position*
+S'il y a une liste des arguments, vous pouvez voir quel fichier vous êtes en
+train d'éditer dans le titre de la fenêtre (s'il y en a un et que 'title' est
+activé) et dans le message obtenu avec la commande CTRL-G. Vous verrez quelque
+chose comme :
+	(file 4 of 11) ~
+Si 'shortmess' contient 'f', cela sera :
+	(4 of 11) ~
+Si vous n'êtes pas en train d'éditer le fichier correspondant à votre position
+dans la liste des arguments, vous obtiendrez :
+	(file (4) of 11) ~
+Ceci signifie que vous êtes à la position 4 de la liste des arguments, mais
+que vous n'en éditez pas le quatrième fichier. Cela arrive si vous faites ":e
+fichier".
+
+
+LISTE DES ARGUMENTS LOCALE
+
+{absent de Vi}
+{uniquement si compilé avec les fonctionnalités |+windows| et |+listcmds|}
+
+							*:arglocal*
+:argl[ocal]		Fait une copie locale de la liste des arguments
+			globale. N'édite pas d'autre fichier.
+
+:argl[ocal][!] [++opt] [+cmd] {listearg}
+			Définit une nouvelle liste des arguments, locale à la
+			fenêtre courante. Sinon, fonctionne comme |:args_f|.
+
+							*:argglobal*
+:argg[lobal]		Utilise la liste des arguments globale pour la fenêtre
+			courante. N'édite pas d'autre fichier.
+
+:argg[lobal][!] [++opt] [+cmd] {listearg}
+			Utilise la liste des arguments globale pour la fenêtre
+			courante. Définit une nouvelle liste des arguments
+			globale comme avec |:args_f|. Toutes les fenêtres
+			utilisant la liste des arguments globale utiliseront
+			cette nouvelle liste.
+
+Il peut y avoir plusieurs listes des arguments. Elles peuvent être partagées
+entre fenêtres. Lorsqu'elles sont partagées, la modification de la liste des
+arguments d'une fenêtre changera aussi celle d'autres fenêtres.
+
+Lorsqu'une fenêtre est partagée, la nouvelle fenêtre hérite la liste des
+arguments de la fenêtre courante. Les deux fenêtres partagent alors cette
+liste, jusqu'à ce que |:arglocal| ou |:argglobal| en fasse utiliser une
+autre à l'une d'elle.
+
+
+UTILISER LA LISTE DES ARGUMENTS
+
+							*:argdo*
+:argdo[!] {cmd}		Exécute {cmd} sur chaque fichier de la liste des
+			arguments. Cela revient à faire : >
+				:rewind
+				:{cmd}
+				:next
+				:{cmd}
+				etc.
+<			Échoue si le fichier courant ne peut pas être
+			|abandon|né et que [!] n'est pas précisé.
+			Lorsqu'une erreur est détectée sur un fichier, les
+			fichiers suivants ne seront pas traités.
+			Le dernier fichier de la liste des arguments (ou celui
+			où apparaît une erreur) devient le fichier courant.
+			{cmd} peut contenir '|' pour concaténer plusieurs
+			commandes. {cmd} ne doit pas modifier la liste des
+			arguments.
+			NOTE : Lors de l'exécution de cette commande,
+			l'événement d'autocommande Syntax sera désactivé en
+			l'ajoutant à 'eventignore'. Cela accélère
+			considérablement l'édition de chaque fichier.
+			Voir aussi |:windo| et |:bufdo|.
+			{absent de Vi} {uniquement si compilé avec la
+			fonctionnalité |+listcmds|}
+
+Exemples : >
+	:args *.c
+	:argdo set ff=unix | update
+<		Fixe l'option 'fileformat' à "unix" pour les fichier "*.c" et
+		les enregistre s'ils ont été modifiés. >
+	:args *.[ch]
+	:argdo %s/\<zorglub\>/Zorglub/ge | update
+<		Change le mot "zorglub" en "Zorglub" dans tous les fichiers
+		"*.c" et "*.h". Le drapeau 'e' est utilisé dans la commande
+		":substitute" pour éviter une erreur lorsque "zorglub" n'est
+		pas présent. ":update" enregistre le fichier uniquement si des
+		modifications ont été effectuées.
+
+==============================================================================
+6. Enregistrer						*writing* *save-file*
+
+NOTE : Si l'option 'write' n'est pas activée, vous n'êtes pas autorisé à
+enregistrer le moindre fichier.
+
+	 						*:w* *:write*
+				*E502* *E503* *E504* *E505* *E512* *E514*
+:w[rite]		Écrit le tampon courant dans le fichier courant. C'est
+			la façon normale d'enregistrer des modifications dans
+			un fichier. Cela échoue lorsque l'option 'readonly'
+			est activée ou que le fichier ne peut pas être écrit
+			pour toute autre raison.
+
+:w[rite]!		Comme ":write", mais force l'écriture quand 'readonly'
+			est activé ou que le fichier ne peut pas être écrit
+			pour toute autre raison.
+			NOTE : Cela peut modifier les permissions et la
+			propriété du fichier, et casser les liens
+			(symboliques). Ajoutez le drapeau 'W' à 'cpoptions'
+			pour éviter cela.
+
+:[plage]w[rite][!]	Écrit la [plage] de lignes spécifiée dans le fichier
+			courant. C'est plutôt inhabituel, car le fichier ne
+			contiendra qu'une partie du tampon.
+
+							*:w_f* *:write_f*
+:[plage]w[rite]	{fich}	Écrit les lignes spécifiées dans {fich}, à moins qu'il
+			n'existe déjà et que 'writeany' ne soit pas activé.
+
+							*:w!*
+:[plage]w[rite]! {fich}	Écrit les lignes spécifiées dans {fich}. Écrase un
+			fichier existant.
+
+						*:w_a* *:write_a* *E494*
+:[plage]w[rite][!] >>	Ajoute les lignes spécifiées au fichier courant.
+
+:[plage]w[rite][!] >> {fichier}
+			Ajoute les lignes spécifiées à {fichier}. '!' force
+			l'écriture même si le fichier n'existe pas.
+
+							*:w_c* *:write_c*
+:[plage]w[rite] !{cmd}	Exécute {cmd} avec le texte de [plage] comme entrée
+			standard (remarquez l'espace avant le '!'). {cmd} est
+			exécuté comme avec ":!{cmd}", tout '!' est remplacé
+			par la commande précédente |:!|.
+
+La [plage] par défaut pour la commande ":w" est le tampon entier (1,$).
+Si un nom de fichier est donné avec ":w", il devient le fichier alternatif.
+Cela peut être utilisé, par exemple, si l'enregistrement a échoué et que vous
+désirez réessayer plus tard avec ":w #". Pour supprimer ce comportement, ôter
+le drapeau 'A' de l'option 'cpoptions'.
+
+							*:sav* *:saveas*
+:sav[eas][!] {fichier}	Écrit le tampon courant dans {fichier} et fixe le nom
+			de fichier du tampon courant à {fichier}. Le nom
+			précédent est utilisé pour le fichier alternatif. [!]
+			est nécessaire pour écraser un fichier existant.
+			{absent de Vi}
+
+							*:up* *:update*
+:[plage]up[date][!] [>>] [fichier]
+			Comme ":write", mais écrit uniquement si le tampon à
+			été modifié. {absent de Vi}
+
+
+ENREGISTRER PLUSIEURS TAMPONS				*buffer-write*
+
+							*:wa* *:wall*
+:wa[ll]			Écrit tous les tampons modifiés. Les tampons sans nom
+			de fichier ou en lecture seule ne sont pas écrits.
+			{absent de Vi}
+
+:wa[ll]!		Écrit tous les tampons modifiés, y compris ceux en
+			lecture seule. Les tampons sans nom de fichier ne sont
+			pas écrits. {absent de Vi}
+
+Vim vous avertira si vous essayez d'écrire dans un fichier qui a été modifié
+à l'extérieur. Voir |timestamp|.
+
+			*backup* *E207* *E506* *E507* *E508* *E509* *E510*
+Si vous écrivez dans un fichier existant (sans ajouter du texte) alors que
+l'option 'backup', 'writebackup' ou 'patchmode' est fixée, une sauvegarde du
+fichier original est créée. Sur les systèmes Unix le fichier est copié, sur
+les autres systèmes il est renommé. Après que le fichier a été correctement
+enregistré, et si l'option 'writebackup' est activée tandis que 'backup' est
+désactivée, le fichier de sauvegarde est supprimé. Lorsque l'option
+'patchmode' est fixée, le fichier de sauvegarde peut être renommé.
+
+							*backup-table*
+	'backup'    'writebackup'   ACTION		    ~
+	désactivé   désactivé	    pas de sauvegarde
+	désactivé   activé	    sauvegarde du fichier courant, suppression
+				       à la sortie de Vim (défaut)
+	activé	    désactivé	    suppression d'une sauvegarde précédente,
+		       		       sauvegarde du fichier courant
+	activé	    activé	    suppression d'une sauvegarde précédente,
+		       		       sauvegarde du fichier courant
+
+Si le motif 'backupskip' correspond avec le nom du fichier enregistré, aucune
+sauvegarde ne sera faite. Les valeurs de 'backup' et 'writebackup' seront
+alors ignorées.
+
+Lorsque l'option 'backup' est activée, un ancien fichier de sauvegarde
+(portant le même nom que le nouveau) sera supprimé. Si 'backup' n'est pas
+activé mais que 'writebackup' l'est, un fichier de sauvegarde déjà existant ne
+sera pas supprimé. Le nouveau fichier de sauvegarde portera alors un nom
+différent.
+
+Sur certains systèmes de fichiers, il est possible qu'un plantage vous fasse
+perdre à la fois la sauvegarde et le fichier nouvellement enregistré (il sera
+peut-être présent, mais contiendra des données boguées). Dans ce cas, procédez
+à un recouvrement : le fichier d'échange est écrit de façon synchrone sur le
+disque et devrait encore être présent. |:recover|
+
+La liste de répertoires spécifiée par l'option 'backupdir' est utilisée pour y
+mettre le fichier de sauvegarde (défaut : répertoire du fichier enregistré).
+
+Selon la valeur de 'backupcopy', la sauvegarde est soit un nouveau fichier,
+copie du fichier original, soit le fichier original renommé. Pour savoir
+lorsque cela survient, consultez |'backupcopy'|.
+
+Si la création d'un fichier de sauvegarde échoue, l'écriture n'est pas
+effectuée. Pour forcer malgré tout la commande, ajoutez-lui un '!'.
+
+							*write-readonly*
+Lorsque l'option 'cpoptions' contient 'W', Vim refusera d'écrire dans un
+fichier en lecture seule. Si 'W' est absent, ":w!" permettra de forcer
+l'écriture, si le système le permet (le répertoire doit être accessible en
+écriture).
+
+							*write-fail*
+Si l'enregistrement d'un nouveau fichier échoue, vous devrez faire attention à
+ne pas perdre vos modifications ET le fichier original. S'il n'y a pas de
+fichier de sauvegarde et que l'enregistrement d'un nouveau fichier a échoué,
+vous avez déjà perdu le fichier original ! NE QUITTEZ PAS VIM JUSQU'À CE QUE
+VOUS AYEZ PU RÉCUPÉRER LE FICHIER ! Si une sauvegarde avait été faite, elle
+est utilisée pour restaurer le fichier original (si possible). Si vous quittez
+Vim et perdez vos modifications, le fichier original y sera conservé pour la
+plupart. Si la restauration du fichier original est impossible, un message
+d'erreur vous avertira que vous avez perdu le fichier original.
+
+						*DOS-format-write*
+Si 'fileformat' vaut "dos", <CR><NL> est utilisé pour <EOL>. C'est la valeur
+par défaut pour MS-DOS, Win32 et OS/2. Sur les autres systèmes, le message
+"[dos format]" est affiché pour rappeler qu'un format inhabituel pour <EOL>
+est employé.
+						*Unix-format-write*
+Si 'fileformat' vaut "unix", <NL> est utilisé pour <EOL>. Sur MS-DOS, Win32 et
+OS/2, le message "[unix format]" est affiché.
+						*Mac-format-write*
+Si 'fileformat' vaut "mac", <CR> est utilisé pour <EOL>. Sur les systèmes
+non-Macintosh, le message "[mac format]" est affiché.
+
+Voir aussi |file-formats| et les options 'fileformat' et 'fileformats'.
+
+							*ACL*
+ACL signifie "Access Control List" [« Liste de Contrôles d'Accès »]. C'est une
+méthode avancée de contrôle des droits d'accès d'un fichier. Elle est utilisée
+par les derniers systèmes MS-Windows et Unix, mais uniquement quand le système
+de fichiers la supporte. Vim essaie de préserver les données ACL lors de
+l'écriture d'un fichier. Le fichier de sauvegarde obtiendra les données ACL
+depuis le fichier original.
+   Les données ACL sont également utilisées pour tester si un fichier est en
+lecture seule (lors de l'ouverture du fichier). Mais cela ne marche pas sur
+les systèmes MS-windows, car la bibliothèque de fonctions ACL est boguée.
+
+							*read-only-share*
+Quand MS-Windows partage un lecteur sur réseau, il peut être marqué en lecture
+seule. Cela signifie que même si l'attribut de fichier en lecture seule est
+absent et que les paramètres ACL sur les lecteurs partagés en réseau NT
+autorisent l'écriture dans le fichier, vous ne pourrez cependant pas écrire
+dedans. Sur les plates-formes Win32, Vim détectera les lecteurs en lecture
+seule sur réseau et marquera les fichiers comme étant en lecture seule. Vous
+ne pourrez pas passer outre avec |:write|.
+
+							*write-device*
+Lorsque le nom de fichier courant est un nom de périphérique, Vim ne fera pas
+de sauvegarde (cela ne serait pas possible). Vous devrez utiliser "!", puisque
+le périphérique existe déjà. Exemple pour Unix : >
+	:w! /dev/lpt0
+et pour MS-DOS ou MS-Windows : >
+	:w! lpt0
+Pour Unix, un périphérique est détecté lorsque le nom ne se réfère pas à un
+fichier ou répertoire normal. Un PEPS ou un tube nommé sont également des
+périphériques pour Vim.
+Pour MS-DOS et MS-Windows, un périphérique est détecté par son nom :
+	AUX
+	CON
+	CLOCK$
+	NUL
+	PRN
+	COMn	n = 1,2,3...
+	LPTn	n = 1,2,3...
+Ces noms peuvent être en majuscules comme en minuscules.
+
+==============================================================================
+7. Enregistrer et quitter				*write-quit*
+
+							*:q* *:quit*
+:q[uit]			Quitte la fenêtre courante. Quitte Vim s'il s'agit de
+			la dernière fenêtre. Cela échoue lorsque des
+			modifications ont été faites et que Vim ne veut pas
+			|abandon|ner le tampon courant, et lorsque le dernier
+			fichier de la liste des arguments n'a pas été édité.
+
+:conf[irm] q[uit]	Quitte, mais affiche une invite lorsque des
+			modifications ont été faites, ou lorsque le dernier
+			fichier de la liste des arguments n'a pas été édité.
+			Voir |:confirm| et 'confirm'. {absent de Vi}
+
+:q[uit]!		Quitte sans enregistrer, même lorsque les tampons
+			visibles sont modifiés. Ne quitte pas si des tampons
+			cachés sont modifiés. Utilisez ":qall!" pour quitter
+			toujours.
+
+:cq[uit]		Quitte toujours, sans enregistrer, et retourne un code
+			d'erreur. Voir |:cq|. Utilisé pour le mode
+			mise-au-point dérivé de Manx (voir |quickfix|).
+			{absent de Vi}
+
+							*:wq*
+:wq			Enregistre le fichier courant et quitte.
+			L'enregistrement échoue si le fichier est en lecture
+			seule ou que le tampon n'a pas de nom. La sortie
+			échoue lorsque le dernier fichier de la liste des
+			arguments n'a pas été édité.
+
+:wq!			Enregistre le fichier courant et quitte.
+			L'enregistrement échoue si le tampon courant n'a pas
+			de nom.
+
+:wq {fichier}		Enregistre dans {fichier} et quitte. La sortie échoue
+			lorsque le dernier fichier de la liste des arguments
+			n'a pas été édité,
+
+:wq! {fichier}		Enregistre dans {fichier} et quitte.
+
+:[plage]wq[!] [fichier]	Comme ci-dessus, mais enregistre uniquement les lignes
+			de [plage].
+
+							*:x* *:xit*
+:[plage]x[it][!] [fichier]
+			Comme ":wq", mais enregistre uniquement lorsque des
+			modifications ont été effectuées.
+			Si 'hidden' est activé et qu'il y a d'autres fenêtres,
+			le tampon courant devient caché, après écriture.
+
+							*:exi* *:exit*
+:[plage]exi[t][!] [fichier]
+			Comme ":xit".
+
+							*ZZ*
+ZZ			Enregistre le fichier courant, si modifié, et quitte
+			(identique à ":x").
+			NOTE : S'il y a plusieurs fenêtres pour le fichier
+			courant, le fichier est enregistré s'il a été modifié,
+			et la fenêtre courante est fermée.
+
+							*ZQ*
+ZQ			Quitte le fichier courant et Vim (identique à ":q!").
+			NOTE : S'il y a plusieurs fenêtres pour le fichier
+			courant, seule la fenêtre courante est fermée.
+
+
+PLUSIEURS FENÊTRES ET TAMPONS				*window-exit*
+
+							*:qa* *:qall*
+:qa[ll]			Quitte Vim, à moins que des tampons n'aient été
+			modifiés. (Utilisez ":bmod" pour aller au tampon
+			modifié suivant). Si 'autowriteall' est activé, tous
+			les tampons modifiés seront écrits, comme |:wqall|.
+			{absent de Vi}
+
+:conf[irm] qa[ll]	Quitte Vim. Affiche une invite lorsque des tampons ont
+			été modifiés. Voir |:confirm|. {absent de Vi}
+
+:qa[ll]!		Quitte Vim. Toutes les modifications des tampons sont
+			perdues. {absent de Vi}
+
+							*:quita* *:quitall*
+:quita[ll][!]		Comme ":qall". {absent de Vi}
+
+:wqa[ll]					*:wqa* *:wqall* *:xa* *:xall*
+:xa[ll]			Écrit tous les tampons modifiés et quitte Vim. S'il y
+			a des tampons sans nom de fichier, en lecture seule,
+			ou qui ne peuvent être écrits pour toute autre raison,
+			ne sort pas de Vim. {absent de Vi}
+
+:conf[irm] wqa[ll]
+:conf[irm] xa[ll]	Écrit tous les tampons modifiés et quitte Vim. Affiche
+			une invite lorsque des tampons sont en lecture seule
+			ou ne peuvent être écrits pour toute autre raison.
+			Voir |:confirm|. {absent de Vi}
+
+:wqa[ll]!
+:xa[ll]!		Écrit tous les tampons modifiés, même ceux en lecture
+			seule, et quitte Vim. S'il y a des tampons sans nom de
+			fichier ou qui ne peuvent être écrits pour toute autre
+			raison, ne sort pas de Vim. {absent de Vi}
+
+==============================================================================
+8. Éditer des fichiers binaires				*edit-binary*
+
+Bien que Vim soit dédié à l'édition de fichiers texte, il est possible
+d'éditer des fichiers binaires. L'argument de commande |-b| (pour « Binaire »)
+passe les E/S de fichier en mode binaire et modifie plusieurs options pour
+l'édition binaire ('binary' est activé, 'textwidth' fixé à 0, 'modeline' et
+'expandtab' désactivés). L'activation de l'option 'binary' produit les mêmes
+effets. N'oubliez pas de faire ceci avant la lecture du fichier.
+
+Il faut garder plusieurs choses présentes à l'esprit lorsqu'on édite des
+fichiers binaires :
+- Lorsqu'on édite des exécutables, le nombre de caractères ne doit pas
+  changer. Utilisez uniquement les commandes "R" ou "r" pour modifier le
+  texte. Ne supprimez pas de caractères avec "x" ou par retour arrière.
+- Fixez l'option 'textwidth' à 0. Sans cela, les lignes se scinderaient en
+  deux de façon inopportune.
+- Lorsqu'il y a peu de caractères <EOL>, les lignes deviennent très longues.
+  Si vous voulez éditer une ligne qui dépasse de l'écran, désactivez l'option
+  'wrap'. Le défilement horizontal est alors utilisé. Si une ligne se révèle
+  trop longue (plus de 32 767 caractères sur Amiga, beaucoup plus sur les
+  systèmes 32 bits, voir |limits|), vous ne pourrez pas l'éditer. La ligne
+  sera coupée à la lecture du fichier. Il est également possible que vous
+  obteniez un message d'erreur "Out of memory!" à la lecture.
+- Assurez-vous d'avoir activé l'option 'binary' AVANT de charger le fichier.
+  Sans cela, <CR><NL> et <NL> seront tous deux reconnus comme fin-de-ligne, et
+  à l'écriture du tampon, <NL> sera remplacé par <CR><NL>.
+- Les caractères <Nul> sont rendus à l'écran par '^@'. Vous pouvez en insérer
+  avec "CTRL-V CTRL-@" ou "CTRL-V 000". {Vi ne permet pas de manipuler les
+  caractères <Nul> dans un fichier}
+- Pour insérer un caractère <NL> dans le fichier, coupez une ligne. Lors de
+  l'écriture du tampon, un <NL> y sera inséré en tant que <EOL>.
+- Vim ajoute normalement un <EOL> à la fin du fichier s'il n'y en a pas.
+  L'option 'binary' permet d'éviter cela. Si vous désirez ajouter un <EOL>
+  final, activez l'option 'endofline'. Vous pouvez également lire la valeur de
+  cette option pour déterminer s'il y a un <EOL> à la dernière ligne du
+  fichier (vous ne pouvez pas le voir dans le texte).
+
+==============================================================================
+9. Chiffrement 						*encryption*
+
+Vim est capable d'écrire (et de relire) des fichiers chiffrés. Le texte
+chiffré ne peut être relu sans la bonne clé de chiffrement.
+
+NOTE : Le fichier d'échange et le texte en mémoire ne sont pas chiffrés. Un
+administrateur système pourra donc lire le texte lorsque vous l'éditerez. Lors
+d'un filtrage de texte avec ":!{filtre}" ou de l'utilisation de
+":w !{commande}", le texte n'est pas chiffré et pourra donc être lu par
+d'autres.
+
+ATTENTION ! Si vous faites une faute de frappe en saisissant la clé de
+chiffrement, après avoir enregistré et quitté, le texte sera perdu !
+
+Normalement, pour travailler en mode chiffré, vous utiliserez la commande
+":X", qui vous demandera de saisir une clé. La prochaine commande d'écriture
+se servira de cette clé pour chiffrer le fichier. Si vous voulez plus tard le
+rééditer, Vim vous demandera la clé : si vous fournissez la bonne, le texte
+sera rendu à nouveau lisible ; sinon, il sera affiché à l'état chiffré.
+
+							*:X*
+:X		Invite à saisir une clé de chiffrement. La saisie se fait à
+		l'aveugle, afin d'éviter que quelqu'un ne la voit. La clé
+		saisie est mémorisée dans l'option 'key', qui est utilisée
+		pour chiffrer le fichier lors de l'enregistrement. Le fichier
+		reste inchangé jusqu'à ce que vous l'enregistriez.
+		Voir aussi |-x|.
+
+La valeur de l'option 'key' est utilisée lors de l'écriture du tampon. Si elle
+n'est pas vide, le fichier enregistré sera chiffré, selon la valeur de la clé
+de chiffrement. Une chaîne magique sera placée avant le texte, pour signaler à
+Vim que celui-ci est chiffré.
+
+Pour annuler le chiffrement, fixez l'option 'key' à une valeur vide : >
+	:set key=
+
+Lors de la lecture d'un fichier chiffré, si cette option n'est pas vide, elle
+sera utilisée pour le déchiffrement. Si elle est vide, vous serez invité à
+entrer la clé. Si vous ne le faites pas, le fichier est édité sans avoir été
+déchiffré.
+
+Si vous voulez lire un fichier qui utilise une clé différente, fixez l'option
+'key' à une chaîne vide : Vim vous invitera alors à entrer la clé. N'utilisez
+pas la commande ":set" pour entrer la valeur, d'autres personnes pourraient la
+voir sur votre écran.
+
+Comme la valeur de l'option 'key' doit rester secrète, elle ne doit jamais
+être directement lisible. Ne fixez pas cette option dans votre fichier vimrc !
+
+Un fichier chiffré par Vim peut être reconnu par la commande `file` si vous
+ajoutez cette ligne dans "/etc/magic", "/usr/share/misc/magic" ou autre, selon
+l'emplacement où votre système stocke le fichier "magic" : >
+	0	string	VimCrypt~	Vim encrypted file
+
+NOTES :
+- Le chiffrement n'est pas possible quand vous faites une conversion avec
+  'charconvert'.
+- Le texte copié ou coupé va dans les registres numérotés. Les registres
+  peuvent être enregistrés dans le fichier viminfo, où ils pourront être lus.
+  Modifiez votre option 'viminfo' pour plus de sécurité.
+- Quelqu'un qui exécuterait des commandes dans Vim en votre absence ne doit
+  pas être capable de récupérer la clé.
+- Si vous faites une faute de frappe en entrant la clé, vous risquez de ne
+  jamais pouvoir recouvrer votre texte !
+- Si vous entrez la clé par une commande ":set key=valeur", elle pourra être
+  lisible dans l'historique du fichier viminfo.
+- Une sécurité de 100 % n'existe pas. Le système de chiffrement de Vim n'a pas
+  été contrôlé sur sa robustesse.
+- L'algorithme employé est cassable. Pour une clé de 4 caractères, il l'est en
+  une heure, et en une journée pour une clé de 6 caractères (avec un PC
+  Pentium 133). Cela nécessite que vous connaissiez un bout de texte
+  apparaissant dans le fichier. Un expert peut en venir à bout pour n'importe
+  quelle clé. Si un fichier a été décrypté, cela veut aussi dire que la clé a
+  été identifiée et que les autres fichiers chiffrés avec la même clé pourront
+  être décryptés.
+- Pkzip utilise le même système de chiffrement, et le gouvernement des ÉUA
+  n'est pas opposé à son exportation. Pour plus de détail sur l'algorithme, se
+  reporter au fichier public de pkzip "APPNOTE.TXT".
+- Vim est originaire des Pays-Bas : c'est de là que proviennent ses sources.
+  Ainsi, le code se rapportant au chiffrement n'est pas importé des ÉUA.
+
+==============================================================================
+10. Horodatages					    *timestamp* *timestamps*
+
+Vim mémorise l'horodatage de modification d'un fichier quand vous commencez
+son édition. Ceci vous permet d'éviter d'avoir deux versions différentes du
+même fichier (à votre insu).
+
+Après l'exécution d'une commande shell (|:!cmd| |suspend| |:read!| |K|), les
+horodatages sont comparés pour tous les tampons dans une fenêtre. Vim lancera
+au besoin les autocommandes |FileChangedShell| associées, ou affichera un
+avertissement pour tous les fichier modifiés. Dans l'IHM graphique, cela se
+produit lorsque Vim regagne le focus.
+
+							*E321* *E462*
+Si vous désirez recharger automatiquement un fichier qui a été modifié en
+dehors de Vim, activez l'option 'autoread'. Cela ne fonctionnera pas à partir
+du moment où vous aurez écrit le fichier, donc où il aura été changé dans Vim.
+
+NOTE : Si une autocommande FileChangedShell est définie, vous n'aurez ni
+message d'avertissement ni invite. L'autocommande est censée suppléer à cela.
+
+Il n'y a pas d'avertissement pour un répertoire (p. ex., dans l'explorateur
+|file-explorer|). Mais vous serez averti si vous lancez l'édition d'un nouveau
+fichier créé plus tard en tant que répertoire.
+
+Lorsque Vim remarque que l'horodatage d'un fichier a changé et que le fichier
+a été édité dans un tampon qui n'a pas été modifié, il teste si le contenu du
+fichier est le même. Pour cela, le fichier est lu à nouveau (dans un tampon
+caché, qui sera immédiatement détruit ensuite) et une comparaison de texte est
+effectuée. Si le texte est identique, il n'y aura pas d'avertissement.
+
+Si vous désirez contrôler vous-même la synchronisation de vos fichiers, vous
+pouvez utiliser la commande suivante :
+
+						    *:checkt* *:checktime*
+:checkt[ime]		Teste si des tampons ont été modifiés en dehors de
+			Vim. Si oui, vous avertit et demande si vous souhaitez
+			en finir avec deux versions d'un même fichier.
+			Si appelé depuis une autocommande, une commande
+			":global" ou non tapé explicitement, le test actuel
+			est différé jusqu'à ce que les effets de bord
+			(rechargement du fichier) soient sans conséquences.
+			Chaque tampon chargé est contrôlé pour savoir si son
+			fichier associé a changé. Si le fichier a été modifié,
+			Vim réagira. S'il n'y a pas de modifications dans le
+			tampon et que 'autoread' est activé, le tampon sera
+			rechargé. Sinon, vous pourrez choisir de recharger le
+			fichier. S'il a été détruit, vous obtiendrez un
+			message d'erreur.
+			Si le fichier n'existait pas auparavant, vous
+			obtiendrez un avertissement s'il existe maintenant.
+			Lorsqu'un fichier a été contrôlé, son horodatage est
+			réactualisé, vous n'aurez donc plus d'avertissement.
+
+:[N]checkt[ime] {nomfich}
+:[N]checkt[ime] [N]	Contrôle l'horodatage d'un tampon spécifique. Le
+			tampon doit être spécifié par son nom, numéro ou par
+			un motif.
+
+
+Avant d'enregistrer un fichier, son horodatage est contrôlé. S'il a changé,
+Vim vous demandera si vous souhaitez vraiment écraser le fichier :
+
+	WARNING: The file has been changed since reading it!!! ~
+	Do you really want to write to it (y/n)? ~
+
+Si vous tapez 'y', Vim poursuivra l'enregistrement du fichier. Si vous tapez
+'n', l'enregistrement avortera. Si vous utilisez ":wq" ou "ZZ", Vim ne
+quittera pas, vous pourrez réessayer d'enregistrer.
+
+Le message signifie normalement que quelqu'un a écrit dans le fichier après
+que la session d'édition eut débuté. Cela peut être le fait d'un tiers, auquel
+cas vous voudrez probablement tester si vos modifications et celles de cette
+autre personne peuvent être fusionnées : enregistrez le fichier sous un autre
+nom et comparez les différences (le programme `diff` peut être utilisé).
+
+Il est également possible que vous ayez modifié le fichier vous-même, depuis
+une autre session d'édition, ou avec une commande externe (un filtre, p. ex.).
+Vous devriez alors savoir quelle version du fichier est à conserver.
+
+ vim:tw=78:ts=8:ft=help:norl:

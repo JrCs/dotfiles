@@ -1,0 +1,107 @@
+*workshop.txt*  Pour Vim version 6.2.  Dernière modification : 18 mar 2003
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Gordon Prieur
+
+
+Fonctionnalités pour Sun Visual WorkShop	*workshop* *workshop-support*
+
+1. Introduction						|workshop-intro|
+2. Commandes						|workshop-commands|
+3. Compiler vim/gvim pour WorkShop			|workshop-compiling|
+4. Configurer gvim dans l'arborescence de WorkShop	|workshop-configure|
+5. Obtenir la dernière version de la bibliothèque XPM	|workshop-xpm|
+
+{absent de Vi}
+{uniquement si compilé avec la fonctionnalité |+sun_workshop|}
+
+==============================================================================
+1. Introduction						*workshop-intro*
+
+Sun Visual WorkShop (SVW) dispose de la fonctionnalité "Choix d'un éditeur"
+["Editor of Choice"] permettant aux utilisateurs de déboguer en utilisant leur
+éditeur favori. Dans la version 6.0, nous avons ajouté le support de gvim. Une
+session de débogage WorkShop possède une fenêtre de débogage et une fenêtre
+d'édition (et éventuellement d'autres fenêtres encore). L'utilisateur peut
+effectuer de nombreuses opérations de débogage depuis la fenêtre de l'éditeur,
+réduisant le besoin de passer d'une fenêtre à l'autre.
+
+La version de Vim prévue pour fonctionner avec Sun Visual WorkShop 6
+(également appelé Forte Developer 6) est Vim 5.3. Les fonctionnalités de cette
+version sont bien plus fiables que celles du vim/gvim fourni avec Visual
+WorkShop. Les utilisateurs de SVW souhaitant utiliser Vim comme éditeur
+devraient installer cette version des sources et les compiler dans leur
+arborescence WorkShop.
+
+==============================================================================
+2. Commandes						*workshop-commands*
+
+						*:ws* *:wsverb*
+:ws[verb] {verbe}		Transmet le {verbe} à l'exécuteur de verbes
+
+Le verbe est alors passé à une fonction spécifique pour WorkShop, qui
+rassemble les arguments puis transmets verbe et données à SVW via une
+connexion IPC.
+
+==============================================================================
+3. Compiler vim/gvim pour WorkShop			*workshop-compiling*
+
+Compiler vim avec la fonctionnalité FEAT_SUN_WORKSHOP active tous les drapeaux
+de compilation nécessaires pour construire un Vim fonctionnel avec SVW. Les
+fonctionnalités requises pour SVW ont été compilées et testées avec les
+compilateurs Sun de SVW. Elles n'ont été ni compilées ni testées avec les
+compilateurs GNU. Cela ne signifie pas que les fonctionnalités ne vont pas
+compiler ou fonctionner si vous utilisez gcc, mais simplement qu'il n'y aucune
+garantie avec gcc !
+
+==============================================================================
+4. Configurer gvim dans l'arborescence de WorkShop	*workshop-configure*
+
+Il existe plusieurs pré-requis à satisfaire pour compiler un gvim destiné à
+être utilisé avec Sun Visual WorkShop 6.
+
+    o Vous devriez utiliser le compilateur de VWS plutôt que gcc. Nous n'avons
+      ni compilé ni testé avec gcc et ne pouvons garantir que la compilation
+      s'effectue correctement.
+
+    o Vous devez fournir votre propre bibliothèque XPM. Voir |workshop-xpm|
+      ci-dessous pour avoir des précisions sur l'obtention de la dernière
+      version de cette bibliothèque.
+
+    o Éditez le Makefile du répertoire "src" et décommentez les lignes
+      concernant Sun Visual WorkShop. Vous pouvez les trouver facilement en
+      recherchant la chaîne "FEAT_SUN_WORKSHOP".
+
+    o Nous vous suggérons également d'utiliser Motif pour l'IHM graphique.
+      Cela confère à Vim le même look-and-feel que le reste de Sun Visual
+      WorkShop.
+
+La ligne de configuration suivante permet de configurer la compilation de Vim
+pour un usage avec Sun Visual WorkShop : >
+
+    $ CC=cc configure --enable-workshop --enable-gui=motif \
+	-prefix=<SVW-install-dir>/contrib/contrib6/<vim-version>
+<
+<SVW-install-dir> représente le répertoire de base dans lequel Sun Visual
+WorkShop a été installé. Par défaut, il s'agit de "/opt/SUNWspro". Les droits
+root vous seront normalement nécessaires pour installer cette version de Vim.
+Vous devrez également modifier le lien symbolique <SVW-install-dir>/bin/gvim
+pour qu'il pointe vers le Vim du répertoire nouvellement installé.
+<vim-version> est une chaîne de version qui doit être unique. L'auteur utilise
+"vim" suivi du contenu de VIM_VERSION_SHORT dans fichier "version.h".
+
+==============================================================================
+5. Obtenir la dernière version de la bibliothèque XPM	*workshop-xpm*
+
+La bibliothèque XPM est nécessaire pour afficher les images dans Vim avec
+Motif ou Athena. Sans elle, la barre d'outils et les symboles sont désactivés.
+
+La bibliothèque XPM est fournie par Arnaud Le Hors de l'INRIA. Il est possible
+de la télécharger sur ftp://koala.inria.fr/pub/xpm. La version actuelle, à
+l'heure où ces lignes sont écrites, est "xpm-3.4k-solaris.tgz", qui est une
+archive tar compressée avec gzip. Si vous créez un répertoire "/usr/local/xpm"
+et que vous y décompressez l'archive, vous pouvez utilisez le Makefile sans
+modifier les lignes non-commentées. Si vous utilisez un répertoire "xpm"
+différent, vous devrez modifier XPM_DIR dans "src/Makefile".
+
+ vim:tw=78:ts=8:ft=help:norl:

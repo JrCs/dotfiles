@@ -1,0 +1,419 @@
+*develop.txt*   Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+Développement de Vim					*development*
+
+Ce texte est important pour tous ceux qui désirent s'impliquer dans le
+développement ultérieur de Vim.
+
+1. Buts du projet	    |design-goals|
+2. Règles de codage	    |coding-style|
+3. Choix de conception	    |design-decisions|
+4. Hypothèses		    |design-assumptions|
+
+Voir le fichier "README.txt" dans le répertoire "src" pour un premier aperçu
+du code source.
+
+==============================================================================
+1. Buts du projet					*design-goals*
+
+Ces buts apparaissent (grosso modo) par ordre décroissant d'importance.
+
+NOTE : Quelques-uns de ces points se contredisent. C'est intentionnel : un
+équilibre doit être trouvé entre eux.
+
+
+VIM EST... COMPATIBLE VI				*design-compatible*
+
+Tout d'abord, il doit être possible d'utiliser Vim au pied levé en
+remplacement de Vi. Quand l'utilisateur le désire, il doit pouvoir utiliser
+Vim en mode compatible en remarquant à peine la différence avec le Vi
+original.
+
+Restrictions :
+- Les bogues identifiés de Vi ne sont pas reproduits dans Vim.
+- Il existe différentes versions de Vi. J'utilise la Version 3.7 (6/7/85)
+  comme référence. Mais le support pour les autres versions est également
+  inclus si possible. Le Vi issu de POSIX n'est pas tenu pour une source
+  définitive.
+- Vim apporte de nouvelles commandes, auxquelles on ne peut pas demander
+  d'échouer sous prétexte qu'elles n'existent pas dans Vi.
+- Vim inclut de nombreuses fonctionnalités que Vi n'a pas. Revenir de Vim à Vi
+  posera des problèmes, c'est inévitable.
+- Certaines fonctionnalités ne sont presque jamais utilisées (mode Open, envoi
+  d'un courriel lors d'un plantage, etc.) : elles seront incluses seulement
+  lorsque quelqu'un trouvera une bonne raison de les inclure, et si cela ne
+  représente pas trop de travail.
+- Pour quelques points, il est opportun de discuter si la compatibilité Vi
+  doit être maintenue ou non. Celle-ci restera accessible à travers un drapeau
+  d'option.
+
+
+VIM EST... AMÉLIORÉ					*design-improved*
+
+Les améliorations apportées par Vim doivent en faire un meilleur Vi, sans
+qu'il ne devienne un éditeur complètement différent. Les extensions doivent
+respecter l'« esprit Vi ».
+- Utiliser le clavier autant que possible. La souris nécessite une troisième
+  main dont nous sommes dépourvus. De nombreux terminaux n'ont pas de souris.
+- Lorsque la souris est quand même utilisée, éviter d'avoir à revenir au
+  clavier. Éviter de mélanger le recours au clavier et à la souris.
+- Ajouter des commandes et des options de manière cohérente. Sinon, les
+  utilisateurs auront du mal à les trouver et à les retenir. Garder à l'esprit
+  que d'autres commandes et options seront ajoutées par la suite.
+- Une fonctionnalité que les utilisateurs ne connaissent pas est une
+  fonctionnalité inutile. Ne pas ajouter de fonctionnalités obscures, ou du
+  moins faire clairement ressortir leur existence dans la documentation.
+- Minimiser l'usage de Ctrl et des autres modificateurs (ils sont plus
+  difficiles à taper).
+- Il existe de nombreux utilisateurs de Vim novices et inexpérimentés. Leur
+  faciliter la prise en main de Vim et leur permettre d'apprendre
+  progressivement avec le temps.
+- Il n'y a pas de limitation pour les fonctionnalités qui peuvent être
+  ajoutées. Leur sélection se fait selon : 1° la demande des utilisateurs,
+  2° l'effort nécessaire au développement et 3° la personne responsable du
+  développement.
+
+
+VIM EST... MULTI-PLATES-FORMES				*design-multi-platform*
+
+Vim essaie d'aider le plus grand nombre d'utilisateurs possible sur le plus
+grand nombre de plates-formes possible.
+- Supporter le plus grand nombre de types de terminaux possible. Les besoins
+  minimaux sont le positionnement du curseur et l'effacement de l'écran. Les
+  commandes doivent utiliser uniquement les touches dont disposent la plupart
+  des terminaux. Supporter toutes les touches du clavier pour les mappages.
+- Supporter le plus grand nombre de plates-formes possible. Pour cela, il faut
+  qu'il se trouve une personne désirant assurer le développement de Vim sur
+  chaque plate-forme, et sans « salir » le code.
+- Supporter le plus grand nombre de compilateurs et bibliothèques possible.
+  Tout le monde n'est pas capable ou autorisé à installer un autre compilateur
+  ou une autre bibliothèque IHM graphique.
+- De nombreuses personnes passent d'une plate-forme à une autre, et de la
+  version IHM graphique au terminal. Les fonctionnalités doivent être
+  présentes dans toutes les versions, ou au moins dans le plus grand nombre
+  possible avec un effort raisonnable. Essayer d'éviter que les utilisateurs
+  ne doivent changer de plate-forme pour accomplir leur travail efficacement.
+- Si une fonctionnalité n'est pas possible sur certaines plates-formes, ou
+  uniquement possible sur une plate-forme, cela ne signifie pas qu'elle ne
+  peut pas être incluse. (Ce point contredit intentionnellement le précédent :
+  un juste milieu doit être trouvé.)
+
+
+VIM EST... BIEN DOCUMENTÉ				*design-documented*
+
+- Une fonctionnalité qui n'est pas documentée est une fonctionnalité inutile.
+  Une rustine pour une nouvelle fonctionnalité doit inclure sa documentation.
+- La documentation doit être compréhensible et intelligible. L'utilisation
+  d'exemples est recommandée.
+- Le texte ne doit pas être plus long qu'il n'est nécessaire. Plus une
+  documentation est courte, plus un élément sera facile à trouver.
+
+
+VIM EST... RAPIDE ET LÉGER				*design-speed-size*
+
+Vim ne doit pas être trop lourd pour les ressources du système. Il doit rester
+performant en vitesse et peu gourmand en mémoire.
+- Chaque année, les ordinateurs deviennent de plus en plus gros et rapides.
+  Vim peut également grossir, mais pas plus vite que les ordinateurs. Il doit
+  rester utilisable sur les anciens systèmes.
+- La plupart du temps, Vim est lancé depuis un shell. Le temps de démarrage
+  doit être court.
+- Les commandes doivent être performantes. Le temps qu'elles consomment doit
+  être aussi court que possible. Les commandes utiles peuvent prendre un peu
+  plus de temps.
+- Ne pas oublier que certaines personnes utilisent Vim à travers une connexion
+  lente. Minimiser les délais de communication.
+- Les éléments qui font croître la taille de façon significative et qui ne
+  sont pas utilisés par le plus grand nombre doivent être des fonctionnalités
+  qu'on peut choisir de désactiver.
+- Vim n'est qu'une composante parmi tant d'autres. Il ne doit pas se
+  transformer en une application massive, mais doit pouvoir coopérer avec
+  d'autres programmes.
+
+
+VIM EST... MAINTENABLE					*design-maintain*
+
+- Le code source ne doit pas devenir une jungle. Il doit être fiable.
+- Utiliser la même mise en forme dans tous les fichiers pour en faciliter la
+  lecture |coding-style|.
+- Utiliser les commentaires de façon constructive !
+- Le portage vers une autre plate-forme doit être facile, sans avoir à changer
+  trop de code indépendant des plates-formes.
+- Utiliser l'esprit orienté-objet : placer les données et le code ensemble.
+  Minimiser le report de connaissances vers d'autres parties du code.
+
+
+VIM EST... FLEXIBLE					*design-flexible*
+
+Vim doit permettre aux utilisateurs de travailler selon leurs méthodes
+préférées, plutôt que de les forcer à un schéma particulier. Cela vaut pour
+les éléments qui ont un impact important (p. ex., l'option 'compatible') comme
+pour les détails. Les valeurs par défaut sont soigneusement choisies afin que
+la plupart des utilisateurs apprécient Vim tel qu'il est. Les commandes et les
+options peuvent être utilisées pour ajuster Vim aux désirs de l'utilisateur et
+à son environnement.
+
+
+VIM N'EST PAS...					*design-not*
+
+- Vim n'est pas un shell ni un système d'exploitation. On ne pourra pas lancer
+  de shell dans Vim ou l'utiliser pour contrôler un débogueur. Ce sera plutôt
+  l'inverse : utiliser Vim comme composante d'un shell ou d'un EDI.
+  D'une façon plus satirique : "Unlike Emacs, Vim does not attempt to include
+  everything but the kitchen sink, but some people say that you can clean one
+  with it.  ;-)" [N.D.T. : Traduction libre, en gardant à l'esprit que Vim est
+  aussi le nom d'un produit décapant dans les pays anglo-saxons :
+  « Contrairement à Emacs, Vim n'est pas une cuisine aménagée tout confort,
+  mais certains affirment qu'ils ont pu briquer la leur avec ;-) ».] XXX
+- Vim n'est pas un éditeur à l'interface graphique avancée qui soigne son
+  apparence au détriment de sa consistance sur toutes les plates-formes. Mais
+  des fonctionnalités d'interface graphique bien conçues sont les bienvenues.
+
+==============================================================================
+2. Règles de codage					*coding-style*
+
+Vous trouverez ici les règles à suivre quand vous voudrez modifier le code
+source de Vim. Vous êtes prié de les respecter, afin que les sources restent
+lisibles et maintenables.
+
+Cette liste n'est pas complète. Jetez un coup d'oeil au code source pour plus
+d'exemples.
+
+[N.D.T. : Vim est un projet international et son développement s'effectue en
+anglais, tant pour la documentation que pour le code. Veuillez ne pas perdre
+ce point de vue lors de la lecture de cette section.]
+
+
+FAIRE DES CHANGEMENTS					*style-changes*
+
+Voici les étapes élémentaires pour apporter des changements au code :
+1° Ajuster la documentation. Faire cela en premier vous permet de garder à
+   l'esprit l'attente de l'utilisateur ;
+2° Effectuer la modification du code source ;
+3° Vérifier dans "../doc/todo.txt" si le changement concerne un des points
+   listés ;
+4° Créer une rustine avec `diff -c` pour le code et la documentation
+   modifiés ;
+5° Écrire une petite note sur ce qui a changé et l'inclure dans la rustine.
+
+
+UTILISATION DES FONCTIONS COMMUNES			*style-functions*
+
+Certaines fonctions d'usage commun possèdent une version spéciale pour Vim.
+Utilisez toujours les versions pour Vim, elles ont été introduites avec une
+bonne raison.
+
+	NOM NORMAL   NOM POUR VIM    DIFFÉRENCE DE LA VERSION VIM  ~
+	free()	     vim_free()	     Vérifie si l'argument est NULL
+	malloc()     alloc()	     Tient compte de la mémoire restante
+	malloc()     lalloc()	     Comme alloc(), mais avec un argument long
+	strcpy()     STRCPY()	     Transtype char_u * avec (char *)
+	strchr()     vim_strchr()    Accepte les caractères spéciaux
+	strrchr()    vim_strrchr()   Accepte les caractères spéciaux
+	isspace()    vim_isspace()   Supporte les caractères supérieurs à 128
+	iswhite()    vim_iswhite()   TRUE uniquement pour espace et tabulation
+	memcpy()     vim_memmove()   Gère les recouvrements lors des copies
+	bcopy()	     vim_memmove()   Gère les recouvrements lors des copies
+	memset()     vim_memset()    Identique sur tous les systèmes
+
+
+NOMS							*style-names*
+
+Les noms de fonctions ne doivent pas faire plus de 31 caractères de long (à
+cause de VMS).
+
+N'utilisez pas "delete" comme nom de variable, C++ n'aime pas ça.
+
+En raison de l'impératif pour Vim de fonctionner sur le plus grand nombre de
+plates-formes possible, il faut éviter d'utiliser des noms qui sont déjà
+définis par les systèmes. Voici une liste de noms qui sont bien connus pour
+poser des problèmes (les noms sont donnés comme des motifs d'expressions
+rationnelles).
+
+is.*()		POSIX, ctype.h
+to.*()		POSIX, ctype.h
+
+d_.*		POSIX, dirent.h
+l_.*		POSIX, fcntl.h
+gr_.*		POSIX, grp.h
+pw_.*		POSIX, pwd.h
+sa_.*		POSIX, signal.h
+mem.*		POSIX, string.h
+str.*		POSIX, string.h
+wcs.*		POSIX, string.h
+st_.*		POSIX, stat.h
+tms_.*		POSIX, times.h
+tm_.*		POSIX, time.h
+c_.*		POSIX, termios.h
+MAX.*		POSIX, limits.h
+__.*		POSIX, system
+_[A-Z].*	POSIX, system
+E[A-Z0-9]*	POSIX, errno.h
+
+*_t		POSIX, pour les définitions de types ; utilisez *_T à la place
+
+wait		ne pas utiliser comme argument d'une fonction, en conflit
+		   avec types.h
+index		masque la déclaration globale
+time		masque la déclaration globale
+new		mot-clé réservé pour C++
+try		Borland C++ n'aime pas qu'il soit utilisé comme une variable
+
+basename()	fonction de chaîne GNU
+dirname()	fonction de chaîne GNU
+get_env_value()	fonction système Linux
+
+
+DIVERS							*style-various*
+
+Les noms déclarés avec "typedef" doivent se terminer par "_t" : >
+	typdef int some_t;
+Les noms définis avec "#define" doivent être en majuscules : >
+	#define SOME_THING
+Les fonctionnalités débutent toujours par "FEAT_" : >
+	#define FEAT_FOO
+
+N'utilisez pas '\"', certains compilateurs ne le supportent pas. '"' marche
+bien.
+
+N'utilisez pas : >
+	#if HAVE_SOME
+Certains compilateurs ne le supportent pas et se plaignent que "HAVE_SOME"
+n'est pas défini. Utilisez >
+	#ifdef HAVE_SOME
+ou >
+	#if defined(HAVE_SOME)
+
+
+STYLE							*style-examples*
+
+Règle générale : une seule instruction par ligne.
+
+Mauvais :   if (cond) a = 1;
+
+Bon :	    if (cond)
+		a = 1;
+
+Mauvais :   while (cond);
+
+Bon :	    while (cond)
+		;
+
+Mauvais :   do a = 1; while (cond);
+
+Bon :	    do
+		a = 1;
+	    while (cond);
+
+
+Les fonctions commencent par :
+
+Mauvais :   int function_name(int arg1, int arg2)
+
+Bon :	    /*
+	     * Explanation of what this function is used for.
+	     *
+	     * Return value explanation.
+	     */
+	        int
+	    function_name(arg1, arg2)
+	        int		arg1;		/* short comment about arg1 */
+	        int		arg2;		/* short comment about arg2 */
+	    {
+	        int		local;		/* comment about local */
+
+	        local = arg1 * arg2;
+
+NOTE : N'utilisez pas des déclarations de fonctions de style ANSI. Certaines
+personnes utilisent encore un compilateur qui ne le supporte pas.
+
+
+ESPACES ET PONCTUATION					*style-spaces*
+
+Pas d'espace entre un nom de fonction et la parenthèse :
+
+Mauvais :   func (arg);
+Bon :	    func(arg);
+
+Entrez un espace après if, while, switch, etc. :
+
+Mauvais :   if(arg)	for(;;)
+Bon :	    if (arg)	for (;;)
+
+Entrez un espace après une virgule et un point-virgule :
+
+Mauvais :   func(arg1,arg2);	for (i = 0;i < 2;++i)
+Bon :	    func(arg1, arg2);	for (i = 0; i < 2; ++i)
+
+Entrez un espace avant et après '=', '+', '/', etc. :
+
+Mauvais :   var=a*5;
+Bon :	    var = a * 5;
+
+En géneral : utilisez des lignes vides pour regrouper des lignes de code
+ensemble. Placez un commentaire juste au-dessus du groupe de lignes. Il est
+ainsi plus facile de voir rapidement ce qui est fait.
+
+Bon :	    /* Prepare for building the table. */
+	    get_first_item();
+	    table_idx = 0;
+
+	    /* Build the table. */
+	    while (has_item())
+	        table[table_idx++] = next_item();
+
+	    /* Finish up. */
+	    cleanup_items();
+	    generate_hash(table);
+
+==============================================================================
+3. Choix de conception					*design-decisions*
+
+REPLIAGE
+
+Plusieurs états de repliage devraient être possibles pour le même tampon. Par
+exemple, avoir une fenêtre qui montre le texte avec un corps de fonction
+replié, et une autre qui montre le corps de fonction.
+
+Le repliage est une façon d'afficher le texte : il devrait donc changer le
+texte lui-même. C'est pour cela que le repliage a été développé comme un
+filtre entre le texte enregistré dans un tampon (les lignes de tampon) et le
+texte affiché dans une fenêtre (les lignes logiques).
+
+
+DIFFÉRENTS TERMES POUR « FENÊTRE »
+
+Le mot « fenêtre » est souvent utilisé pour plusieurs choses différentes : une
+fenêtre à l'écran, une fenêtre xterm ou une fenêtre dans Vim pour visualiser
+un tampon...
+   Afin d'éviter les confusions, certains éléments qui sont parfois appelés
+« fenêtre » ont reçu un autre nom. Voici un sommaire de ces éléments :
+
+écran		Toute la surface d'affichage. Pour l'IHM graphique, cela fait
+		quelque chose comme 1024 × 768 pixels. Le shell Vim peut
+		utiliser l'écran tout entier ou en partie.	     ["screen"]
+shell		L'application Vim. Elle peut occuper tout l'écran (p. ex.,
+		quand elle s'exécute dans une console) ou une partie seulement
+		(xterm ou IHM graphique).
+fenêtre		Une vue d'un tampon. Il peut y avoir plusieurs fenêtres dans
+		Vim. Avec la ligne de commande, la barre de menus, la barre
+		d'outils, etc., elles composent le shell.	     ["window"]
+
+
+À suivre...
+
+==============================================================================
+4. Hypothèses						*design-assumptions*
+
+Taille des variables :
+char	    8 bits signé
+char_u	    8 bits non signé
+int	    16, 32 ou 64 bits signé
+unsigned    16, 32 ou 64 bits non signé
+long	    32 ou 64 bits signé, peut contenir un pointeur
+
+ vim:tw=78:ts=8:ft=help:norl:

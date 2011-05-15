@@ -1,0 +1,123 @@
+*hangulin.txt*  Pour Vim version 6.2.
+
+
+	MANUEL de RÉFÉRENCE VIM - par Chi-Deok Hwang et Sung-Hyun Nam
+
+
+INTRODUCTION						*hangul*
+
+Ce fichier traite de la saisie de l'hangul, l'alphabet coréen, avec la version
+IHM graphique de Vim.
+   Si vous disposez déjà d'un programme XIM (méthode de saisie X), vous pouvez
+utiliser une autre fonctionnalité |+xim|. Fondamentalement, ce fichier est à
+l'usage de personnes n'ayant aucun programme XIM.
+
+
+COMPILATION
+
+La ligne ci-dessous donne les options de base à utiliser. Vous pouvez ajouter
+n'importe quelle autre option supportée par `configure`. >
+
+  ./configure --with-x --enable-multibyte --enable-fontset --enable-hangulinput
+
+Vous devriez de plus vérifier le fichier "feature.h". Si la fonctionnalité
+|+hangul_input| est activée avec `configure`, vous pouvez sélectionner des
+options supplémentaires, telle que le type de clavier, 2 bulsik ou 3 bulsik.
+Vous trouverez dans ce fichier les mots-clés suivants : >
+
+	#define HANGUL_DEFAULT_KEYBOARD 2
+	#define ESC_CHG_TO_ENG_MODE
+	/* #define X_LOCALE */
+	/* #define SLOW_XSERVER */
+
+
+VARIABLES D'ENVIRONNEMENT
+
+Vous devriez fixer la variable LANG à une valeur de région linguistique
+coréenne telle que "ko" ou "ko_KR.euc". De même, si vous fixez LC_ALL,
+choisissez aussi une région linguistique coréenne.
+
+
+RESSOURCES VIM
+
+Ajoutez la ligne suivante à votre fichier vimrc ($HOME/.vimrc). >
+
+	:set fileencoding=korea
+
+
+CLAVIER
+
+Vous pouvez changer le type de clavier (2 bulsik ou 3 bulsik) en utilisant les
+variables d'environnement VIM_KEYBOARD ou HANGUL_DEFAULT_KEYBOARD. Pour sh,
+faites simplement (pour 2 bulsik) : >
+
+	export VIM_KEYBOARD="2"
+    
+Ou : >
+    
+	export HANGUL_KEYBOARD_TYPE="2"
+
+Si les deux variables sont fixées, VIM_KEYBOARD a la priorité.
+
+
+POLICES HANGUL
+
+Vous pouvez choisir la police à utiliser pour le texte dans vos fichiers
+$HOME/.Xdefaults ou $HOME/.gvimrc.
+Mais pour utiliser l'hangul, vous devrez fixer 'guifontset' dans votre vimrc.
+
+$HOME/.Xdefaults : >
+
+	Vim.font: police_latine
+
+	! Menus hangul avec Athena
+	*international: True
+	Vim*fontSet: police_latine,police_hangul
+
+	! Menus hangul avec Motif
+	*international: True
+	Vim*fontList: police_latine;police_hangul:
+
+$HOME/.gvimrc : >
+
+	set guifontset=police_latine,police_hangul
+
+NOTE : Prenez bien garde aux virgules et aux points-virgules.
+
+Aucune commande ":set guifont" ne doit être utilisée. S'il y en a une, gvim
+ignorera la commande ":set guifontset". Cela signifie que Vim fonctionne sans
+le support des jeux de polices. Vous ne verrez que du texte latin, l'hangul ne
+sera pas affiché correctement.
+
+Après l'activation de 'guifontset', Vim ne permet pas l'utilisation de
+'guifont'. Par exemple, si vous utilisez >
+       :set guifontset=police_latine,votre_police
+dans votre gvimrc, alors vous devriez utiliser ceci pour la syntaxe : >
+       :hi Comment guifg=Cyan font=autre_police_latine,autre_police_a_vous
+Si vous faites seulement >
+       :hi Comment font=autre_police_latine
+vous obtiendrez un message d'erreur. Soyez précautionneux !
+
+La largeur de la police hangul doit être le double de celle de la police
+latine.
+
+
+FONCTIONNALITÉS NON SUPPORTÉES
+
+La police johab n'est pas supportée actuellement, et je n'ai pas prévu de
+l'ajouter. Si vous souhaitez vraiment l'utiliser, vous pouvez utiliser
+"hanguldraw.c" dans le paquetage gau.
+
+La saisie hanja n'est pas supportée actuellement, et je n'ai pas prévu de
+l'ajouter. Si vous souhaitez vraiment l'utiliser, utilisez Vim avec un
+hanterm.
+
+
+BOGUES OU COMMENTAIRES
+
+Envoyez vos commentaires, rustines et suggestions à :
+
+	Chi-Deok Hwang <hwang@mizi.co.kr>
+	Nam Sung-Hyun <namsh@lge.com>
+
+ vim:tw=78:ts=8:ft=help:norl:

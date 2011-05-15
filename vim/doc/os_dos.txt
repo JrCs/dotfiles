@@ -1,0 +1,312 @@
+*os_dos.txt*    Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+							*dos* *DOS*
+Ce fichier décrit les particularités communes des versions MS-DOS et Win32 de
+Vim. Voir aussi |os_win32.txt| et |os_msdos.txt|.
+
+1. Emplacement des fichiers		|dos-locations|
+2. Utilisation des contre-obliques	|dos-backslash|
+3. Mappages standards			|dos-standard-mappings|
+4. Rendu à l'écran et couleurs		|dos-colors|
+5. Formats des fichiers			|dos-file-formats|
+6. Commande ":cd"			|dos-:cd|
+7. Interruption				|dos-CTRL-Break|
+8. Fichiers temporaires			|dos-temp-files|
+9. Options par défaut du shell		|dos-shell|
+
+==============================================================================
+1. Emplacement des fichiers				*dos-locations*
+
+Si vous conservez l'exécutable Vim dans le répertoire qui contient les
+sous-répertoires de l'aide et des fichiers de syntaxe ("help" et "syntax"),
+aucune manipulation particulière n'est requise pour que Vim fonctionne. Aucune
+entrée de registre ou variable d'environnement n'a besoin d'être ajoutée.
+Assurez-vous simplement que ce répertoire est dans le chemin de recherche, ou
+alors utilisez un raccourci sur le bureau.
+
+Vos fichiers vimrc ("_vimrc" et "_gvimrc") sont normalement situés dans le
+répertoire parent des fichiers de support. Si vous voulez les mettre ailleurs,
+fixez la variable d'environnement $VIM sur le répertoire qui les contient. Par
+exemple >
+	set VIM=C:\utilisateur\arthur
+trouvera "c:\utilisateur\arthur\_vimrc".
+NOTE : Ceci n'est nécessaire que lorsque l'ordinateur est utilisé par
+plusieurs personnes. Sinon, il est plus simple de laisser votre fichier vimrc
+à son emplacement par défaut.
+
+Si vous déplacez l'exécutable à un autre endroit, vous devez également
+fixer la variable d'environnement $VIM. Les fichiers de support seront trouvés
+à "$VIM/vim{version}". Par exemple >
+	set VIM=E:\vim
+trouvera les fichiers de support dans "e:\vim\vim54".
+NOTE : Ceci n'est PAS recommandé. Il est préférable de laisser l'exécutable
+dans le répertoire de support.
+
+Si vous souhaitez déplacer à la fois votre exécutable ET vos fichiers "_vimrc"
+et "_gvimrc", vous devez fixer $VIM à l'emplacement de vos fichiers vimrc, et
+fixer $VIMRUNTIME à celui des fichiers de support. Par exemple >
+	set VIM=C:\utilisateur\arthur
+	set VIMRUNTIME=E:\vim\vim54
+trouvera "c:\utilisateur\arthur\_vimrc" et les fichiers de support dans
+"e:\vim\vim54".
+
+Voir |$VIM| et |$VIMRUNTIME| pour plus informations.
+
+Sous Windows 95, vous pouvez fixer $VIM dans votre fichier "C:\autoexec.bat".
+Par exemple : >
+      set VIM=D:\vim
+Sous Windows NT, vous pouvez fixer les variables d'environnement pour chaque
+utilisateur séparement dans "Démarrer/Paramètres/Panneau de configuration ->
+Système", ou par les propriétés dans le menu de "Mon ordinateur", dans
+l'onglet Environnement. [N.D.T : Cela diffère sous Windows 2000]. XXX
+
+==============================================================================
+2. Utilisation des contre-obliques			*dos-backslash*
+
+L'utilisation des contre-obliques ('\') dans les noms de fichiers peut poser
+un problème. Vi réduit de moitié le nombre de contre-obliques pour certaines
+commandes. Vim est un peu plus souple et ne retire pas les contre-obliques
+d'un nom de fichier, par conséquent ":e c:\truc\toto" fonctionne comme prévu.
+Mais lorsqu'une contre-oblique précède un caractère spécial (espace, virgule,
+contre-oblique, etc.), Vim la retire. Utilisez des obliques simples ('/') pour
+éviter ces problèmes : ":e c:/truc/toto" fonctionne correctement. Vim remplace
+les obliques par des contre-obliques en interne pour éviter les problèmes avec
+certains programmes MS-DOS et Win32.
+
+Si vous préférez utiliser des obliques simples, activez l'option 'shellslash'.
+Vim remplacera alors les contre-obliques par des obliques simples lors de
+l'expansion des noms de fichiers. C'est particulièrement utile si vous
+utilisez un 'shell' de type Unix.
+
+==============================================================================
+3. Mappages standards				*dos-standard-mappings*
+
+CTRL-PagePrec	curseur sur la première ligne de l'écran	*<C-PageUp>*
+CTRL-PageSuiv	curseur sur la dernière ligne de l'écran,	*<C-PageDown>*
+		   sur le dernier caractère
+
+Ces mappages ont l'effet suivant :
+
+    TOUCHE		CODE CLAVIER	MODE NORMAL/VISUEL   MODE INSERTION ~
+    CTRL-PagePrec	<M-N><M-C-D>	H		     <C-O>H
+    CTRL-PageSuiv	<M-N>v		L$		     <C-O>L<C-O>$
+
+De plus, ces touches sont disponibles pour copier/couper/coller. Dans les
+versions Win32 er DJGPP, le presse-papiers est utilisé.
+
+MAJ-Inser	colle le texte (depuis le presse-papiers)	*<S-Insert>*
+CTRL-Inser	copie la zone Visuel (vers le presse-papiers)	*<C-Insert>*
+CTRL-Suppr	coupe la zone Visuel (vers le presse-papiers)	*<C-Del>*
+MAJ-Suppr	coupe la zone Visuel (vers le presse-papiers)	*<S-Del>*
+
+Ces mappages ont l'effet suivant (versions Win32 et DJGPP de Vim) :
+
+    TOUCHE		CODE CLAVIER  NORMAL	VISUEL	    INSERTION ~
+    MAJ-Inser		<M-N><M-T>    "*P	"-d"*P      <C-R><C-O>*
+    CTRL-Inser		<M-N><M-U>		"*y
+    MAJ-Suppr		<M-N><M-W>		"*d
+    CTRL-Suppr		<M-N><M-X>		"*d
+
+Ces mappages ont l'effet suivant (versions non-Win32 de Vim) :
+
+    TOUCHE		CODE CLAVIER  NORMAL	VISUEL	    INSERTION ~
+    MAJ-Inser		<M-N><M-T>    P		"-dP	    <C-R><C-O>"
+    CTRL-Inser		<M-N><M-U>		y
+    MAJ-Suppr		<M-N><M-W>		d
+    CTRL-Suppr		<M-N><M-X>		d
+
+Quand le presse-papiers est supporté, le registre "* est utilisé.
+
+==============================================================================
+4. Rendu à l'écran et couleurs				*dos-colors*
+
+La méthode de sortie par défaut pour l'écran utilise les appels du BIOS. Cela
+fonctionne correctement sur la plupart des systèmes. Vous n'avez pas besoin de
+"ansi.sys". Vous pouvez utiliser ":mode" pour choisir le mode d'écran courant.
+Voir |:mode|.
+
+Pour modifier les couleurs utilisées par Vim à l'écran , vous pouvez utiliser
+la commande |:highlight|. Le groupe de surbrillance Normal précise les
+couleurs que Vim utilise pour le texte normal. Par exemple, pour obtenir un
+texte gris sur fond bleu : >
+	:hi Normal ctermbg=Blue ctermfg=grey
+Voir |highlight-groups| pour les autres groupes disponibles. 
+
+La console DOS ne supporte par les attributs tels que gras ou souligné. Il
+existe cinq modes pour lesquels vous pouvez définir la couleur à utiliser avec
+neuf options termcap. NOTE : Cela n'est pas forcément nécessaire puisque vous
+pouvez définir les couleurs directement avec la commande ":highlight" ; ces
+options ne sont présentes que pour la compatibilité ascendante. L'option
+|'highlight'| précise lequel des cinq modes est utilisé pour chaque action. >
+
+	:set t_mr=^V^[\|xxm		début du mode vidéo inverse
+	:set t_md=^V^[\|xxm		début du mode gras
+	:set t_me=^V^[\|xxm		retour au texte normal
+
+	:set t_so=^V^[\|xxm		début du mode surligné
+	:set t_se=^V^[\|xxm		retour au texte normal
+
+	:set t_us=^V^[\|xxm		début du mode souligné
+	:set t_ue=^V^[\|xxm		retour au texte normal
+
+	:set t_ZH=^V^[\|xxm		début du mode italique
+	:set t_ZR=^V^[\|xxm		retour au texte normal
+
+"^V" désigne CTRL-V et ^[ désigne <Esc>.
+Vous devez remplacer "xx" par un code décimal, qui correspond à la somme des
+numéros des couleurs de premier plan et de fond :
+
+    NOM DE LA COULEUR	 PREMIER PLAN	FOND ~
+    Black		     0	          0 	                     [« Noir »]
+    DarkBlue		     1		 16 		       [« Bleu foncé »]
+    DarkGreen		     2		 32 		       [« Vert foncé »]
+    DarkCyan		     3		 48 		       [« Cyan foncé »]
+    DarkRed		     4		 64		      [« Rouge foncé »]
+    DarkMagenta		     5		 80 		    [« Magenta foncé »]
+    Brown, DarkYellow	     6		 96	      [« Marron, Jaune foncé »]
+    LightGray		     7		112 		       [« Gris clair »]
+    DarkGray		     8		128 *		       [« Gris foncé »]
+    Blue, LightBlue	     9		144 *		 [« Bleu, Bleu clair »]
+    Green, LightGreen	    10		160 *		 [« Vert, Vert clair »]
+    Cyan, LightCyan	    11		176 *		 [« Cyan, Cyan clair »]
+    Red, LightRed	    12		192 *	       [« Rouge, Rouge clair »]
+    Magenta, LightMagenta   13		208 *	   [« Magenta, Magenta clair »]
+    Yellow, LightYellow	    14		224 *	       [« Jaune, Jaune clair »]
+    White		    15		240 *			    [« Blanc »]
+
+* Selon les modes d'affichage, les codes de couleur supérieurs à 128 peuvent
+  ne pas être disponibles, le code 128 activera alors le clignotement.
+
+Si vous utilisez 0, la couleur est réinitialisée à la valeur avec laquelle Vim
+a demarré (en général 7, gris clair sur noir, mais vous pouvez changer ce
+comportement. Si vous avez changé la couleur par défaut de l'invite de
+commande, il est possible que vous ayez à ajuster certaines couleurs de
+surbrillance dans votre vimrc -- voir plus bas).
+   C'est la valeur par défaut pour 't_me'.
+
+Les valeurs par défaut pour les différents modes de surbrillance sont :
+	't_mr'	112	 vidéo inverse : texte Black (0) sur LightGray (112)
+	't_md'	 15	 gras : texte White (15) sur Black (0)
+	't_me'	  0	 normal (retour aux couleurs par défaut)
+
+	't_so'	 31	 surligné : White (15) sur DarkBlue (16)
+	't_se'	  0	 fin du mode surligné (retour aux couleurs par défaut)
+
+	't_czh'	225	 italique : DarkBlue foncé (1) sur Yellow (224)
+	't_czr'	  0	 fin du mode italique (retour aux couleurs par défaut)
+
+	't_us'	 67	 souligné : texte DarkCyan (3) sur DarkRed (64)
+	't_ue'	  0	 fin du mode souligné (retour aux couleurs par défaut)
+
+Ces couleurs ont été choisies parce qu'elles restent lisibles lors de
+l'utilisation d'un affichage inversé, mais vous pouvez les modifier à votre
+convenance.
+
+Exemples : >
+
+  :set t_mr=^V^[\|97m	" Début vidéo inverse : DarkBlue (1) sur Brown (96)
+  :set t_md=^V^[\|67m	" Début gras : DarkCyan (3) sur DarkRed (64)
+  :set t_me=^V^[\|112m	" Retour au mode normal : Black (0) sur LightGray (112)
+
+  :set t_so=^V^[\|37m	" Début surligné: DarkMagenta (5) sur DarkGreen (32)
+  :set t_se=^V^[\|112m	" Retour au mode normal : Black (0) sur LightGray (112)
+
+==============================================================================
+5. Formats des fichiers					*dos-file-formats*
+
+Si l'option 'fileformat' est fixée à "dos" (elle l'est par défaut), Vim
+accepte un <NL> simple ou un couple <CR><NL> comme fin-de-ligne (<EOL>). À
+l'enregistrement d'un fichier, Vim utilise <CR><NL>. Ainsi, si vous éditez un
+fichier puis l'enregistrez, Vim remplace <NL> par <CR><NL>.
+
+Si l'option 'fileformat' est fixée à "unix", Vim utilise un <NL> simple pour
+les fins-de-lignes, et affiche ^M pour les <CR> .
+
+Vous pouvez utiliser Vim pour remplacer les <NL> par des <CR><NL> dans un
+fichier en le lisant dans n'importe quel mode et l'en écrivant en mode Dos
+(":se ff=dos"). 
+   Vous pouvez utiliser Vim pour remplacer les <CR><NL> par des <NL> dans un
+fichier en le lisant depuis n'importe quel mode et en l'écrivant en mode Unix
+(":se ff=unix").
+
+Vim fixe automatiquement 'fileformat' quand 'fileformats' n'est pas vide (ce
+qui est le cas par défaut), Vous n'avez donc pas à vous en soucier.
+|'fileformat'| |'fileformats'|
+
+Si vous voulez éditer un fichier de script ou un fichier binaire, vous devriez
+activer l'option 'binary' avant de charger le fichier. En effet, ces fichiers
+pourraient contenir des caractères <NL> simples que Vim remplacerait par
+<CR><NL>. Vous pouvez fixer 'binary' automatiquement en lançant Vim avec
+l'argument "-b" (binaire) de la ligne de commande.
+
+==============================================================================
+6. Commande ":cd"					*dos-:cd*
+
+La commande ":cd" reconnaît l'unité spécifiée et change l'unité courante en
+conséquence. Utilisez ":cd c:" pour faire du disque C l'unité active. Utilisez
+":cd d:\toto" pour aller au répertoire "toto" situé à la racine de l'unité D.
+Vim reconnaît également les noms UNC si le système les supporte ; par exemple,
+":cd \\serveur\partage\rep". |:cd|
+
+==============================================================================
+7. Interruption						*dos-CTRL-Break*
+
+Utilisez CTRL-Attn à la place de CTRL-C pour interrompre les recherches. Vim
+ne détecte le CTRL-C que lorsqu'il tente de lire l'appui sur une touche.
+
+==============================================================================
+8. Fichiers temporaires					*dos-temp-files*
+
+Pour les versions 16 et 32 bits DOS uniquement :
+Vim place les fichiers temporaires (pour le filtrage) dans le premier de ces
+répertoires qu'il trouve et dans lequel il peut créer un fichier :
+	$TMP
+	$TEMP
+	C:\TMP
+	C:\TEMP
+	Répertoire courant
+
+Pour la version Win32 (console et graphique) :
+Vim utilise les fonctions Windows standards pour obtenir un nom de fichier
+temporaire (pour le filtrage). Le premier de ces répertoire dans lequel Vim
+peut créer un fichier est utilisé :
+	$TMP
+	$TEMP
+	Répertoire courant
+
+==============================================================================
+9. Options par défaut du shell				*dos-shell*
+
+La valeur par défaut pour l'option 'sh' ('shell') est "command.com" sur
+Windows 95 et "cmd.exe" sur Windows NT. Si SHELL est définie, Vim utilise
+SHELL à la place, et si SHELL n'est pas définie mais que COMSPEC l'est, Vim
+utilise COMSPEC. Vim lance les commandes externes avec `<shell> /c
+<nom_commande>`. Si vous tapez CTRL-Z, Vim lance la commande dans un
+sous-shell. Utilisez `exit` pour revenir à Vim. |'shell'| |CTRL-Z|
+
+Si vous utilisez un shell tiers, vous devrez peut-être modifier les options
+|'shellcmdflag'| ('shcf') et |'shellquote'| ('shq') ou |'shellxquote'|
+('sxq'). Malheureusement, cela dépend de la version de Vim utilisée. Par
+exemple, avec le shell Korn MKS ou avec Bash, les valeurs de ces options
+devraient être :
+
+		DOS 16 BITS    DOS 32 BITS	WIN32  ~
+'shellcmdflag'	    -c		   -c		 -c
+'shellquote'	     "
+'shellxquote'					  "
+
+Pour la version Dos 16 bits, le shell est démarré ainsi : >
+	<shell> -c "nom_commande" >fichier
+Pour la version Win32 : >
+	<shell> -c "nom_commande >fichier"
+Pour la version Dos 32 bits, DJGPP semble le faire en interne.
+
+Au démarrage, Vim vérifie la présence de "sh" quelquepart dans l'option
+'shell'. S'il est présent, Vim fixe les options 'shellcmdflag' et 'shellquote'
+ou 'shellxquote' comme décrit ci-dessus.
+
+ vim:tw=78:ts=8:ft=help:norl:

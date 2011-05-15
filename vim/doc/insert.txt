@@ -1,0 +1,1122 @@
+*insert.txt*    Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+						 *Insert* *Insert-mode*
+Insertion et remplacement de texte			*mode-ins-repl*
+
+La plupart de ce fichier concerne les modes Insertion et Remplacement. À la
+fin, on trouvera quelques commandes permettant l'insertion de texte d'autres
+façons.
+
+Un sommaire des commandes les plus utilisées peut être trouvé au chapitre 24
+du Manuel de l'utilisateur |usr_24.txt|.
+
+ 1. Touches spéciales					|ins-special-keys|
+ 2. Touches spéciales spéciales				|ins-special-special|
+ 3. Options 'textwidth' et 'wrapmargin'			|ins-textwidth|
+ 4. Options 'expandtab', 'smarttab' et 'softtabstop'	|ins-expandtab|
+ 5. Mode Remplacement					|Replace-mode|
+ 6. Mode Remplacement Virtuel				|Virtual-replace-mode|
+ 7. Complètement en mode Insertion			|ins-completion|
+ 8. Commandes pour le mode Insertion			|inserting|
+ 9. Commandes d'insertion Ex				|inserting-ex|
+10. Insertion d'un fichier				|inserting-file|
+
+Voir aussi 'virtualedit', pour déplacer le curseur sur des positions où il n'y
+a aucun caractère. Utile lors de l'édition de tableaux.
+
+==============================================================================
+1. Touches spéciales					*ins-special-keys*
+
+En mode Insertion et Remplacement, les séquences suivantes ont une valeur
+spéciale ; les autres séquences de caractères sont insérées littéralement.
+Pour insérer une de ces séquences spéciales dans le tampon, faites-la précéder
+de CTRL-V. Pour insérer un caractère <Nul>, saisissez "CTRL-V CTRL-@" ou
+"CTRL-V 000". Sur certains systèmes, vous devrez saisir "CTRL-V 003" pour
+insérer un CTRL-C.
+   NOTE : Si CTRL-V est mappé, vous pouvez souvent utiliser CTRL-Q à la place
+|i_CTRL-Q|.
+
+Si vous travaillez dans un mode de langue spécial lorsque vous insérez du
+texte, voyez l'option 'langmap' |'langmap'| pour éviter de sans cesse devoir
+activer/désactiver ce mode.
+
+Si l'option 'insertmode' est activée, <Echap> et quelques autres touches
+prennent une signification différente. Voir |'insertmode'|.
+
+CAR		ACTION						    ~
+--------------------------------------------------------------------
+CTRL-[	    ou					*i_CTRL-[* *i_<Esc>*
+<Echap>		Quitte le mode Insertion ou Remplacement, retourne en mode
+		Normal. Développe les abréviations.
+		NOTE : Si la touche <Echap> n'est pas pratique à saisir sur
+		votre clavier, préférez-lui CTRL-[.
+						*i_CTRL-C*
+CTRL-C		Quitte le mode Insertion, retourne en mode Normal. Ne
+		développe pas les abréviations.
+
+						*i_CTRL-@*
+CTRL-@		Insère le dernier texte inséré et quitte le mode Insertion.
+		{Vi : uniquement si saisi comme premier caractère, et
+		uniquement jusqu'à 128 caractères}
+						*i_CTRL-A*
+CTRL-A		Insère le dernier texte inséré. {absent de Vi}
+
+CTRL-H	    ou					*i_CTRL-H* *i_<BS>* *i_BS*
+<RetArr>	Supprime le caractère avant le curseur (voir |i_backspacing|
+		concernant la fusion de lignes).
+		Voir |:fixdel| si votre touche <RetArr> ne réagit pas comme
+		vous le souhaitez.
+		{Vi ne supprime pas les indentations automatiques}
+						*i_<Del>* *i_DEL*
+<Suppr>		Supprime le caractère sous le curseur. Si le curseur est situé
+		à une fin de ligne et que l'option 'backspace' inclut "eol",
+		supprime le <EOL> ; la ligne suivante est fusionnée avec la
+		ligne courante.
+		Voir |:fixdel| si votre touche <Suppr> ne réagit pas comme
+		vous le souhaitez. {absent de Vi}
+						*i_CTRL-W*
+CTRL-W		Supprime le mot avant le curseur (voir |i_backspacing|
+		concernant la fusion de lignes). Voir la section
+		|word-motions| pour la définition d'un mot.	       ["Word"]
+						*i_CTRL-U*
+CTRL-U		Supprime tous les caractères insérés dans la ligne courante
+		(voir |i_backspacing| concernant la fusion de lignes).
+
+CTRL-I	    ou					*i_CTRL-I* *i_<Tab>* *i_Tab*
+<Tab>		Insère une tabulation. Si l'option 'expandtab' est activée, le
+		nombre d'espaces équivalent est inséré (utilisez alors
+		"CTRL-V <Tab>" pour insérer de vraies tabulations ; utilisez
+		"CTRL-Q <Tab>" si CTRL-V est mappé |i_CTRL-Q|). Voir aussi
+		l'option 'smarttab' et |ins-expandtab|.
+
+CTRL-J	    ou					*i_CTRL-J* *i_<NL>*
+<NL>		Ouvre une nouvelle ligne.
+CTRL-M	    ou					*i_CTRL-M* *i_<CR>*
+<CR>		Ouvre une nouvelle ligne.
+
+						*i_CTRL-K*
+CTRL-K {car1} [car2]
+		Entre un digramme (voir |digraphs|). Si {car1} est une touche
+		spéciale, le code de cette touche est inséré dans une forme <>.
+		Par exemple, la chaîne "<Insert>" peut être insérée en
+		saisissant "CTRL-K <Inser>" (deux touches). Les cars entrés
+		ne seront pas considérés pour les mappages. {absent de Vi}
+
+CTRL-N		Cherche le mot-clé suivant (voir |i_CTRL-N|). {absent de Vi}
+CTRL-P		Cherche le mot-clé précédent (voir |i_CTRL-P|). {absent de Vi}
+
+						*i_CTRL-R*
+CTRL-R {0-9a-z"%#*+/:.-=}
+		Insère le contenu d'un registre. Entre la saisie de CTRL-R et
+		le second caractère, '"' sera affiché pour indiquer que le nom
+		d'un registre est attendu.
+		Le texte est inséré comme si vous l'aviez saisi, mais les
+		mappages et abréviations ne sont pas pris en compte. Si des
+		options telles que 'textwidth', 'formatoptions' ou
+		'autoindent' sont actives, elles influenceront la façon dont
+		le texte est inséré. Cette commande réagit donc différemment
+		des commandes de collage de texte, avec "p" ou par la souris.
+		Registres spéciaux :
+		    '"'	    le registre sans nom, contenant le dernier texte
+			       coupé ou copié
+		    '%'	    le nom du fichier courant
+		    '#'	    le nom du fichier alternatif
+		    '*'	    le contenu du presse-papiers
+		    '+'	    le contenu du presse-papiers (X11 : sélection
+			       primaire)
+		    '/'	    le dernier motif de recherche
+		    ':'	    la dernière ligne de commande
+		    '.'	    le dernier texte inséré
+		    '-'	    le dernier petit (moins d'une ligne) coupage
+		    '='	    le registre d'expression, contenant la dernière
+			       expression que vous avez été invité à entrer
+			       (voir |expression|)
+		Pour plus d'informations sur les registres, voir |registers|.
+		{absent de Vi}
+						*i_CTRL-R_CTRL-R*
+CTRL-R CTRL-R {0-9a-z"%#*+/:.-=}
+		Insère le contenu d'un registre. Fonctionne comme CTRL-R, mais
+		le texte est inséré littéralement, et non comme si vous
+		l'aviez saisi. Cela diffère lorsque le registre contient des
+		caractères comme <RetArr>. Par exemple, si le registre 'a'
+		contient "ab^Hc" : >
+			CTRL-R a		donne "ac"
+			CTRL-R CTRL-R a		donne "ab^Hc"
+<		Les options 'textwidth', 'formatoptions', etc. continuent de
+		s'appliquer. Si vous ne le souhaitez pas, utilisez
+		"CTRL-R CTRL-O r", voir ci-dessous. Le registre '.' (dernier
+		texte inséré) reste inséré comme si saisi. {absent de Vi}
+						*i_CTRL-R_CTRL-O*
+CTRL-R CTRL-O {0-9a-z"%#*+/:.-=}
+		Insère le contenu d'un registre littéralement et sans
+		auto-indentation. Identique à un collage avec la souris,
+		|<MiddleMouse>|.
+		Ne remplace pas de caractères !
+		Le registre '.' (dernier texte inséré) reste inséré comme si
+		saisi. {absent de Vi}
+						*i_CTRL-R_CTRL-P*
+CTRL-R CTRL-P {0-9a-z"%#*+/:.-=}
+		Insère le contenu d'un registre littéralement, en ajustant
+		l'indentation (identique à |[<MiddleMouse>|).
+		Ne remplace pas de caractères !
+		Le registre '.' (dernier texte inséré) reste inséré comme si
+		saisi. {absent de Vi}
+
+						*i_CTRL-T*
+CTRL-T		Insère une indentation de 'shiftwidth' au début de la ligne
+		courante. La valeur de l'indentation est toujours de
+		'shiftwidth' (compatible Vi). {Vi : fonctionne uniquement sur
+		l'indentation}
+						*i_CTRL-D*
+CTRL-D		Supprime une indentation de 'shiftwidth' au début de la ligne
+		courante. La valeur de l'indentation est toujours de
+		'shiftwidth' (compatible Vi). {Vi : CTRL-D fonctionne
+		uniquement après une auto-indentation}		     ["Delete"]
+						*i_0_CTRL-D*
+0 CTRL-D	Supprime toute indentation dans la ligne courante. {Vi :
+		CTRL-D fonctionne uniquement après une auto-indentation}
+						*i_^_CTRL-D*
+^ CTRL-D	Supprime toute indentation dans la ligne courante. Elle
+		sera restaurée ligne suivante. Utile lors de l'insertion d'une
+		liste d'étiquettes. {Vi : CTRL-D fonctionne uniquement après
+		une auto-indentation}
+
+						*i_CTRL-V*
+CTRL-V		Insère le prochain non-numérique littéralement. Pour les
+		touches spéciales, le code du terminal est inséré. Il est
+		également possible d'entrer la valeur décimale, octale ou
+		hexadécimale d'un caractère |i_CTRL-V_digit|.
+		Les caractères saisis juste après CTRL-V ne sont pas pris en
+		compte pour les mappages. {Vi : pas de valeur ASCII décimale}
+		NOTE : Lorsque CTRL-V est mappé (pour coller du texte,
+		p. ex.), vous pouvez souvent utiliser CTRL-Q à la place
+		|i_CTRL-Q|.
+
+						*i_CTRL-Q*
+CTRL-Q		Comme CTRL-V.
+		NOTE : Certaines connexions de terminaux se réservent la
+		séquence CTRL-Q, qui ne fonctionnera pas alors. Cela
+		fonctionnera toujours dans l'IHM graphique.
+
+CTRL-X		Entre dans le sous-mode CTRL-X. Vous pouvez alors spécifier
+		des commandes pour compléter des mots ou faire défiler la
+		fenêtre. Voir |i_CTRL-X| et |ins-completion|. {absent de Vi}
+
+						*i_CTRL-E*
+CTRL-E		Insère le caractère situé en dessous du curseur. {absent de Vi}
+						*i_CTRL-Y*
+CTRL-Y		Insère le caractère situé au-dessus du curseur. {absent de Vi}
+		NOTE : Pour CTRL-E et CTRL-Y, 'textwidth' n'est pas utilisé
+		afin de pouvoir recopier les caractères d'une ligne longue.
+
+						*i_CTRL-_*
+CTRL-_		Change de langue, comme suit :
+		- Dans une fenêtre 'rightleft', 'revins' et 'nohkmap' sont
+		  inversés, puisque des caractères latins vont probablement
+		  être insérés dans ce cas.
+		- Dans une fenêtre 'norightleft', 'revins' et 'hkmap' sont
+		  inversés, puisque de l'hébreu va probablement être inséré
+		  dans ce cas.
+		CTRL-_ déplace le curseur à la fin du texte saisi.
+		Cette commande est disponible uniquement lorsque l'option
+		'allowrevins' est activée.
+		Pour plus d'informations sur l'édition de droite à gauche,
+		voir |rileft.txt|. {absent de Vi}
+		{uniquement si compilé avec la fonctionnalité |+rightleft|, ce
+		qui n'est pas le cas par défaut}
+						*i_CTRL-^*
+CTRL-^		Inverse l'utilisation de la langue de saisie de caractères.
+		Lorsque des mappages de langue |:lmap| sont définis :
+		- Si 'iminsert' vaut 1 (mappages de langue utilisés), il est
+		  fixé à 0 (pas de mappages de langue).
+		- Si 'iminsert' ne vaut pas 1, il est fixé à 1 (les mappages
+		  de langue sont activés).
+		Lorsque aucun mappage de langue n'est défini :
+		- Si 'iminsert' vaut 2 (IM utilisée), il est fixé à 0 (pas de
+		  méthode de saisie utilisée).
+		- Si 'iminsert' possède une autre valeur, il est fixé à 2 (la
+		  méthode de saisie est activée).
+		Si fixé à 1, la valeur de la variable "b:keymap_name",
+		l'option 'keymap' ou "<lang>" XXX apparaît dans la ligne d'état.
+		Les mappages de langue sont normalement utilisés pour taper
+		des caractères qui diffèrent de ce que le clavier produit.
+		L'option 'keymap' peut être utilisée pour installer un grand
+		nombre d'entre eux. {absent de Vi}
+
+						*i_CTRL-]*
+CTRL-]		Développe une abréviation, sans insérer de caractère final.
+		{absent de Vi}
+
+						*i_<Insert>*
+<Inser>		Bascule entre les modes Insertion et Remplacement.
+		{absent de Vi}
+--------------------------------------------------------------------
+
+						*i_backspacing*
+L'effet de <RetArr>, CTRL-W et CTRL-U dépend de l'option 'backspace' (à moins
+que 'revins' ne soit activé). Il s'agit d'une liste d'items séparés par des
+virgules :
+
+	ITEM	 ACTION		    ~
+	indent	 autorise le retour arrière sur une auto-indentation
+	eol	 autorise le retour arrière sur une fin-de-ligne (fusionne)
+	start	 autorise le retour arrière avant la position d'où l'insertion
+		   avait débuté ; CTRL-W et CTRL-U s'arrêtent à cette position
+
+Si 'backspace' est vide, le retour arrière est compatible Vi : vous ne pouvez
+faire de retour arrière avant une auto-indentation, avant la colonne 1 ou
+avant d'où l'insertion avait débuté.
+
+Pour assurer la compatibilité ascendante, les valeurs "0", "1" et "2" sont
+également acceptées, voir |'backspace'|.
+
+Si l'option 'backspace' contient "eol" et que le curseur est sur la colonne 1
+lorsqu'une des trois touches est pressée, la ligne courante fusionne avec la
+précédente. Le <EOL> devant le curseur est effectivement supprimé. {Vi ne
+fusionne pas les lignes, ne supprime pas de texte avant la position initiale
+de l'insertion}
+
+						*i_CTRL-V_digit*
+Avec CTRL-V, la valeur décimale, octale ou hexadécimale d'un caractère peut
+être donnée directement. Par ce moyen, vous pouvez saisir n'importe quel
+caractère, sauf une coupure de ligne (<NL>, valeur 10). Il y a cinq façons
+d'entrer la valeur du caractère :
+
+	PREMIER CAR   MODE	  NB MAX DE CARS   VALEUR MAX	~
+	(aucun)	      décimal		3	   255
+	o ou O	      octal		3	   255
+	x ou X	      hexadécimal	2	   ff	    (255)
+	u	      hexadécimal	4	   ffff	    (65535)
+	U	      hexadécimal	8	   7fffffff (2147483647)
+
+Normalement, vous devriez taper le nombre maximum de caractères. Ainsi, pour
+saisir un espace (valeur 32), vous taperiez "<C-V>032". Vous pouvez cependant
+omettre le zéro initial, auquel cas le caractère saisi après le nombre ne doit
+pas être un chiffre. Ce comportement affecte également les autres modes : dès
+que vous saisissez un caractère invalide dans un mode, la valeur le précédant
+sera prise en compte et le caractère « invalide » sera ensuite traité
+normalement.
+
+Si vous entrez une valeur de 10, elle sera représentée comme un 0 dans le
+fichier. 10 correspond à <NL>, qui est utilisé en interne pour représenter le
+caractère <Nul>. Lorsque le tampon est écrit dans un fichier, le caractère
+<NL> est transformé en <Nul>. <NL> est écrit à la fin de chaque ligne. Ainsi,
+si vous voulez insérer un caractère <NL> dans un fichier, vous devrez faire
+une coupure de ligne.
+
+						*i_CTRL-X* *insert_expand*
+CTRL-X fait entrer dans un sous-mode où plusieurs commandes sont disponibles.
+La plupart de ces commandes effectuent le complètement d'un mot-clé.
+Elles ne sont pas présentes si Vim a été compilé sans la fonctionnalité
+|+insert_expand|.
+
+Deux commandes peuvent être utilisées pour faire défiler la fenêtre
+verticalement, sans quitter le mode Insertion :
+
+						*i_CTRL-X_CTRL-E*
+CTRL-X CTRL-E		Défile d'une ligne vers le haut.
+
+						*i_CTRL-X_CTRL-Y*
+CTRL-X CTRL-Y		Défile d'une ligne vers le bas.
+
+Après que CTRL-X a été pressé, chaque CTRL-E (resp. CTRL-Y) fait défiler la
+fenêtre d'une ligne vers le haut (resp. bas), à moins que ce défilement ne
+provoque le déplacement du curseur de sa position courante. Dès qu'une autre
+touche est pressée, le sous-mode CTRL-X est abandonné et cette touche est
+traitée normalement en mode Insertion.
+
+==============================================================================
+2. Touches spéciales spéciales				*ins-special-special*
+
+Les touches suivantes sont spéciales. Elles interrompent l'insertion courante,
+effectuent une action, puis relancent l'insertion. Cela veut dire que vous
+pouvez effectuer une action sans quitter le mode Insertion. C'est très commode
+si vous préférez utiliser le mode Insertion en permanence, comme dans les
+éditeurs qui n'ont pas de modes distincts Normal/Insertion. Vous voudrez alors
+probablement fixer l'option 'backspace' à "indent,eol,start" et activer
+l'option 'insertmode'. Vous pouvez utiliser CTRL-O pour mapper une touche de
+fonction à une commande.
+
+Les modifications (insertion ou suppression de caractères) effectuées avant et
+après la saisie de ces touches spéciales peuvent être annulées séparément.
+Seule la dernière modification peut être restaurée, et se comporte toujours
+comme une commande "i".
+
+CAR		ACTION						    ~
+--------------------------------------------------------------------
+<Haut>	       curseur une ligne en haut		     *i_<Up>*
+<Bas>	       curseur une ligne en bas			     *i_<Down>*
+CTRL-G <Haut>  une ligne en haut, col. de début d'insertion  *i_CTRL-G_<Up>*
+CTRL-G k       une ligne en haut, col. de début d'insertion  *i_CTRL-G_k*
+CTRL-G CTRL-K  une ligne en haut, col. de début d'insertion  *i_CTRL-G_CTRL-K*
+CTRL-G <Bas>   une ligne en bas, col. de début d'insertion   *i_CTRL-G_<Down>*
+CTRL-G j       une ligne en bas, col. de début d'insertion   *i_CTRL-G_j*
+CTRL-G CTRL-J  une ligne en bas, col. de début d'insertion   *i_CTRL-G_CTRL-J*
+<Gauche>       curseur un caractère à gauche		     *i_<Left>*
+<Droite>       curseur un caractère à droite		     *i_<Right>*
+<S-Gauche>     curseur un mot en arrière (comme "b")	     *i_<S-Left>*
+<C-Gauche>     curseur un mot en arrière (comme "b")	     *i_<C-Left>*
+<S-Droite>     curseur un mot en arrière(comme "w")	     *i_<S-Right>*
+<C-Droite>     curseur un mot en arrière(comme "w")	     *i_<C-Right>*
+<Debut>	       curseur au premier car de la ligne	     *i_<Home>*
+<Fin>	       curseur après le dernier car de la ligne      *i_<End>*
+<C-Debut>      curseur au premier car du fichier	     *i_<C-Home>*
+<C-Fin>	       curseur après le dernier car du fichier	     *i_<C-End>*
+<ClicGauche>   curseur à la position du clic de la souris    *i_<LeftMouse>*
+<S-Haut>       défile d'une page vers le haut		     *i_<S-Up>*
+<PagePrec>     défile d'une page vers le haut 		     *i_<PageUp>*
+<S-Bas>        défile d'une page vers le bas		     *i_<S-Down>*
+<PageSuiv>     défile d'une page vers le bas		     *i_<PageDown>*
+<MoletteBas>   défile de trois lignes vers le bas  	     *i_<MouseDown>*
+<S-MoletteBas> défile d'une page vers le bas		     *i_<S-MouseDown>*
+<MoletteHaut>  défile de trois lignes vers le haut	     *i_<MouseUp>*
+<S-MoletteHaut> défile d'une page vers le haut		     *i_<S-MouseUp>*
+CTRL-O	       exécute une cmd, revient au mode Insertion    *i_CTRL-O*
+--------------------------------------------------------------------
+
+NOTE : Si les touches fléchées vous font quitter le mode Insertion, vérifiez
+l'option 'noesckeys'.
+
+La commande CTRL-O a parfois un effet de bord : si le curseur était positionné
+après la fin de la ligne, il sera déplacé sur le dernier caractère de la
+ligne. Les séquences Maj-Curseur ne sont pas disponibles sur tous les
+terminaux.
+
+Lorsque l'option 'whichwrap' est fixée de manière appropriée, la touche
+<Gauche> (resp. <Droite>) sur le premier (resp. dernier) caractère de la ligne
+permet de se déplacer sur la ligne précédente (resp. suivante).
+
+Les commandes "CTRL-G j" et "CTRL-G k" peuvent être utilisées pour insérer un
+texte devant une colonne. Exemple :
+	int i; ~
+	int j; ~
+Placez le curseur sur le premier "int", tapez "istatic<C-G>j       ". Le
+résultat sera :
+	static int i; ~
+	       int j; ~
+Si vous voulez insérer le même texte au début d'une colonne dans chaque ligne,
+utilisez la commande "I" du mode Visuel par blocs |v_b_I|.
+
+==============================================================================
+3. Options 'textwidth' et 'wrapmargin'			*ins-textwidth*
+
+L'option 'textwidth' peut servir à provoquer la coupure automatique des lignes
+avant qu'elles ne deviennent trop longues. Fixez cette option au nombre
+maximum de caractères désirés par ligne. Si vous entrez plus de caractères
+(espaces ou tabulations exclues), le dernier mot sera alors placé sur une
+nouvelle ligne (à moins que ce ne soit le seul mot de la ligne). Si
+'textwidth' vaut 0, cette fonctionnalité est désactivée.
+
+L'option 'wrapmargin' fait presque la même chose. La différence est que
+'textwidth' est une largeur fixe, tandis que 'wrapmargin' dépend de la largeur
+de l'écran. L'utilisation de 'wrapmargin' est équivalente à celle de
+'textwidth' fixé à "col - 'wrapmargin'", où col correspond à la largeur de
+l'écran.
+
+Si 'textwidth' et 'wrapmargin' sont fixés tous les deux, 'textwidth' est
+utilisée.
+
+Si vous ne désirez pas vraiment provoquer une coupure de ligne, mais voir
+enrouler la ligne à l'endroit approprié, reportez-vous à l'option 'linebreak'.
+
+La ligne est coupée automatiquement uniquement en mode Insertion ou lorsqu'on
+y ajoute du texte. En mode Remplacement, si la longueur de la ligne n'est pas
+changée, elle ne sera pas coupée.
+
+Les lignes longues sont coupées lorsque vous entrez un caractère non-blanc
+dépassant la largeur autorisée. Les situations où une ligne sera coupée
+peuvent être limitées en ajoutant des drapeaux à l'option 'formatoptions' :
+"l"  Coupe une ligne uniquement si elle n'était pas plus large que 'textwidth'
+     lorsque l'insertion a débuté.
+"v"  Coupe uniquement sur un caractère blanc entré lors de l'insertion
+     courante. C'est en général compatible Vi.
+"lv" Coupe une ligne uniquement si elle n'était pas plus large que 'textwidth'
+     lorsque l'insertion a débuté et sur un caractère blanc entré lors de
+     cette insertion. Diffère de "l" lorsque seuls des caractères non-blancs
+     sont entrés qui font dépasser la largeur autorisée par 'textwidth'.
+
+Si vous désirez mettre en forme un bloc de texte, vous pouvez utiliser
+l'opérateur "gq". Tapez "gq" suivi d'une commande de mouvement pour déplacer
+le curseur à la fin du bloc. La plupart du temps, vous voudrez employer la
+commande "gq}" (mettre en forme jusqu'à la fin du paragraphe courant) ; ou
+bien "gqap", qui mettra en forme tout le paragraphe, indépendamment de la
+position du curseur. Vous pouvez également utiliser le mode Visuel : tapez
+"v", déplacez-vous à la fin du bloc, puis tapez "gq". Voir aussi |gq|.
+
+==============================================================================
+4. Options 'expandtab', 'smarttab' et 'softtabstop'	*ins-expandtab*
+
+Si l'option 'expandtab' est activée, des espaces seront utilisés pour remplir
+le blanc d'une tabulation. Si vous voulez entrer une vraie <Tab>ulation,
+saisissez d'abord CTRL-V (utilisez CTRL-Q lorsque CTRL-V est mappé
+|i_CTRL-Q|). Par défaut, l'option 'expandtab' est désactivée.
+   NOTE : En mode Remplacement, un caractère unique sera remplacé par
+plusieurs espaces, ce qui entraînera une augmentation du nombre de caractères
+de la ligne. Un retour arrière supprimera un seul espace à la fois. Le
+caractère initial sera restauré lorsque vous supprimerez le dernier espace.
+{Vi n'a pas d'option 'expandtab'}
+
+							*ins-smarttab*
+Si l'option 'smarttab' est activée, <Tab> insérera 'shiftwidth' positions en
+début de ligne, et 'tabstop' positions ailleurs. Cela implique que des espaces
+blancs seront souvent utilisés au lieu de caractères de tabulation.
+Si 'smarttab' est désactivé, <Tab> insérera toujours 'tabstop' positions, et
+'shiftwidth' ne sera utilisée que pour les commandes comme ">>". {absent de Vi}
+
+							*ins-softtabstop*
+Si l'option 'softtabstop' est non-nulle, <Tab> insérera 'softtabstop'
+positions, et <RetArr> utilisé pour supprimer un espace blanc supprimera
+'softtabstop' positions. C'est comme si 'tabstop' était fixé à 'softtabstop',
+mais un caractère <Tab> recouvrira toujours 'tabstop' positions. Votre fichier
+continuera donc de paraître correct utilisé par d'autres applications.
+
+Si 'softtabstop' est non-nul, <RetArr> essaiera de supprimer les espaces
+blancs jusqu'à la position 'softtabstop' précédente, sauf si le dernier
+caractère inséré est un espace, auquel cas seul celui-ci sera supprimé. Sans
+cela, vous ne pouvez pas toujours supprimer un caractère unique devant le
+curseur : vous devrez supprimer 'softtabstop' caractères d'abord, et entrer
+ensuite le nombre d'espaces nécessaire pour vous placer à la position désirée.
+
+==============================================================================
+5. Mode Remplacement		    *Replace* *Replace-mode* *mode-replace*
+
+On passe en mode Remplacement avec la commande "R" en mode Normal.
+
+En mode Remplacement, chaque caractère que vous saisissez supprime un
+caractère de la ligne. S'il n'y a pas de caractère à supprimer (à la fin de la
+ligne), le caractère saisi est ajouté (comme en mode Insertion). Ainsi, le
+nombre de caractères dans une ligne reste identique jusqu'à ce que vous
+parveniez à sa fin. Si un <NL> est entré, une coupure de ligne est insérée et
+aucun caractère n'est supprimé.
+
+Attention aux caractères <Tab> : si vous entrez un caractère imprimable normal
+à la place, le nombre de caractères restera identique, mais le nombre de
+colonnes sera réduit.
+
+Si vous essayez de supprimer des caractères en mode Remplacement (avec
+<RetArr>, CTRL-W, ou CTRL-U), vous supprimerez en fait vos modifications. Les
+caractères remplacés seront restaurés. Les caractères que vous avez saisis à
+la suite du texte existant seront supprimés, caractère par caractère.
+
+Si l'option 'expandtab' est activée, <Tab> remplacera un caractère par
+plusieurs espaces. Il en résultera une augmentation du nombre de caractères
+dans la ligne. <RetArr> supprimera un espace à la fois. Le caractère initial
+sera restauré lorsque vous supprimerez le dernier espace. {Vi n'a pas d'option
+'expandtab'}
+
+==============================================================================
+6. Mode Remplacement Virtuel		*vreplace-mode* *Virtual-Replace-mode*
+
+On passe en mode Remplacement Virtuel avec la commande "gR" en mode Normal.
+
+{Vi n'a pas de mode Remplacement Virtuel}
+{uniquement si compilé avec la fonctionnalité |+vreplace|}
+
+Le mode Remplacement Virtuel est similaire au mode Remplacement, mais au lieu
+de remplacer les caractères réels dans le fichier, vous en remplacez l'état
+visible à l'écran, de telle sorte que les caractères suivants dans le fichier
+ne subiront jamais de déplacement à l'écran (la structure du texte est
+conservée).
+
+Ainsi, si vous saisissez <Tab>, plusieurs caractères normaux peuvent être
+remplacés, mais si vous saisissez une lettre au début d'une tabulation, rien
+ne sera remplacé, puisque la tabulation remplira toujours les mêmes blancs à
+l'écran qu'avant.
+
+Saisir un <NL> ne déplacera pas non plus les caractères plus loin dans le
+fichier. Le reste de la ligne courante sera remplacé par le <NL> (c.-à-d. sera
+supprimée) et le remplacement continuera sur la ligne suivante. Il n'y aura
+PAS de nouvelle ligne insérée, à moins que vous ne dépassiez la fin du
+fichier.
+
+L'utilisation de CTRL-T et CTRL-D produit des effets intéressants : les
+caractères avant le curseur sont décalés comme à la normale, mais ceux plus
+loin dans la ligne restent à la même place. Avec CTRL-T, une partie de
+l'ancienne ligne sera masquée par les caractères décalés, qui sera découverte
+à nouveau avec CTRL-D.
+
+Comme en mode Remplacement, l'utilisation de <RetArr>, etc. restaurera les
+caractères remplacés. Cela fonctionne encore en conjonction avec
+'smartindent', CTRL-T et CTRL-D, 'expandtab', 'smarttab', 'softtabstop', etc.
+
+En mode 'list', le mode Remplacement Virtuel se comporte comme si l'on n'était
+pas en mode 'list', à moins que 'L' ne soit inclus dans 'cpoptions'.
+
+NOTE : Les seules fois où les caractères suivant le curseur pourront
+apparaître déplacés sont en mode 'list', et occasionnellement si 'wrap' est
+activé (et que les lignes ont changé de longueur pour devenir plus ou moins
+large que la largeur de l'écran), ou momentanément si vous tapez par-dessus un
+caractère CTRL. Un caractère CTRL occupe deux espaces d'écran. Quand vous le
+remplacez par deux caractères normaux, le premier sera inséré et le second
+remplacera le caractère CTRL.
+
+Ce mode est très utile pour éditer des colonnes séparées par des <Tab> dans
+des tableaux, ou pour entrer de nouvelles données sans modifier l'alignement
+des colonnes.
+
+==============================================================================
+7. Complètement en mode Insertion			*ins-completion*
+
+En mode Insertion et Remplacement, il existe plusieurs commandes pour
+compléter une partie d'un mot-clé ou d'une ligne qui ont été saisis. C'est
+utile si vous utilisez des mots-clés complexes (p. ex., des noms de fonctions
+avec des majuscules ou des '_').
+
+{uniquement si compilé avec la fonctionnalité |+insert_expand|}
+
+Le complètement peut porter sur des :
+
+ 1. Lignes entières					|i_CTRL-X_CTRL-L|
+ 2. Mots-clés dans le fichier courant			|i_CTRL-X_CTRL-N|
+ 3. Mots-clés dans 'dictionary'				|i_CTRL-X_CTRL-K|
+ 4. Mots-clés dans 'thesaurus', de style thésaurus	|i_CTRL-X_CTRL-T|
+ 5. Mots-clés dans les fichiers courants et inclus	|i_CTRL-X_CTRL-I|
+ 6. Marqueurs						|i_CTRL-X_CTRL-]|
+ 7. Noms de fichiers					|i_CTRL-X_CTRL-F|
+ 8. Définitions ou macros				|i_CTRL-X_CTRL-D|
+ 9. Commandes de la ligne de commande Vim		|i_CTRL-X_CTRL-V|
+10. Mots-clés dans 'complete'				|i_CTRL-N|
+
+Toutes ces commandes (sauf la 2) sont faites dans le mode CTRL-X. C'est un
+sous-mode des modes Insertion et Remplacement. On entre dans le mode CTRL-X en
+tapant CTRL-X puis une des commandes CTRL-X ; on en sort en tapant une touche
+invalide dans le mode CTRL-X. Les touches valides sont la commande CTRL-X
+elle-même, CTRL-N ["Next", « suivant »] et CTRL-P [« Précédent »].
+
+Voir aussi l'option 'infercase' si vous souhaitez ajuster la casse de la
+correspondance.
+
+NOTE : Les touches valides dans le mode CTRL-X ne sont pas mappées. Cela
+permet à ":map ^F ^X^F" de fonctionner (où ^F désigne CTRL-F et ^X CTRL-X).
+La touche qui termine le mode CTRL-X (n'importe quelle touche invalide dans ce
+mode) est mappée. En outre, lors d'un complètement avec 'complete', les
+mappages s'appliquent comme d'habitude.
+
+Les mappages suivants sont recommandés pour rendre la saisie des commandes
+de complètement un peu plus facile (bien qu'ils recouvreront d'autres
+commandes) : >
+	:inoremap ^] ^X^]
+	:inoremap ^F ^X^F
+	:inoremap ^D ^X^D
+	:inoremap ^L ^X^L
+
+Cas particulier : la saisie de CTRL-R pour insérer le contenu d'un registre
+(voir |i_CTRL-R|) ne fera pas sortir du mode CTRL-X. Cela sert principalement
+à permettre au registre '=' d'appeler une fonction pour déterminer l'opération
+suivante. Si le contenu du registre (ou le résultat de l'évaluation du
+registre '=') ne sont pas des touches valides en mode CTRL-X, alors le mode
+CTRL-X sera quitté comme si ces touches avaient été pressées.
+
+Par exemple, le texte suivant mappera <Tab> soit au <Tab> actuel si la ligne
+courante ne contient que des espaces blancs, soit sinon à CTRL-N, pour lancer
+ou continuer une opération de complètement : >
+
+	function! TabIntelli()
+	   if strpart( getline('.'), 0, col('.')-1 ) =~ '^\s*$'
+	      return "\<Tab>"
+	   else
+	      return "\<C-N>"
+	endfunction
+	inoremap <Tab> <C-R>=TabIntelli()<CR>
+
+
+COMPLÉTER DES LIGNES ENTIÈRES				*compl-whole-line*
+
+							*i_CTRL-X_CTRL-L*
+CTRL-X CTRL-L		Recherche vers l'arrière une ligne qui débute avec les
+			mêmes caractères que ceux de la ligne courante avant
+			le curseur. L'indentation est ignorée. La ligne
+			trouvée est insérée devant le curseur.
+			L'option 'complete' est utilisée pour décider dans
+			quels tampons une correspondance est recherchée. Mais
+			seuls les tampons chargés sont utilisés.
+	CTRL-L	ou
+	CTRL-P		Recherche vers l'arrière la ligne correspondante
+			suivante. Cette ligne remplace la précédente ligne
+			correspondante.
+
+	CTRL-N		Recherche vers l'avant la ligne correspondante
+			suivante. Cette ligne remplace la prochaine ligne
+			correspondante.
+
+	CTRL-X CTRL-L	Après le complètement d'une ligne, vous pouvez en plus
+			obtenir la ligne qui suit en tapant "CTRL-X CTRL-L" à
+			nouveau, à moins que deux CTRL-X ne soient saisis.
+
+
+COMPLÉTER DES MOTS-CLÉS DANS LE FICHIER COURANT		*compl-current*
+
+							*i_CTRL-X_CTRL-N*
+CTRL-X CTRL-N		Recherche vers l'avant les mots qui débutent par le
+			mot-clé devant le curseur. Le mot-clé trouvé est
+			inséré devant le curseur.		       ["Next"]
+							*i_CTRL-X_CTRL-P*
+CTRL-X CTRL-P		Recherche vers l'arrière les mots qui débutent par le
+			mot-clé devant le curseur. Le mot-clé trouvé est
+			inséré devant le curseur.		   ["Previous"]
+
+	CTRL-N		Recherche vers l'avant le mot-clé correspondant
+			suivant. Ce mot-clé remplace le prochain mot-clé
+			correspondant.
+
+	CTRL-P		Recherche vers l'arrière le mot-clé correspondant
+			suivant. Ce mot-clé remplace le précédent mot-clé
+			correspondant.
+
+	CTRL-X CTRL-N  ou
+	CTRL-X CTRL-P	La répétition de "CTRL-X CTRL-N" ou "CTRL-X CTRL-P"
+			copiera à la suite les mots suivant le précédent
+			complètement, à moins que deux CTRL-X ne soient
+			saisis.
+
+S'il y a un mot-clé devant le curseur (un mot composé de caractères
+alphabétiques et dans 'iskeyword'), il est utilisé comme motif de recherche,
+avec "\<" (signifie début de mot) ajouté devant. Sinon, "\<\k\k" est utilisé
+comme motif de recherche (début de n'importe quel mot-clé de deux caractères
+au moins).
+
+En mode Remplacement, le nombre de caractères remplacés dépend de la longueur
+de la chaîne correspondante. Cela fonctionne comme en tapant les caractères de
+la chaîne correspondante en mode Remplacement.
+
+S'il n'y a pas de mot-clé valide devant le curseur, n'importe quel mot-clé de
+deux caractères au moins pourra correspondre.
+   Par exemple, pour obtenir
+	printf("(%g, %g, %g)", vecteur[0], vecteur[1], vecteur[2]); ~
+il suffit de taper : >
+	printf("(%g, %g, %g)", vecteur[0], ^P[1], ^P[2]);
+
+Les répétitions du même motif de complètement sont ignorées ; ainsi, une
+correspondance différente sera insérée à chaque CTRL-N ou CTRL-P (à moins
+qu'il n'existe qu'un mot-clé correspondant).
+
+Les correspondances d'un seul caractère ne sont jamais incluses, puisqu'elles
+ne correspondent normalement pas à ce que vous désirez obtenir.
+   Par exemple, pour obtenir
+	printf("nom = %s\n", nom); ~
+il suffit de taper >
+	printf("nom = %s\n", n^P);
+ou tout simplement : >
+	printf("nom = %s\n", ^P);
+Le 'n' de "\n" n'est pas pris en compte.
+
+Après le complètement d'un mot, vous pouvez utiliser "CTRL-X CTRL-P" ou
+"CTRL-X CTRL-N" pour reporter le mot suivant le complètement. Ces séquences
+recherchent le dernier texte complété et y rajoutent un mot supplémentaire.
+C'est utile si vous devez répéter une séquence de mots complexes. Bien que
+CTRL-P et CTRL-N ne recherchent que des chaînes de deux caractères au moins,
+"CTRL-X CTRL-P" et "CTRL-X CTRL-N" peuvent compléter des mots d'un seul
+caractère.
+   Par exemple, pour obtenir
+	M&eacute;rovingiens ~
+vous pouvez taper : >
+	M^N^P^X^P^X^P
+CTRL-N lance le complètement, puis CTRL-P recherche vers l'arrière le dernier
+caractère 'M', et les deux "CTRL-X CTRL-P" suivants donnent les mots "&eacute"
+et ";rovingiens".
+
+Si le complètement précédent était coupé parce qu'il devenait plus long que
+'textwidth', alors seul le texte de la ligne courante sera utilisé.
+
+Si la correspondance trouvée est à la fin d'une ligne, le premier mot de la
+ligne suivante sera inséré et le message "word from next line" affiché. Si ce
+mot est accepté, le "CTRL-X CTRL-P" ou "CTRL-X CTRL-N" suivant recherchera les
+lignes débutant par ce mot.
+
+
+COMPLÉTER DES MOTS-CLÉS DANS 'dictionary'		*compl-dictionary*
+
+							*i_CTRL-X_CTRL-K*
+CTRL-X CTRL-K		Recherche les mots qui débutent par le mot-clé sous le
+			curseur dans les fichiers donnés avec l'option
+			'dictionnary'. Comme CTRL-N, mais seuls les fichiers
+			dictionnaires sont utilisés, pas le fichier courant.
+			Le mot-clé trouvé est inséré devant le curseur. Cette
+			commande peut être assez lente, car toutes les
+			correspondances sont recherchées avant que la première
+			ne soit utilisée. Par défaut, 'dictionnary' est vide.
+			Pour savoir où vous pourrez trouvez une liste de mots
+			pour votre dictionnaire, voir l'option 'dictionary'.
+								    ["Keyword"]
+	CTRL-K	ou
+	CTRL-N		Recherche vers l'avant le mot-clé correspondant
+			suivant. Ce mot-clé remplace le prochain mot-clé
+			correspondant.				       ["Next"]
+
+	CTRL-P		Recherche vers l'arrière le mot-clé correspondant
+			suivant. Ce mot-clé remplace le précédent mot-clé
+			correspondant.
+
+							*i_CTRL-X_CTRL-T*
+CTRL-X CTRL-T		Fonctionne comme "CTRL-X CTRL-K", mais d'une façon
+			spéciale. L'option 'thesaurus' est utilisée au lieu de
+			'dictionary'. Si une correspondance est trouvée dans
+			un fichier thésaurus, tous les autres mots de la même
+			ligne sont pris comme correspondances, même s'ils ne
+			complètent pas le mot-clé. Ainsi, un mot peut être
+			intégralement remplacé.
+
+			En guise d'exemple, imaginez que le fichier 'thesaurus'
+			contienne une ligne comme celle-ci :
+				verbeux volubile prolixe loquace disert ~
+			Si vous placez le curseur à la suite des lettres "ver"
+			et que vous tapez "CTRL-X CTRL-T", vous obtiendrez
+			"verbeux" ; si vous recommencez, le mot sera changé en
+			"volubile", "prolixe", etc.
+			Des utilisations telles que la traduction entre deux
+			langues ou le groupement de fonctions API par
+			mots-clés sont ainsi possibles.
+	CTRL-T	ou
+	CTRL-N		Recherche vers l'avant le mot-clé correspondant
+			suivant. Ce mot-clé remplace le prochain mot-clé
+			correspondant.				       ["Next"]
+
+	CTRL-P		Recherche vers l'arrière le mot-clé correspondant
+			suivant. Ce mot-clé remplace le précédent mot-clé
+			correspondant.
+
+
+COMPLÉTER DES MOTS-CLÉS DANS LES FICHIERS COURANTS ET INCLUS	*compl-keyword*
+
+L'option 'include' est utilisée pour spécifier une ligne qui contient un nom
+de fichier inclus. L'option 'path' est utilisée pour rechercher des fichiers
+inclus.
+
+							*i_CTRL-X_CTRL-I*
+CTRL-X CTRL-I		Recherche le premier mot-clé qui débute par les mêmes
+			caractères que ceux sous le curseur dans les fichiers
+			courant et inclus. Le mot-clé correspondant est inséré
+			devant le curseur.
+
+	CTRL-N		Recherche vers l'avant le mot-clé correspondant
+			suivant. Ce mot-clé remplace le précédent mot-clé
+			correspondant.
+			NOTE : CTRL-I est identique à <Tab>, qui est
+			susceptible d'être tapé après un complètement réussi,
+			c'est pourquoi CTRL-I n'est pas utilisé pour
+			rechercher la correspondance suivante.	       ["Next"]
+
+	CTRL-P		Recherche vers l'arrière le mot-clé correspondant
+			suivant. Ce mot-clé remplace le précédent mot-clé
+			correspondant.
+
+	CTRL-X CTRL-I	La répétition de "CTRL-X CTRL-I" copiera à la suite
+			les mots suivant le précédent complètement, à moins
+			que deux CTRL-X ne soient saisis.
+
+
+COMPLÉTER DES MARQUEURS					*compl-tag*
+
+							*i_CTRL-X_CTRL-]*
+CTRL-X CTRL-]		Recherche le premier marqueur qui débute par les
+			mêmes caractères que ceux sous le curseur. Le marqueur
+			correspondant est inséré devant le curseur. Les
+			caractères alphabétiques et les caractères dans
+			'iskeyword' sont utilisés pour définir quels
+			caractères composent un marqueur (comme pour un
+			mot-clé). Voir aussi |CTRL-]|.
+			L'option 'showfulltag' peut être utilisée pour inclure
+			des caractères d'autour la définition du marqueur.
+	CTRL-]	ou
+	CTRL-N		Recherche vers l'avant le marqueur correspondant
+			suivant. Ce marqueur remplace le prochain marqueur
+			correspondant.				       ["Next"]
+
+	CTRL-P		Recherche vers l'arrière le marqueur correspondant
+			précédent. Ce marqueur remplace le précédent marqueur
+			correspondant.
+
+
+COMPLÉTER DES NOMS DE FICHIERS				*compl-filename*
+
+							*i_CTRL-X_CTRL-F*
+CTRL-X CTRL-F		Recherche le premier nom de fichier qui débute par les
+			mêmes caractères que ceux sous le curseur. Le nom de
+			fichier correspondant est inséré devant le curseur.
+			Les caractères alphabétiques et les caractères dans
+			'isfname' sont utilisés pour définir quels caractères
+			composent un nom de fichier.
+			NOTE : L'option 'path' n'est pas (encore) utilisée
+			ici.
+	CTRL-F	ou
+	CTRL-N		Recherche vers l'avant le nom de fichier correspondant
+			suivant. Ce nom de fichier remplace le prochain nom
+			de fichier correspondant.		       ["Next"]
+
+	CTRL-P		Recherche vers l'arrière le nom de fichier
+			correspondant précédent. Ce nom de fichier remplace le
+			précédent nom de fichier correspondant.
+
+
+COMPLÉTER DES DÉFINITIONS OU DES MACROS			*compl-define*
+
+L'option 'define' est utilisée pour spécifier une ligne qui contient une
+définition. L'option 'include' est utilisée pour spécifier une ligne qui
+contient un nom de fichier inclus. L'option 'path' est utilisée pour
+rechercher des fichiers inclus.
+
+							*i_CTRL-X_CTRL-D*
+CTRL-X CTRL-D		Recherche le premier nom de définition (ou macro) qui
+			débute par les mêmes caractères que ceux sous le
+			curseur dans les fichiers courant et inclus. Le nom de
+			définition correspondant est inséré devant le curseur.
+	CTRL-D	ou
+	CTRL-N		Recherche vers l'avant le nom de macro suivant. Ce nom
+			de macro remplace le prochain nom de macro
+			correspondant.				       ["Next"]
+
+	CTRL-P		Recherche vers l'arrière le nom de macro précédent. Ce
+			nom de macro remplace le précédent nom de macro
+			correspondant.
+
+	CTRL-X CTRL-D	La répétition de "CTRL-X CTRL-D" copiera à la suite
+			les mots suivant le précédent complètement, à moins
+			que deux CTRL-X ne soient saisis.
+
+
+COMPLÉTER DES COMMANDES DE LA LIGNE DE COMMANDE VIM	*compl-vim*
+
+Le complètement est sensible au contexte. Il fonctionne comme à la ligne de
+commande : il complète une commande Ex aussi bien que ses arguments.
+
+							*i_CTRL-X_CTRL-V*
+CTRL-X CTRL-V		Devine quel type d'élément est devant le curseur et en
+			trouve la première définition.
+			NOTE : Lorsque CTRL-V est mappé, vous pouvez souvent
+			utiliser CTRL-Q à la place |i_CTRL-Q|.
+	CTRL-V	ou
+	CTRL-N		Recherche vers l'avant la correspondance suivante.
+			Cette correspondance remplace la suivante.     ["Next"]
+
+	CTRL-P		Recherche vers l'arrière la correspondance précédente.
+			Cette correspondance remplace la précédente.
+
+	CTRL-X CTRL-V	La répétition de "CTRL-X CTRL-V" fera la même chose
+			que CTRL-V. Cela permettra de mapper une touche pour
+			compléter des commandes Vim, par exemple : >
+				:imap <Tab> <C-X><C-V>
+
+
+COMPLÉTER DES MOTS-CLÉS DEPUIS DIFFÉRENTES SOURCES	*compl-generic*
+
+							*i_CTRL-N*
+CTRL-N			Trouve la correspondance suivante pour les mots qui
+			débutent par le mot-clé sous le curseur, en balayant
+			les endroits donnés par l'option 'complete'. Le
+			mot-clé trouvé est inséré devant le curseur.   ["Next"]
+
+							*i_CTRL-P*
+CTRL-P			Trouve la correspondance précédente pour les mots qui
+			débutent par le mot-clé sous le curseur, en balayant
+			les endroits donnés par l'option 'complete'. Le
+			mot-clé trouvé est inséré devant le curseur.
+
+	CTRL-N		Recherche vers l'avant le mot-clé correspondant
+			suivant. Ce mot-clé remplace le prochain mot-clé
+			correspondant.
+
+	CTRL-P		Recherche vers l'arrière le mot-clé correspondant
+			suivant. Ce mot-clé remplace le précédent mot-clé
+			correspondant.
+
+	CTRL-X CTRL-N  ou
+	CTRL-X CTRL-P	La répétition de "CTRL-X CTRL-N" ou "CTRL-X CTRL-P"
+			copiera à la suite les mots suivant le précédent
+			complètement, à moins que deux CTRL-X ne soient
+			saisis.
+
+==============================================================================
+8. Commandes pour le mode Insertion			*inserting*
+
+Les commandes suivantes peuvent être utilisées pour insérer du nouveau texte
+dans le tampon. Elles peuvent toutes être annulées et répétées avec la
+commande ".".
+
+							*a*
+a			Ajoute du texte après le curseur [quant] fois.
+
+							*A*
+A			Ajoute du texte à la fin de la ligne [quant] fois.
+
+<Inser>		ou					*i* *insert* *<Insert>*
+i			Insère du texte avant le curseur [quant] fois.
+			Lorsque CTRL-O est utilisé en mode Insertion
+			|i_CTRL-O|, le quantificateur n'est pas supporté.
+
+							*I*
+I			Insère du texte avant le premier non-blanc de la ligne
+			[quant] fois.
+
+							*gI*
+gI			Insère du texte à la colonne 1 [quant] fois.
+			{absent Vi}
+
+							*gi*
+gi			Insère du texte à la position où le mode Insertion
+			avait été quitté la dernière fois dans le tampon
+			courant.
+			La marque |'^| est utilisée. Différent de "`^i" si la
+			marque est après la fin de la ligne.
+			La position est corrigée selon les lignes
+			insérées/supprimées, mais PAS selon les caractères
+			insérés/supprimés.
+			{absent de Vi}
+
+							*o*
+o			Ouvre une nouvelle ligne en dessous du curseur et y
+			insère du texte, [quant] fois.
+			{Vi : efface [quant] lignes d'écran}
+
+							*O*
+O			Ouvre une nouvelle ligne au-dessus du curseur et y
+			insère du texte, [quant] fois.
+			{Vi : efface [quant] lignes d'écran}
+
+Ces commandes sont utilisées pour débuter l'insertion de texte. Vous pouvez
+quitter le mode Insertion en pressant <Echap>. Voir |mode-ins-repl| pour les
+autres caractères spéciaux du mode Insertion. Le paramètre [quant] prend effet
+après la sortie du mode Insertion.
+
+Si 'autoindent' est activé, l'indentation de la nouvelle ligne est obtenue à
+partie de la ligne précédente. Si 'smartindent' ou 'cindent' sont activés,
+l'indentation d'une ligne est automatiquement ajustée pour les programmes C.
+
+'textwidth' peut être fixé à la largeur maximum d'une ligne. Lorsqu'une ligne
+devient trop longue en y ajoutant des caractères, une coupure est faite
+automatiquement.
+
+==============================================================================
+9. Commandes d'insertion Ex				*inserting-ex*
+
+							*:a* *:append*
+:{plage}a[ppend]	Insère plusieurs lignes de texte sous la ligne
+			spécifiée. Si {plage} n'est pas précisée, le texte
+			sera inséré après la ligne courante.
+
+							*:i* *:in* *:insert*
+:{plage}i[nsert]	Insère plusieurs lignes de texte au-dessus de la ligne
+			spécifiée. Si {plage} n'est pas précisée, le texte
+			sera inséré avant la ligne courante.
+
+Ces deux commandes liront les lignes que vous leur entrerez jusqu'à ce que
+vous entriez une ligne contenant un simple point ('.'). Faites attention aux
+lignes débutant par une contre-oblique (voir |line-continuation|).
+   NOTE : ":append" et ":insert" ne fonctionnent pas correctement entre un
+":if" et un ":endif".
+
+						*:start* *:startinsert*
+:star[tinsert][!]	Lance le mode Insertion immédiatement. Fonctionne
+			comme "i" en mode Normal. Si [!] est inclus,
+			fonctionne comme "A" (ajoute à la fin de la ligne).
+			Sinon, l'insertion débute à la position du curseur.
+			NOTE : Lors de l'utilisation de cette commande dans un
+			script ou une fonction, l'insertion débute uniquement
+			après que le script ou la fonction ne se termine.
+			{absent de Vi} {uniquement si compilé avec la
+			fonctionnalité |+ex_extra|}
+
+						*:stopi* *:stopinsert*
+:stopi[nsert]		Quitte le mode Insertion dès que possible. Revient à
+			saisir <Echap> en mode Insertion.
+			Peut être utilisé dans une autocommande. Exemple : >
+				:au BufEnter brouillon stopinsert
+
+==============================================================================
+10. Insertion d'un fichier  				*inserting-file*
+
+							*:r* *:re* *:read*
+:r[ead] [fich]		Insère le fichier [fich] (défaut : fichier courant)
+			sous le curseur.
+
+:{plage}r[ead] [fich]	Insère le fichier [fich] (défaut : fichier courant)
+			sous la ligne spécifiée.
+
+							*:r!* *:read!*
+:r[ead] !{cmd}		Exécute {cmd} et insère sa sortie standard sous le
+			curseur. Un fichier temporaire est utilisé pour
+			enregistrer la sortie de la commande, qui est ensuite
+			lu dans le tampon. 'shellredir' est utilisé pour
+			enregistrer la sortie de la commande, en y incluant la
+			sortie d'erreur ou non.
+			{cmd} est exécuté comme avec ":!{cmd}", tout '!' est
+			remplacé par la commande précédente |:!|.
+
+Ces commandes insèrent le contenu d'un fichier ou la sortie d'une commande
+dans le tampon. Elles peuvent être annulées, mais pas répétées avec la
+commande ".". Elles fonctionnent par lignes entières, l'insertion débutant
+sous la ligne courante, ou sous celle spécifiée. Pour insérer du texte
+au-dessus de la première ligne, utilisez la commande ":0r {fich}".
+
+Après la commande ":read", le curseur est placé sur le premier non-blanc de la
+première des lignes insérées. Sauf en mode Ex, où le curseur est placé sur la
+dernière des lignes insérées (désolé, mais c'est compatible Vi).
+
+Si un nom de fichier est donné avec ":r", il devient le fichier alternatif.
+Cela peut être utilisé, par exemple, lorsque vous voulez éditer ce fichier :
+":e! #". Ce comportement peut être désactivé en supprimant le drapeau 'a' de
+l'option 'cpoptions'.
+
+							*file-read*
+L'option 'fileformat' fixe le style des <EOL> pour un fichier :
+	'fileformat'   CARACTÈRES	  NOM	     ~
+	"dos"	       <CR><NL> ou <NL>	  format DOS
+	"unix"	       <NL>		  format Unix
+	"mac"	       <CR>		  format Mac
+L'option 'textmode', qui était utilisée auparavant, est aujourd'hui obsolète.
+
+Si 'fileformat' vaut "dos", un <CR> devant un <NL> est ignoré et un CTRL-Z
+à la fin du fichier est ignoré.
+
+Si 'fileformat' vaut "mac", un <NL> dans le fichier est représenté en interne
+par un <CR>. Ceci afin d'éviter la confusion avec un <NL> utilisé pour
+représenter un <NUL>. Voir |CR-used-for-NL|.
+
+Si l'option 'fileformats' n'est pas vide, Vim essaie de détecter le type des
+<EOL> (voir |file-formats|). De toute façon, l'option 'fileformat' ne sera pas
+modifiée, le format détecté est uniquement utilisé lors de la lecture du
+fichier.
+   L'option 'fileencodings' est traitée de façon similaire.
+
+Sur les systèmes non-MS-DOS ou -Win32 ou -OS/2, le message "[dos format]"
+apparaîtra si le fichier est lu en format DOS, pour rappeler qu'une action
+inhabituelle est faite.
+   Sur Macintosh, MS-DOS, Win32 et OS/2, le message "[unix format]"
+apparaîtra si le fichier est lu en format Unix.
+   Sur les systèmes non-Macintosh, le message "[Mac format]" apparaîtra si le
+fichier est lu en format Mac.
+
+Un exemple sur l'utilisation de ":r !" : >
+	:r !uuencode fichierbin fichierbin
+Cette commande lit "fichierbin", le code avec `uuencode` et l'inclut dans le
+tampon courant. Utile si vous éditez un courriel et que vous souhaitez y
+inclure un fichier binaire.
+
+							*read-messages*
+Lors de la lecture d'un fichier, Vim affichera un message d'information sur le
+fichier lu. Le tableau qui suit en décrit quelques items ; les autres sont
+suffisamment explicites. L'option 'shortmess' détermine si la version de
+chaque item est longue ou courte.
+
+	LONG		  COURT   SIGNIFICATION			~
+	[readonly]	  {RO}	  le fichier est protégé en écriture
+	[fifo/socket]		  utilise un flux
+	[fifo]			  utilise un flux de type PEPS
+	[socket]		  utilise un flux de type socket
+	[CR missing]		  lecture avec 'fileformat' valant "dos", mais
+				     un NL sans CR précédant a été trouvé
+	[NL found]		  lecture avec 'fileformat' valant "mac", mais
+				     un NL a été trouvé (peut-être le format
+				     est-il "unix")
+	[long lines split]	  une ligne au moins a été coupée en deux
+	[NOT converted]		  conversion de 'fileencoding' en 'encoding'
+				     tentée mais a échoué
+	[converted]		  conversion de 'fileencoding' en 'encoding'
+				     effectuée
+	[crypted]		  le fichier a été déchiffré
+	[READ ERRORS]		  le fichier n'a pas pu être lu en entier
+
+ vim:tw=78:ts=8:ft=help:norl:

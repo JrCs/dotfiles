@@ -1,0 +1,178 @@
+*sign.txt*     Pour Vim version 6.1.
+
+
+		MANUEL de RÉFÉRENCE VIM  par Gordon Prieur
+					 et  Bram Moolenaar
+
+
+Fonctionnalité de support de signalisation 			*sign-support*
+
+1. Introduction				|sign-intro|
+2. Commandes				|sign-commands|
+
+{Vi ne possède aucune de ces fonctionnalités}
+{uniquement si compilé avec la fonctionnalité |+signs|}
+
+==============================================================================
+1. Introduction					*sign-intro*
+
+Lorsqu'un débogueur ou un autre outil de programmation intégré pilote un
+éditeur, celui-ci doit être capable de spécifier des repères qui donneront
+à l'utilisateur les informations utiles sur le fichier. Un bon exemple 
+peut être un débogueur qui placerait une icône dans une colonne à gauche  
+afin de signaler un point d'arrêt. Un autre exemple pourrait être le cas d'une 
+flèche représentant un compteur ordinal (PC). La fonctionnalité de 
+signalisation permet à la fois la définition d'un symbole ou d'une icône
+sur la gauche de la fenêtre et la définition d'une mise en surbrillance 
+qui sera appliquée à la ligne. L'affichage du symbole comme une image est,
+le plus souvent, uniquement possible qu'avec gvim (bien que le dtterm de
+Sun Microsystem supporte cela, c'est à ma connaissance le seul émulateur de
+terminal qui en soit capable). Un symbole en texte et la surbrillance devrait
+être possible avec n'importe quel émulateur de terminal en couleur.
+
+Les symboles et les mises en surbrillance ne sont pas simplement utiles
+pour les débogueurs. Le Visual WorkShop de Sun utilise les symboles et la
+mise en surbrillance pour notifier les erreurs de compilation et les
+repères de SourceBrowser. De plus, le débogueur supporte 8 à 10 symboles
+et couleurs de surbrillance différents. |workshop|
+
+Il y a deux étapes dans l'utilisation de la signalisation :
+
+1. Définition de la signalisation. Ceci indique l'image, le texte et la mise
+   en surbrillance.  Par exemple, vous pouvez définir une signalisation "Stop"
+   avec l'image d'un panneau routier STOP et le texte "!!".
+
+2. Placer la signalisation. Ceci indique le fichier et le numero de ligne où
+   la signalisation doit être affichée. Une signalisation définie peut être
+   placée plusieurs fois sur différentes lignes de différents fichiers.
+
+Lorsqu'une signalisation est définie pour un fichier, Vim va automatiquement
+ajouter une colonne de deux caractères pour l'afficher. Lorsque la dernière
+signalisation est retirée, la colonne disparaît.
+
+==============================================================================
+2. Commandes					*sign-commands* *:sig* *:sign*
+
+DÉFINITION D'UNE SIGNALISATION.			*:sign-define* *E255* *E160*
+
+:sign define {nom} {argument}...
+		Définit une nouvelle signalisation ou place les attributs
+		pour une signalisation existante. Le {nom} peut être un
+		nombre (que des chiffres) ou un nom débutant par un caractère
+		n'étant pas un chiffre.
+		A peu près 120 signalisations différentes peuvent être 
+		définies.
+
+		Arguments acceptés:
+
+	icon={pixmap}
+		Définit le nom de fichier où l'image pixmap peut être 
+		trouvée. Le pixmap doit pouvoir tenir dans l'espace de deux
+		caractères. Ceci n'est pas vérifié. Si le pixmap est trop
+		gros, un problème de rafraîchissement apparaîtra.
+
+	linehl={groupe}
+		Le groupe de mise en surbrillance utilisé pour la ligne
+		entière où la signalisation est placée. Le plus utile est de
+		définir une couleur d'arrière plan.
+
+	text={texte}						*E239*
+		Définit le texte qui sera affiché s'il n'y à pas icône ou que
+		l'IHM graphique n'est pas utilisée. Ceci doit véritablement
+		être deux caractères ASCII.
+
+	texthl={groupe}
+		Le groupe de mise en surbrillance utilisé pour l'élément
+		texte.
+
+
+SUPPRESSION D'UNE SIGNALISATION				*:sign-undefine* *E155*
+
+:sign undefine {nom}
+		Supprime une signalisation précédement définie. Si la 
+		signalisation portant ce {nom} est encore placée, cela posera
+		des problèmes
+
+
+LISTAGE DES SIGNALISATIONS				*:sign-list* *E156*
+
+:sign list	Liste toutes les signalisations définies et leurs attributs.
+
+:sign list {nom}
+		Liste une signalisation définie et ses attributs.
+
+
+PLACEMENT DES SIGNALISATIONS				*:sign-place* *E158*
+
+:sign place {id} line={lnum} name={nom} file={fnom}
+		Place la signalisation définie comme {nom} à la ligne {lnum}
+		sur le fichier {fnom}. Le fichier {fnom} doit être déjà chargé
+		dans un buffer. Le nom de fichier exacte doit être utilisé,
+		les caractères joker, $ENV et le ~ ne sont pas développés.
+
+		La signalisation est mémorisée sous l'{id}, celle-ci peut être
+		utilisée pour des manipulations à venir. {id} doit être un
+		nombre.
+		C'est à l'utilisateur de veiller qu'une seul {id} est utilisée
+		à la fois pour un fichier donné (si celle-ci est utilisée
+		plusieurs fois, la suppression du placement devra être faite
+		autant de fois et les changements peuvent ne pas fonctionner
+		comme espéré).
+
+:sign place {id} line={lnum} name={nom} buffer={nr}
+		Idem, mais utilise le tampon {nr}.
+
+:sign place {id} name={nom} file={fnom}
+		Change la signalisation {id} placée dans le fichier {fnom}
+		afin d'utiliser la signalisation {nom}.
+		Ceci peut être utilisé pour changer le symbole affiché sans le
+		déplacer (lorsque le débogueur a stoppé sur un point d'arrêt 
+		par exemple).
+
+:sign place {id} name={nom} buffer={nr}
+		Idem, mais utilise le tampon {nr}.
+
+
+SUPPRESSION DES SIGNALISATIONS				*:sign-unplace* *E159*
+
+:sign unplace {id} file={fnom}
+		Retire la signalisation {id} précédement placée dans le
+                fichier {fnom}.
+
+:sign unplace {id} buffer={nr}
+		Idem, mais utilise le tampon {nr}.
+
+:sign unplace {id}
+		Retire la signalisation {id} précédement placée dans tous les
+		fichiers où elle apparaît.
+
+:sign unplace *
+		Retire toutes les signalisations.
+
+:sign unplace
+		Retire la signalisation placée là où se trouve le curseur.
+
+
+LISTAGE DES SIGNALISATIONS PLACÉES
+
+:sign place file={fnom}
+		Liste les signalisations placées dans le fichier {fnom}.
+
+:sign place buffer={nr}
+		Liste les signalisations placées dans le tampon {nr}.
+
+:sign place	Liste les signalisations placées dans tous les fichiers.
+
+
+SAUTER VERS UNE SIGNALISATION				*:sign-jump* *E157*
+
+:sign jump {id} file={fnom}
+		Ouvre le fichier {fnom} ou saute à la fenêtre qui contient
+		{fnom} et positionne le curseur sur la signalisation {id}.
+		Si le fichier n'est pas affiché dans la fenêtre et que le
+		fichier courant ne peut être |abandon|né, ceci échoue.
+
+:sign jump {id} buffer={nr}
+		Idem, mais utilise le tampon {nr}.
+
+ vim:tw=78:ts=8:ft=help:norl:

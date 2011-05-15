@@ -1,0 +1,431 @@
+*digraph.txt*   Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+Digrammes						*digraphs* *Digraphs*
+
+Les digrammes sont utilisés pour entrer des caractères qui ne peuvent
+pas être saisis normalement avec un clavier ordinaire. Il s'agit
+essentiellement de caractères accentués avec le huitième bit positionné. Les
+digrammes sont plus simples à mémoriser que le numéro décimal qui peut être
+entré avec CTRL-V (voir |i_CTRL-V|).
+
+Il existe une courte introduction aux digrammes dans le Manuel de
+l'utilisateur : |24.9|.
+   Vous pouvez aussi utiliser l'option 'keymap' à la place.
+
+1. Définir des digrammes	|digraphs-define|
+2. Utiliser des digrammes	|digraphs-use|
+3. Digrammes par défaut		|digraphs-default|
+
+{absent de Vi}
+
+==============================================================================
+1. Définir des digrammes				*digraphs-define*
+
+							*:dig* *:digraphs*
+:dig[raphs]		Affiche les digrammes actuellement définis.
+							*E104* *E39*
+:dig[raphs] {car1}{car2} {numero} ...
+			Ajoute le digramme {car1}{car2} à la liste. {numero}
+			correspond à la représentation décimale du caractère.
+			Exemple : >
+				:digr e: 235 a: 228
+<			Évitez de définir un digramme avec '_' (souligné)
+			comme premier caractère, il possèdera une
+			signification spéciale dans le futur.
+
+Vim est normalement compilé avec la fonctionnalité |+digraphs|. Si cette
+fonctionnalité est désactivée, la commande ":digraph" émettra un message
+d'erreur.
+
+Exemple de sortie de ":digraphs" :
+  TH Þ  222  ss ß  223  a! à  224  a' á  225  a> â  226  a? ã  227  a: ä  228 ~
+
+Les deux premiers caractères de chaque colonne sont les caractères que vous
+devez taper pour entrer le digramme.
+
+Le caractère produit est donné au milieu de chaque colonne. Il pourra
+apparaître déformé si vous le visualisez sur un système qui ne supporte pas
+les digrammes, ou si vous imprimez ce fichier.
+
+Le nombre décimal correspond au numéro du caractère.
+
+==============================================================================
+2. Utiliser des digrammes				*digraphs-use*
+
+Il y a deux méthodes pour entrer des digrammes :	*i_digraph*
+	CTRL-K {car1} {car2}	    ou
+	{car1} <RetArr> {car2}
+La première est toujours disponible ; la seconde uniquement quand l'option
+'digraph' est activée.
+
+S'il n'existe pas de digramme {car1}{car2}, Vim recherche un digramme
+{car2}{car1}. Cela peut vous aider si vous ne vous rappelez pas quel caractère
+vient en premier.
+
+NOTE : Quand vous tapez "CTRL-K {car1}", où {car1} est une touche spéciale,
+Vim entre le code de cette touche spéciale. Ce n'est pas un digramme.
+
+Après que vous avez entré le digramme, Vim traite le caractère comme un
+caractère normal, qui occupe un seul caractère dans le fichier et à l'écran.
+Exemples : >
+	B <RetArr> B
+<		entrera le caractère 166 : '¦' (barre interrompue). >
+	a <RetArr> >
+<		entrera le caractère 226 : 'â' ('a' accent circonflexe). >
+	CTRL-K - -
+<		entrera le caractère 173 : '­' (tiret mou). XXX
+
+Les digrammes courants sont listés avec la commande ":digraphs". Certains des
+digrammes par défaut sont donnés dans la liste plus bas |digraph-table|.
+
+Avec CTRL-K, il existe une forme générale : "CTRL-K <Epace> {car}" entrera
+{car} avec le plus haut bit positionné. Vous pouvez utiliser ceci pour entrer
+des méta-caractères.
+
+Le caractère <Echap> ne peut pas faire partie d'un digramme. Quand vous tapez
+<Echap>, Vim arrête l'entrée du digramme et quitte le mode Insertion ou
+Ligne-de-commande, exactement comme si <Echap> avait été saisi en dehors du
+contexte de digramme. Utilisez "CTRL-V 155" pour entrer Alt + Échap (CSI).
+
+Si vous avez accidentellement tapé un 'a' à la place d'un 'e', vous saisirez
+quelque chose comme cela : "a <RetArr> e". Mais comme il s'agit d'un digramme,
+vous n'obtiendrez pas l'effet recherché. Pour remédier à cela, vous devrez
+taper "<RetArr> e" à nouveau. Pour éviter ce genre de situations, n'activez
+pas l'option 'digraph' et utilisez CTRL-K pour entrer des digrammes.
+
+Vous pouvez rencontrer des problèmes en utilisant Vim avec des caractères de
+valeur ASCII supérieure à 128. Par exemple : vous insérez ü ('u' tréma) et
+l'éditeur affiche "\334" en mode Insertion. Après avoir quitté le mode
+Insertion, tout revient dans l'ordre.
+   NOTE : `fmt` supprime tous les caractères de code ASCII supérieur à 128 du
+texte à mettre en forme. Sur certains systèmes Unix, cela signifie que vous
+devez définir la variable d'environnement LC_CTYPE. Si vous utilisez csh,
+placez la ligne suivante dans votre fichier ".cshrc" : >
+	setenv LC_CTYPE iso_8859_1
+
+==============================================================================
+3. Digrammes par défaut					*digraphs-default*
+
+Vim dispose d'un jeu de digrammes par défaut. Examinez la sortie de
+":digraphs" pour les voir.
+
+Sur la plupart des systèmes, Vim utilise les mêmes digrammes. Ils fonctionnent
+pour les jeux de caractères Unicode et ISO-8859-1. Ces digrammes sont issus de
+la RFC1345. Pour les rendre faciles à retenir, le deuxième caractère possède
+une signification standard :
+
+	NOM DU CARACTÈRE	CAR	SIGNIFICATION  ~
+	Point d'exclamation	 !	Accent grave
+	Apostrophe		 '	Accent aigu
+	Symbole supérieur-à 	 >	Accent circonflexe
+	Point d'exclamation	 ?	Tilde
+	Moins/Tiret		 -	Longue XXX
+	Parenthèse ouvrante	 (	Brève XXX
+	Point			 .	Point supérieur
+	Deux-points		 :	Tréma
+	Virgule			 ,	Cédille
+	Souligné		 _	Soulignement
+	Barre oblique		 /	Barre
+	Double-apostrophe	 "	Double accent aigu
+	Point-virgule		 ;	Ogonek
+	Symbole inférieur-à	 <	Accent circonflexe renversé
+	Zéro			 0	Rond suscrit
+	Deux			 2	Hook XXX cédille supérieure (vietnamien) ???
+	Neuf			 9	Horn XXX accent aigu de côté (vietnamien) ???
+
+	Égal			 =	Cyrillique
+	Étoile			 *	Grec
+	Symbole de pourcentage	 %	Grec/Cyrillique spécial
+	Plus			 +	Minuscules : arabe, Majuscules : hébreu
+	Trois			 3	Certaines lettres latines/grecques/
+					   cyrilliques
+	Quatre			 4	Bopomofo
+	Cinq			 5	Hiragana
+	Six			 6	Katakana
+
+Exemples : "a:" désigne 'ä' et "o:" désigne 'ö'.
+
+Voici les digrammes de la RFC1345 pour les caractères mono-octets.
+Reportez-vous à la sortie de ":digraphs" pour les autres. Les caractères
+supérieurs à 255 sont disponibles uniquement lorsque Vim a été compilé avec la
+fonctionnalité |+multi_byte|.
+							*digraph-table*
+CAR  DIGRAMME  HEXA   DÉC   NOM OFFICIEL 	      ÉQUIVALENT FRANÇAIS  ~
+^@	NU     0x00     0   NULL (NUL)		      NUL
+^A	SH     0x01     1   START OF HEADING (SOH)    DÉBUT D'EN-TÊTE
+^B	SX     0x02     2   START OF TEXT (STX)	      DÉBUT DE TEXTE
+^C	EX     0x03     3   END OF TEXT (ETX)	      FIN DE TEXTE
+^D	ET     0x04     4   END OF TRANSMISSION	      FIN DE TRANSMISSION
+			    (EOT)
+^E	EQ     0x05     5   ENQUIRY (ENQ)	      REQUÊTE XXX
+^F	AK     0x06     6   ACKNOWLEDGE (ACK)	      ACCUSÉ DE RÉCEPTION XXX
+^G	BL     0x07     7   BELL (BEL)		      BIP XXX
+^H	BS     0x08     8   BACKSPACE (BS)	      RETOUR ARRIÈRE
+^I	HT     0x09     9   CHARACTER TABULATION      TABULATION HORIZONTALE
+			    (HT)
+^@	LF     0x0a    10   LINE FEED (LF)	      SAUT-DE-LIGNE
+^K	VT     0x0b    11   LINE TABULATION (VT)      TABULATION VERTICALE
+^L	FF     0x0c    12   FORM FEED (FF)	      SAUT-DE-PAGE
+^M	CR     0x0d    13   CARRIAGE RETURN (CR)      RETOUR CHARIOT
+^N	SO     0x0e    14   SHIFT OUT (SO)	      XXX jusqu'au suivant
+^O	SI     0x0f    15   SHIFT IN (SI)	      XXX
+^P	DL     0x10    16   DATALINK ESCAPE (DLE)     XXX
+^Q	D1     0x11    17   DEVICE CONTROL ONE	      COMMANDE UNITÉ 1 XXX
+			    (DC1)
+^R	D2     0x12    18   DEVICE CONTROL TWO	      COMMANDE UNITÉ 2 XXX
+			    (DC2)
+^S	D3     0x13    19   DEVICE CONTROL THREE      COMMANDE UNITÉ 3 XXX
+			    (DC3)
+^T	D4     0x14    20   DEVICE CONTROL FOUR	      COMMANDE UNITÉ 4 XXX
+			    (DC4)
+^U	NK     0x15    21   NEGATIVE ACKNOWLEDGE      ACCUSÉ DE RÉCEPTION
+			    (NAK)		      NÉGATIF XXX
+^V	SY     0x16    22   SYNCRONOUS IDLE (SYN)     XXX
+^W	EB     0x17    23   END OF TRANSMISSION	      FIN DE BLOC DE
+			    BLOCK (ETB)		      TRANSMISSIONS XXX
+^X	CN     0x18    24   CANCEL (CAN)	      ANNULATION
+^Y	EM     0x19    25   END OF MEDIUM (EM)	      FIN DE SUPPORT PHYSIQUE XXX
+^Z	SB     0x1a    26   SUBSTITUTE (SUB)	      SUBSTITUTION XXX
+^[	EC     0x1b    27   ESCAPE (ESC)	      ÉCHAPPEMENT
+^\	FS     0x1c    28   FILE SEPARATOR (IS4)      SÉPARATEUR DE FICHIER
+^]	GS     0x1d    29   GROUP SEPARATOR (IS3)     SÉPARATEUR DE GROUPE
+^^	RS     0x1e    30   RECORD SEPARATOR (IS2)    SÉPARATEUR
+						      D'ENREGISTREMENT
+^_	US     0x1f    31   UNIT SEPARATOR (IS1)      SÉPARATEUR DE DONNÉES
+	SP     0x20    32   SPACE		      ESPACE
+#	NB     0X23    35   NUMBER SIGN		      DIÈSE
+$	DO     0x24    36   DOLLAR SIGN		      SYMBOLE DOLLAR
+@	At     0x40    64   COMMERCIAL AT	      AROBASE
+[	<(     0x5b    91   LEFT SQUARE BRACKET	      CROCHET OUVRANT
+\	//     0x5c    92   REVERSE SOLIDUS	      BARRE OBLIQUE INVERSE
+]	)>     0x5d    93   RIGHT SQUARE BRACKET      CROCHET FERMANT
+^	'>     0x5e    94   CIRCUMFLEX ACCENT	      ACCENT CIRCONFLEXE XXX
+`	'!     0x60    96   GRAVE ACCENT	      ACCENT GRAVE XXX
+{	(!     0x7b   123   LEFT CURLY BRACKET	      ACCOLADE OUVRANTE
+|	!!     0x7c   124   VERTICAL LINE	      BARRE VERTICALE
+}	!)     0x7d   125   RIGHT CURLY BRACKET	      ACCOLADE FERMANTE
+~	'?     0x7e   126   TILDE		      TILDE
+^?	DT     0x7f   127   DELETE (DEL)	      SUPPRESSION
+~@	PA     0x80   128   PADDING CHARACTER (PAD)   CARACTÈRE DE REMPLISSAGE XXX
+~A	HO     0x81   129   HIGH OCTET PRESET (HOP)   XXX
+~B	BH     0x82   130   BREAK PERMITTED HERE      AUTORISATION DE COUPER
+			    (BPH)		      XXX
+~C	NH     0x83   131   NO BREAK HERE (NBH)	      INTERDICTION DE COUPER XXX
+~D	IN     0x84   132   INDEX (IND)		      INDEX
+~E	NL     0x85   133   NEXT LINE (NEL)	      LIGNE SUIVANTE
+~F	SA     0x86   134   START OF SELECTED AREA    DÉBUT DE ZONE
+			    (SSA)		      SÉLECTIONNÉE XXX
+~G	ES     0x87   135   END OF SELECTED AREA      FIN DE ZONE
+			    (ESA)		      SÉLECTIONNÉE XXX
+~H	HS     0x88   136   CHARACTER TABULATION      XXX
+			    SET (HTS)
+~I	HJ     0x89   137   CHARACTER TABULATION      TABULATION HORIZONTALE
+			    WITH JUSTIFICATION	      AVEC JUSTIFICATION
+			    (HTJ)		      XXX
+~J	VS     0x8a   138   LINE TABULATION SET	      XXX
+			    (VTS)
+~K	PD     0x8b   139   PARTIAL LINE FORWARD      AVANCER D'UNE FRACTION
+			    (PLD)		      DE LIGNE XXX
+~L	PU     0x8c   140   PARTIAL LINE BACKWARD     RECULER D'UNE FRACTION
+			    (PLU)		      DE LIGNE XXX
+~M	RI     0x8d   141   REVERSE LINE FEED (RI)    REMONTER D'UNE LIGNE XXX
+~N	S2     0x8e   142   SINGLE-SHIFT TWO (SS2)    XXX
+~O	S3     0x8f   143   SINGLE-SHIFT THREE	      XXX
+			    (SS3)
+~P	DC     0x90   144   DEVICE CONTROL STRING     XXX
+			    (DCS)
+~Q	P1     0x91   145   PRIVATE USE ONE (PU1)     XXX
+~R	P2     0x92   146   PRIVATE USE TWO (PU2)     XXX
+~S	TS     0x93   147   SET TRANSMIT STATE	      XXX
+			    (STS)
+~T	CC     0x94   148   CANCEL CHARACTER (CCH)    XXX
+~U	MW     0x95   149   MESSAGE WAITING (MW)      MESSAGE EN ATTENTE XXX
+~V	SG     0x96   150   START OF GUARDED AREA     DÉBUT DE ZONE PROTÉGÉE
+			    (SPA)
+~W	EG     0x97   151   END OF GUARDED AREA	      FIN DE ZONE PROTÉGÉE
+			    (EPA)
+~X	SS     0x98   152   START OF STRING (SOS)     DÉBUT DE CHAÎNE
+~Y	GC     0x99   153   SINGLE GRAPHIC	      INTRODUCTEUR DE
+			    CHARACTER INTRODUCER      CARACTÈRE GRAPHIQUE
+			    (SGCI)		      UNIQUE XXX
+~Z	SC     0x9a   154   SINGLE CHARACTER	      INTRODUCTEUR DE
+			    INTRODUCER (SCI)	      CARACTÈRE UNIQUE XXX
+~[	CI     0x9b   155   CONTROL SEQUENCE	      INTRODUCTEUR DE SÉQUENCE
+			    INTRODUCER (CSI)	      DE COMMANDE XXX
+~\	ST     0x9c   156   STRING TERMINATOR (ST)    FIN DE CHAÎNE XXX
+~]	OC     0x9d   157   OPERATING SYSTEM	      COMMANDE DU SYSTÈME
+			    COMMAND (OSC)	      D'EXPLOITATION XXX
+~^	PM     0x9e   158   PRIVACY MESSAGE (PM)      MESSAGE VIE PRIVÉE XXX
+~_	AC     0x9f   159   APPLICATION PROGRAM	      COMMANDE DU PROGRAMME
+			    COMMAND (APC)	      D'APPLICATION XXX
+|	NS     0xa0   160   NO-BREAK SPACE	      ESPACE INSÉCABLE
+¡	!I     0xa1   161   INVERTED EXCLAMATION      POINT D'EXCLAMATION
+			    MARK		      INVERSÉ
+¢	Ct     0xa2   162   CENT SIGN		      SYMBOLE CENT
+£	Pd     0xa3   163   POUND SIGN		      SYMBOLE LIVRE
+¤	Cu     0xa4   164   CURRENCY SIGN	      SYMBOLE MONÉTAIRE
+¥	Ye     0xa5   165   YEN SIGN		      SYMBOLE YEN
+¦	BB     0xa6   166   BROKEN BAR		      BARRE INTERROMPUE
+§	SE     0xa7   167   SECTION SIGN	      SYMBOLE PARAGRAPHE
+¨	':     0xa8   168   DIAERESIS		      TRÉMA
+©	Co     0xa9   169   COPYRIGHT SIGN	      SYMBOLE COPYRIGHT
+ª	-a     0xaa   170   FEMININE ORDINAL	      MARQUE ORDINALE FÉMININE
+			    INDICATOR
+«	<<     0xab   171   LEFT-POINTING DOUBLE      GUILLEMET FRANÇAIS
+			    ANGLE QUOTATION MARK      OUVRANT
+¬	NO     0xac   172   NOT SIGN		      SYMBOLE NÉGATION
+­	--     0xad   173   SOFT SIGN		      TIRET MOU XXX
+®	Rg     0xae   174   REGISTERED SIGN	      SYMBOLE MARQUE DÉPOSÉE XXX
+¯	'm     0xaf   175   MACRON		      LONGUE XXX
+°	DG     0xb0   176   DEGREE SIGN		      SYMBOLE DEGRÉ
+±	+-     0xb1   177   PLUS-MINUS SIGN	      SYMBOLE PLUS OU MOINS
+²	2S     0xb2   178   SUPERSCRIPT TWO	      PUISSANCE DEUX
+³	3S     0xb3   179   SUPERSCRIPT THREE	      PUISSANCE TROIS
+´	''     0xb4   180   ACUTE ACCENT	      ACCENT AIGU
+µ	My     0xb5   181   MICRO SIGN		      SYMBOLE MICRO
+¶	PI     0xb6   182   PILCROW SIGN	      PIED DE MOUCHE
+·	.M     0xb7   183   MIDDLE DOT		      POINT CENTRAL
+¸	',     0xb8   184   CEDILLA		      CÉDILLE
+¹	1S     0xb9   185   SUPERSCRIPT ONE	      PUISSANCE UN
+º	-o     0xba   186   MASCULINE ORDINAL	      MARQUE ORDINALE
+			    INDICATOR		      MASCULINE
+»	>>     0xbb   187   RIGHT-POINTING DOUBLE     GUILLEMET FRANÇAIS
+			    ANGLE QUOTATION MARK      FERMANT
+¼	14     0xbc   188   VULGAR FRACTION	      FRACTION UN QUART
+			    ONE QUARTER
+½	12     0xbd   189   VULGAR FRACTION	      FRACTION UN DEMI
+			    ONE HALF
+¾	34     0xbe   190   VULGAR FRACTION	      FRACTION TROIS QUARTS
+			    THREE QUARTERS
+¿	?I     0xbf   191   INVERTED QUESTION MARK    POINT D'INTERROGATION
+						      INVERSÉ
+À	A!     0xc0   192   LATIN CAPITAL LETTER A    A MAJUSCULE ACCENT GRAVE
+			    WITH GRAVE
+Á	A'     0xc1   193   LATIN CAPITAL LETTER A    A MAJUSCULE ACCENT AIGU
+			    WITH ACUTE
+Â	A>     0xc2   194   LATIN CAPITAL LETTER A    A MAJUSCULE ACCENT
+			    WITH CIRCUMFLEX	      CIRCONFLEXE
+Ã	A?     0xc3   195   LATIN CAPITAL LETTER A    A MAJUSCULE TILDE
+			    WITH TILDE
+Ä	A:     0xc4   196   LATIN CAPITAL LETTER A    A MAJUSCULE TRÉMA
+			    WITH DIAERESIS
+Å	AA     0xc5   197   LATIN CAPITAL LETTER A    A MAJUSCULE ROND SUSCRIT
+			    WITH RING ABOVE
+Æ	AE     0xc6   198   LATIN CAPITAL LETTER AE   E-DANS-L'A MAJUSCULE
+Ç	C,     0xc7   199   LATIN CAPITAL LETTER C    C CÉDILLE MAJUSCULE
+			    WITH CEDILLA
+È	E!     0xc8   200   LATIN CAPITAL LETTER E    E MAJUSCULE ACCENT GRAVE
+			    WITH GRAVE
+É	E'     0xc9   201   LATIN CAPITAL LETTER E    E MAJUSCULE ACCENT AIGU
+			    WITH ACUTE
+Ê	E>     0xca   202   LATIN CAPITAL LETTER E    E MAJUSCULE ACCENT
+			    WITH CIRCUMFLEX	      CIRCONFLEXE
+Ë	E:     0xcb   203   LATIN CAPITAL LETTER E    E MAJUSCULE TRÉMA
+			    WITH DIAERESIS
+Ì	I!     0xcc   204   LATIN CAPITAL LETTER I    I MAJUSCULE ACCENT GRAVE
+			    WITH GRAVE
+Í	I'     0xcd   205   LATIN CAPITAL LETTER I    I MAJUSCULE ACCENT AIGU
+			    WITH ACUTE
+Î	I>     0xce   206   LATIN CAPITAL LETTER I    I MAJUSCULE ACCENT
+			    WITH CIRCUMFLEX	      CIRCONFLEXE
+Ï	I:     0xcf   207   LATIN CAPITAL LETTER I    I MAJUSCULE TRÉMA
+			    WITH DIAERESIS
+Ð	D-     0xd0   208   LATIN CAPITAL LETTER      EDH MAJUSCULE
+			    ETH (Icelandic)	      (islandais)
+Ñ	N?     0xd1   209   LATIN CAPITAL LETTER N    N MAJUSCULE TILDE
+			    WITH TILDE
+Ò	O!     0xd2   210   LATIN CAPITAL LETTER O    O MAJUSCULE ACCENT GRAVE
+			    WITH GRAVE
+Ó	O'     0xd3   211   LATIN CAPITAL LETTER O    O MAJUSCULE ACCENT AIGU
+			    WITH ACUTE
+Ô	O>     0xd4   212   LATIN CAPITAL LETTER O    O MAJUSCULE ACCENT
+			    WITH CIRCUMFLEX	      CIRCONFLEXE
+Õ	O?     0xd5   213   LATIN CAPITAL LETTER O    O MAJUSCULE TILDE
+			    WITH TILDE
+Ö	O:     0xd6   214   LATIN CAPITAL LETTER O    O MAJUSCULE TRÉMA
+			    WITH DIAERESIS
+×	*X     0xd7   215   MULTIPLICATION SIGN	      SYMBOLE MULTIPLICATION
+Ø	O/     0XD8   216   LATIN CAPITAL LETTER O    O MAJUSCULE BARRÉ
+			    WITH STROKE
+Ù	U!     0xd9   217   LATIN CAPITAL LETTER U    U MAJUSCULE ACCENT GRAVE
+			    WITH GRAVE
+Ú	U'     0xda   218   LATIN CAPITAL LETTER U    U MAJUSCULE ACCENT AIGU
+			    WITH ACUTE
+Û	U>     0xdb   219   LATIN CAPITAL LETTER U    U MAJUSCULE ACCENT
+			    WITH CIRCUMFLEX	      CIRCONFLEXE
+Ü	U:     0xdc   220   LATIN CAPITAL LETTER U    U MAJUSCULE TRÉMA
+			    WITH DIAERESIS
+Ý	Y'     0xdd   221   LATIN CAPITAL LETTER Y    Y MAJUSCULE ACCENT AIGU
+			    WITH ACUTE
+Þ	TH     0xde   222   LATIN CAPITAL LETTER      THORN MAJUSCULE
+			    THORN (Icelandic)	      (islandais)
+ß	ss     0xdf   223   LATIN SMALL LETTER	      SZ MINUSCULE
+			    SHARP S	(German)      (allemand)
+à	a!     0xe0   224   LATIN SMALL LETTER A      A MINUSCULE ACCENT GRAVE
+			    WITH GRAVE
+á	a'     0xe1   225   LATIN SMALL LETTER A      A MINUSCULE ACCENT AIGU
+			    WITH ACUTE
+â	a>     0xe2   226   LATIN SMALL LETTER A      A MINUSCULE ACCENT
+			    WITH CIRCUMFLEX	      CIRCONFLEXE
+ã	a?     0xe3   227   LATIN SMALL LETTER A      A MINUSCULE TILDE
+			    WITH TILDE
+ä	a:     0xe4   228   LATIN SMALL LETTER A      A MINUSCULE TRÉMA
+			    WITH DIAERESIS
+å	aa     0xe5   229   LATIN SMALL LETTER A      A MINUSCULE ROND SUSCRIT
+			    WITH RING ABOVE
+æ	ae     0xe6   230   LATIN SMALL LETTER AE     E-DANS-L'A MINUSCULE
+ç	c,     0xe7   231   LATIN SMALL LETTER C      C CÉDILLE MINUSCULE
+			    WITH CEDILLA
+è	e!     0xe8   232   LATIN SMALL LETTER E      E MINUSCULE ACCENT GRAVE
+			    WITH GRAVE
+é	e'     0xe9   233   LATIN SMALL LETTER E      E MINUSCULE ACCENT AIGU
+			    WITH ACUTE
+ê	e>     0xea   234   LATIN SMALL LETTER E      E MINUSCULE ACCENT
+			    WITH CIRCUMFLEX	      CIRCONFLEXE
+ë	e:     0xeb   235   LATIN SMALL LETTER E      E MINUSCULE TRÉMA
+			    WITH DIAERESIS
+ì	i!     0xec   236   LATIN SMALL LETTER I      I MINUSCULE ACCENT GRAVE
+			    WITH GRAVE
+í	i'     0xed   237   LATIN SMALL LETTER I      I MINUSCULE ACCENT AIGU
+			    WITH ACUTE
+î	i>     0xee   238   LATIN SMALL LETTER I      I MINUSCULE ACCENT
+			    WITH CIRCUMFLEX	      CIRCONFLEXE
+ï	i:     0xef   239   LATIN SMALL LETTER I      I MINUSCULE TRÉMA
+			    WITH DIAERESIS
+ð	d-     0xf0   240   LATIN SMALL LETTER	      EDH MINUSCULE
+			    ETH (Icelandic)	      (islandais)
+ñ	n?     0xf1   241   LATIN SMALL LETTER N      N MINUSCULE TILDE
+			    WITH TILDE
+ò	o!     0xf2   242   LATIN SMALL LETTER O      O MINUSCULE ACCENT GRAVE
+			    WITH GRAVE
+ó	o'     0xf3   243   LATIN SMALL LETTER O      O MINUSCULE ACCENT AIGU
+			    WITH ACUTE
+ô	o>     0xf4   244   LATIN SMALL LETTER O      O MINUSCULE ACCENT
+			    WITH CIRCUMFLEX	      CIRCONFLEXE
+õ	o?     0xf5   245   LATIN SMALL LETTER O      O MINUSCULE TILDE
+			    WITH TILDE
+ö	o:     0xf6   246   LATIN SMALL LETTER O      O MINUSCULE TRÉMA
+			    WITH DIAERESIS
+÷	-:     0xf7   247   DIVISION SIGN	      SYMBOLE DIVISION
+Ø	O/     0XF8   248   LATIN SMALL LETTER O      O MINUSCULE BARRÉ
+			    WITH STROKE
+ù	u!     0xf9   249   LATIN SMALL LETTER U      U MINUSCULE ACCENT GRAVE
+			    WITH GRAVE
+ú	u'     0xfa   250   LATIN SMALL LETTER U      U MINUSCULE ACCENT AIGU
+			    WITH ACUTE
+û	u>     0xfb   251   LATIN SMALL LETTER U      U MINUSCULE ACCENT
+			    WITH CIRCUMFLEX	      CIRCONFLEXE
+ü	u:     0xfc   252   LATIN SMALL LETTER U      U MINUSCULE TRÉMA
+			    WITH DIAERESIS
+ý	y'     0xfd   253   LATIN SMALL LETTER Y      Y MINUSCULE ACCENT GRAVE
+			    WITH GRAVE
+þ	th     0xfe   254   LATIN SMALL LETTER	      THORN MINUSCULE
+			    THORN (Icelandic)	      (islandais)
+ÿ	y:     0xff   255   LATIN SMALL LETTER Y      Y MINUSCULE TRÉMA
+			    WITH DIAERESIS
+
+ vim:tw=78:ts=8:ft=help:norl:

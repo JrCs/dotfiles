@@ -1,0 +1,472 @@
+*usr_28.txt*	Pour Vim version 6.2.
+
+	       MANUEL de l'UTILISATEUR VIM - par Bram Moolenaar
+
+			     Utiliser les replis
+
+
+Un texte structuré peut être divisé en sections. Et ces sections subdivisées
+en sous-sections. Les replis vous permettent de faire apparaître une section
+comme une seule ligne, vous offrant ainsi un aperçu de la structure de votre
+texte. Ce chapitre aborde les différentes façons de procéder.
+This chapter explains the different ways this can be done. XXX
+
+|28.1|	Qu'est-ce qu'un repli ?
+|28.2|	Repliage manuel
+|28.3|	Travailler avec les replis
+|28.4|	Enregistrer et restaurer les replis
+|28.5|	Repliage par indentation
+|28.6|	Repliage par balises
+|28.7|	Repliage par syntaxe
+|28.8|	Repliage par expression
+|28.9|	Repliage pour des lignes inchangées
+|28.10| Quelle méthode de repliage utiliser ?
+
+  Chapitre suivant : |usr_29.txt|  Se déplacer dans des programmes
+Chapitre précédent : |usr_27.txt|  Commandes et motifs de recherche
+Table des matières : |usr_toc.txt|
+
+==============================================================================
+*28.1*	Qu'est-ce qu'un repli ?
+
+Un repli permet d'afficher une plage de lignes dans un tampon sous la forme
+d'une seule ligne à l'écran. Comme un bout de papier qu'on aurait plié pour le
+rendre plus court :
+
+	+------------------------+
+	| ligne 1		 |
+	| ligne 2		 |
+	| ligne 3		 |
+	\¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯\
+	 \________________________\
+	 / lignes repliées	  /
+	/________________________/
+	| ligne 12		 |
+	| ligne 13		 |
+	| ligne 14		 |
+	+------------------------+
+
+Le texte est toujours présent, tel quel, dans le tampon. Un repli n'affecte
+que la façon dont les lignes sont affichées.
+
+L'avantage des replis est d'offrir une meilleure lisibilité de la structure du
+texte, par le regroupement des lignes d'une section et leur remplacement par
+une ligne faisant office de « titre » de la section.
+
+==============================================================================
+*28.2*	Repliage manuel
+
+Faites un essai : placez le curseur sur un paragraphe et tapez : >
+
+	zfap
+
+Vous observerez que le paragraphe est remplacé par une ligne en surbrillance.
+Vous venez de créer un repli. |zf| est un opérateur et |ap| un objet textuel.
+Vous pouvez utiliser l'opérateur "zf" avec n'importe quel mouvement pour créer
+un repli pour le texte couvert par le mouvement. "zf" fonctionne également en
+mode Visuel.
+
+Pour voir le texte à nouveau, ouvrez le repli en utilisant : >
+
+	zo
+
+Vous pouvez ensuite refermer le repli avec : >
+
+	zc
+
+Toutes les commandes de repliage commencent par 'z'. Peut-être parce que le
+'z' ressemble à une feuille de papier pliée, si vous la regardez de côté...
+Plus sérieusement, la lettre suivant le 'z' possède bien une valeur
+mnémotechnique, ce qui rend ces commandes faciles à retenir [N.D.T. : pour un
+anglophone, s'entend] :
+
+	zf	crée un repli					       ["Fold"]
+	zo	Ouvre un repli
+	zc	ferme un repli					      ["Close"]
+
+Il est possible d'imbriquer des replis : un passage de texte contenant des
+replis peut être replié à son tour. Par exemple, vous pouvez replier tous les
+paragraphes de cette section, puis replier toutes les sections de ce chapitre.
+Essayez donc. Vous remarquerez que lors de l'ouverture du repli contenant le
+chapitre entier, les replis imbriqués sont restaurés tels qu'ils étaient,
+certains ouverts et d'autres fermés.
+
+Supposons que vous ayez créé plusieurs replis, et vouliez maintenant voir
+votre texte en entier. Vous pourriez aller à chaque repli et taper "zo". Il
+existe un moyen plus rapide : >
+
+	zr
+
+Cette commande Réduira le repliage. Son contraire est >
+
+	zm
+
+qui augmente le repliage ["More"]. Vous pouvez répéter "zr" et "zm" pour
+ouvrir et fermer des replis imbriqués de niveaux différents.
+
+Si vous disposez d'imbrications sur plusieurs niveaux, vous pouvez les ouvrir
+tous d'un coup avec : >
+
+	zR
+
+Ceci Réduit le repliage jusqu'à ce qu'il n'y ait plus un seul repli fermé.
+Pour au contraire fermer tous les replis, utilisez >
+
+	zM
+
+qui augmente le repliage au Maximum.
+
+Vous pouvez facilement désactiver le repliage avec la commande |zn| ["None"].
+|zN| restaurera ensuite les replis tels qu'ils étaient. |zi| fait basculer de
+l'un à l'autre. C'est utile pour travailler comme suit :
+- créer des replis pour avoir une vue d'ensemble du fichier ;
+- se déplacer à un endroit où il reste du travail à faire ;
+- utiliser "zi" pour voir le texte et l'éditer ;
+- réutiliser "zi" pour restaurer les replis et se déplacer dans le fichier.
+
+Pour plus d'informations sur le repliage manuel, voir le Manuel de référence :
+|fold-manual|.
+
+==============================================================================
+*28.3*	Travailler avec les replis
+
+Lorsqu'un repli est fermé, les commandes de déplacement comme "j" et "k" le
+traversent comme s'il s'agissait d'une simple ligne vide. Cela vous permet de
+vous déplacer rapidement dans un texte contenant des replis.
+
+Vous pouvez couper, copier et coller des replis comme s'ils n'étaient qu'une
+seule ligne. C'est très pratique pour réordonner des fonctions dans un
+programme. Assurez-vous d'abord que chaque repli contient une fonction entière
+(ou un peu moins) en sélectionnant la méthode de repliage appropriée (option
+'foldmethod'). Coupez ensuite la fonction avec "dd", allez à l'endroit
+souhaité et collez-la avec "p". Si certaines lignes de la fonction sont
+situées au-dessus ou en dessous du repli, vous pouvez utiliser une sélection
+Visuel :
+- amenez le curseur sur la première ligne à déplacer ;
+- lancez le mode Visuel avec "V" ;
+- amenez le curseur sur la dernière ligne à déplacer ;
+- coupez les lignes sélectionnées avec "d" ;
+- amenez le curseur à la nouvelle position et coller les lignes avec "p".
+
+Il est parfois difficile de voir ou de se rappeler de l'emplacement d'un
+repli, et donc des endroits où une commande "zo" pourra fonctionner. Pour
+repérer les replis définis : >
+
+	:set foldcolumn=4
+
+Ceci fera apparaître une petite colonne à gauche de la fenêtre pour signaler
+les replis. Un '+' est indiqué pour un repli fermé. Un '-' est indiqué au
+début de chaque repli ouvert et des '|' sont utilisés pour les lignes
+suivantes du repli.
+
+Vous pouvez utiliser la souris pour ouvrir un repli en cliquant sur le '+'
+dans la colonne de repli. Si vous cliquez sur un '-' ou l'un des '|' suivants,
+vous fermerez un repli ouvert.
+
+Pour ouvrir tous les replis sous le curseur, utilisez |zO|.
+Pour fermer tous les replis sous le curseur, utilisez |zC|.	      ["Close"]
+Pour supprimer un repli sous le curseur, utilisez |zd|.		     ["Delete"]
+Pour supprimer tous les replis sous le curseur, utilisez |zD|.
+
+Si vous être en mode Insertion, le repli sous le curseur ne sera jamais fermé.
+Cela vous permet de voir ce que vous tapez !
+
+Les replis sont automatiquement ouverts lors d'un saut vers le texte du repli
+ou lors d'un déplacement du curseur à gauche/droite. Par exemple, la commande
+"0" ouvre le repli sous le curseur (si 'foldopen' contient "hor", ce qui est
+le cas par défaut). L'option 'foldopen' peut être modifiée pour n'ouvrir les
+replis qu'avec certaines commandes particulières. Si vous souhaitez que la
+ligne sous le curseur soit toujours ouverte, utilisez : >
+
+	:set foldopen=all
+
+Attention : Vous ne pourrez plus vous déplacer sur un repli fermé le cas
+échéant. N'utilisez ceci que temporairement, et revenez ensuite à la valeur
+par défaut : >
+
+	:set foldopen&
+
+Vous pouvez également faire se refermer automatiquement les replis lorsque
+vous les quittez : >
+
+	:set foldclose=all
+
+Ceci réappliquera 'foldlevel' à tous les replis qui ne contiennent pas le
+curseur. Essayez-le, et vous verrez à l'usage si ce comportement vous
+convient. Utilisez "zm" pour plus de repliage, et "zr" pour moins de repliage
+(plus de replis ouverts).
+
+Le repliage est local à une fenêtre. Ceci vous permet d'ouvrir deux fenêtres
+pour le même tampon, une avec des replis et l'autre sans. Ou bien une avec
+tous les replis ouverts et l'autre avec tous les replis fermés.
+
+==============================================================================
+*28.4*	Enregistrer et restaurer les replis
+
+Quand vous abandonnez un fichier (en lançant l'édition d'un autre fichier),
+l'état des replis est perdu. Si vous revenez au même fichier ultérieurement,
+tous les replis ouverts et fermés manuellement seront dans leur état par
+défaut. Si des replis avaient été créés manuellement, ils seront perdus ! Pour
+sauvegarder l'état des replis, utilisez la commande |:mkview| : >
+
+	:mkview
+
+Ceci enregistrera tous les paramètres qui influencent la vue sur le fichier.
+Vous pouvez changer ce qui sera enregistré via l'option 'viewoptions'.
+   Si vous revenez au même fichier ultérieurement, vous pourrez charger la vue
+précédente : >
+
+	:loadview
+
+Il est possible d'avoir jusqu'à dix vues sur un même fichier. Par exemple,
+pour sauvegarder la configuration courante en tant que troisième vue, puis
+charger la deuxième vue : >
+
+	:mkview 3
+	:loadview 2
+
+NOTE : Lorsque des lignes sont insérées ou supprimées, les vues peuvent
+devenir invalides.
+   Surveillez en outre l'option 'viewdir', qui indique l'endroit où les vues
+sont enregistrées. N'oubliez pas de purger ce répertoire de temps en temps.
+
+==============================================================================
+*28.5*	Repliage par indentation
+
+Définir des replis avec "zf" demande beaucoup de travail. Si votre texte est
+structuré en donnant une indentation plus grande à des éléments de niveau
+inférieur, vous pouvez utiliser la méthode de repliage "indent". Des replis
+seront alors créés pour chaque plage de lignes de même indentation. Les lignes
+d'indentation supérieure deviendront des replis imbriqués. Cela se révèle
+adapté pour de nombreux langages de programmation.
+
+Vous pouvez essayer en fixant l'option 'foldmethod' : >
+
+	:set foldmethod=indent
+
+Utilisez ensuite les commandes "zm" et "zr" pour augmenter/réduire le
+repliage. Il est facile de voir l'effet produit sur ce texte :
+
+Cette ligne n'est pas indentée ~
+	Cette ligne est indentée simplement ~
+		Cette ligne est indentée doublement ~
+		Cette ligne est indentée doublement ~
+	Cette ligne est indentée simplement ~
+Cette ligne n'est pas indentée ~
+	Cette ligne est indentée simplement ~
+	Cette ligne est indentée simplement ~
+
+NOTE : La relation entre la grandeur de l'indentation et la profondeur du
+repli dépend de l'option 'shiftwidth'. Chaque pas d'indentation de
+'shiftwidth' de large ajoute un à la profondeur du repli. On parle aussi de
+niveau de repli.
+
+Quand vous utilisez les commandes "zm" et "zr", vous augmentez/diminuez en
+fait le niveau de repli (option 'foldlevel'). Vous pourriez tout aussi bien
+fixer cette option directement : >
+
+	:set foldlevel=3
+
+Ceci signifie que tous les replis avec une indentation de trois 'shiftwidth'
+ou plus seront fermés. Plus le niveau de repli est bas, plus il y aura de
+replis fermés. Quand 'foldlevel' vaut zéro, tous les replis sont fermés. "zM"
+fixe 'foldlevel' à zéro. À l'inverse, "zR" fixe 'foldlevel' au niveau de repli
+le plus élevé rencontré dans le fichier.
+
+Il existe ainsi deux moyens pour ouvrir et fermer des replis :
+
+1. En fixant le niveau de repli.
+   Cela vous permet d'effectuer simplement un « zoom arrière » pour voir la
+   structure du texte, déplacer le curseur, puis revenir au texte par un
+   « zoom avant ».
+
+2. En utilisant les commandes "zo" et "zc" pour ouvrir et fermer des replis
+   particuliers.
+   Cela vous permet de n'ouvrir que les replis que vous souhaitez, tandis que
+   les autres resteront fermés.
+
+Vous pouvez combiner les deux : fermer d'abord la plupart des replis en
+exécutant "zm" plusieurs fois, puis ouvrir un repli particulier avec "zo". Ou
+bien ouvrir tous les replis avec "zR", puis fermer des replis particuliers
+avec "zc".
+
+Notez qu'il est impossible de définir des replis manuellement lorsque
+'foldmethod' vaut "indent", car cela perturberait la relation entre
+indentation et niveau de repli.
+
+Pour plus d'informations sur le repliage par indentation, voir le Manuel de
+référence : |fold-indent|.
+
+==============================================================================
+*28.6*	Repliage par balises
+
+Des balises sont utilisées dans le texte pour marquer le début et la fin d'une
+région à replier. Cela permet de contrôler précisément les lignes à inclure
+dans un repli. L'inconvénient est qu'il est nécessaire de modifier le texte.
+
+Pour essayer, faites : >
+
+	:set foldmethod=marker
+
+Exemple de texte, tel qu'il pourrait apparaître dans un programme C :
+
+	/* zorglub () {{{ */ ~
+	int zorglub() ~
+	{ ~
+		/* valeur de retour {{{ */ ~
+		return 42; ~
+		/* }}} */ ~
+	} ~
+	/* }}} */ ~
+
+Remarquez que la ligne repliée affichera le texte qui précède la balise. C'est
+très utile pour indiquer le contenu d'un repli.
+
+It's quite annoying when the markers don't pair up correctly after moving some
+lines around.  This can be avoided by using numbered markers. XXX Exemple :
+
+	/* variables globales {{{1 */ ~
+	int varA, varB; ~
+
+	/* fonctions {{{1 */ ~
+	/* foncA() {{{2 */ ~
+	void foncA() {} ~
+
+	/* foncB() {{{2 */ ~
+	void foncB() {} ~
+	/* }}}1 */ ~
+
+Chaque balise numérotée marque le début d'un repli de niveau correspondant,
+ainsi que la fin de tout repli de niveau supérieur. Il est possible de
+n'employer que des balises numérotées de début pour définir tous les replis.
+L'utilisation de balises de fin n'est nécessaire que pour terminer
+explicitement un repli avant qu'un autre ne commence.
+
+Pour plus d'informations sur le repliage par balises, voir le Manuel de
+référence : |fold-marker|.
+
+==============================================================================
+*28.7*	Repliage par syntaxe
+
+Vim utilise un fichier de syntaxe différent pour chaque langage. Cela permet
+de définir la surbrillance utilisée pour divers éléments d'un fichier. Si vous
+lisez le présent fichier dans Vim, dans un terminal qui supporte les couleurs,
+les couleurs que vous voyez sont définies par le fichier de syntaxe de l'aide
+en ligne, "help.vim".
+   Il est possible d'ajouter des éléments de syntaxe qui contiennent
+l'argument "fold" dans les fichiers de syntaxe. Ils définissent une région de
+repli. Cette méthode requiert d'écrire un fichier de syntaxe et d'y ajouter
+les éléments appropriés. C'est assez délicat, mais une fois que c'est fait,
+tout le repliage sera géré automatiquement.
+   Si vous utilisez un fichier de syntaxe déjà existant, vous n'avez rien à
+faire. Les replis seront créés et supprimés automatiquement lorsque le fichier
+sera édité. Vous pouvez les ouvrir et les fermer comme expliqué plus haut.
+
+Pour plus d'informations sur le repliage par syntaxe, voir le Manuel de
+référence : |fold-syntax|.
+
+==============================================================================
+*28.8*	Repliage par expression
+
+Cette méthode est similaire au repliage par indentation, mais au lieu
+d'utiliser l'indentation d'une ligne, une fonction utilisateur est appelée
+pour calculer son niveau de repli. C'est utile pour un texte dans lequel un
+élément indique les lignes devant être regroupées. Par exemple, une citation
+de texte dans un message électronique est indiquée par un '>' en début de
+ligne. Pour replier les passages cités, utilisez ceci : >
+
+	:set foldmethod=expr
+	:set foldexpr=strlen(substitute(substitute(getline(v:lnum),'\\s','',\"g\"),'[^>].*','',''))
+
+Voyez le résultat produit sur ce texte :
+
+> texte tiré du dernier message ~
+> texte tiré du dernier message ~
+> > texte tiré de l'avant-dernier message ~
+> > texte tiré de l'avant-dernier message ~
+
+Dissection du 'foldexpr' utilisé dans l'exemple (depuis l'intérieur vers
+l'extérieur) :
+
+	getline(v:lnum)			  renvoie la ligne courante
+	substitute(...,'\\s','','g')	  supprime tous les espaces blancs de
+					     la ligne
+	substitute(...,'[^>].*','',''))	  supprime tout après les '>' initiaux
+	strlen(...)			  renvoie la longueur de la chaîne,
+					     c.-à-d. le nombre de '>' trouvés
+
+Notez qu'une contre-oblique doit être insérée avant chaque espace,
+double-apostrophe et contre-oblique pour la commande ":set". Si cela vous pose
+problème, faites >
+
+	:set foldexpr
+
+pour obtenir la valeur de retour effective. Pour corriger une expression
+complexe, utilisez le complètement de la ligne de commande : >
+
+	:set foldexpr=<Tab>
+
+(<Tab> désigne une vraie tabulation.) Vim insérera alors la valeur précédente
+de l'expression, que vous pourrez ensuite éditer.
+
+Pour plus d'informations sur le repliage par expression, voir le Manuel de
+référence : |fold-expr|.
+
+==============================================================================
+*28.9*	Repliage pour des lignes inchangées
+
+C'est utile quand vous activez l'option 'diff' dans la même fenêtre. La
+commande |vimdiff| le fait pour vous. Exemple : >
+
+	:setlocal diff foldmethod=diff scrollbind nowrap foldlevel=1
+
+Ceci peut être exécuté dans chaque fenêtre affichant une version différente du
+même fichier. Les différences entre les fichiers ressortiront clairement,
+tandis que le texte n'ayant pas changé sera replié.
+
+Pour plus de détails, voir |fold-diff|.
+
+==============================================================================
+*28.10* Quelle méthode de repliage utiliser ?
+
+Toutes ces possibilités vous font peut-être vous demander quelle méthode de
+repliage vous devriez choisir. Malheureusement, il n'y a pas règle d'or. Voici
+quelques conseils.
+
+S'il existe un fichier de syntaxe incorporant le repliage pour le fichier que
+vous éditez, c'est probablement le meilleur choix. S'il n'en existe pas, vous
+pouvez l'écrire vous-même. Cela nécessite une bonne connaissance des motifs de
+recherche. C'est un exercice plutôt difficile, mais après cela vous serez
+tranquille (vous n'aurez plus à définir de replis à la main).
+
+Utilisez le repliage manuel pour un texte non structuré. Utilisez ensuite la
+commande ":mkview" pour sauvegarder vos replis : ils pourront être restaurés.
+
+Le repliage par balises nécessite une modification du fichier. Si vous devez
+partager ce fichier avec de nombreuses autres personnes ou vous plier aux
+règles d'une société, vous ne pourrez probablement pas employer cette méthode.
+   Le principal avantage des balises est qu'elles peuvent être placées
+exactement où vous voulez. Cela évite qu'il ne manque quelques lignes lorsque
+vous coupez et collez des replis. Vous pouvez en outre ajouter un commentaire
+sur le contenu du repli.
+
+Le repliage par indentation fonctionne pour de nombreux fichiers, mais pas
+toujours très bien. À utiliser lorsque les autres méthodes ne peuvent pas
+l'être. XXX
+However, it is
+very useful for outlining.  Then you specifically use one 'shiftwidth' for
+each nesting level.
+
+Le repliage par expression peut créer des replis pour quasiment n'importe
+quel texte structuré. Il est relativement simple à spécifier, particulièrement
+si le début et la fin d'un repli sont faciles à reconnaître.
+   Si vous utilisez la méthode "expr" pour définir des replis, mais qu'ils ne
+correspondent pas exactement à ce que vous souhaitez, vous pouvez passer à la
+méthode "manual". Les replis déjà définis ne seront pas modifiés. Vous pouvez
+ensuite supprimer ou ajouter des replis manuellement.
+
+==============================================================================
+
+Chapitre suivant : |usr_29.txt|  Se déplacer dans des programmes
+
+Copyright : voir |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:

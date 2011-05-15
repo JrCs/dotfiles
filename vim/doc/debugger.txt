@@ -1,0 +1,148 @@
+*debugger.txt*  Pour Vim version 6.2.  Dernière modification : 22 déc 2001
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Gordon Prieur
+
+
+Fonctionnalités pour le support des débogueurs		*debugger-support*
+
+1. Fonctionnalités pour le débogage	|debugger-features|
+2. Options de compilation de Vim	|debugger-compilation|
+3. Débogueurs intégrés	  		|debugger-integration|
+
+{absent de Vi}
+
+==============================================================================
+1. Fonctionnalités pour le débogage			*debugger-features*
+
+Les fonctionnalités suivantes sont disponibles à des fins d'intégration avec
+un débogueur ou un Environnement de Programmation Intégré (EPI ou IPE) ou
+encore avec un Environnement de Développement Intégré (EDI ou IDE) :
+
+	1.1. Entrée de commande alternative		|alt-input|
+	1.2. Symboles de débogage			|debug-signs|
+	1.3. Surbrillance des sources pour le débogage	|debug-highlight|
+	1.4. Messages en pied de page			|gui-footer|
+	1.5. Évaluation par infobulle			|balloon-eval|
+
+Ces fonctionnalités ont été ajoutées pour être utilisées spécifiquement avec
+la version Motif de gvim. Cependant, |alt-input| et |debug-highlight| ont été
+écrits pour être utilisables aussi bien dans vim que dans gvim. Certaines
+fonctionnalités parmi celles restantes pourraient être utilisées dans la
+version non graphique de vim avec de légères modifications. Toutefois, je ne
+l'ai pas fait et je n'ai pas non plus testé la fiabilité de la compilation
+pour `vim` en mode texte et les versions graphiques non-Motif.
+
+
+1.1. Entrée de commande alternative			*alt-input*
+
+Pour que Vim fonctionne avec un débogueur, il doit y avoir au moins un lien
+entrant avec un débogueur ou un outil tiers. Dans beaucoup de cas, il y aura
+aussi un lien sortant, mais cela n'est pas absolument nécessaire.
+
+La but du lien entrant est de permettre à un débogueur externe d'envoyer des
+commandes à Vim. Les commandes envoyées par le débogueur doivent donner
+suffisamment de contrôle à ce dernier pour afficher l'état et l'environnement
+de débogage actuel.
+
+L'implémentation actuelle est basée sur la boucle de répartition du X Toolkit
+et sur l'appel de la fonction XtAddInput().
+
+
+1.2. Symboles de débogage				*debug-signs*
+
+Beaucoup de débogueurs démarquent une ligne précise en plaçant un petit
+symbole devant ou en la mettant en surbrillance. La commande |:sign| permet au
+débogueur de définir cette marque graphique. Un exemple où cette
+fonctionnalité pourrait être utilisée serait un débogueur affichant une flèche
+représentant le compteur du programme (PC) du programme en cours de débogage.
+Un autre exemple serait un petit panneau "stop" pour une ligne comportant un
+point d'arrêt. Ces mises en valeur visuelles permettent à l'utilisateur de
+suivre le fil de certains états du débogueur.
+
+Cette fonctionnalité peut également être utilisée pour davantage que du
+débogage. Un EPI peut utiliser un symbole pour mettre en valeur des erreurs de
+compilation, un texte recherché ou même d'autres choses. La fonctionnalité
+"symbole" peut aussi être utilisée de concert avec |debug-highlight| pour
+s'assurer que le marquage est vraiment visible.
+
+Les symboles de débogage sont définis et placés en utilisant la commande
+|:sign|. 
+
+
+1.3. Surbrillance des sources pour le débogage		*debug-highlight*
+
+Cette fonction permet à une ligne d'avoir une surbrillance prédominante. La
+surbrillance permet de faire ressortir une ligne particulière. La 
+surbrillance peut fonctionner aussi bien avec vim que gvim, alors que les
+symboles de débogage sont, dans la plupart des cas, limité à gvim. La seule
+exception est `dtterm` de Sun Microsystem. Le `dtterm` de Sun a une 
+« gouttière à symboles » pour permettant d'afficher les symboles graphiques. 
+
+
+1.4. Messages en pied de page	 			*gui-footer*
+
+Les messages en pied de page peuvent être utilisés pour afficher les messages
+à partir d'un débogueur ou EPI. Ils peuvent aussi être utilisés pour afficher
+des messages d'aide sur les menus ou la barre d'outils. La zone « pied de
+page » est en bas de la fenêtre graphique, en dessous de la ligne de texte
+utilisée pour afficher les commandes débutant par ':'.
+
+L'affichage du pied de page est contrôlé par la lettre 'F' de 'guioptions'.
+
+
+1.5. Évaluation par infobulle   			*balloon-eval*
+
+Cette fonctionalité permet à un débogueur, ou à tout autre outil externe,
+d'afficher des informations dynamiques basées sur la position de la souris. Le
+but de cette fonction était de permettre au débogueur de Sun Visual WorkShop
+d'afficher l'évaluation d'expressions. Toutefois, la fonctionnalité a été
+conçue de façon aussi générale que possible, et pourrait tout aussi bien être
+utilisée pour l'affichage d'autres informations.
+
+L'évaluation par infobulle possède des paramètres configurables. La liste des
+polices et des couleurs peut être définie via les ressources de X
+(XmNballoonEvalFontList, XmNballoonEvalBackground et
+XmNballoonEvalForeground).
+   L'option 'balloondelay' indique le délai avant qu'une tentative soit faite
+pour afficher une bulle. Cette option doit être définie prendre effet.
+
+L'évaluation par infobulle n'est disponible que lorsque Vim a été compilé
+avec les fonctionnalités |+balloon_eval| et |+sun_workshop|.
+
+Les fonctions d'évaluation par infobulle sont également utilisées pour montrer
+un message d'aide pour la barre d'outils. L'option 'balloneval' n'a pas besoin
+d'être activée pour que cela fonctionne. Mais les autres paramètres
+s'appliquent.
+
+==============================================================================
+2. Options de compilation de Vim			*debugger-compilation*
+
+Les fonctionnalités de débogage ont été explicitement ajoutées pour être
+utilisée avec l'environement de programmation intégré de Sun (EPI). Cependant,
+elles ont été réalisées de façon générique afin que l'intégration avec
+d'autres débogueurs puisse aussi utiliser quelques uns ou la totalité les
+outils utilisés avec l'EPI de Sun.
+
+Les variables du préprocesseur qui suivent commandent la prise en charge des
+fonctionnalités au moment de la compilation :
+
+    Entrée de commande alternative		ALT_X_INPUT
+    Symboles de débogage			FEAT_SIGNS
+    Surbrillance des sources pour le débogage	FEAT_SIGNS
+    Messages en pied de page			FEAT_FOOTER
+    Evalutation par infobulle			FEAT_BEVAL    
+
+La première intégration complète avec un EPI/EDI a été réalisée avec Sun
+Visual WorkShop. Pour compiler un gvim qui s'interface avec VWS, définissez
+l'option suivante, qui inclut toutes les options ci-dessus :
+
+    Sun Visual WorkShop				FEAT_SUN_WORKSHOP
+
+==============================================================================
+3. Débogueurs intégrés					*debugger-integration*
+
+À l'heure actuelle, le seul débogueur/IPE/IDE complètement intégré est Sun
+Visual WorkShop.
+
+ vim:tw=78:sw=4:ts=8:ft=help:norl:

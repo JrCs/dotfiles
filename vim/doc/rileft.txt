@@ -1,0 +1,144 @@
+*rileft.txt*	Pour Vim version 6.2.
+
+
+		  MANUEL de RÉFÉRENCE VIM - par Avner Lottem
+				mis à jour par Nadim Shaikli
+
+
+Mode d'affichage de droite à gauche pour Vim	*rileft*
+
+
+Ces fonctions furent écrites à l'origine par Avner Lottem :
+   Courriel :	alottem@iil.intel.com
+   Téléphone :	+972-4-8307322
+[N.D.T. : Le traducteur ne garantit pas qu'Avner comprenne le français.]
+
+{Vi ne possède aucune de ces commandes}
+
+								*E26*
+Cette fonctionnalité n'est disponible que si la fonctionnalité |+rightleft| a
+été incluse lors de la compilation.
+
+
+Introduction
+------------
+Certaines langues telles que l'arabe, le persan, l'hébreu (parmi d'autres)
+nécessitent la possibilité d'afficher leur texte de droite à gauche. Les
+fichiers écrits dans ces langues sont enregistrés de manière conventionnelle
+(c.-à-d. en commençant par le début, en continuant par le milieu, et en
+terminant par la fin) ; l'affichage de droite à gauche est uniquement une
+fonctionnalité de l'interface d'affichage (en vertu des spécifications
+Unicode). Dans les fichiers écrits dans l'orientation de droite à gauche, les
+caractères apparaissent de droite à gauche à l'écran.
+
+La bidirectionnalité (ou, en abrégé, la bidi) est la solution universelle
+offerte à ces langues par Unicode. La bidi offre à l'utilisateur la
+possibilité de visualiser à la fois dans la même fenêtre du texte de gauche à
+droite ou de droite à gauche selon l'écriture utilisée. Pour des raisons de
+simplicité, Vim ne fournit pas la bidi à l'heure actuelle ; son choix est
+seulement de proposer à l'utilisateur la possibilité d'afficher, de saisir et
+d'utiliser du texte allant soit de gauche à droite, soit de droite à gauche.
+Une option hybride plus ancienne, qui consistait à encoder la direction
+d'affichage avec chaque caractère (ou groupe de caractères), n'a pas été
+retenue non plus, d'une part parce qu'elle dépasse ce à quoi on peut
+s'attendre de la part d'un « simple » éditeur de texte, et d'autre part parce
+qu'Unicode ne lui a pas accordé sa sanction.
+
+
+Résumé
+------
+o  L'édition « de gauche à droite » fonctionne comme dans le Vim
+   « classique », sans changement.
+
+o  Affichage et édition des fichiers dans des fenêtres orientées de droite à
+   gauche. L'orientation est définie « par fenêtre », de sorte qu'il est
+   possible de visualiser un même fichier à la fois de gauche à droite et de
+   droite à gauche. (Ceci est utile pour la visualisation de fichiers hybrides
+   contenant à la fois du texte de gauche à droite et de droite à gauche).
+
+o  Compatibilité avec le Vim « classique ». Pratiquement toutes les
+   fonctionnalités sont indépendantes du sens de l'affichage (voir plus loin
+   « Bogues »).
+
+o  Recul en mode d'insertion inverse, vers la position correcte dans le
+   fichier (si possible).
+
+o  Le terminal n'a pas besoin de posséder une fonction d'affichage de droite à
+   gauche. Toutes les modifications introduites par l'option d'affichage de
+   droite à gauche sont totalement indépendantes du matériel.
+
+o  De nombreuses langues exigent que l'affichage de droite à gauche soit
+   supporté. Il est très facile de supporter de nouvelles langues à écriture
+   de droite à gauche, moyennant l'inclusion de leur codage clavier, et
+   peut-être de quelques ajustement mineurs dans le code source. À l'heure
+   actuelle, trois de ces langues sont déjà supportées : voir |arabic.txt|,
+   |farsi.txt| et |hebrew.txt|.
+
+
+Particularités...
+-----------------
+
+o  Invocation
+   ----------
+   + 'rightleft' ('rl') oriente la fenêtre de droite à gauche.
+   + 'delcombine' ('deco'), option booléenne, permet, lors de l'édition de
+     textes encodés en UTF-8, de supprimer un caractère de composition,
+     c'est-à-dire un caractère qui s'affiche superposé sur le précédent
+     (de tels caractères sont utilisés, par exemple, pour les voyelles des
+     langues sémitiques).
+   + 'rightleftcmd' ('rlc') permet, dans certains modes (tels que la
+     recherche) l'utilisation de texte de droite à gauche même sur la ligne
+     de commande.
+
+O  Saisie rétrodirectionnelle				*ins-reverse*
+   --------------------------
+   Au lieu d'utiliser pleinement l'option 'rightleft', il est possible d'opter
+   pour l'insertion à reculons. Lorsque l'option 'revins' (reverse insert =
+   insertion inversée) est activée, l'insertion se produit à reculons. Ceci
+   peut être utilisé pour taper du texte de droite à gauche. Au cours de
+   l'insertion, le curseur reste immobile et le texte est « poussé » vers la
+   droite. La touche <RetArr> supprime le caractère le plus récent, qui se
+   trouve sous le curseur. CTRL-W et CTRL-U fonctionnent également en sens
+   inverse. <RetArr>, CTRL-W et CTRL-U ne s'arrêtent ni au début de
+   l'insertion ni à la fin de la ligne, quelle que soit la valeur de l'option
+   'backspace'.
+
+   Il n'y a pas (encore) de mode remplacement à reculons.
+
+   Si l'option 'showmode' est activée, la ligne d'état affiche "-- REVERSE
+   INSERT --" lorsque l'insertion se fait à reculons.
+
+o  Coller dans une fenêtre orientée de droite à gauche
+   ---------------------------------------------------
+   Si on colle dans une fenêtre orientée de droite à gauche du texte copié ou
+   coupé avec la souris, l'orientation du texte sera inversée, car les
+   caractères se trouvent de gauche à droite dans le presse-papiers. Pour
+   éviter cela, inversez l'options 'revins' avant de coller le texte.
+
+
+Bogues
+------
+o  Les commandes CTRL-A et CTRL-X (addition et soustraction) ne sont pas
+   exécutées correctement dans une fenêtre orientée de droite à gauche.
+
+o  L'insertion à reculons et le mode de droite à gauche ne sont pas supportés
+   sur la ligne de commande. Toutefois, la fonctionnalité de l'éditeur ne s'en
+   trouve pas diminuée, car il est possible de saisir de droite à gauche les
+   mappages, les abréviations et les textes à rechercher.
+
+o  Le traitement est légèrement plus lent en mode de droite à gauche, car le
+   mouvement de droite à gauche est « émulé » au sein de Vim, il n'est pas
+   exécuté directement par la carte d'écran.
+
+o  Dans l'IHM graphique Athena, l'ascenseur horizontal fonctionne dans le
+   mauvais sens. Ceci est difficile à corriger.
+
+o  Lorsque 'rightleft' et 'revins' sont activées en même temps, l'option
+   'textwidth' ne fonctionne pas : il n'y a pas de retour à la ligne
+   automatique, vous obtenez une seule longue ligne.
+
+o  Il n'y a pas de support pour une vraie et complète bidirectionnalité
+   (bidi).
+
+
+ vim:tw=78:ts=8:ft=help:norl:fenc=latin1:nomod

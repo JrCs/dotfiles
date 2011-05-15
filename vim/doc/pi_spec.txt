@@ -1,0 +1,111 @@
+*pi_spec.txt*   Pour Vim version 6.2.  Dernière modification : 29 oct 2002
+
+
+		MANUEL de RÉFÉRENCE VIM - par Gustavo Niemeyer
+
+
+Il s'agit d'un greffon de type de fichier prévu pour les fichiers de
+spécifications RPM.
+
+Actuellement, ce greffon Vim vous permet de mettre aisément à jour la section
+"%changelog" des fichiers de spécifications RPM. Il créera cette section si
+elle n'existe pas encore. Si une entrée à la date du jour existe déjà, il vous
+donne la possibilité d'y ajouter un nouvel élément. Si vous ne fournissez pas
+de chaîne de format |spec_chglog_format|, le greffon vous demandera une
+adresse électronique et construira lui-même une chaîne de format.
+
+1. Comment l'utiliser	|spec-how-to-use-it|
+2. Personnalisation	|spec-customizing|
+
+==============================================================================
+1. Comment l'utiliser				*spec-how-to-use-it*
+
+Le greffon "spec_chglog" fournit le mappage suivant : >
+
+	:map <buffer> <LocalLeader>c <Plug>SpecChangelog
+
+Cela signifie que vous pouvez utiliser le greffon dans un fichier de
+spécifications en pressant d'abord votre touche "mapleader" locale ('\' par
+défaut) puis 'c'. Si |spec_chglog_format| n'est pas fixé, le greffon vous
+demandera l'adresse électronique à utiliser lors de cette session d'édition.
+
+À chaque exécution du greffon, ce dernier va vérifier si la dernière entrée de
+la section a été écrite en ce jour et par vous. Si c'est le cas, il insérera
+juste un nouvel élément dans l'entrée, sinon il créera une nouvelle entrée. Si
+vous travaillez avec |spec_chglog_release_info| activé, il vérifiera également
+la correspondance des nom, version et mouture. Le greffon est assez
+intelligent pour pour demander s'il est nécessaire de mettre à jour la mouture
+du paquetage si vous ne l'avez pas fait.
+
+Configurer un mappage				*spec-setting-a-map*
+---------------------
+Comme vous le savez sans doute, vous pouvez facilement configurer un mappage
+pour accéder à n'importe quelle commande Vim (notamment). Si le mappage par
+défaut <LocalLeader>c vous déplaît, vous pouvez mapper votre propre touche. La
+ligne qui suit vous montre comment le faire dans votre fichier ".vimrc", en
+mappant le greffon sur la touche <F5> : >
+
+	au FileType spec map <buffer> <F5> <Plug>SpecChangelog
+
+NOTE : le greffon respectera votre souhait de modifier le mappage par défaut
+       et ne le modifiera pas.
+
+Cette commande n'ajoute un mappage que dans les tampons contenant des fichiers
+de spécifications RPM.
+
+==============================================================================
+2. Personnalisation				*spec-customizing*
+
+La chaîne de format				*spec_chglog_format*
+-------------------
+Vous pouvez facilement personnaliser l'aspect des entrées de votre fichier de
+spécifications. Pour cela, fixez la variable "spec_chglog_format" dans votre
+fichier ".vimrc" de la manière suivante : >
+
+	let spec_chglog_format = "%a %b %d %Y Mon Nom <mon@adresse.net>"
+
+NOTE : "%a %b %d %Y" est le format de date le plus courant. Si vous ne
+spécifiez pas de chaîne de format, le greffon vous demandera votre adresse
+électronique à la première exécution de la commande SpecChangelog, et
+construira la variable |spec_chglog_format| à votre place. Ainsi, vous ne
+devrez donner votre adresse électronique qu'une seule fois.
+
+Pour connaître les différents options de format disponibles, jetez un oeil au
+manuel de la fonction |strftime()|.
+
+Où insérer les nouveaux éléments		*spec_chglog_prepend*
+--------------------------------
+Le greffon insèrera habituellement les nouveaux éléments d'une entrée
+%changelog (à distinguer d'une entrée elle-même) après ceux déjà présents. Si
+vous fixez la variable spec_chglog_prepend >
+
+	let spec_chglog_prepend = 1
+
+les nouveaux éléments seront insérés avant ceux déjà présents.
+
+Insérer l'information de version 		*spec_chglog_release_info*
+--------------------------------
+Si vous le souhaitez, le greffon peut insérer automatiquement les informations
+de version dans chaque entrée de la section %changelog. Un des avantages de
+l'activation de cette fonctionnalité est le contrôle de la mise à jour de la
+mouture après la dernière modification dans le paquetage. Si vous n'avez pas
+mis à jour la version ou la mouture du paquetage, le greffon vous demandera
+s'il doit effectuer la mise à jour à votre place. Pour activer cette
+fonctionnalité, insérez simplement le code suivant dans votre fichier
+".vimrc" : >
+
+	let spec_chglog_release_info = 1
+
+Ensuite, le premier élément de votre entrée ressemblera à : >
+
+	+ name-1.0-1cl
+
+Si vous n'appréciez pas la fonctionnalité de mise à jour de la mouture et que
+vous ne souhaitez pas dire "No" à chaque détection d'une ancienne mouture,
+vous pouvez la désactiver avec >
+
+	let spec_chglog_never_increase_release = 1
+
+Bonne chance !
+
+ vim:tw=78:ts=8:ft=help:norl:

@@ -1,0 +1,365 @@
+*os_win32.txt*  Pour Vim version 6.1.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par George Reilly
+
+
+						*win32* *Win32* *MS-Windows*
+Ce fichier documente les particularités de la version Win32 de Vim.
+
+La version Win32 de Vim fonctionne aussi bien sur Windows NT que sur Windows
+95. Il existe à la fois une version console et une version IHM graphique. Il
+existe aussi une version IHM graphique utilisable dans le sous-système Win32s
+de Windows 3.1[1]. Vous pouvez également utiliser la version DOS 32 bits de
+Vim à la place. Voir |os_msdos.txt|.
+
+1. Problèmes connus			|win32-problems|
+2. Démarrage				|win32-startup|
+3. Restaurer le contenu de l'écran	|win32-restore|
+4. Utiliser la souris			|win32-mouse|
+5. Travailler sous Windows 3.1		|win32-win3.1|
+6. Mini FAQ Win32			|win32-faq|
+
+De plus, il existe des éléments communs aux versions Win32 et DOS :
+Emplacement des fichiers	|dos-locations|
+Utiliser les contre-obliques	|dos-backslash|
+Mappages standards		|dos-standard-mappings|
+Rendu à l'écran et couleurs	|dos-colors|
+Formats des fichiers		|dos-file-formats|
+Commande :cd			|dos-:cd|
+Interrompre			|dos-CTRL-Break|
+Fichiers temporaires		|dos-temp-files|
+Options par défaut du shell	|dos-shell|
+
+IHM graphique Win32		|gui-w32|
+
+Contributeurs :
+La version Win32 a été écrite par George V. Reilly <george@reilly.org>.
+Le premier portage pour Windows NT a été réalisé par Roger Knobbe
+<RogerK@wonderware.com>.
+La version IHM graphique a été réalisée par George V. Reilly et Robert Webb.
+
+Pour compiler Vim, consultez src/INSTALL.pc.		*win32-compiling*
+
+==============================================================================
+1. Problèmes connus				*windows95* *win32-problems*
+
+Il existe quelques problèmes connus avec l'exécution de Vim dans une console
+sous Windows 95. À notre connaissance, c'est également le cas avec Windows 98
+et Windows ME.
+
+Commentaire d'une personne travaillant chez Microsoft : "Win95 console
+support has always been and will always be flaky." (« Le support de la console
+sous Win95 a toujours été et sera toujours farfelu. »)
+1. Le support des touches mortes ne fonctionne pas.
+2. Le redimensionnement de la fenêtre avec ":set columns=N lines=N"
+   fonctionne, mais l'exécution de commandes externes PEUT PROVOQUER LE
+   BLOCAGE OU LE PLANTAGE DE VOTRE SYSTÈME.
+3. Le rafraîchissement de l'affichage est lent, à moins que vous ne donniez à
+   'columns' et 'lines' des valeurs non-DOS. Mais le problème 2 survient
+   alors !
+
+Si cela vous dérange, utilisez la version MS-DOS 32 bits ou la version
+graphique Win32.
+
+Lors du complètement du nom d'un fichier, Vim trouve aussi la correspondance
+pour le nom court du fichier. Mais il trouvera et utilisera le nom long de
+toute façon. Par exemple, si vous avez un nom de fichier long
+"ceci_est_un_essai" avec le nom court "ceci_e~1", la commande ":e *1" lancera
+l'édition du fichier "ceci_est_un_essai".
+
+==============================================================================
+2. Démarrage						*win32-startup*
+
+RÉPERTOIRE COURANT					*win32-curdir*
+
+Lorsqu'il est lancé avec un seul nom de fichier en argument, et que son chemin
+est complet (il commence par "x:\"), Vim suppose qu'il a été lancé depuis
+l'explorateur de fichiers et fixera le répertoire courant à l'emplacement de
+ce fichier. Pour éviter cela lorsque vous tapez une commande pour lancer Vim,
+utilisez une oblique « normale » plutôt qu'une contre-oblique.
+Exemples : >
+
+	vim c:\texte\fichiers\toto.txt
+
+Ceci changera le répertoire courant en "C:\texte\fichiers". >
+
+	vim c:/texte\fichiers\toto.txt
+
+Ceci utilisera le répertoire courant actuel.
+
+
+OPTION DU TERMINAL					*win32-term*
+
+Le seul type de terminal supporté par la version Win32 est "win32". C'est un
+terminal interne. Si vous fixez 'term' sur quoi que ce soit d'autre, vous
+obtiendrez probablement un comportement très bizarre de Vim. C'est pourquoi
+Vim ne cherche pas à récupèrer de valeur par défaut pour 'term' depuis la
+variable d'environnement "TERM".
+
+==============================================================================
+3. Restaurer le contenu de l'écran			*win32-restore*
+
+Quand 'restorescreen' est activé (c'est le cas par défaut), Vim rétablit le
+contenu original de la console quand vous quittez ou lors de l'exécution de
+commandes externes. Si cela n'est pas ce que vous voulez, utilisez ":set
+nors".  Voir |'restorescreen'|.
+
+==============================================================================
+4. Utiliser la souris					*win32-mouse*
+
+La version Win32 de Vim supporte l'utilisation de la souris. Si vous avez une
+souris avec 2 boutons, le bouton du milieu peut être émulé en pressant les
+boutons gauche et droit simultanément. NOTE : Dans l'IHM graphique Win32, si
+le menu contextuel du bouton droit de la souris est activé (voir
+'mousemodel'), presser d'abord le bouton gauche peut provoquer des erreurs.
+Voir |mouse-using|.
+
+Si la souris ne fonctionne pas, essayez de désactiver la fonctionnalité "Mode
+d'édition rapide" de la console.
+
+==============================================================================
+5. Travailler sous Windows 3.1				*win32-win3.1*
+
+						*win32s* *windows-3.1*
+Il existe une version particulière de gVim qui fonctionne sous Windows 3.1 et
+3.11. Vous aurez besoin du fichier gvim.exe qui a été compilé avec Visual C++
+4.1.
+
+Pour faire fonctionner la version Win32 sous Windows 3.1, vous devez installer
+Win32s. Il est possible que vous l'ayez déjà installé avec une autre
+application Win32. Si Vim ne semble pas fonctionner correctement, récupérez la
+dernière version : 1.30c. Vous pouvez la trouver sur :
+
+	http://support.microsoft.com/download/support/mslfiles/pw1118.exe
+
+(Avec un peu de chance, Microsoft ne l'aura pas déplacé à nouveau !)
+
+La raison d'avoir deux versions de gvim.exe est que la version Win32s a été
+compilée avec Visual C++ 4.1. C'est la dernière version de VC++ qui supporte
+les programmes Win32s. VC++ 5.0 est meilleur, il donc est utilisé pour la
+version Win32. Ceci mis à part, il n'y a pas de différence entre ces
+programmes. Si vous êtes dans un environnement hétérogène, vous pouvez
+utiliser indifféremment gvim.exe pour Win32s.
+
+La version Win32s fonctionne de la même manière que la version Win32 sous
+95/NT. Avec la version Win32s, les différences suivantes s'appliquent :
+- Vous ne pouvez pas utiliser les noms de fichiers longs, car Windows 3.1 ne
+  les supporte pas !
+- Lors de l'exécution d'un commande externe, aucun code de retour n'est
+  renvoyé. Après un ":make", vous devez faire le ":cn" vous-même.
+
+==============================================================================
+6. Mini FAQ Win32					*win32-faq*
+
+Q. Pourquoi la version Win32 de Vim rafraîchit l'écran si lentement sur
+   Windows 95 ?
+R. Le support de la console pour les applications Win32 est très bogué sur
+   Windows 95. Pour une raison inconnue, le rafraîchissement de l'écran est
+   très lent quand Vim fonctionne dans l'une des résolutions standards (80x25,
+   80x43 ou 80x50), et la version DOS 16 bits rafraîchit l'écran bien plus
+   rapidement que la version Win32.
+   Toutefois, si l'écran est basculé dans une autre résolution, par exemple
+   avec ":set columns=100 lines=40", le rafraîchissement devient à peu près
+   aussi rapide que celui de la version 16 bits.
+
+   AVERTISSEMENT : Modifier 'columns' peut faire planter Windows 95 lors du
+   rafraîchissement de la fenêtre (plaintes --> Microsoft). Puisque cela
+   fonctionne presque, cela n'a pas été désactivé, mais restez prudent si vous
+   changez 'columns'.
+
+   Changer la résolution de l'écran rend l'affichage plus rapide, mais amène
+   de nouveaux problèmes. Les commandes externes (par exemple, ":!dir")
+   peuvent provoquer le blocage de Vim quand l'écran est dans une résolution
+   qui n'est pas standard, en particulier quand 'columns' est différent de 80.
+   Il n'est pas possible à Vim de remettre de manière fiable la résolution de
+   l'écran à la valeur qu'elle avait au démarrage, avant l'exécution des
+   commandes externes. Donc, si vous changez les nombres de lignes ('lines')
+   ou de colonnes ('columns'), soyez très, très prudent. En fait, Vim ne vous
+   permettra pas d'exécuter des commandes externes lorsque 'columns' est
+   différent de 80, car la probabilité d'un blocage est trop importante.
+
+   Aucun des problèmes ci-dessus n'existe sur Windows NT. Le rafraîchissement
+   de l'écran est rapide, quel que soit le nombre de lignes ('lines') ou de
+   colonnes ('columns') de la fenêtre, et les commandes externes ne provoquent
+   aucun blocage.
+
+Q. Du coup, si le rafraîchissement est si lent avec la version Win32 sur
+   Windows 95 alors que la version DOS 16 bits est bien plus rapide, pourquoi
+   voudrais-je utiliser la version Win32 ?
+R. Premièrement, la version Win32 n'est pas si lente que cela, en particulier
+   quand l'écran est réglé sur un nombre de lignes et de colonnes non
+   standard. Deuxièmement, la version DOS 16 bits souffre de limitations
+   sévères : elle ne permet pas de faire des changements importants et ne
+   reconnaît pas les noms de fichiers longs. La version Win32 n'a pas ces
+   limitations et est globalement plus rapide (vrai également pour la version
+   DOS 32 bits DJGPP de Vim). La version Win32 est plus intelligente dans sa
+   manière de gérer l'écran, la souris et le clavier que ne l'est la version
+   DJGPP.
+
+Q. Et la version DOS 16 bits par rapport à la version Win32 sur NT ?
+R. Il n'existe aucune bonne raison d'utiliser la version DOS 16 bits sur NT.
+   La version Win32 rafraîchit l'écran aussi rapidement que la version 16 bits
+   sur NT. Tous les inconvénients cités ci-dessus s'appliquent. Enfin, les
+   applications DOS peuvent mettre plus de temps à démarrer et fonctionnent
+   plus lentement. Sur les plates-formes non Intel, la version DOS est
+   pratiquement inutilisable du fait de sa lenteur, parce qu'elle fonctionne
+   au sein d'un émulateur 80x86.
+
+Q. Comment puis-je changer la police ?
+R. Dans le version IHM graphique, vous pouvez utiliser l'option 'guifont'.
+   Dans la version console, vous devez changer la police de la console. Vous
+   ne pouvez pas le faire depuis Vim.
+
+Q. Quand je change la taille de la fenêtre de la console avec ":set lines=N"
+   ou équivalent, la police change ! (Win95)
+R. La police de la console est fixée sur "Auto" dans les propriétés de Vim (ou
+   dans celles de votre Invite de commande MS-DOS). Cela demande à Win95 de
+   déterminer la meilleure police possible (pas toujours pertinent).  Donnez
+   une police explicite à la place.
+
+Q. Pourquoi ne puis-je pas coller du texte dans Vim sous Windows 95 ?
+R. Dans la boîte de dialogue des propriétés de la fenêtre MS-DOS, allez à
+   "MS-DOS Prompt/Misc/Fast pasting" XXX et assurez-vous qu'il n'est PAS
+   activé. Vous devriez également saisir ":set paste" dans Vim pour éviter
+   des effets inattendus. |'paste'|
+
+Q. Comment puis-je taper des touches mortes sur Windows 95, dans la version
+   console ?
+   (Une touche morte est une touche avec un accent, par exemple grave, aigu,
+   ou tréma, qui ne produit pas de caractère par elle-même mais qui, suivie
+   d'une autre touche, produit un caractère accentué, comme 'e' accent grave,
+   'i' tréma, 'n' tilde, ainsi de suite. Très utile pour la plupart des
+   langues européennes. L'agencement des claviers en langue anglaise ne
+   propose pas de touches mortes, à notre connaissance.)
+R. Vous ne pouvez pas. Les routines d'entrée du mode console ne fonctionnent
+   pas correctement sous Windows 95, et je n'ai pas réussi à trouver une
+   solution. Voici les mots d'un « développeur senior » de Microsoft :
+
+	« Le support de la console sous Win95 a toujours été et sera toujours
+	farfelu.
+	   Cette absurdité est inévitable parce que nous sommes coincés entre le
+	monde des programmes résidents MS-DOS pour le clavier, tel que KEYB
+	(qui veux trafiquer les données ; important pour
+	l'internationalisation), et le monde Win32.
+	   Donc les touches qui « n'exitent pas » dans le monde MS-DOS (comme
+	les touches mortes) ont une existence très ténue dans le monde console
+	Win32. Les touches qui réagissent différement entre les mondes MS-DOS
+	et console Win32 (par exemple Verr Maj) auront un comportement
+	farfelu.
+	   Ne parlons même pas des problèmes liés à l'agencement de claviers
+	selon la langue... »
+
+   Vous devriez pouvoir contourner ce problème en utilisant le mécanisme des
+   digraphes. |digraphs|
+
+   La meilleure solution est d'utiliser la version IHM graphique Win32
+   gvim.exe. Sinon, vous pouvez essayer l'une des versions DOS de Vim où les
+   touches mortes sont signalées opérationnelles.
+
+Q. Comment puis-je taper des touches mortes sur Windows NT ?
+R. Les touches mortes fonctionnent sur NT 3.51. Utilisez-les comme vous le
+   feriez dans toute autre application.
+   Sur NT 4.0, vous devez vous assurer que la région linguistique par défaut
+   (qui est définie dans la partie Clavier du Panneau de configuration) est la
+   même que la région linguistique actuellement utilisée. Sinon, le code NT
+   s'embrouille et plante ! Ce problème est dû à NT 4.0, ce n'est pas vraiment
+   un problème Vim.
+
+Q. J'utilise Vim pour éditer un fichier situé sur un serveur de fichiers Unix
+   NFS par le biais d'un lien symbolique. Quand j'écris le fichier, Vim
+   n'écrit pas « à travers » le lien ; Au lieu de cela, il efface le lien et
+   le remplace par un nouveau fichier. Pourquoi ?
+R. Sur Unix, Vim s'attend à trouver des liens (symboliques ou physiques). Une
+   copie du fichier original est réalisée puis le fichier original est
+   écrasé. Ceci assure que toutes les propriétés du fichier restent les
+   mêmes. Sur les systèmes non-Unix, le fichier original est renommé et un
+   nouveau fichier est écrit. Seuls les bits de protection sont positionnés
+   comme pour le fichier original. Toutefois, cela ne fonctionne pas
+   correctement lorsque l'on travaille sur un système de fichiers NFS monté
+   localement, où les liens et d'autres choses existent. La seule manière de
+   corriger ceci dans la version actuelle est de ne pas créer de fichier de
+   sauvegarde, avec ":set nobackup nowritebackup". Voir |'writebackup'|.
+
+Q. Comment puis-je faire pour voir la sortie de ":make" pendant qu'il est en
+   cours ?
+R. En fait, vous devez ajouter le programme "tee", qui copie ce qu'il reçoit
+   (la sortie de make) sur la sortie standard stdout et dans le fichier
+   d'erreurs. Vous pouvez trouver une copie de tee (et de nombreux autres
+   outils GNU) sur :
+	ftp://ftp.cc.utexas.edu/microlib/nt/gnu
+   Sinon, essayez la dernière version Cygnus des outils GNU, disponible sur :
+	http://www.cygnus.com/misc/gnu-win32
+   Vous trouverez également des choses intéressantes sur le site Virtual Unix
+   de Chris Szurgot, http://www.itribe.net/virtunix. Microsoft dispose de
+   quelque outils similaires à ceux d'Unix sur :
+	http://www.microsoft.com/ntserver/tools/Maintnce.htm
+   Lorsque que vous aurez obtenu une copie de tee, vous devrez ajouter >
+	:set shellpipe=\|\ tee
+<  à votre fichier "_vimrc".
+
+Q. J'enregistre des fichiers sur une machine distante qui fonctionne avec
+   VisionFS, et des fichiers disparaissent !
+R. VisionFS ne gère pas certaines extensions de fichiers formées d'un point
+   ('.') suivi de trois lettres. SCO affirme que ce comportement est requis
+   pour la compatibilité ascendante avec les environnements DOS/Windows 16
+   bits. Les deux commandes ci-dessous mettent ce comportement en évidence : >
+
+	echo Bonjour > fichier.bat~ 
+	dir > fichier.bat
+<
+   Le résultat est le suivant : la commande "dir" met à jour le fichier
+   "fichier.bat~", au lieu d'en créer un nouveau. Ce même comportement a lieu
+   dans Vim lors de l'édition d'un fichier existant "toto.bat", car le
+   comportement par défaut de Vim est de créer un fichier temporaire avec un
+   caractère '~' ajouté à la fin du nom. Lors de l'enregistrement du fichier,
+   il se retrouve effacé.
+
+   Solution : Ajouter cette commande à votre fichier "_vimrc" : >
+	:set backupext=.temporaire
+
+Q. Comment puis-je changer la fréquence de clignotement du curseur ?
+R. Vous ne pouvez pas ! C'est une limitation de la console NT. NT 5.0 est
+   signalé comme étant capable de changer la fréquence de clignotement du
+   curseur pour toutes les consoles à la fois.
+
+							*:!start*
+Q. Comment puis-je lancer une commande externe ou un programme de manière
+   asynchrone ?
+R. En utilisant ":!" pour lancer une commande externe, vous pouvez la démarrer
+   avec "start" : >
+	:!start winfile.exe<CR>
+<  L'utilisation de "start" indique à Vim de ne plus basculer sur un nouvel
+   écran, ouvrir une nouvelle console, ou attendre que le programme se
+   termine ; cela indique que le programme que vous lancez n'affecte pas les
+   fichiers en cours d'édition. Les programmes commençant par ":!start" ne
+   récupèrent pas les descripteurs de fichiers ouverts de Vim, ce qui signifie
+   qu'il n'est pas nécessaire qu'ils soient terminés avant Vim.  Pour éviter
+   ce cas particulier, utilisez ":! start".
+
+Q. J'utilise Win32s, et quand j'essaye de lancer une commande externe telle
+   que "make", Vim n'attend pas qu'elle soit terminée ! Au secours !
+R. Le problème est qu'une application 32 bits (Vim) ne peut pas recevoir de
+   notification de la part de Windows qu'une application 16 bits (votre
+   session DOS) est terminée. Vim dispose d'une solution de contournement pour
+   ce problème, mais vous devez paramétrer vos commandes DOS pour qu'elles
+   fonctionnent dans une fenêtre plutôt qu'en plein écran. Pour cela :
+   1° Ouvrez l'éditeur PIF (dans le groupe Programmes principaux) ;
+   2° Ouvrez le fichier "_default.pif" situé dans votre répertoire Windows ;
+   3° Changez l'option d'affichage de "Plein écran" à "Fenêtre" ;
+   4° Enregistrez puis sortez.
+
+   Pour vérifier, démarrez Vim et tapez >
+   	:!dir C:\<CR>
+<  Vous devriez voir une fenêtre DOS apparaître brièvement avec la liste des
+   fichiers du répertoire.
+
+Q. J'utilise Vim sous Win32s et NT. Sur NT, je peux demander à la console de
+   faire 50 lignes par défaut, pour obtenir un shell de 80x50 caractères lors
+   d'un ":sh". Puis-je faire la même chose sur Win3.1x, ou suis-je coincé en
+   80x25 ?
+R. Éditez le fichier "system.ini" et ajoutez "ScreenLines=50" dans la section
+   [NonWindowsApp]. L'invite de commande DOS et les commandes externes DOS
+   fonctionneront à présent dans une fenêtre de 50 lignes.
+
+ vim:tw=78:fo=tcq2:ts=8:ft=help:norl:

@@ -1,0 +1,1001 @@
+*gui.txt*       Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+L'Interface Homme/Machine graphique de Vim		*gui* *GUI* *IHMg*
+
+1. Lancer l'IHM graphique		|gui-start|
+2. Ascenseurs				|gui-scrollbars|
+3. Contrôle de la souris		|gui-mouse|
+4. Sélections dans l'IHM graphique	|gui-selections|
+5. Menus				|menus|
+6. Divers				|gui-extras|
+7. Commandes shell			|gui-shell|
+
+Autres documents sur l'IHM graphique :
+|gui_x11.txt|	Pour les élément spécifiques de l'IHM graphique X11.
+|gui_w32.txt|	Pour les élément spécifiques de l'IHM graphique Win32.
+
+{absent de Vi}
+
+==============================================================================
+1. Lancer l'IHM graphique			*gui-start* *E229* *E233*
+
+En premier lieu, vous devez vous assurer que vous utilisez une version de Vim
+qui supporte l'IHM graphique. Pour cela, vérifiez la sortie de la commande
+":version" : elle doit inclure "+GUI_Athena", "+GUI_BeOS", "+GUI_GTK",
+"+GUI_Motif" ou "MS-Windows ... {no} GUI version".
+
+La façon de lancer l'IHM graphique dépend du système utilisé. La plupart du
+temps, vous pouvez utiliser :
+
+	gvim [options] [fichiers...]
+
+La version X11 de Vim peut s'exécuter aussi bien en mode IHM graphique que
+console. Voir |gui-x11-start|.
+
+					*gui-init* *gvimrc* *.gvimrc* *_gvimrc*
+Lorsque l'IHM graphique est lancée, les initialisations sont effectuées dans
+cet ordre :
+1° Les options termcap sont fixées à leurs valeurs par défaut pour l'IHM
+   graphique.
+2° Si le fichier menu système existe, il est sourcé. Le nom de ce fichier est
+   normalement "$VIMRUNTIME/menu.vim". Vous pouvez le vérifier avec
+   ":version". Voir aussi |$VIMRUNTIME|. Pour sauter le chargement du menu
+   système, incluez 'M' dans 'guioptions'.
+					*buffers-menu* *no_buffers_menu*
+   Le fichier menu système inclut un menu Tampons. Si vous n'en voulez pas,
+   fixez la variable "no_buffers_menu" dans votre vimrc (pas gvimrc !) : >
+	:let no_buffers_menu = 1
+<  NOTE : L'activation de la coloration syntaxique charge aussi le fichier
+   menu, vous devez donc désactiver le menu Tampons avant de faire ":syntax
+   on".
+   Les noms de chemins sont tronqués à 35 caractères. Vous pouvez spécifier
+   une longueur différente, par exemple 50, comme ceci : >
+	:let bmenu_max_pathlen = 50
+3° Si l'option de ligne de commande "-U {gvimrc}" a été spécifiée lors du
+   lancement de Vim, le fichier {gvimrc} sera lu pour les initialisations. Les
+   étapes suivantes sont sautées.
+4° Pour Unix et MS-Windows, si le fichier gvimrc système existe, il est
+   sourcé. Le nom de ce fichier est normalement "$VIM/gvimrc". Vous pouvez le
+   vérifier avec ":version". Voir aussi |$VIM|.
+5° Vim effectue la première de ces étapes qui est possible :
+   - Si la variable d'environnement $GVIMINIT existe et est non vide, elle est
+     exécutée en tant que commande Ex.
+   - Si le fichier utilisateur gvimrc existe, il est sourcé. Le nom de ce
+     fichier est normalement "$HOME/.gvimrc". Vous pouvez le vérifier avec
+     ":version".
+   - Pour Win32, quand $HOME n'est pas fixé, "$VIM\_gvimrc" est utilisé.
+   - Quand aucun fichier "_gvimrc" n'est trouvé, ".gvimrc" est également
+     essayé. Et vice versa.
+6° Si l'option 'exrc' est activée (cela n'est PAS le cas par défaut), le
+   fichier "./.gvimrc" est sourcé, s'il existe et est différent des fichiers
+   gvimrc système ou utilisateur. Si ce fichier ne vous appartient pas,
+   certaines limitations de sécurité sont appliquées. Quand ".gvimrc" n'est
+   pas trouvé, "_gvimrc" est également essayé. Pour Macintosh et DOS/Win32,
+   "_gvimrc" est essayé en premier.
+
+NOTE : Aucune de ces initialisations (sauf la première) n'est effectuée si Vim
+a été lancé avec "-u NONE" et qu'aucun argument "-U" n'a été donné, ou s'il a
+été lancé avec "-U NONE".
+
+Tout ceci n'intervient qu'APRÈS les initialisations normales de Vim, comme la
+lecture du fichier vimrc. Voir |initialization|.
+   Mais la fenêtre IHM graphique est ouverte uniquement après que toutes les
+initialisations ont été réalisées. Si vous souhaitez que des commandes soit
+exécutées juste après l'ouverture de la fenêtre IHM graphique, utilisez
+l'événement autocommande |GUIEnter|. Exemple : >
+
+	:autocommand GUIEnter * winpos 100 50
+
+Vous pouvez utiliser les fichiers gvimrc pour définir vos propres menus
+personnalisés (voir |:menu|) et initialiser d'autres éléments que vous
+souhaitez fixer différemment de la version terminal.
+
+Emplacements recommandés pour vos initialisations IHM graphique personnelles :
+	Unix		    $HOME/.gvimrc
+	OS/2		    $HOME/.gvimrc ou $VIM/.gvimrc
+	MS-DOS et Win32	    $HOME/_gvimrc ou $VIM/_gvimrc
+	Amiga		    s:.gvimrc ou $VIM/.gvimrc
+
+Il existe un certain nombre d'options qui n'ont de sens que dans la version
+IHM graphique de Vim. Il s'agit 'guicursor', 'guifont', 'guipty' et
+'guioptions'. Elles sont documentées dans |options.txt| avec toutes les autres
+options.
+
+Si vous utilisez la version Motif ou Athena de l'IHM graphique, (mais pas pour
+pour les versions GTK+ ou Win32), certaines ressources X sont disponibles.
+Voir |gui-resources|.
+
+Un autre moyen de fixer les couleurs pour différentes occasions est d'utiliser
+les groupes de surbrillance. Le groupe "Normal" est utilisé pour fixer les
+couleurs de premier plan et de fond. Exemple (agréable à l'oeil) : >
+
+	:highlight Normal guibg=grey90
+
+Les paramètres "guibg" et "guifg" recouvrent les valeurs normales de fond et
+de premier plan. Les autres paramètres pour le groupe de surbrillance Normal
+ne sont pas utilisés. Utilisez l'option 'guifont' pour fixer la police.
+
+Voyez aussi l'option 'guicursor', qui permet de fixer la couleur du curseur
+dans différents modes.
+
+Vim s'efforce à ce que la fenêtre ne dépasse pas de l'écran lorsqu'il est
+lancé, afin que vous en voyiez la totalité. Pour que cela fonctionne sur le
+système X Window, Vim doit faire certaines hypothèses. Vous pouvez modifier la
+hauteur qui est utilisée pour le titre de la fenêtre et une barre des tâches
+avec l'option 'guiheadroom'.
+
+						*:winp* *:winpos* *E188*
+:winp[os]		Affiche la position courante du coin supérieur gauche
+			de la fenêtre IHM graphique Vim en pixels. Ne
+			fonctionne pas dans toutes les versions.
+							*E466*
+:winp[os] {X} {Y}	Place la fenêtre IHM graphique Vim aux coordonnées
+			{X} et {Y}. Les coordonnées doivent spécifier la
+			position en pixel du coin supérieur gauche de la
+			fenêtre. Ne fonctionne pas dans toutes les versions.
+			Fonctionne dans un xterm (récent) |xterm-color|.
+			Quand la fenêtre IHM graphique n'a pas encore été
+			ouverte, les valeurs sont mémorisées jusqu'à ce que la
+			fenêtre soit ouverte. La position est ajustée pour que
+			la fenêtre puisse rentrer dans l'écran (si possible).
+
+						*:win* *:winsize* *E465*
+:win[size] {largeur} {hauteur}
+			Fixe la taille de la fenêtre à {largeur} par {hauteur}
+			caractères.
+			Obsolète, utilisez plutôt ":set lines=11 columns=22".
+
+Si vous utilisez le système X Window, vous pouvez obtenir des informations sur
+la fenêtre dans laquelle Vim s'exécute avec cette commande : >
+
+	:!xwininfo -id $WINDOWID
+
+==============================================================================
+2. Ascenseurs						*gui-scrollbars*
+
+Il existe des ascenseurs verticaux et des horizontaux. Vous pouvez définir
+ceux qui apparaissent avec l'option 'guioptions'.
+
+L'interface ressemble à ceci (avec ":set guioptions=mlrb") :
+
+		         +------------------------------+
+		         | Fichier  Edition	   Aide | <- Barre de menus (m)
+		         +-+--------------------------+-+
+		         |^|			      |^|
+		         |#| Zone de texte.	      |#|
+		         | |			      | |
+		         |v|__________________________|v|
+ Ligne d'état normale -> |-+ Fichier.c	         5,2  +-|
+ entre des fenêtres Vim  |^|¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯|^|
+		         | |			      | |
+		         | | Un autre tampon.	      | |
+		         | |			      | |
+		         |#|			      |#|
+ Ascenseur gauche (l) -> |#|			      |#| <- Ascenseur droit
+		         |#|			      |#|    (r)
+		         | |			      | |
+		         |v|__________________________|v|
+		         | |< ####		     >| | <- Ascenseur du bas
+		         ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯    (b)
+
+Il est possible de désactiver chaque élément (ascenseurs ou menus) en omettant
+la lettre correspondante dans la chaîne 'guioptions'. L'ascenseur du bas n'est
+utile que si 'nowrap' est activé.
+
+
+ASCENSEURS VERTICAUX					*gui-vert-scroll*
+
+Chaque fenêtre Vim possède un ascenseur latéral qu'on peut faire défiler vers
+le bas ou vers le haut pour se déplacer dans le texte du tampon correspondant.
+La taille de l'ascenseur est proportionnelle à la partie du tampon qui peut
+être vu dans la fenêtre. Quand l'ascenseur est amené tout en bas, la dernière
+ligne du fichier apparaîtra en haut de la fenêtre.
+
+Quand une fenêtre est réduite à une hauteur nulle (par l'agrandissement d'une
+autre fenêtre), son ascenseur disparaît. Il réapparaît lorsque la fenêtre est
+restaurée.
+
+Quand une fenêtre est partagée verticalement, elle n'obtiendra d'ascenseur que
+si c'est la fenêtre courante, XXX
+If a window is vertically split, it will only get a scrollbar when it is the
+current window, or the middle of the current window is above or below it.
+When there are scrollbars on both sides, and the middle of the current window
+is on the left halve, the right scrollbar column will contain scrollbars for
+the rightmost windows.  The same happens on the other side.
+
+
+ASCENSEURS HORIZONTAUX					*gui-horiz-scroll*
+
+L'ascenseur horizontal (en bas de l'IHM graphique Vim) peut être utilisé pour
+faire défiler le texte bord à bord quand l'option 'wrap' est désactivée. La
+taille de la barre d'ascenseur est telle que le texte de la ligne courante du
+curseur peut défiler autant que possible à gauche et à droite.
+
+							*athena-intellimouse*
+Si vous possédez une souris Intellimouse et un serveur X qui supporte
+l'utilisation de la molette, vous pouvez utiliser la molette pour faire
+défiler le texte verticalement dans gvim. Cela marche avec XFree86 4.0 et
+ultérieur, ainsi qu'avec certaines versions antérieures si vous avez appliqué
+des rustines. Voir |scroll-mouse-wheel|.
+
+Pour des version plus anciennes de XFree86, vous devez appliquer des rustines
+à votre serveur X. La page suivant donne quelques informations sur
+l'utilisation d'une souris Intellimouse pour Linux, ainsi que des liens vers
+les rustines et binaires du serveur X (vous n'y trouverez peut-être pas ce
+qu'il vous faut) :
+	http://www.inria.fr/koala/colas/mouse-wheel-scroll/
+
+==============================================================================
+3. Contrôle de la souris				*gui-mouse*
+
+La souris ne fonctionne que si le drapeau approprié est positionné dans
+'mouse'. Quand l'IHM graphique est activée et que 'mouse' n'a pas encore été
+fixé, l'option 'mouse' est fixée automatiquement à 'a', ce qui active la
+souris pour tous les modes, sauf pour les invites Appuyez-sur-entrée
+|hit-enter|. Si ce n'est pas ce que vous souhaitez, la meilleure chose à faire
+est de définir l'option 'mouse' dans le fichier gvimrc.
+
+Autres options prises en compte par la souris :
+'mousefocus'	le focus de fenêtre suit le pointeur de la souris
+		   |gui-mouse-focus|
+'mousemodel'	assigne une action aux boutons de la souris
+'mousehide'	masque le pointeur de la souris lors d'une saisie de texte
+'selectmode'	indique s'il faut lancer le mode Visuel ou le mode Sélection
+
+La commande ":behave" fournit un moyen rapide de fixer ces options.
+							*:behave* *:be*
+:be[have] {modele}	Définit un comportement pour la souris et la
+			sélection. Les arguments valides sont :
+			    mswin	comportement MS-Windows
+			    xterm	comportement Xterm
+
+			L'utilisation de ":behave" modifie ces options :
+			OPTION	       mswin		    xterm   ~
+			'selectmode'   "mouse,key"	    ""
+			'mousemodel'   "popup"		    "extend"
+			'keymodel'     "startsel,stopsel"   ""
+			'selection'    "exclusive"	    "inclusive"
+
+Dans le répertoire $VIMRUNTIME, il y a un script nommé "mswin.vim", qui
+mappera également certaines séquences clavier aux commandes MS-Windows pour
+couper/copier/coller. Cela n'est PAS compatible, car les séquences CTRL-V,
+CTRL-X et CTRL-C sont utilisées. Si vous n'y voyez pas d'inconvénient,
+utilisez cette commande : >
+
+	:so $VIMRUNTIME/mswin.vim
+
+Pour un défilement avec la molette de la souris, voir |scroll-mouse-wheel|.
+
+
+3.1. DÉPLACER LE CURSEUR AVEC LA SOURIS			*gui-mouse-move*
+
+Cliquez avec le bouton gauche de la souris à un endroit dans un tampon de
+texte où vous souhaitez que le curseur aille, et il y va !
+	CECI FONCTIONNE EN...	QUAND 'mouse' CONTIENT...  ~
+	mode Normal		'n' ou 'a'
+	mode Visuel		'v' ou 'a'
+	mode Insertion		'i' ou 'a'
+
+Le mode Sélection est géré comme le mode Visuel.
+
+Vous pouvez utiliser cela avec un opérateur comme "d" pour couper du texte
+depuis la position courante jusqu'à la position vers laquelle vous pointez
+avec la souris. Il vous suffit de tapez "d", puis de cliquer quelque part avec
+la souris.
+
+							*gui-mouse-focus*
+L'option 'mousefocus' peut être activée pour que le focus du clavier suive le
+pointeur de la souris. Cela signifie que la fenêtre où se trouve le pointeur
+de la souris est la fenêtre active. Avertissement : cela ne marche pas très
+bien quand vous utilisez un menu, car la commande ":menu" s'appliquera
+toujours à la fenêtre du haut.
+
+Si vous êtes sur la ligne ':' (ou '/' ou '?') et que vous cliquez (gauche ou
+droit), le curseur sera amené sur la ligne ':' (si 'mouse' contient 'c', 'a'
+ou 'A').
+
+Dans n'importe quelle situation, le bouton du milieu de la souris peut être
+cliqué pour coller la sélection courante.
+
+
+3.2. SÉLECTION AVEC LA SOURIS				*gui-mouse-select*
+
+La souris peut être utilisée pour débuter une sélection. La façon de procéder
+dépend l'option 'mousemodel' :
+- si 'mousemodel' vaut "extend" : utilisez le bouton droit de la souris ;
+- si 'mousemodel' vaut "popup" : utilisez le bouton gauche, en gardant la
+  touche Maj enfonçée.
+
+Si aucune sélection n'était en cours, une nouvelle sera lancée depuis
+l'ancienne position du curseur jusqu'à la position vers laquelle la souris
+pointe. S'il y avait déjà une sélection, son extrémité la plus proche est
+étendue.
+
+Si 'selectmode' contient "mouse", la sélection sera en mode Sélection. Cela
+signifie que la saisie d'un texte normal remplacera la sélection. Voir
+|Select-mode|. Sinon, la sélection sera en mode Visuel.
+
+Il est possible d'effectuer un double clic pour obtenir une sélection par
+mots, un triple clic par lignes, et un quadruple clic par blocs
+rectangulaires.
+
+Voir |gui-selections| sur la manière dont la sélection est utilisée.
+
+
+3.3. AUTRE SÉLECTION DE TEXTE AVEC LA SOURIS		*gui-mouse-modeless*
+							*modeless-selection*
+Un type particulier de sélection est utilisé :
+- en mode Ligne-de-commande ;
+- dans la fenêtre command-line quand la souris pointe vers une autre fenêtre ;
+- pour l'invite Appuyez-sur-entrée |hit-enter| ;
+- quand le mode courant n'est pas dans l'option 'mouse' ;
+- quand les touches Ctrl et Maj sont maintenues pressées dans l'IHM graphique.
+
+Dans ces cas, comme Vim continue comme s'il n'y avait pas de sélection, et
+qu'aucun mode n'est associé à la sélection, on parle de « sélection amodale ».
+N'importe quel texte dans la fenêtre Vim peut être sélectionné. Sélectionnez
+le texte en pressant le bouton gauche au début, faites glisser la souris
+jusqu'à la fin puis relâchez le bouton. Pour étendre la sélection, utilisez le
+bouton droit de la souris si 'mousemodel' vaut "extend", ou le bouton gauche
+avec la touche Maj pressée si 'mousemodel' vaut "popup". Le bouton du milieu
+colle le texte.
+
+La sélection est annulée quand le texte sélectionné défile ou est modifié. Sur
+la ligne de commande, CTRL-Y peut être utilisé pour copier la sélection dans
+le presse-papiers. Pour faire cela en mode Insertion, utilisez
+"CTRL-O : CTRL-Y <Entree>".
+
+
+3.4. UTILISER LA SOURIS SUR LES LIGNES D'ÉTAT		*gui-mouse-status*
+
+Un clic (gauche ou droit) sur la ligne d'état au bas d'une fenêtre rend cette
+fenêtre courante. Cela survient en fait lors du relâchement du bouton (pour
+distinguer un clic d'un glissement).
+
+Avec le bouton gauche de la souris, une ligne d'état peut être tirée vers le
+haut ou le bas, les fenêtres situées au-dessus et en dessous d'elle étant
+ainsi redimensionnées. Cela ne modifie pas le focus de fenêtre.
+
+Cela vaut également pour une séparation verticale : cliquez dessus pour donner
+le focus à la fenêtre située à gauche de la séparation ; tirez vers la gauche
+ou la droite pour rendre les fenêtres plus ou moins larges.
+
+
+3.5. DIVERS CLICS DE SOURIS				*gui-mouse-various*
+
+    <S-ClicGauche>	Recherche vers l'avant le mot sous le clic de la
+			souris. Quand 'mousemodel' vaut "popup", ceci débute
+			ou étend une sélection.
+    <S-ClicDroit>	Recherche vers l'arrière le mot sous le clic de la
+			souris.
+    <C-ClicGauche>	Saute vers le nom du marqueur sous le clic de la
+			souris.
+    <C-ClicDroit>	Revient à la position d'avant le saut précédent vers
+			un marqueur (comme CTRL-T).
+
+
+3.6. MAPPAGES DE SOURIS					*gui-mouse-mapping*
+
+Les événements souris, complétés par des modificateurs, peuvent être mappés.
+Par exemple : >
+	:map <S-LeftMouse>     <RightMouse>
+	:map <S-LeftDrag>      <RightDrag>
+	:map <S-LeftRelease>   <RightRelease>
+	:map <2-S-LeftMouse>   <2-RightMouse>
+	:map <2-S-LeftDrag>    <2-RightDrag>
+	:map <2-S-LeftRelease> <2-RightRelease>
+	:map <3-S-LeftMouse>   <3-RightMouse>
+	:map <3-S-LeftDrag>    <3-RightDrag>
+	:map <3-S-LeftRelease> <3-RightRelease>
+	:map <4-S-LeftMouse>   <4-RightMouse>
+	:map <4-S-LeftDrag>    <4-RightDrag>
+	:map <4-S-LeftRelease> <4-RightRelease>
+Ces mappages permettent à la sélection de fonctionner de la façon dont elle le
+devrait probablement dans une application Motif, avec Maj + clic gauche
+permettant l'extension de la zone Visuel, plutôt que le bouton droit de la
+souris.
+
+Un mappage de la souris avec des modificateur ne fonctionne pas pour la
+sélection amodale.
+
+==============================================================================
+4. Sélections dans l'IHM graphique			*gui-selections*
+
+							*quotestar*
+Vous pouvez effectuer des sélections avec la souris (voir |gui-mouse-select|),
+ou en utilisant le mode Visuel de Vim (voir |v|). Si 'a' est présent dans
+'guioptions', alors dès qu'une sélection est lancée (mode Visuel ou
+Sélection), ou quand elle est modifiée, Vim devient le propriétaire de la
+sélection primaire du système de fenêtrage (sur MS-Windows, le presse-papiers
+|gui-clipboard| est utilisé ; sous X11, la sélection X11 |x11-selection| l'est
+-- vous devriez lire la documentation en rapport vous concernant).
+
+							*clipboard*
+Il existe un registre spécial pour mémoriser cette sélection, il s'agit du
+registre "*. Rien n'est placé dedans à moins que l'information sur le texte
+sélectionné soit sur le point de changer (p. ex., avec un clic gauche de la
+souris quelque part), ou qu'une autre application veuille coller le texte
+sélectionné. Le texte est alors placé dans le registre "*. Par exemple, pour
+couper une ligne et en faire la sélection courante (la placer dans le
+presse-papiers) : >
+
+	"*dd
+
+De la même façon, quand vous souhaitez coller une sélection depuis une autre
+application, p. ex., en cliquant avec le bouton du milieu de la souris, la
+sélection est d'abord placée dans le registre "*, puis elle est « collée »
+comme n'importe quel autre registre. Par exemple, pour coller la sélection (le
+contenu du presse-papiers) : >
+
+	"*p
+
+Si vous utilisez ce registre sous X11, voir aussi |x11-selection|. Cela
+explique également le registre associé "+.
+
+NOTE : Quand un texte est collé d'un Vim dans un autre Vim, le type de la
+sélection (par caractères, lignes ou blocs) sera aussi copié. Pour les autres
+applications, le type sera toujours par caractères. Cependant, si le texte
+passe par le tampon de coupage X11 |x11-cut-buffer|, le type de la sélection
+est TOUJOURS perdu.
+
+Lorsque la chaîne "unnamed" est incluse dans l'option 'clipboard', le registre
+sans nom est copié dans le registre "*. Ainsi, vous pouvez y copier et coller
+la sélection sans ajouter "* aux commandes.
+
+==============================================================================
+5. Menus						*menus*
+
+Pour une introduction, voir |usr_42.txt| dans le Manuel de l'utilisateur.
+
+
+5.1. UTILISER LES MENUS					*using-menus*
+
+En pratique, les menus peuvent être utilisés exactement comme les mappages.
+Vous pouvez définir vos propres menus, autant que vous voulez.
+   Les habitués de Vim n'utiliseront pas beaucoup les menus. Mais leur
+puissance réside surtout dans la possibilité d'ajouter ses propres menus et
+éléments de menu. Ils se rendent alors utiles pour des choses dont vous avez
+oublié la séquence clavier.
+
+Pour créer des menus dans une langue différente, voir |:menutrans|.
+
+							*menu.vim*
+Les menus par défaut sont lus depuis le fichier "$VIMRUNTIME/menu.vim". Voir
+|$VIMRUNTIME| pour connaître le chemin exact. Vous pouvez définir vos propres
+menus. Il est conseillé de garder les menus par défaut. Vous pouvez y ajouter
+des éléments ou, si vous n'aimez pas du tout les menus actuels, les supprimer
+tous |:unmenu-all|. Vous pouvez aussi empêcher que les menus par défaut ne
+soient chargés en ajoutant cette ligne dans votre vimrc (PAS dans votre
+gvimrc !) : >
+	let did_install_default_menus = 1
+Pour annuler aussi le chargement du menu Syntaxe : >
+	let did_install_syntax_menu = 1
+Si vous souhaitez conserver le menu Syntaxe mais pas toutes les entrées pour
+chaque fichier de syntaxe (ce qui prend un peu de temps au chargement) : >
+	let skip_syntax_sel_menu = 1
+<
+							*console-menus*
+Bien que cette documentation soit consacrée à l'IHM graphique, vous pouvez en
+fait utiliser des menus également en mode console. Vous devrez alors charger
+explicitement |menu.vim|, qui n'est pas chargé par défaut. Vous pouvez
+utiliser la commande |:emenu| et le complètement en mode Ligne-de-commande
+avec 'wildmenu' pour accéder aux entrées du menu, comme pour un vrai menu
+système. Pour cela, placez ces commandes dans votre fichier vimrc : >
+	source $VIMRUNTIME/menu.vim
+	set wildmenu
+	set cpo-=<
+	set wcm=<C-Z>
+	map <F4> :emenu <C-Z>
+La touche <F4> fera apparaître le menu. Vous pouvez ensuite utiliser les
+touches fléchées pour choisir une entrée de menu. Tapez <Entree> pour
+l'exécuter. Tapez <Echap> pour annuler.
+   La fonctionnalité |+menu| doit avoir été activée lors de la compilation
+pour supporter ceci.
+
+							*tear-off-menus*
+GTK+ et Motif supportent les menus détachables. Ce sont des sortes de menus
+déroulants « collants » qui restent présents en permanence. Si le
+redimensionnement ne marche pas correctement, cela peut provenir de
+l'utilisation de quelque chose comme "Vim*geometry" dans un Xdefaults.
+Utilisez plutôt "Vim.geometry".
+
+La version IHM graphique Win32 peut imiter les menus détachables de Motif. En
+fait, un habitué de Motif verra tout de suite la différence, mais cela
+n'affecte pas l'utilisation. Vous pouvez en outre utiliser la commande
+|:tearoff| en conjonction avec des menus cachés |hidden-menus| pour créer des
+menus flottants n'apparaissant pas sur la barre de menus principale.
+
+
+5.2. CRÉER DE NOUVEAUX MENUS				*creating-menus*
+
+				*:me*  *:menu*  *:noreme*  *:noremenu*
+				*:am*  *:amenu* *:an*      *:anoremenu*
+				*:nme* *:nmenu* *:nnoreme* *:nnoremenu*
+				*:ome* *:omenu* *:onoreme* *:onoremenu*
+				*:vme* *:vmenu* *:vnoreme* *:vnoremenu*
+				*:ime* *:imenu* *:inoreme* *:inoremenu*
+				*:cme* *:cmenu* *:cnoreme* *:cnoremenu*
+				*E330* *E327* *E331* *E336* *E333*
+				*E328* *E329* *E337*
+Pour créer un nouvel élément de menu, utilisez les commandes ":menu". Elles
+ressemblent au jeu de commandes ":map", mais le premier argument correspond à
+un nom d'élément de menu, donné sous la forme d'un chemin de menus et de
+sous-menus utilisant des '.' comme séparateurs. Exemples : >
+
+	:menu Fichier.Enregistrer  :w<CR>
+	:inoremenu Fichier.Enregistrer  <C-O>:w<CR>
+	:menu Edition.Changements.Supprimer\ Les\ Espaces  :%s/[ ^I]//g<CR>
+
+La dernière commande créera un nouvel élément dans le menu "Edition" de la
+barre de menus qui, si vous laissez la souris appuyée dessus, fera apparaître
+un menu contenant l'élément "Changements", qui est un sous-menu contenant
+l'élément "Supprimer Les Espaces", lequel se chargera d'effectuer cette
+opération s'il est sélectionné.
+
+Caractères spéciaux dans un nom de menu :
+	&	Le caractère suivant est une touche de raccourci. Assurez-vous
+		que chaque touche de raccourci n'est utilisée qu'une seule
+		fois dans un (sous-)menu. Pour insérer un '&' littéral dans le
+		nom du menu, utilisez "&&".
+	<Tab>	Sépare le nom du menu du texte aligné à droite. Cela peut
+		servir à afficher la commande équivalente. Le texte littéral
+		"<Tab>" peut être utilisé ici à votre convenance. Si vous
+		utilisez une vraie tabulation, n'oubliez pas de la faire
+		précéder par une contre-oblique !
+
+Exemple : >
+
+	:amenu &Fichier.&Ouvrir<Tab>:e  :browse e<CR>
+
+(Tapez ceci littéralement.)
+   Avec les raccourcis 'F' (la touche <Alt> étant pressée) puis 'O', ce menu
+peut être utilisé. La deuxième partie fera afficher "Ouvrir     :e". Le ":e"
+est aligné à droite et le 'O' est souligné, pour indiquer le raccourci.
+
+La commande ":amenu" peut être utilisée pour définir des entrées de menus pour
+tous les modes à la fois. Pour que la commande fonctionne correctement, un
+caractère est automatiquement inséré pour certains modes :
+	MODE	      INSÉRÉ   AJOUTÉ  ~
+	Normal	      rien     rien
+	Visuel	      <C-C>    <C-\><C-G>
+	Insertion     <C-O>
+	Lignecmd      <C-C>    <C-\><C-G>
+	Op-en-cours   <C-C>    <C-\><C-G>
+
+L'ajout de "CTRL-\ CTRL-G" permet de revenir en mode Insertion lorsque
+'insertmode' est activé. |CTRL-\_CTRL-G|
+
+Par exemple >
+
+	:amenu Fichier.Suivant	:next^M
+
+équivaut à : >
+
+	:nmenu Fichier.Suivant	:next^M
+	:vmenu Fichier.Suivant	^C:next^M^\^G
+        :imenu Fichier.Suivant	^O:next^M
+	:cmenu Fichier.Suivant	^C:next^M^\^G
+	:omenu Fichier.Suivant	^C:next^M^\^G
+
+Attention : En mode Insertion, cela ne fonctionne que pour une commande SIMPLE
+en mode Normal, à cause du CTRL-O. Si vous avez deux commandes ou plus, vous
+devrez utiliser la commande ":imenu". Pour insérer du texte dans n'importe
+quel mode, vous pouvez utiliser le registre d'expression : >
+
+	:amenu Insertion.blabla   "='blabla'<CR>P
+
+NOTE : Les drapeaux '<' et 'k' de 'cpoptions' s'appliquent ici aussi (quand
+ils sont inclus, la notation <> et les codes clavier bruts ne sont pas
+reconnus).
+
+NOTE : <Echap> en mode Ligne-de-commande exécute la commande, comme dans un
+mappage. Ce comportement est compatible Vi. Utilisez CTRL-C pour quitter le
+mode Ligne-de-commande.
+
+						*:menu-<silent>* *:menu-silent*
+Pour définir un menu sans écho sur la ligne de commande, ajoutez "<silent>"
+comme premier argument. Exemple : >
+	:menu <silent> Paramètres.Ignorer\ la\ casse  :set ic<CR>
+La commande ":set ic" ne sera pas retournée en écho lors de l'utilisation de
+ce menu. Les messages émanant de la commande exécutée sont cependant toujours
+donnés. Pour les faire taire aussi, ajoutez un ":silent" dans la commande
+exécutée : >
+	:menu <silent> Recherche.Zorglub :exe ":silent normal /Zorglub\r"<CR>
+<
+						*:menu-<script>* *:menu-script*
+Le côté droit d'un menu sera examiné à la recherche de mappages. Si vous ne
+le souhaitez pas, utilisez la commande ":noremenu" (ou une commande similaire
+pour un mode spécifique). Si vous souhaitez utiliser des mappages locaux de
+script, ajoutez "<script>" comme tout premier argument à la commande ":menu",
+ou après "<silent>".
+
+							*menu-priority*
+Vous pouvez donner une priorité à un menu. Les menus de priorité supérieure
+sont placés plus à droite. La priorité est donnée comme un nombre avant la
+commande ":menu". Exemple : >
+	:80menu Tampon.suivant :bn<CR>
+
+Les menus par défaut possèdent ces priorités :
+	Fichier		10
+	Edition		20
+	Outils		40
+	Syntaxe		50
+	Tampons		60
+	Fenêtre		70
+	Aide		9999
+
+Si aucune priorité n'est donnée (ou une priorité nulle), 500 est utilisé.
+   La priorité n'est pas utilisée pour le menu contextuel (PopUp).
+
+Le menu Aide sera placé tout à droite de la barre de menus sur les systèmes
+qui le permettent (Motif et GTK+). Pour GTK+ 2, cela ne sera plus effectué car
+le placement à droite du menu Aide est désormais déconseillé pour la
+conception des IHM.
+
+Vous pouvez utiliser une priorité supérieure à 9999 pour placer un menu après
+le menu Aide, mais cela n'est pas standard et est déconseillé. La plus grande
+priorité possible est d'environ 32000. La plus petite, de 1.
+
+							*sub-menu-priority*
+Le même mécanisme peut être utilisé pour placer un sous-menu. La priorité est
+alors donnée comme une liste de priorités séparées par des points, avant le
+nom du menu : >
+	:menu 80.500 Tampon.suivant :bn<CR>
+Il n'est nécessaire de donner une priorité à un sous-menu que lorsque
+l'élément concerné ne doit pas être placé à sa position normale. Par exemple,
+pour placer un sous-menu avant les autres éléments : >
+	:menu 80.100 Tampon.premier :brew<CR>
+Ou pour placer un sous-menu après les autres éléments, et que les éléments
+suivants avec une priorité par défaut soient placés avant : >
+	:menu 80.900 Tampon.dernier :blast<CR>
+Quand un nombre manque, la valeur de 500 sera utilisée par défaut : >
+	:menu .900 monMenu.test :echo "test"<CR>
+La priorité d'un menu n'est utilisé que lors de la création d'un nouveau menu.
+S'il existe déjà, p. ex., dans un autre mode, la priorité ne sera pas
+modifiée. Ainsi, la priorité n'a besoin d'être donnée que la première fois
+où un menu est utilisé.
+   Le menu contextuel (PopUp) fait exception. Il existe un menu séparé pour
+chaque mode (Normal, Op-en-cours, Visuel, Insertion, Lignecmd). L'ordre dans
+chacun de ces menus peut être différent. Cela diffère des menus de la barre de
+menus, qui possèdent le même ordre pour tous les modes.
+   NOTE : Actuellement, les priorités pour les sous-menus ne fonctionnent pas
+pour toutes les versions de l'IHM graphique.
+
+							*menu-separator* *E332*
+Les éléments de menu peuvent être séparés par un élément spécial qui insère un
+espace entre les éléments. Selon le système, il est représenté par une ligne
+ou des pointillés. Ces éléments doivent débuter par '-' et se terminer par
+'-'. Tout ce qui vient entre est utilisé pour donner un nom unique. Des
+priorités peuvent être utilisées comme avec des éléments normaux. Exemple : >
+	:menu Exemple.element1	    :faire quelque chose
+	:menu Exemple.-Sep-	    :
+	:menu Exemple.element2	    :faire autre chose
+NOTE : Le séparateur requiert aussi un côté droit. Cela peut être n'importe
+quoi, car l'élément ne sera jamais sélectionné. Utilisez un deux-points pour
+faire simple.
+
+							*gui-toolbar*
+La barre d'outils est actuellement disponible pour les IHM graphiques Win32,
+Athena, Motif, GTK+ (X11) et Photon. Elle devrait l'être pour les autres IHM
+graphiques en temps utile. La barre d'outils par défaut est définie dans
+"menu.vim".
+   L'affichage de la barre d'outils est contrôlée par le drapeau 'T' de
+'guioptions'. Vous pouvez ainsi disposer des barres d'outils et de menus en
+même temps, ou séparément, ou n'en afficher aucune.
+   L'apparence de la barre d'outils est contrôlée par l'option 'toolbar'. Vous
+pouvez choisir une image, un texte, ou les deux.
+
+							*toolbar-icon*
+La barre d'outils est définie comme un menu spécial nommé ToolBar, qui ne
+comporte qu'un seul niveau. Vim interprète les éléments dans ce menu comme
+suit :
+1° Si un argument "icon=" est spécifié, le fichier portant ce nom est utilisé.
+   Le fichier peut être spécifié soit avec son chemin complet soit avec son
+   nom standard. Dans ce dernier cas, il est recherché dans le répertoire
+   "bitmaps" de 'runtimepath', comme décrit dans 3°. Exemples : >
+	:amenu icon=/usr/local/pixmaps/toto.xpm ToolBar.Toto :echo "Toto"<CR>
+	:amenu icon=IconeToto ToolBar.Toto :echo "Toto"<CR>
+<  NOTE : Dans le premier cas l'extension est incluse, tandis qu'elle est
+   omise dans le second.
+   Si le fichier ne peut pas être ouvert, les étapes suivantes sont essayées.
+   Un espace dans le nom du fichier doit être protégé par une contre-oblique.
+   La priorité d'un menu doit apparaître _après_ l'argument "icon" : >
+	:amenu icon=toto 1.42 ToolBar.Toto :echo "42!"<CR>
+2° Un élément nommé "BuiltIn##", où "##" désigne un nombre, est considéré
+   comme le numéro ## des icônes internes disponibles dans Vim. Il existe
+   actuellement 31 numéros de 0 à 30, qui couvrent les opérations d'édition
+   les plus courantes |builtin-tools|. >
+	:amenu ToolBar.BuiltIn22 :call RechercherPrecedent("arrière")<CR>
+3° Un élément portant un autre nom est d'abord recherché dans le répertoire
+   "bitmaps" de 'runtimepath'. S'il est trouvé, le fichier image est utilisé
+   pour l'icône du bouton de la barre d'outils. NOTE : Le nom de fichier exact
+   dépend du SE : par exemple, sous Win32, la commande >
+	:amenu ToolBar.Bonjour :echo "Bonjour"<CR>
+<  trouvera le fichier "bonjour.bmp". Sous GTK+/X11, ce sera "Bonjour.xpm".
+   Avec GTK+ 2, les fichiers "Bonjour.png", "Bonjour.xpm" et "Bonjour.bmp"
+   sont recherchés et le premier trouvé est utilisé.
+   Pour MS-Windows et GTK+ 2, l'icône est mise à l'échelle pour rentrer dans
+   le bouton. Pour MS-Windows, une taille de 18 pixels par 18 donne le
+   meilleur résultat.
+   Pour MS-Windows, l'icône BMP devrait posséder 16 couleurs avec la palette
+   standard. Les pixels gris clair ["LightGrey"] seront passés dans la couleur
+   de la fenêtre Vim (pixels « transparents »), tandis que les pixels gris
+   foncé ["DarkGrey"] prendront la couleur de l'ombre de la fenêtre. Des
+   couleurs supplémentaires peuvent être supportées, selon votre système.
+4° Si l'icône n'est toujours pas trouvée, Vim teste s'il existe une
+   correspondance avec sa liste de noms internes. Chaque image de bouton
+   interne porte une nom.
+   Ainsi, la commande >
+	:amenu ToolBar.Open :e
+<  affichera l'image du bouton « Ouvrir un fichier » interne si "open.bmp"
+   n'existe pas.
+   Tous les noms internes peuvent être vus dans "menu.vim" où ils sont
+   utilisés.
+5° Si toutes les autres étapes ont échoué, un bouton vide, mais qui
+   fonctionne, est affiché.
+
+							*builtin-tools*
+N°   NOM	    ACTION NORMALE	~
+00   New	    ouvre une nouvelle fenêtre
+01   Open	    choisit un fichier pour ouvrir dans la fenêtre courante
+02   Save	    écrit le tampon dans le fichier
+03   Undo	    annule le dernier changement
+04   Redo	    restaure le dernier changement annulé
+05   Cut    	    coupe le texte sélectionné dans le presse-papiers
+06   Copy	    copie le texte sélectionné dans le presse-papiers
+07   Paste	    colle le texte du presse-papiers
+08   Print	    imprime le tampon courant
+09   Help	    ouvre un tampon d'aide en ligne de Vim
+10   Find	    lance une commande de recherche
+11   SaveAll	    écrit tous les tampon modifiés dans leurs fichiers
+12   SaveSesn	    écrit le fichier de session pour la situation courante
+13   NewSesn	    écrit un nouveau fichier de session
+14   LoadSesn	    charge un fichier de session
+15   RunScript	    choisit un fichier pour lancer en tant que script Vim
+16   Replace	    invite pour une commande de substitution
+17   WinClose	    ferme la fenêtre courante
+18   WinMax	    maximise la hauteur de la fenêtre courante
+19   WinMin	    minimise la hauteur de la fenêtre courante
+20   WinSplit	    partage la fenêtre courante
+21   Shell	    lance un shell
+22   FindPrev	    poursuit la recherche, vers l'arrière
+23   FindNext	    poursuit la recherche, vers l'avant
+24   FindHelp	    invite pour entrer un mot sur lequel rechercher de l'aide
+25   Make	    lance `make` et saute à la première erreur
+26   TagJump	    saute au marqueur sous le curseur
+27   RunCtags	    génère les marqueurs de tous les fichiers du rép. courant
+28   WinVSplit	    partage la fenêtre courante verticalement
+29   WinMaxWidth    maximise la largeur de la fenêtre courante
+30   WinMinWidth    minimise la largeur de la fenêtre courante
+
+					*hidden-menus* *win32-hidden-menus*
+Dans les IHM graphiques Win32 et GTK+, si un nom de menu débute par ']', ce
+menu est exclu de la barre de menus principale. Vous devez alors utiliser la
+commande |:tearoff| ou bien |:popup| pour l'afficher.
+
+							*popup-menu*
+Dans les IHM graphiques Win32, GTK+, Motif, Athena et Photon, vous pouvez
+définir le menu spécial "PopUp". Il s'agit d'un menu contextuel -- qui
+apparaîtra quand le bouton droit de la souris est pressé si 'mousemodel' est
+fixé à "popup" ou "popup_setpos".
+
+
+5.3. AFFICHER CE À QUOI DES MENUS SONT MAPPÉS		*showing-menus*
+
+Pour voir à quoi un menu existant est mappé, utilisez un seul argument après
+les commandes de menu (comme vous le feriez avec les commandes ":map"). Si le
+menu spécifié est un sous-menu, alors tous les menus sous cette hiérarchie
+seront affichés. Si aucun argument n'est donné après ":menu", alors TOUS les
+éléments de menu seront affichés pour le mode approprié (p. ex., le mode
+Ligne-de-commande pour ":cmenu").
+
+Caractères spéciaux dans la liste, juste avant le côté droit :
+	*	Le menu a été défini avec "nore" pour interdire un remappage.
+	&	Le menu a été défini avec "<script>" pour autoriser le
+		remappage des mappages locaux de script uniquement.
+	-	Le menu a été désactivé.
+
+NOTE : Vous pouvez utiliser <Tab> lors de la saisie d'un nom de menu après une
+commande "menu" pour compléter le nom de l'élément de menu.
+
+
+5.4. EXÉCUTER DES MENUS					*execute-menus*
+
+						*:em*  *:emenu* *E334* *E335*
+:[plage]em[enu] {menu}	Exécute {menu} depuis la ligne de commande. Par
+			défaut, cela exécute le menu du mode Normal. Si une
+			[plage] est donnée, le menu du mode Visuel est
+			exécuté. Si utilisé depuis <C-O>, le menu du mode
+			Insertion est exécuté.
+			Exemple : >
+				:emenu Fichier.Quitter
+
+En mode console, si Vim a été compilé avec WANT_MENU défini, vous pouvez
+utiliser ":emenu" pour accéder aux éléments de menu utiles auxquels vous vous
+êtes habitués en mode IHM graphique. Voir 'wildmenu' pour une option qui
+marche bien avec ceci. Voir |console-menus| pour un exemple.
+
+Quand vous utilisez une plage, si les lignes correspondent à '<,'>, alors le
+menu est exécuté en utilisant la dernière sélection du mode Visuel.
+
+
+5.5. SUPPRIMER DES MENUS				*delete-menus*
+
+						*:unme*  *:unmenu*
+						*:aun*   *:aunmenu*
+						*:nunme* *:nunmenu*
+						*:ounme* *:ounmenu*
+						*:vunme* *:vunmenu*
+						*:iunme* *:iunmenu*
+						*:cunme* *:cunmenu*
+Pour supprimer un élément de menu ou un sous-menu entier, utilisez les
+commandes "unmenu", qui sont analogues aux commandes "unmap". Par exemple : >
+	:unmenu! Edition.Coller
+
+Ceci supprimera l'élément Coller du menu Edition pour les modes Insertion et
+Ligne-de-commande.
+
+NOTE : Vous pouvez utiliser <Tab> lors de la saisie d'un nom de menu après une
+commande "umenu" pour compléter le nom de l'élément de menu pour mode
+approprié.
+
+Pour supprimer tous les menus :				*:unmenu-all*  >
+	:unmenu *	" supprime tous les menus en mode Normal et Visuel
+	:unmenu! *	" supprime tous les menus en mode Insertion et Lignecmd
+
+
+5.6. DÉSACTIVER DES MENUS				*disable-menus*
+
+						*:menu-disable* *:menu-enable*
+Si vous ne souhaitez pas supprimer un menu, mais le désactiver momentanément,
+vous pouvez utiliser le mot-clé "enable" ou "disable" dans une commande
+":menu". Exemples : >
+	:menu disable &Fichier.&Ouvrir\.\.\.
+	:amenu enable *
+	:amenu disable &Outils.*
+
+La commande s'applique aux mêmes modes que pour toutes les commandes de menus.
+NOTE : Les caractères tels que '&' doivent être inclus pour que les noms
+traduits puissent être trouvés.
+   Quand l'argument est "*", tous les menus sont affectés. Sinon, le menu au
+nom correspondant et tous ses sous-menus existants sont affectés.
+
+
+5.7. EXEMPLES POUR LES MENUS				*menu-examples*
+
+Cet exemple montre comment ajouter des éléments de menu aux menus ! Vous
+pouvez ajouter un élément de menu pour le mot-clé sous le curseur. Le registre
+"z" est utilisé. >
+
+	:nmenu Mots.Ajouter\ Var     wb"zye:menu! Mots.<C-R>z <C-R>z<CR>
+	:nmenu Mots.Supprimer\ Var   wb"zye:unmenu! Mots.<C-R>z<CR>
+	:vmenu Mots.Ajouter\ Var     "zy:menu! Mots.<C-R>z <C-R>z <CR>
+	:vmenu Mots.Supprimer\ Var   "zy:unmenu! Mots.<C-R>z<CR>
+	:imenu Mots.Ajouter\ Var     <Esc>wb"zye:menu! Mots.<C-R>z <C-R>z<CR>a
+	:imenu Mots.Supprimer\ Var   <Esc>wb"zye:unmenu! Mots.<C-R>z<CR>a
+
+(Le côté droit utilise la notation <>, vous pouvez copier/coller ce texte pour
+essayer les mappages, ou placez ces lignes dans votre gvimrc ; "<C-R>" désigne
+CTRL-R, "<CR>" désigne la touche <CR>. Voir |<>|.)
+
+
+5.8. AIDES CONTEXTUELLES DE MENUS ET BULLES D'AIDE
+
+Voir la section |42.4| du Manuel de l'utilisateur.
+
+							*:tmenu* *:tm*
+:tm[enu] {cheminmenu} {ctd}	Définit une aide contextuelle pour un menu ou
+				un outil. {uniquement dans les IHM graphiques
+				X11 et Win32}				["Tip"]
+
+:tm[enu] [cheminmenu]		Liste les aides contextuelles de menus.
+				{uniquement dans les IHM graphiques X11 et
+				Win32}
+
+							*:tunmenu* *:tu*
+:tu[nmenu] {cheminmenu}		Supprime une aide contextuelle pour un menu ou
+				un outil. {uniquement dans les IHM graphiques
+				X11 et Win32}
+
+Quand une aide contextuelle est définie pour un élément de menu, elle apparaît
+sur la ligne de commande lorsque la souris est placée sur cet élément, un peu
+à la manière de l'aide s'affichant en standard dans une barre d'état sous
+MS-Windows. (Mais si Vim est en mode Ligne-de-commande, rien n'est affiché,
+bien sûr.)
+   Quand une aide contextuelle est définie pour un élément de ToolBar, elle
+apparaît en tant que bulle d'aide lorsque la souris est immobilisée sur le
+bouton en question, de façon habituelle. Utilisez le groupe de surbrillance
+|hl-Tooltip| pour en changer les couleurs.
+
+Une « aide contextuelle » peut être définie pour chaque élément de menu. Par
+exemple, quand un élément de menu est défini comme ceci >
+	:amenu MonMenu.Bonjour :echo "Bonjour"<CR>
+l'aide contextuelle est définie comme ceci >
+	:tmenu MonMenu.Bonjour Affiche un salut.
+et supprimée avec : >
+	:tunmenu MonMenu.Bonjour
+
+Les bulles d'aide ne sont actuellement supportées pour les IHM graphiques X11
+et Win32. Cependant, elles devraient apparaître prochainement sur les autres
+plates-formes IHM graphiques.
+
+La commande ":tmenu" fonctionne exactement comme les autres commandes de
+menus, elle utilise les même arguments. ":tunmenu" supprime une aide
+contextuelle de menu existante, de la même manière que les autres commandes
+"unmenu".
+
+Si un élément de menu devient invalide (c.-à-d. si ses actions dans tous les
+modes sont supprimées), Vim supprimera l'aide contextuelle du menu (et
+l'élément) pour vous. Cela signifie que lorsque ":aunmenu" supprime un élément
+de menu, vous n'avez pas besoin d'exécuter le ":tunmenu" en rapport.
+
+
+5.9. MENUS CONTEXTUELS
+
+Dans les IHM graphiques Win32 et GTK+, vous pouvez provoquer l'apparition d'un
+menu sous le curseur. Cette fonctionnalité est similaire aux menus
+contextuels, mais pour n'importe quelle branche de menu.
+
+Cette commande assure la compatibilité ascendante, mais son utilisation est
+déconseillée car elle se comporte d'une manière étrange.
+
+							*:popup* *:popu*
+:popu[p] {nom}		Fait apparaître le menu contextuel {nom}. Le menu
+			nommé doit posséder au moins une sous-entrée, mais pas
+			nécessairement apparaître dans barre de menus (voir
+			|hidden-menus|).
+			{uniquement pour les IHM graphiques Win32 et GTK+}
+
+Exemples : >
+	:popup Fichier
+Ceci fera apparaître le menu "Fichier" (s'il y en a un) au niveau du curseur
+du texte. >
+	:amenu ]Toolbar.Make	:make<CR>
+	:popup ]Toolbar
+Ceci créera un menu contextuel qui n'existe pas dans la barre de menus
+principale.
+
+NOTE : Un menu qui débute par ']' ne sera pas affiché.
+
+==============================================================================
+6. Divers						*gui-extras*
+
+Cette section décrit les autres fonctionnalités relatives à l'IHM graphique.
+
+- Avec l'IHM graphique, il n'y a pas de délai d'une seconde après la saisie
+  d'Échap, car les codes clavier ne débutent pas par <Echap>.
+
+- La saisie de ^V suivi par une touche spéciale dans l'IHM graphique insérera
+  "<Touche>", la chaîne interne utilisée étant dépourvue de signification. Des
+  modificateurs peuvent aussi être maintenus enfoncés pour obtenir
+  "<Modificateurs-Touche>".
+
+- Dans l'IHM graphique, les modificateurs Maj, Ctrl et Alt (ou Méta) peuvent
+  être utilisés dans des mappages de touches spéciales et d'événements souris.
+  Par exemple : ":map <M-LeftDrag> <LeftDrag>".
+
+- Dans l'IHM graphique, plusieurs touches normales peuvent posséder des
+  modificateurs dans les mappages, etc. Ce sont <Espace>, <Tab>, <NL>, <CR>,
+  <Echap>.
+
+==============================================================================
+7. Commandes shell					*gui-shell*
+
+Pour l'IHM graphique X11, les commandes externes sont exécutées dans la
+fenêtre gvim. Voir |gui-pty|.
+
+AVERTISSEMENT : L'exécution d'une commande externe depuis l'IHM graphique X11
+ne marchera pas toujours. Les commandes « normales » comme `ls`, `grep` et
+`make` fonctionnent assez bien. Les commandes requérant un terminal évolué
+comme `less` et `ispell` ne marcheront pas. Certaines commandes risquent même
+de bloquer l'interface et devront être tuées à partir d'un autre terminal.
+Soyez prudent !
+
+Pour l'IHM graphique Win32, les commandes externes sont exécutées dans une
+fenêtre séparée. Voir |gui-shell-win32|.
+
+ vim:tw=78:ts=8:ft=help:norl:

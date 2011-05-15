@@ -1,0 +1,241 @@
+*os_os2.txt*    Pour Vim version 6.2.  Dernière modification : 29 oct 2002
+
+
+		   MANUEL de RÉFÉRENCE VIM - Paul Slootman
+
+
+							*os2* *OS2* *OS/2*
+Ce fichier documente les particularités de la version OS/2 de Vim.
+
+Actuellement, il n'existe pas de version graphique de Vim native pour PM : la
+version OS/2 est une application console. Toutefois, il existe maintenant une
+version graphique compatible avec Win32s, qui devrait être utilisable pour les
+possesseurs de Warp 4 (qui supporte Win32s) dans une sessions Win-OS/2. Les
+notes contenues dans ce fichier font référence à la version console native.
+
+
+NOTE :
+
+Ce portage sur OS/2 fonctionne correctement pour moi et quelques autres
+utilisateurs de OS/2 ; toutefois, comme je ne reçois que très peu de retours,
+cela signifie, soit qu'aucun bogue (spécifique à OS/2) n'existe (à ceux
+mentionnés plus bas près), soit que personne ne s'est trouvé dans une
+situation où l'un de ces bogues est visible. Les E/S de fichiers en mode Dos
+et Unix, le mode binaire et la prise en charge de la FAT semblent tous bien
+fonctionner, alors qu'ils seraient les endroits les plus propices aux
+problèmes.
+
+Un problème connu sont les fichiers ouverts par Vim et hérités d'autres
+programmes qui ont été lancés via un shell depuis Vim. Cela signifie en
+particulier que Vim ne sera pas capable de supprimer le(s) fichier(s)
+d'échange associé(s) au(x) tampon(s) ouvert(s) lorsque l'autre programme a été
+lancé, tant que l'autre programme n'est pas terminé. À ce moment, le fichier
+d'échange pourra être supprimé, mais si Vim n'en a pas la possibilité lors de
+cette première fois, il ne sera jamais supprimé. Lors du lancement suivant de
+Vim avec ce fichier, vous obtiendrez des avertissements à propos d'une autre
+session Vim qui éditerait ce même fichier. Ce comportement est reproductible
+en faisant les manipulations suivantes : ":!start epm", puis quittez Vim, et
+lancez-le à nouveau avec le fichier qui se trouvait dans le tampon au moment
+où `epm` a été lancé. J'y travaille !
+
+Un second problème est que Vim n'est pas conscient de la situation lorsqu'il
+est utilisé pour accéder à un système OS/2 via le réseau, par exemple avec
+`telnet` depuis un système Unix, depuis lequel est démarré Vim. Il semble que
+la problème soit qu'OS/2 reconnaisse les touches de fonctions ou fléchées, et
+tente _parfois_ de les convertir en codes OS/2, correspondants à ceux
+qui auraient été générés par un clavier de PC « normal ». J'ai testé une
+solution de contournement (mapper les codes OS/2 aux « bonnes » fonctions),
+mais je n'ai rien obtenu de concluant jusqu'ici (sur Warp 3, au fait). En
+attendant, toute aide serait grandement appréciée.
+
+
+PRÉ-REQUIS
+
+Pour faire fonctionner Vim, vous avez besoin de l'environnement d'exécution
+EMX (revision 0.9b au minimum). Il est généralement disponible en tant que
+(posez la question à Archie) :
+
+	emxrt.zip	emx runtime package
+
+Une copie de "emx.dll" a été incluse. Elle devrait être copiée dans l'un des
+répertoires listés dans votre LIBPATH. EMX est sous GPL, mais pas la
+bibliothèque "emx.dll" (lisez COPYING.EMX pour comprendre cela signifie pour
+vous).
+
+Cette copie de "emx.dll" provient du paquetage "emxfix04.zip", qui contient
+malheureusement un bogue, euh pardon, plutôt une « fonctionnalité » POSIX dans
+select(). Les versions de Vim antérieures à la 3.27 peuvent bloquer au
+démarrage (pendant la lecture du fichier vimrc). Si cela se produit, ppuyez
+sur <Entree> plusieurs fois jusqu'à ce que Vim se mette à fonctionner
+normalement. Ensuite, récupérez un Vim un peu plus récent !
+
+
+FICHIER D'AIDE ET VIMRC
+
+Si vous décompressez l'archive de Vim et que vous lancez Vim directement
+depuis l'endroit où il a été décompressé, il devrait être capable de trouver
+les fichiers de support et votre fichier ".vimrc" sans aucun paramétrage
+particulier.
+
+Si vous séparez les fichiers de support et les binaires, la variable
+d'environnement VIM permet de trouver l'emplacement des fichiers d'aide et le
+vimrc du système. Ajoutez une ligne de ce type dans le CONFIG.SYS : >
+
+  SET VIM=c:/local/lib/vim
+
+Mettez votre fichier ".vimrc" et vos autres fichiers Vim dans ce répertoire.
+Copiez le répertoire de support dans ce répertoire. Chaque version de Vim
+dispose de son propre répertoire. ce dernier est nommé à l'image de
+"c:/local/lib/vim/vim54". Ainsi vous obtenez une arborescence de fichiers Vim
+ressemblant à :
+	c:/local/lib/vim/.vimrc
+	c:/local/lib/vim/vim54/filetype.vim
+	c:/local/lib/vim/vim54/doc/help.txt
+	etc.
+
+NOTE : le fichier ".vimrc" peut également s'appeler "_vimrc" pour s'adapter à
+ceux qui ont choisi d'installer OS/2 sur un système de fichier FAT. Vim essaye
+d'abord de trouver ".vimrc", et si cela échoue, recherche "_vimrc" au même
+endroit. L'existence d'un fichier ".vimrc" ou "_vimrc" influence l'option
+'compatible', ce qui peut avoir des effets de bord inattendus. Voir
+|'compatible'|.
+
+Si vous utilisez des disques réseaux avec OS/2, alors vous pouvez installer
+Vim sur un disque réseau (y compris le fichier ".vimrc" ; il est alors appelé
+le fichier ".vimrc" système), et utiliser ensuite une copie personnelle de ce
+fichier (le fichier ".vimrc" utilisateur). Il devrait être placé dans un
+répertoire désigné par la variable d'environnement HOME.
+
+
+VARIABLES D'ENVIRONNEMENT DANS LES NOMS DE FICHIERS
+
+La variable d'environnement HOME est également utilisée pour étendre les '~'
+dans les noms de fichiers, ainsi ":e ~/fichtext" éditera le fichier "fichtext"
+situé dans le répertoire désigné par HOME. De plus, vous pouvez utiliser
+d'autres variables d'environnement dans les noms de fichier, comme dans
+":n $SRC/*.c".
+
+La variable d'environnement HOME permet également de localiser le fichier
+".viminfo" (voir |viminfo-file|). Le support de viminfo n'existe pas encore
+pour les systèmes de fichiers FAT, désolé. Vous pourriez toutefois essayer
+l'option de démarrage "-i" (comme dans : "vim -i $HOME/_viminfo").
+
+Si la variable d'environnement HOME n'est pas définie, "C:/" est utilisé par
+défaut.
+
+
+CONTRE-OBLIQUES
+
+Utiliser des obliques ('/') et des contre-obliques ('\') peut poser quelques
+problèmes (voir |dos-backslash| pour davantage d'explications), mais dans la
+plupart des cas, Vim fait « ce qu'il faut ». En interne, Vim utilise des
+contre-obliques dans les noms de fichiers, mais accepte volontiers les
+obliques normales si elles sont utilisées (en fait, cela marche parfois même
+mieux !).
+
+
+FICHIERS TEMPORAIRES
+
+Les fichiers temporaires (pour les filtres) sont placés dans le premier
+répertoire de la liste suivante qui existe et dans lequel le fichier peut être
+créé :
+	$TMP
+	$TEMP
+	C:\TMP
+	C:\TEMP
+	répertoire courant
+
+
+RÉGLAGES DU TERMINAL
+							*os2ansi*
+Utilisez "os2ansi" comme variable d'environnement TERM (ou ne la définissez
+pas du tout, car la valeur par défaut est la bonne). Vous pouvez fixer 'term'
+à "os2ansi" dans le fichier ".vimrc", au cas où vous auriez besoin d'une
+valeur de TERM différente pour d'autres applications. Le problème est que
+l'émulation ANSI de OS/2 est assez limitée (elle ne dispose pas de l'insertion
+ou de la suppression des lignes, par exemple).
+
+Si vous voulez utiliser une valeur différente pour TERM (à cause d'autres
+programmes par exemple), assurez-vous que l'entrée termcap pour cette valeur
+de TERM possède les mappages appropriés. La base "termcap.dat" distribuée avec
+EMX n'en dispose pas toujours. Voici quelques valeurs appropriées à ajouter à
+l'entrée termcap de votre choix. Elles permettent le fonctionnement des
+touches fléchées et des touches de fonction nommées (telles que PageSuiv) :
+
+	:ku=\316H:kd=\316P:kl=\316K:kr=\316M:%i=\316t:#4=\316s:\
+	:kD=\316S:kI=\316R:kN=\316Q:kP=\316I:kh=\316G:@7=\316O:\
+	:k1=\316;:k2=\316<:k3=\316=:k4=\316>:k5=\316?:k6=\316@:\
+	:k7=\316A:k8=\316B:k9=\316C:k;=\316D:
+
+(Paul Slootman)
+
+
+FENÊTRE DE 43 LIGNES
+
+Une suggestion de Steven Tryon, pour faire fonctionner Vim dans une fenêtre
+plus grande :
+
+	Quand j'invoque Vim depuis une application OS/2 WPS, telle que PMMail,
+	il s'ouvre par défaut dans le mode 25 lignes. Pour obtenir une taille
+	plus utilisable, je fais de "vimbig.cmd" mon éditeur externe, qui a
+	son tour appelle "vimbig2.cmd". Force brute et maladresse, peut-être,
+	mais ça marche.
+
+	vimbig.cmd : >
+		@echo off
+		start "Vi Improved" /f vimbig2.cmd %1 %2 %3 %4
+<
+	vimbig2.cmd : >
+		@echo off
+		mode 80,43
+		vim.exe %1 %2 %3 %4
+		exit
+
+
+ACCÈS AU PRESSE-PAPIER (par Alexander Wagner)
+
+Vim pour OS/2 n'a pas d'accès direct au presse-papiers du système. Pour y
+avoir accès tout de même, vous avez besoin d'un outil supplémentaire qui
+vous donne accès au presse-papiers depuis une application vio. Le paquetage
+"clipbrd.zip" (graticiel) de Stefan Gruendel peut être utilisé pour cela. Vous
+pourrez télécharger le paquetage contenant les binaires précompilés et
+l'ensemble des sources sur :
+
+	http://www.stellarcom.org/vim/index.html ~
+
+L'installation de ce paquetage est assez simple : placez simplement les deux
+exécutables fournis dans un répertoire du PATH, pour que Vim soit capable de
+les appeler indépendamment du répertoire dans lequel vous travaillez.
+
+Pour coller le texte contenu dans le presse-papiers dans une session Vim, vous
+pouvez utiliser la commande ":r". Appelez simplement "clipbrd.exe" depuis Vim,
+de cette manière : >
+
+	:r !clipbrd -r
+
+Pour copier du texte de Vim vers le presse-papiers du système, sélectionnez le
+texte comme habituellement avec Vim et appelez : >
+
+	:!clipbrd -w
+
+ce qui écrira la sélection directement dans le presse-papiers d'OS/2.
+
+Pour le confort d'utilisation, vous pourriez ajouter des mappages pour ces
+commandes. Par exemple, pour utiliser <F11> pour coller le contenu du
+presse-papiers dans Vim et <F12> pour copier le texte sélectionné vers le
+presse-papiers, vous pourriez utiliser : >
+
+	if has("os2")
+	  imap <F11>     <ESC>:r !clipbrd -r<CR>i
+	  vmap <F12>     :!clipbrd -w<cr>
+	else
+	  imap <F11>     <ESC>"*p<CR>i
+	  vmap <F12>     "*y
+	endif
+
+La condition initiale permet de s'assurer que `clipbrd` n'est appelé que sur
+OS/2, tandis que le mécanisme intégré à Vim est utilisé sur les autres
+plates-formes. Pour que ces mappages soient définis au chargement de Vim,
+placez ces lignes dans votre fichier ".vimrc".
+
+ vim:tw=78:ts=8:ft=help:norl:

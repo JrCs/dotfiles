@@ -1,0 +1,334 @@
+*arabic.txt*	Pour Vim version 6.2.  Dernière modification : 11 mai 2003
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Nadim Shaikli
+
+
+Support de la langue Arabe dans Vim (options et mappages)	*Arabic*
+
+{Vi n'a aucune de ces commandes}
+
+								*E800*
+Pour pouvoir utiliser l'édition de droite à gauche et les mappages pour
+l'Arabe, il est nécessaire de compiler Vim avec la fonctionnalité |+arabic|.
+
+Ces fonctions ont été écrites par Nadim Shaikli <nadim-at-arabeyes.org>.
+
+Les réglages suivants permettent de visualiser ce fichier dans les meilleures
+conditions dans l'interface graphique de Vim : >
+
+	:set encoding=utf-8
+	:set arabicshape
+
+
+Introduction
+------------
+
+L'Arabe est une langue plutôt exigeante, pour laquelle un certain nombre de
+fonctionnalités particulières sont requises. Les caractères sont orientés de
+droite-à-gauche et doivent apparaître ainsi à l'écran (c'est-à-dire de la
+droite vers la gauche). L'Arabe nécessite également la mise en forme des
+caractères, ce qui signifie qu'un même caractère présente des graphies
+différentes selon la position qu'il occupe dans un mot (isolée, initiale,
+médiane ou finale). L'Arabe requiert en outre deux formes de compositions et
+la faculté, dans certains cas, de superposer jusqu'à deux caractères sur un
+autre (composition) ou de substituer deux caractères en un seul (combinaison).
+Enfin, pour afficher correctement l'Arabe, non seulement la police ISO-8859-6
+(U+0600-U+06FF) est indispensable, mais aussi la police Presentation Form-B
+(U+FE70-U+FEFF), toutes deux étant des sous-ensembles de la soi-disant police
+ISO-10646-1.
+
+Les différentes commandes, invites et fichiers d'aide de Vim ne sont pas en
+Arabe, par conséquent, l'interface utilisateur reste celle d'un Vi standard.
+
+
+Résumé
+------
+
+o  Édition de fichiers orientés de droite-à-gauche inchangée par rapport à
+   Vim original.
+
+o  Visualisation et édition des fichiers dans des fenêtres de droite-à-gauche.
+   L'orientation des fichiers est établie par fenêtre, il est donc possible de
+   voir un même fichier en mode droite-à-gauche et en mode gauche-à-droite
+   simultanément.
+
+o  Aucun terminal particulier disposant de capacités droite-à-gauche n'est
+   requis. Les modifications pour le mode droite-à-gauche sont indépendantes
+   du matériel. Seules les polices arabes sont nécessaires.
+
+o  Compatibilité avec Vim original. Pratiquement toutes les fonctionnalités
+   fonctionnent en mode droite-à-gauche (des bogues sont susceptibles
+   d'exister).
+
+o  Basculement du mappage clavier et du mode d'insertion à rebours en une
+   seule commande.
+
+o  Basculement complet du support de l'Arabe en une seule commande.
+
+o  Dans le mode Arabe, les nombres sont saisis de gauche à droite. Lors de la
+   saisie d'un caractère qui n'est pas un chiffre, il est inséré juste à
+   gauche du dernier chiffre.
+
+o  Mappage clavier Arabe en mode Insertion à rebours sur la ligne de commande.
+
+o  Fonctionnement adéquat de la bidirectionnalité (bidi) possible quand Vim
+   est lancé dans un émulateur de terminal disposant de la capacité bidi.
+
+
+Polices arabes						*arabicfonts*
+--------------
+
+Vim requiert des polices à espacement constant qui ne sont pas monnaie
+courante. L'Arabe nécessite les polices ISO-8859-6 ainsi que Presentation
+Form-B (sans Form-B, l'Arabe n'est _PAS_ utilisable). Il est vivement
+recommandé aux utilisateurs de rechercher les soi-disant polices
+'ISO-10646-1'. Faites une recherche sur Internet ou allez sur www.arabeyes.org
+pour davantage d'informations sur l'obtention des polices arabes nécessaires.
+
+
+Installation des polices
+------------------------
+
+o  Installation des polices sur les systèmes X Window (Unix/Linux) :
+
+   Selon votre système, copiez le fichier contenant votre_POLICE_ARABE dans le
+   répertoire de votre choix. Allez dans ce répertoire contenant les polices
+   arabes et exécutez les commandes suivantes : >
+
+     %	mkfontdir
+     %	xset +fp chemin_du répertoire_des_polices_arabes
+
+
+Utilisation
+-----------
+
+Avant d'utiliser effectivement l'Arabe dans Vim, un certain nombre de réglages
+doivent être explicités et réalisés.
+
+o  Paramétrer les polices arabes
+
+   +  Dans l'IHM graphique, fixez 'guifont' à votre_POLICE_ARABE. Cela se fait
+      en tapant la commande suivante dans la fenêtre de Vim : >
+
+		:set guifont=votre_POLICE_ARABE
+<
+      NOTE : la chaîne "votre_POLICE_ARABE" désigne le nom complet d'une
+	     police, semblable à ceux utilisés sur les systèmes Unix/Linux.
+	     Par exemple : >
+	        -misc-fixed-medium-r-normal--20-200-75-75-c-100-iso10646-1
+<
+      Vous pouvez mettre cette commande dans votre fichier ".vimrc" pour
+      obtenir le même résultat. Autrement dit, vous pouvez ajouter la ligne
+      ":set guifont=votre_POLICE_ARABE" dans votre fichier ".vimrc".
+
+   +  Dans l'environnement X Window, vous pouvez aussi démarrer Vim avec
+      l'argument "-fn your_ARABIC_FONT".
+
+o  Fixer l'encodage approprié
+
+   Pour activer le bon encodage Arabe, la commande suivante doit être rajoutée
+   dans votre fichier ".vimrc" : >
+
+		:set encoding=utf-8
+<
+   La saisir manuellement dans la fenêtre de Vim est fortement déconseillé.
+   Pour résumer : ajoutez la ligne ":set encoding=utf-8" dans votre fichier
+   ".vimrc".
+
+   Si vous tentez d'utiliser les fonctionnalités pour l'Arabe sans activer
+   l'UTF-8, vous obtiendrez le message d'avertissement suivant :
+
+							    *W17* XXX fr.po
+	Arabic requires UTF-8, do ':set encoding=utf-8' ~
+
+
+o  Activer les paramètres du mode Arabe
+
+   Pour simplifier les choses et les rationaliser, vous pouvez invoquer Vim
+   avec un argument de la ligne de commande : >
+
+	% vim -A mon_fichier_arabe_utf8 ...
+<
+   ou activer l'option 'arabic' dans Vim avec la commande suivante : >
+
+	:set arabic
+<
+   Les deux méthodes décrites ci-dessus sont les façons de procéder
+   recommandées aux utilisateurs. À moins que 'termbidi' ne soit activée, ces
+   deux méthodes :
+
+	1. activent le codage clavier ;
+	2. activent l'effacement d'un caractère combiné ;
+	3. activent le mode droite-à-gauche pour l'édition ;
+	4. activent le mode droite-à-gauche pour le ligne de commande ;
+	5. activent le mode arabicshape (pour l'altération visuelle des
+	   caractères).
+
+   Vous pouvez aussi mettre cette dernière commande dans votre fichier
+   ".vimrc", en y ajoutant la ligne ":set arabic".
+
+   Il vous est également possible de désactiver le support de l'Arabe avec >
+
+		:set noarabic
+<
+   qui réinitialise tout ce que la commande d'activation avait activé, sans
+   modifier les réglages globaux qui pourraient affecter d'autres tampons
+   éventuellement ouverts. Pour résumé, cette commande
+
+     1. sélection le codage clavier alternatif ;
+     2. désactive l'effacement d'un caractère combiné ;
+     3. désactive le mode droite-à-gauche.
+
+   NOTE : l'option 'arabic' prend en compte la valeur de 'termbidi', qui
+	  indique l'éventuel support externe de la bidirectionnalité (bidi)
+	  par le terminal (`mlterm` offre par exemple un tel support).
+	  'termbidi', quand il est disponible, est de meilleur qualité que le
+	  mode droite-à-gauche de Vim. Il est choisi préférentiellement,
+	  compte-tenu du niveau de ses fonctionnalités. Activer 'arabic' alors
+	  que 'termbidi' l'est ne fait qu'activer le codage clavier.
+
+   Mais si, d'un autre côté, vous préférez accumuler des commandes explicites
+   et choisissez de ne pas utiliser le raccourci qu'offre l'option 'arabic',
+   voici ce qu'il est nécessaire d'effectuer (si vous utilisez ":set arabic",
+   vous pouvez sauter cette section) :
+
+   +  Activation du codage clavier Arabe
+
+      Pour activer le codage clavier Arabe (c'est-à-dire pour que votre
+      clavier anglais/latin réagisse comme un clavier arabe standard), fixez
+      l'option 'keymap' à "arabic", de cette façon : >
+
+		:set keymap=arabic
+<
+      dans la fenêtre de Vim. Vous pouvez aussi inclure cette commande dans
+      votre fichier ".vimrc", en y ajoutant cette même ligne.
+
+      Pour basculer du codage Arabe de votre clavier au codage par défaut
+      (latin), il est conseillé aux utilisateurs de presser CTRL-^ au cours
+      des modes Insertion et Remplacement. La ligne de commande affichera le
+      codage clavier actuel à l'aide de la chaîne "Arabic", placée au côté de
+      l'indication du mode en cours (par exemple : "-- INSERT Arabic --").
+      XXX fr.po
+
+   +  Effacement d'un caractère combiné XXX
+
+      Par défaut, l'option 'delcombine' de Vim est désactivée. Cette option
+      permet l'effacement de ALEF dans un caractère combiné LAM_ALEF (LAA) et
+      de conserver le LAM (c'est-à-dire que Vim traite le caractère combiné
+      comme étant formé de deux caractères -- XXX this also pertains to
+      harakat and their combined forms). Vous pouvez activer cette option en
+      tapant >
+
+		:set delcombine
+<
+      dans votre fenêtre Vim. Vous pouvez aussi inclure cette commande dans
+      votre fichier ".vimrc", en y ajoutant cette même ligne.
+
+   +  Mode droite-à-gauche
+
+      Par défaut, Vim démarre en mode gauche-à-droite. 'rightleft' est
+      l'option qui permet de changer l'orientation d'une fenêtre, ce qui est
+      possible en
+
+      - passant du mode gauche-à-droite au mode droite-à gauche et inversement
+	avec ":set rightleft" et ":set norightleft".
+
+      - en tapant ":set rl" dans la ligne de commande en mode gauche-à-droite
+	('rl' est l'abréviation de 'rightleft').
+
+      - Ajouter la ligne ":set rl" dans votre fichier '.vimrc' pour que Vim
+	démarre toujours en mode droite-à-gauche.
+
+   +  Mode droite-à-gauche pour la ligne de commande
+
+      L'édition de certaines commandes est possible en mode droite-à-gauche.
+      Actuellement, cela ne fonctionne que pour les commandes de recherche.
+
+      Cette possibilité est contrôlée par l'option 'rightleftcmd'. Par défaut,
+      elle vaut "search", ce qui signifie que les fenêtres dont l'édition se
+      fait de droite-à-gauche verront l'édition de leurs commandes de
+      recherche se faire en mode droite-à-gauche. Pour désactiver ce
+      comportement, >
+
+		:set rightleftcmd=
+<
+      Pour réactiver l'édition de droite-à-gauche des commandes de recherche, >
+>
+		:set rightleftcmd&
+<
+   +  Mise en forme des caractères arabes
+
+      Pour activer l'altération visuelle des caractères (modification de la
+      graphie, composition et combinaison) requise par la langue Arabe,
+      activer l'option 'arabicshape' avec >
+
+		:set arabicshape
+<
+      dans la fenêtre de Vim. vous pouvez également inclure cette commande
+      dans votre fichier ".vimrc", en y ajoutant cette même ligne.
+
+
+Codage clavier/clavier					*arabickeymap*
+----------------------
+
+L'encodage des caractères/lettres utilisé dans Vim est le standard UTF-8.
+Utiliser ou même tenter d'utiliser tout autre encodage est vivement
+déconseillé.
+
+NOTE : UTF-8 est encodage universel, et en tant que tel, est le seul encodage
+       supporté (et recommandé) pour l'Arabe (l'emploi de tout autre encodage
+       propriétaire doit être découragé et même désapprouvé).
+
+o  Clavier
+
+   +  CTRL-^ en mode Insertion ou Remplacement bascule entre les mode Arabe et
+      Latin.
+
+   +  Le mappage du clavier est basé sur le mappage du clavier Arabe de
+      Microsoft (le standard de fait dans le monde arabe) :
+
+  +---------------------------------------------------------------------+
+  |!   |@   |#   |$   |%   |^   |&   |*   |(   |)   |_   |+   ||   |~  Ù‘ |
+  |1 Ù¡ |2 Ù¢ |3 Ù£ |4 Ù¤ |5 Ù¥ |6 Ù¦ |7 Ù§ |8 Ù¨ |9 Ù© |0 Ù  |-   |=   |\   |` Ø° |
+  +---------------------------------------------------------------------+
+       |Q  Ù |W  Ù‹ |E  Ù |R  ÙŒ |T Ù„Ø¥ |Y Ø¥ |U ` |I Ã· |O x |P Ø› |{ < |} > |
+       |q Ø¶ |w Øµ |e Ø« |r Ù‚ |t Ù |y Øº |u Ø¹ |i Ù‡ |o Ø® |p Ø­ |[ Ø¬ |] Ø¯ |
+       +-----------------------------------------------------------+
+	 |A  Ù |S  Ù |D [ |F ] |G Ù„Ø£ |H Ø£ |J Ù€ |K ØŒ |L / |:   |"   |
+	 |a Ø´ |s Ø³ |d ÙŠ |f Ø¨ |g Ù„ |h Ø§ |j Øª |k Ù† |l Ù… |; Ùƒ |' Ø· |
+	 +------------------------------------------------------+
+	   |Z ~ |X  Ù’ |C { |V } |B Ù„Ø¢ |N Ø¢ |M ' |< , |> . |? ØŸ |
+	   |z Ø¦ |x Ø¡ |c Ø¤ |v Ø± |b Ù„Ø§ |n Ù‰ |m Ø© |, Ùˆ |. Ø² |/ Ø¸ |
+	   +-------------------------------------------------+
+
+Limitations
+-----------
+
+o  Vim, dans sa version graphique actuelle, ne supporte pas la
+   bidirectionnalité (c'est-à-dire la faculté d'afficher des caractères arabes
+   et latins, mélangés au sein de la même ligne).
+
+
+Known Bugs
+----------
+
+Il existe un bogue mineur connu.
+
+ 1. Si vous insérez un haraka (eg. Fatha (U+064E)) après un LAM (U+0644), puis
+    un ALEF (U+0627), la combinaison appropriée ne se produit pas, dû au fait
+    que le haraka pris en sandwich aboutit à quelque chose qui ne sera PAS
+    affiché correctement.
+
+    CONTOURNEMENT : n'incluez pas de combinaisons harakat entre LAM et ALEF.
+		    En général, ne vous attendez pas à obtenir la
+		    représentation visuelle correcte pour les caractères
+		    combinés harakat et LAM+ALEF (même ceux saisis après les
+		    deux caractères). Ce problème est strictement visuel, ce
+		    qui signifie que l'enregistrement d'un tel fichier
+		    contiendra bien toutes les informations et encodages
+		    appropriés -- aucune donnée n'est perdue.
+
+Aucun autre bogue n'est actuellement connu.
+
+ vim:tw=78:ts=8:ft=help:norl:

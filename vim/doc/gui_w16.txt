@@ -1,0 +1,201 @@
+*gui_w16.txt*   Pour Vim version 6.2c.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+Interface (IHM) graphique de Vim			*gui-w16* *win16-gui*
+
+1. Démarrer l'interface graphique		|win16-start|
+2. Vim comme éditeur par défaut			|win16-default-editor|
+3. Utiliser le presse-papiers			|win16-clipboard|
+4. Commandes externes DOS			|win16-shell|
+5. Couleurs particulières			|win16-colors|
+6. Sélecteurs et dialogues Windows		|win16-dialogs|
+7. Divers					|win16-various|
+
+Autres documents en rapport :
+|gui.txt|	pour les éléments génériques de l'interface graphique.
+|os_msdos.txt|	pour les éléments communs à DOS et Windows.
+|gui_w32.txt|	dont certains éléments sont également applicables à la version
+		Win16.
+
+{Vi n'a pas d'interface graphique sous Windows}
+
+La version Win16 de Vim fonctionne sur Windows 3.1 ou ultérieur. Elle n'a pas
+été testée sur Windows 3.0, elle ne fonctionnera sans doute pas sans être
+modifiée et recompilée (mais vous avez tout intérêt à passer à la version 3.11
+:-).
+
+Sous bien des aspects, elle se comporte exactement comme la version graphique
+Win32, y compris la barre d'outil sans relief (!). Les différences majeures :
+
+1) Le texte gras/italique n'est pas disponible, pour accélérer l'affichage et
+   réduire la consommation de ressources (Vous pouvez rétablir cette
+   possibilité en supprimant la définition de MSWIN16_FASTTEXT).
+2) Pas d'émulation des menus détachables.
+3) Pas d'interface OLE.
+4) Pas de support des noms de fichiers longs (bien entendu).
+5) Pas d'infobulles pour la barre d'outils. À la place, elle produit un message
+   d'information dans la barre d'état, comme les entrées de menu.
+6) La longueur des lignes est limitée à 32767 caractères (comme dans la
+   version DOS 16 bits).
+
+
+==============================================================================
+1. Démarrer l'interface graphique			*win16-start*
+
+La version graphique Win16 de Vim démarrera toujours l'interface graphique,
+quels que soient la manière dont vous la lancez et le nom avec lequel elle est
+invoquée. Il n'y a pas de version 'console' en tant que telle, mais vous
+pouvez utiliser l'une des versions DOS dans une fenêtre DOS.
+
+L'IHM Graphique Win16 a un élément de menu supplémentaire :
+"Fenêtre/Selectionner police" XXX. Il ouvre le sélecteur de polices standard
+de Windows. NOTE : les styles gras et italique des polices ne sont pas
+supportés, pour tenter d'accélérer la vitesse d'affichage.
+
+Fixer la hauteur du menu ne fonctionne pas avec l'IHM graphique Win16.
+
+							*win16-maximized*
+Si vous voulez que Vim démarre dans une fenêtre maximisée, ajoutez cette
+commande dans votre fichier vimrc ou gvimrc : XXX >
+	au GUIEnter * simalt ~n
+<
+
+Il existe une version spécifique de gvim.exe qui fonctionne dans les
+sous-systèmes Win32s de Windows 3.1 ou 3.11. Voir |win32s|.
+
+==============================================================================
+2. Vim comme éditeur par défaut				*win16-default-editor*
+
+Pour définir Vim comme éditeur par défaut pour un type de fichier particulier,
+vous pouvez utiliser la fonction "Associer" du Gestionnaire de Fichiers.
+
+Quand vous ouvrez un fichier dans Vim en double-cliquant dessus, Vim utilise
+le répertoire de ce fichier comme répertoire courant.
+
+Voir également |notepad|.
+
+==============================================================================
+3. Utiliser le presse-papiers				*win16-clipboard*
+
+Windows a un presse-papiers, dans lequel vous pouvez copier du texte et depuis
+lequel vous pouvez en coller. Vim le supporte de plusieurs manières.
+Le presse-papiers fonctionne de la même façon qu'avec la version Win32 : voir
+|gui-clipboard|.
+
+==============================================================================
+4. Commandes externes DOS				*win16-shell*
+
+Vim crée une fenêtre DOS pour les commandes externes, afin de permettre
+l'exécution de n'importe quelle commande. Cette fenêtre utilise les propriétés
+définies dans "_default.pif".
+
+							*win16-!start*
+Normalement, Vim attend que la commande se termine avant de continuer (cela se
+comprend pour la plupart des commandes DOS, qui produisent une sortie que
+Vim va utiliser). Si vous voulez que Vim lance un programme et revienne
+immédiatement, vous pouvez utiliser la syntaxe suivante : >
+	:!start {command}
+Toutefois, cela ne fonctionne que pour un programme Windows.
+N'oubliez pas que vous devez dire à Windows 3.1x de poursuivre l'exécution de
+la commande DOS en arrière-plan lorsque vous revenez à Vim.
+
+==============================================================================
+5. Couleurs particulières				*win16-colors*
+
+Sous Win16, les couleurs normales du DOS peuvent être utilisées. Voir
+|dos-colors|.
+
+De plus, les couleurs configurées pour le système peuvent également être
+utilisées. Elles sont reconnues par les noms "Sys_XXX", où XXX est le nom de
+la couleur système appropriée, parmi la liste suivante (consultez la
+documentation Win32 pour une description complète). La casse est indifférente.
+
+Sys_BTNFace		Sys_BTNShadow			Sys_ActiveBorder
+Sys_ActiveCaption	Sys_AppWorkspace		Sys_Background
+Sys_BTNText		Sys_CaptionText			Sys_GrayText
+Sys_Highlight		Sys_HighlightText		Sys_InactiveBorder
+Sys_InactiveCaption	Sys_InactiveCaptionText		Sys_Menu
+Sys_MenuText		Sys_ScrollBar			Sys_Window
+Sys_WindowFrame		Sys_WindowText
+
+Les valeurs les plus utiles sont probablement :
+	Sys_Window	    Arrière-plan normal
+	Sys_WindowText      Texte normal
+	Sys_Highlight       Arrière-plan en surbrillance
+	Sys_HighlightText   Texte en surbrillance
+
+Ces couleurs supplémentaires sont également disponibles :
+    Gray, Grey, LightYellow, SeaGreen, Orange, Purple, SlateBlue, Violet,
+
+
+Voir également |rgb.txt|.
+
+==============================================================================
+6. Sélecteurs et dialogues				*win16-dialogs*
+
+L'IHM graphique Win16 de Vim peut utiliser des composants habituels de Windows
+pour certaines opérations, tout comme l'interface plus traditionnelle de la
+version console.
+
+	
+6.1. DIALOGUES
+
+Les dialogues affichés par la famille "confirm" (c'est-à-dire l'option
+'confim', la commande |:confirm| et la fonction |confirm()|) sont graphiques,
+plutôt que textuels comme ceux utilisés dans d'autres versions. Il n'existe
+aucune possibilité de changer cela.
+
+
+6.2. SÉLECTEUR DE FICHIERS
+
+En faisant précéder par ":browse" les commandes d'édition de fichier, un
+sélecteur de fichiers est ouvert pour vous permettre de choisir un fichier
+existant. Voir |:browse|.
+
+==============================================================================
+7. Divers						*win16-various*
+
+							*win16-printing*
+L'entrée de menu "Fichier/Imprimer" utilise Notepad pour imprimer le tampon
+courant. C'est un peu rudimentaire, mais c'est portable. Si vous voulez
+quelque chose de différent, vous pouvez définir votre propre commande
+d'impression. Par exemple, vous pourriez chercher une version 16 bits de
+PrintFile. Consultez $VIMRUNTIME/menu.vim pour le fonctionnement par défaut.
+
+Ceci devrait également fonctionner : >
+	:w >>prn
+
+Vim supporte nombre de fonctionnalités standards de MS Windows. Certaines
+d'entre elles sont détaillées ailleurs : voir |'mouse'|, |win32-hidden-menus|.
+Voir également |:simalt|.
+
+							*win16-drag-n-drop*
+Vous pouvez glisser et déposer un ou plusieurs fichiers dans la fenêtre Vim,
+où ils seront ouverts normalement. Si vous maintenez la touche Maj enfoncée,
+Vim prend le répertoire du premier fichier déposé comme répertoire courant. Si
+vous maintenez la touche Ctrl enfoncée, Vim divisera toujours la fenêtre pour
+le fichier. Sinon, ceci n'a lieu que quand le tampon courant a été modifié.
+Vous pouvez également déposer un dossier, mais plutôt que d'ouvrir tous les
+fichiers de ce répertoire (ce qui n'est généralement pas ce que vous
+souhaitez), Vim le prend comme répertoire courant et commence un nouveau
+fichier.
+Si Vim est en cours d'édition d'une ligne de commande, les noms des fichiers et
+dossiers déposés sont insérés sous le curseur. Cela vous permet d'utiliser
+ces noms avec n'importe quelle commande Ex.
+
+							*win16-truetype*
+Il est recommandé d'utiliser une police « raster » (par points) plutôt qu'une
+police à chasse fixe TrueType (par courbes). Par exemple, utilisez Courier
+plutôt que Courier New. Ça n'est pas seulement pour consommer moins de
+ressources, mais parce qu'il existe des bogues subtils dans la gestion des
+polices TrueType à chasse fixe sous Win3.x. Notamment, quand vous déplacez un
+curseur bloc par dessus un caractère barre '|', le curseur n'est pas dessiné
+avec la bonne taille et laisse des traces. C'est un bogue de l'interface
+graphique de Win3.x, il ne se produit pas si vous lancez l'exécutable sous
+95/NT.
+
+ vim:tw=78:sw=4:ts=8:ft=help:norl:
+

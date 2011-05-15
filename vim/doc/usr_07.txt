@@ -1,0 +1,518 @@
+*usr_07.txt*	Pour Vim version 6.2.  Dernière modification : 19 jul 2002
+
+	       MANUEL de l'UTILISATEUR VIM - par Bram Moolenaar
+
+			  Éditer plusieurs fichiers
+
+
+Peu importe le nombre de fichiers, vous pouvez tous les éditer sans quitter
+Vim. Vous pouvez également définir une liste de fichiers à éditer et sauter de
+l'un à l'autre, ou encore copier du texte dans un fichier et le coller dans un
+autre.
+
+|07.1|	Éditer un autre fichier
+|07.2|	Une liste de fichiers
+|07.3|	Sauter de fichier en fichier
+|07.4|	Sauvegarder des fichiers
+|07.5|	Copier du texte entre des fichiers
+|07.6|	Visualiser un fichier
+|07.7|	Changer le nom d'un fichier
+
+  Chapitre suivant : |usr_08.txt|  Gérer plusieurs fenêtres
+Chapitre précédent : |usr_06.txt|  Utiliser la coloration syntaxique
+Table des matières : |usr_toc.txt|
+
+==============================================================================
+*07.1*	Éditer un autre fichier
+
+Jusque là, vous deviez lancer Vim pour chaque fichier que vous souhaitiez
+éditer. Il existe un moyen plus simple. Pour débuter l'édition d'un autre
+fichier, utilisez cette commande : >
+
+	:edit toto.txt
+
+Vous pouvez précisez n'importe quel nom de fichier à la place de "toto.txt".
+Vim fermera le fichier courant et ouvrira le nouveau. Cependant, si le fichier
+courant possède des modifications non enregistrées, Vim affichera un message
+d'erreur et n'ouvrira pas le nouveau fichier :
+
+	E37: Modifications non enregistrées (utilisez ! pour passer outre) ~
+
+	NOTE :
+	Vim précise un identifiant d'erreur au début de tous les messages
+	d'erreur. Si vous ne comprenez pas le message ou ce qui a causé le
+	problème, recherchez cet identifiant dans le système d'aide. Dans le
+	cas présent : >
+
+		:help E37
+
+À ce moment, plusieurs alternatives s'offrent à vous. Vous pouvez écrire le
+fichier en utilisant cette commande : >
+
+	:write
+
+Ou vous pouvez forcer Vim à abandonner les modifications et à éditer le
+nouveau fichier, en forçant l'édition (avec le caractère '!') : >
+
+	:edit! toto.txt
+
+Si vous voulez éditer un autre fichier, mais sans écrire tout de suite les
+modifications dans le fichier courant, vous pouvez le masquer : >
+
+	:hide edit toto.txt
+
+Le texte modifié est toujours là, mais vous ne pouvez pas le voir. Ce principe
+est expliqué plus en détail dans la section |22.4| : La liste de tampons.
+
+==============================================================================
+*07.2*	Une liste de fichiers
+
+Vous pouvez démarrer Vim en éditant une série de fichiers. Par exemple : >
+
+	vim un.c deux.c trois.c
+
+Cette commande démarre Vim et lui indique que vous allez éditer trois
+fichiers. Vim affiche juste le premier fichier. Après avoir fait ce que vous
+souhaitiez avec ce fichier, vous pouvez utiliser cette commande pour éditer
+le fichier suivant : >
+
+	:next
+
+Si votre fichier courant contient des modifications non enregistrées, vous
+obtiendrez un message d'erreur et ":next" ne fonctionnera pas. C'est le même
+problème qu'avec ":edit", mentionné dans la section précédente. Pour
+abandonner les modifications : >
+
+	:next!
+
+Mais généralement, vous souhaitez enregistrer les modifications et passer au
+fichier suivant. Il existe une commande spéciale pour cela : >
+
+	:wnext
+
+Cela revient à l'utilisation de deux commandes distinctes : >
+
+	:write
+	:next
+
+
+OÙ SUIS-JE ?
+
+Pour savoir quel est le fichier de la liste des arguments que vous êtes en
+train d'éditer, regardez le titre de la fenêtre. Il devrait contenir quelque
+chose comme "(2 of 3)". Cela signifie qu'il s'agit du deuxième fichier sur
+trois.
+   Si vous souhaitez voir la liste des fichiers, utilisez cette commande : >
+
+	:args
+
+C'est une abréviation du mot "arguments". La sortie pourrait ressembler à
+ceci : >
+
+	un.c [deux.c] trois.c
+
+Ce sont les fichiers avec lesquels Vim a été démarré. Celui que vous êtes en
+train d'éditer, "deux.c", est entre crochets.
+
+
+PASSER À UN AUTRE ARGUMENT
+
+Pour revenir au fichier précédent : >
+
+	:previous
+
+Cette commande est semblable à ":next", sauf qu'elle parcourt la liste dans
+l'autre direction. À nouveau, il existe une commande raccourcie afin d'écrire
+le fichier courant avant : >
+
+	:wprevious
+
+Pour aller au tout dernier fichier de la liste : >
+
+	:last
+
+Et pour revenir au premier : >
+
+	:first
+
+Toutefois, il n'existe pas de commande ":wlast" ou ":wfirst" !
+
+Vous pouvez utiliser un quantificateur avec ":next" et ":previous". Pour aller
+deux fichiers en avant : >
+
+	:2next
+
+
+ÉCRITURE AUTOMATIQUE
+
+Quand vous allez d'un fichier à un autre et que vous faites des modifications,
+vous devez vous rappeler d'utiliser ":write". Sinon, vous obtiendrez un
+message d'erreur. Si vous êtes certain de toujours vouloir écrire les fichiers
+modifiés, vous pouvez demander à Vim de les écrire automatiquement : >
+
+	:set autowrite
+
+Si vous éditez un fichier que vous ne souhaitez pas écrire, vous pouvez
+désactiver cette option : >
+>
+	:set noautowrite
+
+
+ÉDITER UNE AUTRE LISTE DE FICHIERS
+
+Vous pouvez redéfinir la liste des fichiers sans avoir besoin de quitter Vim
+et le démarrer à nouveau. Utilisez cette commande pour éditer trois autres
+fichiers : >
+
+	:args cinq.c six.c sept.h
+
+Ou utilisez un joker, tel qu'il est employé dans le shell : >
+
+	:args *.txt
+
+Vim vous placera dans le premier fichier de la liste. À nouveau, si le fichier
+courant contient des modifications, vous pouvez soit écrire le fichier, soit
+utiliser ":args!" (en ajoutant '!') pour abandonner les modifications.
+
+
+AVEZ-VOUS ÉDITÉ LE DERNIER FICHIER
+							*arglist-quit*
+Quand vous utilisez une liste de fichiers, Vim suppose que vous souhaitez tous
+les éditer. Pour éviter une sortie trop précoce, vous obtiendrez ce message
+d'erreur si le dernier fichier de la liste n'a pas été édité :
+
+	E173: Encore 46 fichiers à éditer ~
+
+Si vous souhaitez vraiment quitter, faites-le à nouveau. Cela fonctionnera
+cette fois-ci (mais pas si vous tapez d'autres commandes entre-temps).
+
+==============================================================================
+*07.3*	Sauter de fichier en fichier
+
+Pour passer rapidement d'un fichier à un autre et réciproquement, pressez
+CTRL-^ [N.D.T. : Ctrl, Alt Gr et la touche 9 sur un clavier français].
+Exemple : >
+
+	:args un.c deux.c trois.c
+
+Vous êtes à présent dans "un.c". >
+
+	:next
+
+Maintenant, vous êtes dans "deux.c". Utilisez à présent CTRL-^ pour retourner
+dans "un.c". Un autre CTRL-^ vous ramène dans "deux.c". Une autre CTRL-^, et
+vous voilà à nouveau dans "un.c". Si vous faites : >
+
+	:next
+
+Vous allez dans "trois.c". Notez bien que la commande CTRL-^ ne modifie pas
+la notion de position où vous vous trouvez dans la liste. Seules les commandes
+":next" et ":previous" le peuvent.
+
+Le fichier que vous éditiez précédemment est appelé le fichier « alternatif »
+["alternate"]. Quand vous venez de démarrer Vim, CTRL-^ ne fonctionne pas,
+puisqu'il n'existe aucun fichier précédent.
+
+
+MARQUES PRÉDÉFINIES
+
+Après un saut dans un autre fichier, vous pouvez utiliser deux marques
+prédéfinies très utiles : >
+
+	`"
+
+Cette commande vous place à la position où se trouvait le curseur quand vous
+avez quitté le fichier. Une autre marque mémorisée est la position de la
+dernière modification : >
+
+	`.
+
+Supposons que vous éditez le fichier "un.txt". Quelque part au beau milieu du
+fichier, vous utilisez "x" pour effacer un caractère. Puis vous allez sur la
+dernière ligne avec "G" et vous écrivez le fichier avec ":w". Vous éditez
+plusieurs autres fichiers, puis utilisez ":edit un.txt" pour revenir à
+"un.txt". Si vous utilisez à présent `", Vim saute à la dernière ligne du
+fichier. L'utilisation de `. vous amène à la position où vous aviez effacé un
+caractère. Même quand vous vous déplacez dans le fichier, `" et `. vous
+amènent aux positions mémorisées. Du moins jusqu'à ce que vous fassiez une
+autre modification ou que vous quittiez le fichier.
+
+
+MARQUES DE FICHIERS
+
+Dans le chapitre 4 était expliqué comment vous pouvez positionner une marque
+dans un fichier avec "mx" et sautez vers cette position avec "`x". Cela
+fontionne à l'intérieur d'un fichier. Si vous éditez un autre fichier et que
+vous y positionnez des marques, elles sont spécifiques à ce fichier. Ainsi,
+puisque chaque fichier possède son propre jeu de marques, elles sont forcément
+locales au fichier.
+   Jusque là, nous utilisions des marques avec des lettres miniscules. il
+existe également des marques avec des lettres majuscules. Elles sont globales,
+elles peuvent donc être utilisées depuis n'importe quel fichier. Par exemple,
+supposons que vous êtes en train d'éditer le fichier "toto.txt". Allez à la
+moitié du fichier ("50%") et positionnez la marque T (T pour "toto") : >
+
+	50%mT
+
+Éditez maintenant le fichier "plop.txt" et positionnez la marque P (P pour
+"plop") sur la dernière ligne : >
+>
+	GmP
+
+Vous pouvez maintenant utiliser la commande "'T" pour retourner à la moitié de
+"toto.txt". Ou encore éditer un autre fichier, taper "'P" et vous retrouver à
+nouveau à la fin de "plop.txt".
+
+Les marques de fichiers sont mémorisées jusqu'à ce qu'elles soient
+positionnées ailleurs. Ainsi, vous pouvez placer une marque, éditer pendant
+des heures et conserver la possibilité de sauter vers cette marque.
+   Il est souvent utile de penser à une relation simple entre la lettre de la
+marque et l'endroit où elle est positionnée. Par exemple, utilisez la marque H
+pour les fichiers d'en-tête (".h", ["header"]), M pour un Makefile et C pour
+un fichier de code C.
+
+Pour voir où se situe une marque en particulier, donnez un argument à la
+commande ":marks" : >
+
+	:marks M
+
+Vous pouvez aussi donner plusieurs arguments : >
+
+	:marks MTP
+
+N'oubliez pas que vous pouvez utiliser CTRL-O et CTRL-I pour sauter vers des
+positions plus anciennes ou plus récentes, sans positionner de marques.
+
+==============================================================================
+*07.4*	Sauvegarder des fichiers
+
+Habituellement, Vim ne produit pas de fichier de sauvegarde. Si vous souhaitez
+en avoir, tout ce que vous devez faire est exécuter la commande : >
+
+	:set backup
+
+Le nom du fichier de sauvegarde est celui du fichier original avec un ~ ajouté
+à la fin. Par exemple, si votre fichier est nommé "donnees.txt", le nom du
+fichier de sauvegarde est "donnees.txt~".
+   Si l'extension ~ pour les fichiers de sauvegarde ne vous convient pas, vous
+pouvez la modifier : >
+
+	:set backupext=.bak
+
+Le fichier s'appelera "donnees.txt.bak" au lieu de "donnees.txt~".
+   Une autre option importante ici est 'backupdir'. Elle spécifie l'endroit où
+est écrit le fichier de sauvegarde. Le comportement par défaut, qui est
+d'écrire la sauvegarde dans le même répertoire que le fichier original, est en
+général une bonne chose.
+
+	NOTE :
+	Quand l'option 'backup' n'est pas activée, mais que l'option
+	'writebackup' l'est, Vim crée tout de même un fichier de sauvegarde.
+	Toutefois, il est effacé dès que l'écriture du fichier se termine avec
+	succès. Cela fonctionne comme une sécurité contre la perte de votre
+	fichier original quand l'écriture échoue pour une raison ou pour une
+	autre (un disque plein est la cause la plus fréquente ; être frappé
+	par la foudre en est une autre, bien que plus beaucoup plus rare).
+
+
+CONSERVER LE FICHIER ORIGINAL
+
+Si vous éditez des fichiers de sources, vous pourriez souhaiter conserver les
+fichiers avant d'y apporter des modifications. Mais le fichier de sauvegarde
+est écrasé à chaque fois que vous enregistrez le fichier. Ainsi, il ne
+contient que la version précédente, et non pas la tout première.
+   Pour que Vim conserve la version originale, activez l'option 'patchmode'.
+Elle spécifie l'extension à utiliser pour la première sauvegarde d'un fichier
+modifié. Habituellement, vous ferez ceci : >
+
+	:set patchmode=.orig
+
+À présent, quand vous éditez le fichier "donnees.txt" pour la première fois,
+que vous faites des modifications et que vous enregistrez le fichier, Vim
+conserve une copie du fichier non modifié sous le nom "donnees.txt.orig".
+   Si vous apportez davantage de modifications au fichier, Vim remarquera que
+le fichier "donnees.txt.orig" existe déjà et le laissera tranquille. Les
+fichiers de sauvegarde suivant seronts nommés "donnees.txt~" (ou quoi que ce
+soit de spécifié dans 'backupext').
+   Si vous laissez 'patchmode' vide (c'est le cas par défaut), le fichier
+original ne sera pas conservé.
+
+==============================================================================
+*07.5*	Copier du texte entre des fichiers
+
+Cette section explique comment copier du texte depuis un fichier vers un
+autre. Commençons par un exemple simple. Éditez le fichier contenant le texte
+que vous souhaitez copier. Placez le curseur au début du texte et appuyez sur
+'v'. Vous passez en mode Visuel. À présent, placez le curseur à la fin du
+texte et tapez "y". Cela copie le texte sélectionné.
+   Pour copier le paragraphe ci-dessus, vous feriez : >
+
+	:edit cefichier
+	/Cette
+	vjjjj$y
+
+Maintenant, éditez le fichier dans lequel vous voulez coller le texte. Placez
+le curseur sur le caractère après lequel vous voulez que le texte apparaisse.
+Utilisez "p" pour y coller le texte. >
+
+	:edit autrefichier
+	/Ici
+	p
+
+Bien entendu, vous pouvez utiliser de nombreuses autres commandes pour copier
+le texte. Par exemple, pour sélectionner des lignes entières, passez en mode
+Visuel avec "V". Ou utilisez CTRL-V pour sélectionner un bloc rectangulaire.
+Ou tapez "Y" pour copier une seule ligne, "yaw" pour copier un mot
+["yank-a-word"], etc.
+   La commande "p" ["put"] colle le texte après le curseur. Utilisez "P" pour
+coller le texte avant le curseur. Remarquez que Vim se souvient si vous avez
+copié une ligne entière ou un bloc, et colle à l'identique.
+
+
+UTILISER LES REGISTRES
+
+Quand vous voulez copier plusieurs morceaux de texte d'un fichier vers un
+autre, passer d'une fenêtre à l'autre et écrire le fichier modifié prend
+beaucoup de temps. Pour éviter cela, copier chaque morceau de texte dans son
+propre registre.
+   Un registre est un emplacement dans lequel Vim mémorise du texte. Ici, nous
+utiliserons les registres a à z (vous verrez plus tard qu'il en existe
+d'autres). Copions une phrase dans le registre p (p comme Premier) : >
+
+	"pyas
+
+La commande "yas" copie une phrase comme précédemment. C'est "p qui indique à
+Vim de mémoriser le texte dans le registre p. Cette indication doit venir
+juste avant la commande de copie.
+   À présent, copiez trois lignes entières dans le registre l (l pour Ligne) : >
+
+	"l3Y
+
+Le quantificateur pourrait aussi être placé avant le "l. Pour copier un bloc
+de texte dans le registre b (pour Bloc) : >
+
+	CTRL-Vjjww"by
+
+Remarquez que l'indication du registre "b est juste avant la commande "y".
+C'est indispensable. Si vous l'aviez placée avant la commande "w", cela
+n'aurait pas fonctionné.
+   Vous avez maintenant trois morceaux de texte dans les registres p, l, b.
+Éditez un autre fichier, déplacez-vous et placez le texte où vous le voulez :
+>
+	"pp
+
+Comme précédemment, l'indication du registre "p vient avant la commande "p".
+   Vous pouvez coller le contenu des registres dans n'importe quel ordre. Et
+le texte reste dans le registre jusqu'à ce que vous y placiez quelque chose
+d'autre. Ainsi, vous pouvez coller son contenu autant de fois que vous le
+souhaitez.
+
+Quand vous coupez du texte, vous pouvez également spécifier un registre.
+Utilisez ce principe pour déplacer plusieurs morceaux de texte. Par exemple,
+pour couper un mot ["Delete-A-Word"] et le placer dans le registre m : >
+
+	"mdaw
+
+À nouveau, l'indication du registre vient avant la commande de coupage "d".
+
+
+AJOUTER À UN FICHIER
+
+Quand vous collectez des lignes en un seul fichier de texte, vous pouvez
+utiliser cette commande : >
+
+	:write >> fichier_de_log
+
+Cela écrira le texte du fichier courant à la fin du "fichier_de_log".
+C'est-à-dire qu'il est ajouté. Cela vous évite de copier les lignes, éditer le
+fichier et coller le texte. Ainsi, vous économisez deux étapes. Mais vous ne
+pouvez ajouter qu'à la fin du fichier.
+   Pour n'ajouter que quelques lignes, sélectionnez-les en mode Visuel avant
+de taper ":write". Dans le chapitre 10, vous apprendrez les autres manières de
+sélectionner une plage de lignes.
+
+==============================================================================
+*07.6*	Visualiser un fichier
+
+Parfois, vous voulez seulement voir ce qu'un fichier contient, sans avoir
+aucune intention de l'écrire. Le risque que vous tapiez ":w" sans réfléchir et
+que vous écrasiez le fichier original existe toutefois. Pour éviter cela,
+vous pouvez éditer le fichier en lecture seule.
+   Pour démarrer Vim en mode Lecture-seule, utilisez cette commande : >
+
+	vim -R fichier
+
+Sur Unix, cette commande devrait faire la même chose : >
+
+	view fichier
+
+Vous éditez alors "fichier" en mode Lecture-seule. Quand vous tenterez
+d'utiliser ":w", vous obtiendrez un message d'erreur et le fichier ne sera pas
+écrit.
+   Quand vous essaierez d'apporter une modification au fichier, Vim vous
+avertira :
+
+	W10: Alerte: Modification d'un fichier en lecture seule ~
+
+La modification est tout de même réalisable. Cela permet la mise en forme du
+fichier, par exemple, pour pouvoir le lire plus facilement.
+   Si vous faites des modification dans un fichier en oubliant qu'il est en
+lecture seule, vous pouvez quand même l'écrire. Ajoutez un '!' à la commande
+d'écriture pour forcer l'enregistrement.
+
+Si vous voulez vraiment interdire les modifications dans un fichier, faites
+ceci : >
+
+	vim -M fichier
+
+Maintenant, chaque tentative pour modifier le fichier échouera. Les fichiers
+d'aide sont comme cela, par exemple. Si vous essayez d'apporter une
+modification, vous obtenez ce message d'erreur :
+
+	E21: Ne peut rien changer, 'modifiable' est désactivé ~
+
+Vous pourriez utilisez l'argument -M pour faire travailler Vim comme un
+visualisateur. Cela reste toutefois une limitation volontaire, puisque les
+commandes suivantes retirent la protection : >
+
+	:set modifiable
+	:set write
+
+==============================================================================
+*07.7*	Changer le nom d'un fichier
+
+Une manière astucieuse pour débuter l'édition d'un nouveau fichier est
+d'utiliser un fichier existant contenant à peu près ce que vous voulez. Par
+exemple, vous commencez l'écriture d'un nouveau programme qui déplace un
+fichier. Vous savez que vous disposez déjà d'un programme qui copie un
+fichier, par conséquent, vous commencez par : >
+
+	:edit copy.c
+
+Vous pouvez supprimer ce dont vous n'avez pas besoin. À présent, vous devez
+enregistrer le fichier sous un nouveau nom. La commande ":saveas" vous le
+permet : >
+
+	:saveas move.c
+
+Vim enregistrera le fichier sous le nom spécifié, et éditera ce fichier.
+Ainsi, la prochaine fois que vous ferez ":write", il écrira "move.c". "copy.c"
+reste inchangé.
+   Quand vous souhaitez changer le nom du fichier que vous éditez, mais sans
+l'écrire, vous pouvez utiliser cette commande : >
+
+	:file move.c
+
+Vim indiquera le fichier comme "Pas édité". Cela signifie que Vim sait qu'il
+ne s'agit pas du fichier que vous aviez commencé à éditer. Si vous tentiez
+d'écrire le fichier, vous pourriez obtenir ce message :
+
+	E13: Le fichier existe déjà, (ajoutez ! pour passer outre) ~
+
+Cela vous protège de l'écrasement accidentel d'un autre fichier.
+
+==============================================================================
+
+Chapitre suivant : |usr_08.txt|  Gérer plusieurs fenêtres
+
+Copyright : voir |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:

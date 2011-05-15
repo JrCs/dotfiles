@@ -1,0 +1,1094 @@
+*quickfix.txt*  Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+Ce sujet est abordé dans la section |30.1| du Manuel de l'utilisateur.
+
+1. Utiliser les commandes mise-au-point	    |quickfix|
+2. La fenêtre d'erreurs			    |quickfix-window|
+3. Utiliser plus d'une liste d'erreurs	    |quickfix-error-lists|
+4. Utiliser ":make"			    |:make_makeprg|
+5. Utiliser ":grep"			    |grep|
+6. Sélectionner un compilateur		    |compiler-select|
+7. Format des erreurs			    |error-file-format|
+8. La pile de répertoires		    |quickfix-directory-stack|
+9. Formats d'erreurs spécifiques	    |errorformats|
+
+{absent de Vi}
+{uniquement si compilé avec la fonctionnalité |+quickfix|}
+
+=============================================================================
+1. Utiliser les commandes mise-au-point		*quickfix* *Quickfix* *E42*
+
+Vim dispose d'un mode spécial, le mode « mise-au-point », pour accélérer le
+cycle édition-compilation-correction. Ce mode est inspiré de l'option
+"quickfix" du compilateur Aztec C de Manx sur Amiga. Le principe consiste à
+enregistrer les messages d'erreurs dans un fichier et à utiliser Vim pour
+sauter vers chaque erreur séparément. Vous pouvez alors étudier chaque
+problème et le résoudre, sans avoir à retenir tous les messages d'erreurs.
+
+Si vous utilisez le compilateur Aztec C de Manx sur Amiga, reportez-vous à
+|quickfix-manx| pour savoir comment l'employer avec Vim. Si vous utilisez un
+autre compilateur, vous devriez enregistrer les messages d'erreurs dans un
+fichier et lancer Vim avec `vim -q nomfichier`. Vous pouvez aussi utiliser la
+commande |:make|, qui vous facilitera les choses (voir plus bas). L'option
+'errorformat' doit être soigneusement définie pour correspondre au format des
+messages d'erreurs de votre compilateur (voir |errorformat| plus bas).
+
+Les commandes mise-au-point suivantes peuvent être utilisées :
+
+							*:cc*
+:cc[!] [no]		Affiche l'erreur numéro [no]. Si [no] est omis, la
+			même erreur est affichée à nouveau. Sans [!], cela ne
+			fonctionne pas lors d'un saut vers un autre tampon,
+			lorsque le tampon courant a été modifié, qu'une seule
+			fenêtre est disponible pour ce tampon et que les
+			options 'hidden' et 'autowrite' sont désactivées.
+			En cas de saut vers un autre tampon avec [!], tous les
+			changements pour le tampon courant seront perdus, sauf
+			si 'hidden' est activé ou qu'il existe une autre
+			fenêtre pour ce tampon.
+			Les paramètres de l'option 'switchbuf' sont respectés
+			lors d'un saut vers un autre tampon.
+
+							*:cn* *:cnext* *E553*
+:[quant]cn[ext][!]	Affiche la [quant]-ième erreur suivante de la liste
+			qui inclut un nom de fichier. S'il n'y a aucun nom
+			de fichier, va à la [quant]-ième erreur suivante. Voir
+			|:cc| pour [!] et 'switchbuf'.
+
+:[quant]cN[ext][!]			*:cp* *:cprevious* *:cN* *:cNext*
+:[quant]cp[revious][!]	Affiche la [quant]-ième erreur précédente de la liste
+			qui inclut un nom de fichier. S'il n'y a aucun nom
+			de fichier, va à la [quant]-ième erreur suivante. Voir
+			|:cc| pour [!] et 'switchbuf'.
+
+							*:cnf* *:cnfile*
+:[quant]cnf[ile][!]	Affiche la première erreur dans le [quant]-ième
+			fichier suivant de la liste qui inclut un nom de
+			fichier. S'il n'y a aucun nom de fichier ou qu'il n'y
+			a pas de fichier suivant, va à la [quant]-ième erreur
+			suivante. Voir |:cc| pour [!] et 'switchbuf'.
+
+							*:crewind* *:cr*
+:cr[ewind][!] [no]	Affiche l'erreur numéro [no]. Si [no] est omis, la
+			PREMIÈRE erreur est affichée. Voir |:cc|.
+
+							*:cfirst* *:cfir*
+:cfir[st][!] [no]	Comme ":crewind".
+
+							*:clast* *:cla*
+:cla[st][!] [no]	Affiche l'erreur numéro [no]. Si [no] est omis, la
+			DERNIÈRE erreur est affichée. Voir |:cc|.
+
+							*:cq* *:cquit*
+:cq[uit]		Quitte Vim avec un code d'erreur, de sorte que le
+			compilateur ne compilera pas le même fichier à
+			nouveau.
+
+							*:cf* *:cfile*
+:cf[ile][!] [ficherr]	Lit le fichier d'erreurs et saute à la première.
+			Ceci est fait automatiquement lorsque Vim est lancé
+			avec l'option "-q". Vous pouvez utiliser cette
+			commande si vous ne sortez pas de Vim pendant la
+			compilation. Si vous donnez le nom du fichier
+			d'erreurs, l'option 'errorfile' sera fixé à [ficherr].
+			Voir |:cc| pour [!].
+
+							*:cg* *:cgetfile*
+:cg[etfile][!] [ficherr]
+			Lit le fichier d'erreurs. Comme ":cfile", mais ne
+			saute pas à la première erreur.
+
+							*:cl* *:clist*
+:cl[ist] [de] [, [a]]	Liste toutes les erreurs valides |quickfix-valid|.
+			Si les nombres [de] et/ou [a] sont donnés, la plage
+			d'erreurs correspondante sera listée. Un nombre
+			négatif comptera à partir de la dernière erreur dans
+			l'ordre inverse, -1 désignant la dernière erreur.
+			Les paramètres de l'option 'switchbuf' seront
+			respectés lors d'un saut vers un autre tampon.
+
+:cl[ist]! [de] [, [a]]	Liste toutes les erreurs.
+
+
+Si vous insérez ou supprimez des lignes, la position exacte de l'erreur sera
+trouvée malgré tout la plupart du temps, car des marques cachées sont
+utilisées. Quelquefois, quand la marque a été supprimée pour une raison ou
+pour une autre, le message "line changed" est affiché pour vous avertir que la
+position de l'erreur ne sera peut-être pas correcte. Si vous quittez Vim puis
+le relancez, les marques seront perdues et les positions des erreurs ne seront
+sans doute plus correctes.
+
+=============================================================================
+2. La fenêtre d'erreurs					*quickfix-window*
+
+							*:cope* *:copen*
+:cope[n] [hauteur]	Ouvre une fenêtre pour afficher la liste d'erreurs
+			courante.
+			Si [hauteur] est donné, la fenêtre est mise à cette
+			hauteur (s'il y a de la place). Sinon, la fenêtre est
+			créée avec dix lignes de hauteur.
+			La fenêtre contiendra un tampon spécial, pour lequel
+			'buftype' vaudra "quickfix". Ne changez pas cela !
+			Si une fenêtre mise-au-point existe déjà, elle
+			deviendra la fenêtre courante. Il n'est pas possible
+			d'ouvrir une deuxième fenêtre mise-au-point.
+
+							*:ccl* *:cclose*
+:ccl[ose]		Ferme la fenêtre mise-au-point.
+
+							*:cw* *:cwindow*
+:cw[indow] [hauteur]	Ouvre la fenêtre mise-au-point lorsqu'il y a des
+			erreurs reconnues. Si la fenêtre est déjà ouverte et
+			qu'il n'y a pas d'erreurs reconnues, ferme la fenêtre.
+
+
+Normalement, la fenêtre mise-au-point est placée en bas de l'écran. S'il y a
+des partages verticaux, elle est placée tout en bas et à droite de l'écran.
+Pour qu'elle occupe toujours toute la largeur de l'écran : >
+	:botright cwindow
+Pour changer la place de la fenêtre, voir |window-moving|. Par exemple, pour
+déplacer la fenêtre en haut, utilisez "CTRL-W K".
+   L'option 'winfixheight' sera activée, ce qui veut dire que la fenêtre
+conservera sa taille la plupart du temps, indépendamment de 'winheight' et
+'equalalways'. Vous pourrez changer la hauteur manuellement (p. ex., en tirant
+la ligne d'état avec la souris).
+
+Dans la fenêtre mise-au-point, chaque ligne est une erreur. Le numéro de ligne
+équivaut au numéro de l'erreur. Vous pouvez utiliser ":.cc" pour sauter à
+l'erreur sous le curseur. La saisie d'Entrée ou un double clic sur une ligne a
+le même effet. Le fichier contenant l'erreur est ouvert dans la fenêtre
+au-dessus de la fenêtre mise-au-point. Si une fenêtre existe déjà pour ce
+fichier, elle est utilisée à la place. Si le tampon dans la fenêtre utilisée a
+changé et que l'erreur est dans un autre fichier, le saut vers l'erreur
+échouera. Vous devrez d'abord vous assurer que la fenêtre contient un tampon
+qui peut être abandonné.
+
+Quand la fenêtre mise-au-point a été remplie, deux événements d'autocommandes
+sont déclenchés. D'abord, l'option 'filetype' est fixée à "qf", ce qui
+déclenche l'événement FileType. Ensuite, l'événement BufReadPost est
+déclenché. Cela peut être utilisé pour appliquer certaines actions à la liste
+d'erreurs. Exemple : >
+	au BufReadPost quickfix  silent g/^/s//\=line(".")." "/
+Ceci préfixe le numéro de ligne à chaque ligne. Notez l'utilisation de "\="
+dans la chaîne de substitution de la commande ":s", qui est utilisé pour
+évaluer une expression.
+
+NOTE : Effectuer des changements dans la fenêtre mise-au-point n'a pas d'effet
+sur la liste d'erreurs. 'modifiable' est désactivé afin d'éviter tout
+changement. Si vous insérez ou supprimez des lignes malgré tout, la relation
+entre le texte et le numéro de l'erreur est corrompue. Si c'est vraiment ce
+que vous souhaitez, vous pouvez écrire le contenu de la fenêtre mise-au-point
+dans un fichier et utilisez ":cfile" pour qu'il soit analysé et utilisé comme
+la nouvelle liste d'erreurs.
+
+=============================================================================
+3. Utiliser plus d'une liste d'erreurs		*quickfix-error-lists*
+
+Jusqu'ici, nous avons supposé qu'il n'y avait qu'une seule liste d'erreurs. En
+réalité, les dix dernières listes utilisées sont mémorisées. Quand une
+nouvelle liste débute, les précédentes sont automatiquement conservées. Deux
+commandes peuvent être utilisées pour accéder aux anciennes listes. Elles
+permettent de fixer comme courante une des listes d'erreurs existantes.
+
+						*:colder* *:col* *E380*
+:col[der] [quant]	Va à une liste d'erreurs plus ancienne. Si [quant] est
+			donné, le fait [quant] fois. Si déjà à la liste
+			d'erreurs la plus ancienne, un message d'erreurs est
+			émis.
+
+						*:cnewer* *:cnew* *E381*
+:cnew[er] [quant]	Va à une liste d'erreurs plus récente. Si [quant] est
+			donné, le fait [quant] fois. Si déjà à la liste
+			d'erreurs la plus récente, un message d'erreurs est
+			émis.
+
+Quand une nouvelle liste d'erreurs est ajoutée, elle devient la liste
+courante.
+
+Quand ":colder" a été utilisé et que ":make" ou ":grep" est appelé pour
+ajouter une nouvelle liste d'erreurs, la liste la plus récente sera écrasée.
+C'est particulièrement utile si vous utilisez ":grep" pour naviguer dans vos
+fichiers |grep|. Si vous souhaitez conserver les listes d'erreurs les plus
+récentes, utilisez d'abord ":cnewer 99".
+
+=============================================================================
+4. Utiliser ":make"					*:make_makeprg*
+
+							*:mak* *:make*
+:mak[e][!] [arguments]	1. Si l'option 'autowrite' est activée, écrit tout
+			   tampon modifié.
+			2. Un nom de fichier d'erreurs est créé à partir de
+			   'makeef'. Si 'makeef' ne contient pas "##", et
+			   qu'un fichier du même nom existe déjà, il est
+			   écrasé.
+			3. Le programme donné par 'makeprg' est lancé
+			   (défaut : "make") avec [arguments] passé en option,
+			   et la sortie est écrite dans le fichier d'erreurs
+			   (pour Unix, elle est également envoyée sur
+			   l'écran).
+			4. Le fichier d'erreurs est lu en utilisant
+			   'errorformat'.
+			5. Si [!] n'est pas donné, saute à la première erreur.
+			6. Le fichier d'erreurs est supprimé.
+			7. Vous pouvez à présent accéder aux erreurs avec des
+			   commandes comme |:cnext| et |:cprevious|, voir plus
+			   haut.
+			Cette commande n'accepte pas de commentaire, tout
+			caractère '"' est considéré comme faisant partie des
+			arguments.
+
+La commande ":make" exécute la commande donnée par l'option 'makeprg'. Ceci
+est fait en passant la commande au shell donné par l'option 'shell'. Cela
+revient presque à taper :
+
+	:!{makeprg} [arguments] {shellpipe} {ficherr}
+
+Où : - {makeprg} désigne la chaîne donnée par l'option 'makeprg'. N'importe
+       quelle commande peut être utilisée, pas simplement `make`. Les
+       caractères '%' et '#' sont étendus comme habituellement sur la ligne de
+       commande. Vous pouvez utiliser "%<" pour insérer le nom du fichier
+       courant sans extension, ou "#<" pour insérer le nom du fichier
+       alternatif sans extension, par exemple : >
+	    :set makeprg=make\ #<.o
+<    - [arguments] est tout ce qui est tapé après ":make" ;
+     - {shellpipe} désigne l'option 'shellpipe' ;
+     - {ficherr} désigne l'option 'makeef', où "##" est remplacé pour rendre
+       le nom unique.
+
+L'expression spéciale "$*" peut être utilisée parmi les arguments de
+{makeprg} si la commande requiert des caractères supplémentaires après ses
+arguments. "$*" est alors remplacé par tous les arguments. Par exemple >
+	:set makeprg=latex\ \\\\nonstopmode\ \\\\input\\{$*}
+ou simplement : >
+	:let &mp = 'latex \\nonstopmode \\input\{$*}'
+"$*" peut être donné plusieurs fois, par exemple : >
+	:set makeprg=gcc\ -o\ $*\ $*
+
+L'option 'shellpipe' vaut ">" par défaut pour Amiga, MS-DOS et Win32. Cela
+signifie que la sortie du compilateur est écrite dans un fichier et n'est pas
+affichée directement à l'écran. Pour Unix, "| tee" est utilisée. La sortie du
+compilateur est affichée sur l'écran et écrite dans un fichier en même temps.
+Selon le shell utilisé, la valeur par défaut vaudra "|& tee" ou "2>&1| tee",
+stderr sera donc inclus.
+
+Si 'shellpipe' est vide, la partie {ficherr} sera omise. C'est utile pour les
+compilateurs qui écrivent eux-mêmes un fichier d'erreurs (Aztec C sur Amiga,
+par exemple).
+
+==============================================================================
+5. Utiliser ":grep"					*grep* *lid*
+
+Vim peut s'interfacer avec `grep` ou des programmes similaires (comme les
+utilitaires ID GNU "id-utils") de la même manière qu'il s'intègre avec les
+compilateurs (voir |:make| ci-dessus).
+
+[Digression pour les unixiens : le nom de la commande Unix `grep` vient de
+":g/re/p", où "re" est mis pour "Regular Expression", « expression
+rationnelle ».]
+
+							*:gr* *:grep*
+:gr[ep][!] [arguments]	Comme ":make", mais utilise 'grepprg' au lieu de
+			'makeprg', et 'grepformat' au lieu de 'errorformat'.
+
+							*:grepa* *:grepadd*
+:grepa[dd][!] [arguments]
+			Comme ":grep", mais au lieu de créer une nouvelle
+			liste d'erreurs, les correspondances sont ajoutées à
+			la liste courante. Exemple : >
+				:grep gloubi %
+				:bufdo grepadd! boulga %
+<			La première commande crée une nouvelle liste d'erreurs
+			vide. La seconde exécute "grepadd" pour chaque tampon
+			listé. Notez l'utilisation de '!' pour éviter que
+			":grepadd" ne saute à la première erreur, ce qui n'est
+			pas permis avec |:bufdo|.
+
+
+5.1. CONFIGURER `grep`
+
+Si vous disposez d'un programme `grep` standard installé, la commande ":grep"
+peut fonctionner correctement avec les valeurs par défaut. La syntaxe est très
+similaire à la commande standard : >
+
+	:grep zorglub *.c
+
+Ceci recherchera la chaîne "zorglub" dans tous les fichiers d'extension ".c".
+Les arguments de ":grep" sont en fait passés tels quels au programme `grep`,
+vous pouvez donc utiliser toutes les options que votre version de `grep`
+supporte.
+
+Par défaut, ":grep" invoque `grep` avec l'option "-n" (donne le nom de fichier
+et le numéro de ligne). Cela peut être changé avec l'option 'grepprg'. Vous
+devrez modifier cette option si :
+- vous utilisez un programme qui ne s'appelle pas "grep" ;
+- vous devez appeler `grep` avec son chemin absolu ;
+- vous souhaitez passer systématiquement d'autres options à `grep` (p. ex.,
+  pour des recherches insensibles à la casse).
+
+Après l'exécution de `grep`, Vim analyse du résultat en utilisant l'option
+'grepformat'. Cette option fonctionne pareillement à l'option 'errorformat'
+-- voir cette dernière pour obtenir des détails. Vous devrez certainement
+modifier 'grepformat' si la sortie de votre programme `grep` n'a pas un format
+standard, ou si vous utilisez un autre programme avec un format spécial.
+
+Après l'analyse syntaxique du résultat, Vim charge le premier fichier
+contenant une correspondance et saute à la ligne appropriée, de la même façon
+qu'il saute à une erreur de compilation en mode mise-au-point |quickfix|. Vous
+pouvez alors utiliser les commandes |:cnext|, |:clist|, etc. pour voir les
+autres correspondances.
+
+
+5.2. UTILISER ":grep" AVEC LES UTILITAIRES ID XXX
+
+Vous pouvez modifier le comportement de la commande ":grep" pour la faire
+fonctionner avec les utilitaires ID GNU "id-utils" de cette façon : >
+
+	:set grepprg=lid\ -Rgrep\ -s
+	:set grepformat=%f:%l:%m
+
+Ensuite >
+
+	:grep (exprat)
+
+fonctionnera comme vous le souhaitez (pour peu que vous ayez lancé `mkid`
+d'abord :)
+
+
+5.3. NAVIGUER DANS LE CODE SOURCE AVEC ":grep"
+
+En utilisant la pile des listes d'erreurs conservée par Vim, vous pouvez
+naviguer dans vos fichiers à la recherche d'une fonction spécifique ou des
+fonctions qu'elles appellent. Par exemple, supposons que vous deviez ajouter
+un argument à la fonction lire_fichier(). Vous pouvez alors entrer cette
+commande >
+
+	:grep lire_fichier *.c
+
+puis utiliser ":cn" pour parcourir la liste des correspondances et ajouter
+l'argument. Au même endroit, vous devez trouver le nouvel argument d'une
+fonction de plus haut niveau msg() et le changer lui aussi. Vous ferez : >
+
+	:grep msg *.c
+
+Pendant la modification des fonctions msg(), vous découvrez une autre fonction
+qui doit obtenir l'argument d'un niveau supérieur. Vous pouvez utiliser
+":grep" à nouveau pour trouver ces fonctions. Quand vous en avez fini avec une
+fonction, vous pouvez utiliser >
+
+	:colder
+
+pour revenir à la précédente.
+
+Cette navigation fonctionne comme dans un arbre : ":grep" descend d'un niveau,
+créant une liste de branches. ":colder" fait revenir au niveau précédent. Vous
+pouvez alterner l'utilisation de ":grep" et de ":colder" pour atteindre tous
+les emplacements possibles dans une navigation arborescente. Si vous suivez
+cette méthode de façon rigoureuse, vous pourrez atteindre tous les
+emplacements souhaités sans avoir besoin de les consigner.
+
+=============================================================================
+6. Sélectionner un compilateur				*compiler-select*
+
+							*:comp* *:compiler*
+:comp[iler] {nom}	Fixe les options nécessaires pour fonctionner avec le
+			compilateur {nom}.
+			{uniquement si compilé avec la fonctionnalité |+eval|}
+
+En pratique, cette commande :
+- supprime la variable "current_compiler" ;		*current_compiler*
+- exécute ":runtime! compiler/{nom}.vim".
+
+Pour écrire un greffon de compilateur, voir |write-compiler-plugin|.
+
+
+C MANX D'AZTEC				    *quickfix-manx* *compiler-manx*
+
+Pour utiliser Vim avec le compilateur Aztec C de Manx sur Amiga, voilà ce que
+vous devriez faire :
+- Fixer la variable d'environnement CCEDIT avec la commande : >
+	mset "CCEDIT=vim -q"
+- Compiler avec l'option -qf. Si le compilateur trouve la moindre erreur, Vim
+  est lancé et le curseur positionné sur la première erreur. Le message
+  d'erreur sera affiché sur la dernière ligne. Vous pouvez sauter aux autres
+  erreurs avec les commandes mentionnées plus haut. Vous pouvez corriger les
+  erreurs et enregistrer le(s) fichier(s).
+- Si vous quittez Vim normalement, le compilateur recompilera le même fichier.
+  Si vous quittez avec la commande ":cq", le compilateur se terminera : faites
+  ainsi si vous ne pouvez pas corriger l'erreur, ou si un autre fichier doit
+  être compilé en premier.
+
+Il y a des restrictions au mode mise-au-point sur Amiga. Le compilateur écrit
+uniquement les 25 premières erreurs dans le fichier d'erreurs (la
+documentation de Manx ne précise pas comment en obtenir plus). Si vous voulez
+accéder aux autres, vous devrez corriger quelques erreurs et quitter
+l'éditeur. Après recompilation, vous aurez de nouveau jusqu'à 25 autres
+erreurs.
+
+Si Vim a été lancé par le compilateur, la commande ":sh" et certaines
+commandes ":!" ne fonctionneront pas, car Vim s'exécute dans le même processus
+que le compilateur, et l'entrée standard (stdin) ne sera pas interactive.
+
+
+COMPILATEUR PYUNIT					*compiler-pyunit*
+
+En fait il ne s'agit pas d'un compilateur, mais d'un cadre applicatif pour
+effectuer des tests unitaires en Python. Il est inclus dans la distribution
+standard du langage à partir de la version 2.0. Si vous disposez d'une version
+antérieure, vous pouvez le récupérer sur "http://pyunit.sourceforge.net/".
+
+Lorsque vous lancez vos tests à l'aide de ce cadre applicatif, les erreurs
+éventuelles sont analysées par Vim et vous sont présentées en mode
+mise-au-point.
+
+Malheureusement, il n'existe aucune méthode standard pour lancer les tests,
+même si le script "alltests.py" semble être assez fréquemment utilisé. Les
+valeurs utiles dans ce cas pour l'option 'makeprg' sont : >
+	:setlocal makeprg=./alltests.py	    " Lance une batterie de tests
+	:setlocal makeprg=python %	    " Lance un cas de test unique
+
+Voir aussi "http://vim.sourceforge.net/tip_view.php?tip_id=280".
+
+
+COMPILATEUR TEX						*compiler-tex*
+
+Inclus dans la distribution de Vim, le greffon de compilateur pour TeX
+("$VIMRUNTIME/compiler/tex.vim") est censé gérer correctement toutes les
+variantes de TeX. Si la variable "b:tex_flavor" ou "g:tex_flavor" (dans cet
+ordre) existe, elle définit une variante de TeX pour ":make" (en fait, c'est
+le nom de la commande à exécuter), et si aucune des deux variables n'existe,
+la valeur par défaut sera "latex". Par exemple, si vous éditez
+"chapitre2.tex", inclus (avec "\input") dans "mondocument.tex" -- écrit en
+AmS-TeX : >
+
+	:let b:tex_flavor = 'amstex'
+	:compiler tex
+<	... édition ... >
+	:make mondocument
+
+NOTE : Vous devez spécifier le nom du fichier à compiler en argument (pour que
+le bon fichier soit traité quand vous éditez des fichiers inclus -- avec
+"\input" ou "\include" -- ; une solution portable pour substituer "%" quand il
+n'y a pas d'arguments serait la bienvenue). Cela ne fait pas partie de la
+sémantique habituelle de ":make", mais vous pouvez spécifier le nom du fichier
+sans extension ".tex", en voulant signifier ":make nomfich.dvi ou nomfich.pdf
+ou nomfich.extension_du_résultat" selon le compilateur utilisé.
+
+Variables utilisées :
+---------------------
+"b:tex_ignore_makefile" ou "g:tex_ignore_makefile"
+	Habituellement, quand un fichier "Makefile" ou "makefile" existe dans
+	le répertoire courant, Vim considère qu'il s'agit d'un signe indiquant
+	que l'utilisateur souhaite traiter ses fichiers (La)TeX avec `make`
+	(p. ex., parce qu'il dispose d'un ouvrage segmenté en plusieurs
+	fichiers réunis via un fichier principal -- auquel cas ":make" devrait
+	traiter le fichier principal indépendamment du fichier en cours
+	d'édition). Si ce n'est pas ce que vous souhaitez, vous pouvez fixer
+	une des variables ci-dessus avant de lancer ":compiler tex".
+"b:tex_flavor" ou "g:tex_flavor"
+	Par défaut, ce greffon de compilateur suppose que vous utilisez LaTeX
+	(ce n'est pas le cas ? Pourquoi ?!) et le lance avec la commande
+	`latex`. Si ce n'est pas vrai pour vous, fixez "b:tex_flavor" ou
+	"g:tex_flavor" au nom de la commande que vous voulez utiliser.
+
+NOTE : La syntaxe de la ligne de commande `latex` est choisie de façon à être
+utilisable pour MikTeX (suggestion de Srinath Avadhanula) et pour teTeX
+(vérifié Artem Chuprina). Le format d'erreur suggéré dans |errorformat-LaTeX|
+est trop complexe pour fonctionner sur différents shells et SE, et ne permet
+pas l'utilisation d'autres options TeX. Si votre version de TeX ne supporte
+pas "-interaction=nonstopmode", merci de le signaler en indiquant les méthodes
+alternatives pour activer "\nonstopmode" depuis la ligne de commande.
+
+=============================================================================
+7. Format des erreurs					*error-file-format*
+
+					*errorformat* *E372* *E373* *E374*
+					*E375* *E376* *E377* *E378*
+L'option 'errorformat' contient une liste des formats qui sont reconnus. Le
+premier format qui correspond avec un message d'erreur est utilisé. Vous
+pouvez ajouter plusieurs formats pour supporter les différents messages que
+votre compilateur produit, ou au moins des entrées pour plusieurs
+compilateurs. Voir |efm-entries|.
+
+Chaque entrée dans 'errorformat' est une chaîne de style scanf qui décrit le
+format. En premier lieu, vous devez savoir comment scanf fonctionne. Lisez la
+documentation de votre compilateur C. Ci-dessous, vous trouverez les items '%'
+que Vim comprend. Les autres sont invalides.
+
+La virgule et la contre-oblique ('\') sont des caractères spéciaux dans
+'errorformat'. Pour les gérer correctement, voir |efm-entries|. NOTE : "%%"
+correspond à un "%" littéral, il n'a donc pas besoin d'être protégé par une
+contre-oblique.
+
+NOTE : Par défaut, la différence entre majuscules et minuscules est ignorée.
+Si vous voulez que la casse soit respectée, ajoutez "\C" au motif |/\C|.
+
+
+ITEMS DE BASE
+
+	%f	    nom de fichier (trouve une chaîne)
+	%l	    numéro de ligne (trouve un nombre)
+	%c	    numéro de colonne (trouve un nombre représentant la
+		       colonne de caractère de l'erreur (1 tabulation =
+		       1 colonne de caractère)
+	%v	    numéro de colonne virtuelle (trouve un nombre représentant
+		       la colonne d'écran de l'erreur (1 tabulation =
+		       8 colonnes d'écran)
+	%t	    type d'erreur (trouve un caractère simple)
+	%n	    numéro d'erreur (trouve un nombre)
+	%m	    message d'erreur (trouve une chaîne)
+	%r	    correspond au « reste » d'un message de fichier mono-ligne
+		       %O/P/Q
+	%p	    ligne de pointage (trouve une séquence de '-', '.' ou ' '
+		       et utilise la longueur pour le numéro de colonne)
+	%*{conv}    toute conversion scanf non assignable
+	%%	    le caractère simple '%'
+
+La conversion de "%f" dépend de la valeur courante de l'option 'isfname'.
+
+Les conversions de "%f" et de "%m" doivent détecter la fin de la chaîne. Elle
+devrait être suivie par un caractère qui ne peut pas être inclus dans la
+chaîne. Tout le reste jusqu'à ce caractère est inclus. Mais quand le caractère
+suivant est un '%' ou une contre-oblique, "%f" recherchera n'importe quel
+caractère de 'isfname', et "%m" n'importe quoi. Si l'item "%f" ou "%m" est
+arrivé à la fin, tout sera inclus jusqu'à la fin de la ligne.
+
+Sur MS-DOS, MS-Windows et OS/2, un "C:" initial sera inclus dans "%f", même
+quand "%f:" est utilisé. Cela signifie qu'un nom de fichier avec un seul
+caractère alphabétique ne sera pas détecté.
+
+La conversion de "%p" est normalement suivie par un '^'. C'est utilisé pour un
+compilateur qui produit un ligne telle que
+		 ^ ~
+ou
+	---------^ ~
+pour indiquer la colonne de l'erreur. Cela peut être utilisé dans un message
+d'erreur multi-lignes. Voir |errorformat-javac| pour un exemple utile.
+
+
+CHANGER DE RÉPERTOIRE
+
+Les caractères majuscules de conversion suivants sont appropriés à des chaînes
+d'un format spécial. Il est possible d'utiliser l'un d'eux comme préfixe au
+début d'un motif d'items simples séparé des autres par des virgules.
+   Certains compilateurs produisent des messages qui consistent en noms de
+répertoires devant être préfixés à chaque nom de fichier lu par "%f" (GNU
+make, par exemple). Les codes suivants peuvent être utilisés pour ces noms de
+répertoires ; ils seront mémorisés dans une pile de répertoires interne.
+							    *E379*
+	%D	    chaîne de format « entrée de répertoire » ; attend un "%f"
+		       à la suite pour trouver le nom du répertoire
+								  ["Directory"]
+	%X	    chaîne de format « sortie de répertoire » ; attend un "%f"
+		       à la suite
+
+Lorsque vous définissez un format « entrée de répertoire » ou « sortie de
+répertoire », le "%D" ou "%X" doit être donné au début de cette sous-chaîne.
+Vim suivra les changements de répertoires et préfixera le nom du répertoire
+courant à chaque nom de fichier erroné trouvé avec un chemin relatif. Voir
+|quickfix-directory-stack| pour des détails, astuces et limitations à ce
+sujet.
+
+
+MESSAGES MULTI-LIGNES				*errorformat-multi-line*
+
+Il est possible de lire la sortie des programmes qui produisent des messages
+multi-lignes (c.-à-d. qui occupent plus d'une ligne). Les préfixes utilisables
+sont :
+
+	%E	    début d'un message d'erreur multi-lignes
+	%W	    début d'un message d'avertissement multi-lignes ["Warning"]
+	%I	    début d'un message d'information multi-lignes
+	%A	    début d'un message multi-lignes (quelconque)	["All"]
+	%C	    continuation d'un message multi-lignes
+	%Z	    fin d'un message multi-lignes
+
+Ils peuvent utilisés avec '+' et '-', voir |efm-ignore| plus bas.
+
+Exemple : votre compilateur donne ses messages d'erreurs dans le format
+suivant (les numéros des lignes ne font pas partie de la sortie) :
+
+     1	Error 275
+     2	line 42
+     3	column 3
+     4	' ' expected after '--'
+
+Le format d'erreur approprié doit ressembler à : >
+
+	:set efm=%EError\ %n,%Cline\ %l,%Ccolumn\ %c,%Z%m
+
+Et le message d'erreur |:clist| généré pour cette erreur :
+
+	1:42 col 3 error 275:  ' ' expected after '--' ~
+
+Autre exemple : votre interpréteur Python produit le message d'erreur suivant
+(les numéros des lignes ne font pas partie de la sortie) :
+
+     1	==============================================================
+     2	FAIL: testGetTypeIdCachesResult (dbfacadeTest.DjsDBFacadeTest)
+     3	--------------------------------------------------------------
+     4	Traceback (most recent call last):
+     5	  File "unittests/dbfacadeTest.py", line 89, in testFoo
+     6	    self.assertEquals(34, dtid)
+     7	  File "/usr/lib/python2.2/unittest.py", line 286, in
+     8	 failUnlessEqual
+     9	    raise self.failureException, \
+    10	AssertionError: 34 != 33
+    11
+    12	--------------------------------------------------------------
+    13	Ran 27 tests in 0.063s
+
+Supposons que vous souhaitiez que |:clist| ne vous donne que l'information
+essentielle de ce message, à savoir :
+
+	5 unittests/dbfacadeTest.py:89:  AssertionError: 34 != 33 ~
+
+Le format d'erreur approprié pourra alors être défini comme suit : >
+
+	:set efm=%C\ %.%#,%A\ \ File\ \"%f\"\\,\ line\ %l%.%#,%Z%[%^\ ]%\\@=%m
+
+NOTE : La chaîne "%C" est ici donnée avant le "%A" : comme l'expression
+" %.%#" (qui représente l'expression rationnelle " .*") correspond à chaque
+ligne débutant par un espace, elle englobe aussi la ligne 7 qui sans cela
+déclencherait une erreur séparée. Les chaînes de format d'erreur sont toujours
+analysées motif par motif jusqu'à ce que la première correspondance survienne.
+
+
+NOM DE FICHIER SÉPARÉ			    *errorformat-separate-filename*
+
+Ces préfixes sont utiles si le nom de fichier est donné une seule fois et que
+de multiples messages qui se réfèrent à ce nom de fichier suivent.
+
+	%O	    message de fichier mono-ligne : recherche dans une
+		       correspondance déjà établie		   ["Overread"]
+	%P	    message de fichier mono-ligne : empile le fichier "%f"
+								       ["Push"]
+	%Q	    message de fichier mono-ligne : dépile le dernier fichier
+
+Exemple : soit un compilateur qui produise la sortie d'erreur suivante (sans
+les numéros des lignes) :
+
+     1	[a1.tt]
+     2	(1,17)  error: ';' missing
+     3	(21,2)  warning: variable 'z' not defined
+     4	(67,3)  error: end of file found before string ended
+     5
+     6	[a2.tt]
+     7
+     8	[a3.tt]
+     9	NEW compiler v1.1
+    10	(2,2)   warning: variable 'x' not defined
+    11	(67,3)  warning: 's' already defined
+
+Cette sortie donne plusieurs messages pour chaque fichier encadré entre
+crochets. Ces messages sont correctement analysés par un format d'erreur
+comme : >
+
+	:set efm=%+P[%f],(%l\\,%c)%*[\ ]%t%*[^:]:\ %m,%-Q
+
+L'appel de |:clist| les affichera avec leurs noms de fichiers correspondants :
+
+	2 a1.tt:1 col 17 error: ';' missing ~
+	3 a1.tt:21 col 2 warning: variable 'z' not defined ~
+	4 a1.tt:67 col 3 error: end of file found before string ended ~
+	8 a3.tt:2 col 2 warning: variable 'x' not defined ~
+	9 a3.tt:67 col 3 warning: 's' already defined ~
+
+Contrairement aux autres préfixes qui donnent tous des correspondances sur des
+lignes entières, "%P", "%Q" et "%O" peuvent être utilisés pour correspondre
+avec plusieurs motifs sur une même ligne. Il est ainsi possible de traiter des
+messages de fichiers imbriqués comme dans cette ligne :
+
+	{"fich1" {"fich2" err1} err2 {"fich3" err3 {"fich4" err4 err5}}}
+
+"%O" peut ensuite analyser les chaînes qui ne contiennent aucune information
+de type « empiler/dépiler » un fichier. Voir |errorformat-LaTeX| pour un
+exemple complet.
+
+
+IGNORER ET UTILISER DES MESSAGES ENTIERS		*efm-ignore*
+
+Les codes '+' ou '-' peuvent être combinés avec les codes des lettres
+majuscules décrits ci-dessus ; dans ce cas, ils doivent précéder la lettre,
+p. ex., "%+A" ou "%-G" :
+
+	%-	    ignore cette correspondance multi-lignes
+	%+	    inclut toute la correspondance dans la chaîne d'erreur "%m"
+
+Le préfixe "%G" n'est utilisable que s'il est combiné avec '+' ou '-'. Il
+effectue l'analyse des lignes contenant des informations générales, comme la
+version du compilateur ou autres en-têtes qui peuvent être sautés.
+
+	%-G	    ignore ce message
+	%+G	    message général
+
+
+CORRESPONDANCES DE MOTIFS
+
+La notation de style scanf "%*[]" est supportée pour des raisons de
+compatibilité ascendante avec les versions antérieures de Vim. De toute façon,
+il est également possible de spécifier (à peu près) n'importe quelle
+expression rationnelle supportée par Vim dans les chaînes de formats.
+   Comme les caractères spéciaux des expressions rationnelles peuvent faire
+partie des chaînes ou des noms de fichiers ordinaires (et doivent donc être
+déspécialisés en interne), les méta-symboles doivent être donnés avec un '%'
+initial :
+
+	%\	    le caractère simple '\' (NOTE : il doit être protégé
+		       ("%\\") dans une définition ":set errorformat=")
+	%.	    le caractère simple '.'
+	%#	    le caractère simple '*' (!)
+	%^	    le caractère simple '^'
+	%$	    le caractère simple '$'
+	%[	    le caractère simple '[' pour une plage de caractères []
+	%~	    le caractère simple '~'
+
+Quand vous utilisez des classes de caractères dans les expressions (voir |/\i|
+pour un sommaire), les termes englobés par le multi "\+" peuvent être écrits
+dans la notation scanf "%*". Par exemple, "%\\d%\\+" ("\d\+", "n'importe
+quel nombre") est équivalent à "%*\\d".
+   NOTE importante : Le groupage \(...\) de sous-correspondances ne peut pas
+être utilisé dans les spécifications de format, il est réservé pour des
+conversions internes.
+
+
+ENTRÉES MULTIPLES DANS 'errorformat'			*efm-entries*
+
+Pour pouvoir reconnaître les sorties de plusieurs compilateurs, plusieurs
+motifs de formats peuvent être entrés dans 'errorformat', séparés par des
+virgules (NOTE : les blancs après la virgule seront ignorés). Le premier motif
+qui correspond entièrement est utilisé. Si aucun ne convient, une
+correspondance partielle avec le dernier motif sera utilisée, même si le nom
+de fichier est supprimé et que l'erreur entière est utilisée comme message
+d'erreur. Donc, s'il y a un motif qui peut correspondre à la sortie de
+plusieurs compilateurs (même partiellement), placez-le après un autre qui est
+plus restrictif.
+
+Pour inclure une virgule dans un motif, faites-la précéder par une
+contre-oblique (vous devez en saisir deux dans une commande ":set"). Pour
+inclure une contre-oblique elle-même, spécifiez-en deux (quatre dans une
+commande ":set"). Vous devez également protéger un espace par une
+contre-oblique dans une commande ":set".
+
+
+CORRESPONDANCES VALIDES					*quickfix-valid*
+
+Si une ligne ne correspond pas complètement avec une des entrées de
+'errorformat', la ligne entière est mise dans le message d'erreur, et
+est marquée comme « non valide ». Ces lignes sont sautées par les commandes
+":cn" et ":cp" (à moins qu'il n'y ait aucune entrée valide). Vous pouvez
+utiliser ":cl!" pour afficher tous les messages d'erreurs.
+
+Si le format d'erreur ne contient pas de nom de fichier, Vim ne peut pas se
+rendre au bon fichier. Vous devrez le faire à la main.
+
+
+EXEMPLES
+
+Le format du fichier produit par le compilateur Aztec sur Amiga est :
+
+	nomfich>noligne:nocolonne:typeerreur:noerreur:messageerreur
+
+	nomfich		nom du fichier dans lequel l'erreur a été détectée
+	noligne		numéro de la ligne où l'erreur a été détectée
+	nocolonne	numéro de la colonne où l'erreur a été détectée
+	typeerreur	type de l'erreur, normalement un simple 'E' ou 'W'
+	noerreur	numéro de l'erreur (voir le manuel du compilateur)
+	messageerreur	description de l'erreur
+
+Ce format correspond avec cette entrée de 'errorformat' : >
+	%f>%l:%c:%t:%n:%m"
+
+Voici d'autres exemples pour des compilateurs C qui produisent des sorties
+d'erreurs mono-lignes : >
+	%f:%l:\ %t%*[^0123456789]%n:\ %m
+<		Pour les messages d'erreurs d'Aztec C de Manx (scanf() ne
+		comprend pas [0-9]). >
+	%f\ %l\ %t%*[^0-9]%n:\ %m
+<		Pour SAS C. >
+	\"%f\"\\,%*[^0-9]%l:\ %m
+<		Pour les compilateurs C génériques. >
+	%f:%l:\ %m
+<		Pour GCC. >
+	%f:%l:\ %m,%Dgmake[%*\\d]:\ Entering\ directory\ `%f',
+	%Dgmake[%*\\d]:\ Leaving\ directory\ `%f'
+<		Pour GCC avec `gmake` (fusionnez les lignes !). >
+	%f(%l)\ :\ %*[^:]:\ %m
+<		Pour l'ancien compilateur SCO C (pre-OS5). >
+	%f(%l)\ :\ %t%*[^0-9]%n:\ %m
+<		Idem, avec le type et numéro de l'erreur. >
+	%f:%l:\ %m,In\ file\ included\ from\ %f:%l:,\^I\^Ifrom\ %f:%l%m
+<		Pour GCC, avec quelques suppléments.
+
+Vous trouverez des exemples complets pour le support de messages d'erreurs
+multi-lignes plus bas, voir |errorformat-Jikes| et |errorformat-LaTeX|.
+
+NOTE : Une contre-oblique ('\') devant un espace ou une double-apostrophe est
+nécessaire pour la commande ":set". Il y a deux contre-obliques devant une
+virgule : une pour la commande ":set" et une pour éviter que la virgule ne
+soit reconnue comme un séparateur de formats d'erreurs.
+
+
+FILTRER DES MESSAGES
+
+Si vous avez un compilateur qui produit des messages d'erreurs qui ne
+correspondent pas aux formats supportés, vous pouvez écrire un programme qui
+traduise ces messages afin qu'ils le soient. Utilisez alors ce programme avec
+la commande ":make", en modifiant l'option 'makeprg'. Par exemple : >
+	:set mp=make\ \\\|&\ filtre_erreurs
+Les contre-obliques avant la barre verticale sont nécessaires afin que
+celle-ci ne soit pas reconnue comme un séparateur de commandes. La
+contre-oblique avant chaque espace est requise pour la commande ":set".
+
+=============================================================================
+8. La pile de répertoires			*quickfix-directory-stack*
+
+Le mode mise-au-point gère une pile pour mémoriser tous les noms de
+répertoires extraits de la sortie de `make`. Pour GNU make c'est assez simple,
+car il affiche toujours le chemin absolu de tous les répertoires dans lesquels
+il entre et sort, sans distinction entre les changements obtenus avec une
+commande `cd` dans le Makefile ou avec le commutateur "-C rép" (change de
+répertoire avant de lire le Makefile). Il peut être utile d'utiliser le
+commutateur "-w" pour obliger GNU make à afficher le répertoire de travail
+avant et après traitement.
+
+Il est plus difficile de déterminer le bon répertoire si vous n'utilisez pas
+GNU make. Par exemple, AIX make n'affiche aucune information sur son
+répertoire de travail. Dans ce cas, vous devrez améliorer vous-même le
+Makefile. Dans le Makefile de lesstiff, il y a une commande qui affiche
+"Making {cible} in {rep}". Le problème ici est qu'il n'y a pas de message
+lors de la sortie d'un répertoire et que le chemin absolu n'est pas donné.
+
+Pour résoudre le problème du chemin relatif et du message de « sortie de
+répertoire » manquant, Vim utilise l'algorithme suivant :
+
+1° Vérifier que le répertoire donné est un sous-répertoire du répertoire
+   courant. Si c'est le cas, l'enregistrer comme répertoire courant.
+2° S'il ne s'agit pas d'un sous-répertoire du répertoire courant, vérifier
+   si c'est un sous-répertoire de l'un des répertoires parents.
+3° Si le répertoire n'est toujours pas trouvé, Vim considère qu'il s'agit
+   d'un sous-répertoire de son propre répertoire courant.
+
+De plus, Vim vérifie chaque fichier pour déterminer s'il existe réellement
+dans les répertoires identifiés. Sinon, le fichier est recherché dans tous les
+autres répertoires de la pile de répertoires (et NON dans la sous-arborescence
+du répertoire !). S'il reste introuvable, Vim considère qu'il se trouve dans
+son propre répertoire courant.
+
+Cet algorithme est imparfait. Ces exemples supposent que `make` affiche des
+informations sur l'entrée dans un répertoire de la forme "Making {cible} in
+{rep}".
+
+1. Supposons que vous ayez les fichiers et répertoires suivants :
+	./rep1
+	./rep1/fich1.c
+	./fich1.c
+
+   Si `make` traite le répertoire "./rep1" avant le répertoire courant et
+   qu'il y a une erreur dans le fichier "./fich1.c", vous obtiendrez le
+   chargement du fichier "./rep1/fich1.c" dans Vim.
+
+   La seule solution est d'avoir un message de « sortie de répertoire ».
+
+2. Supposons que vous ayez les répertoires suivants :
+	./rep1
+	./rep1/rep2
+	./rep2
+
+   Voilà ce que vous obtiendrez :
+
+	SORTIE DE `make`	RÉPERTOIRE DÉTERMINÉ PAR VIM  ~
+	"Making all in rep1"	./rep1
+	"Making all in rep2"  	./rep1/rep2
+	"Making all in rep2"	./rep1/rep2
+
+   Il est possible de résoudre ce problème en affichant le chemin absolu des
+   répertoires dans les messages d'« entrée de répertoire » ou de « sortie de
+   répertoire »...
+
+Pour éviter ces problèmes, assurez-vous que les chemins absolus des
+répertoires et les messages indiquant la sortie de ces répertoires est bien
+affichée.
+
+Exemple pour les fichiers Makefile Unix :
+
+	bib:
+		for nr in $(REPBIB); do				    \
+		    (cd $$nr; echo "Entre dans '$$(pwd)'"; make);   \
+		    echo "Quitte le répertoire";		    \
+		done
+
+Ajoutez >
+	%DEntre\ dans\ '%f',%XQuitte\ le\ répertoire
+à votre option 'errorformat' pour supporter la sortie de ce Makefile.
+
+NOTE : Vim ne vérifie pas si le nom de répertoire dans un message « sortie de
+répertoire » est le répertoire courant. C'est pourquoi vous pouvez simplement
+utiliser le message "Quitte le répertoire".
+
+=============================================================================
+9. Formats d'erreurs spécifiques		    *errorformats*
+
+JIKES(TM)					    *errorformat-Jikes*
+
+Jikes(TM) est un pseudo-compilateur Java publié par IBM Research qui génère
+des messages d'erreurs multi-lignes simples.
+
+Vous trouverez ci-dessous une entrée de 'errorformat' correspondant avec les
+messages produits. Vous pouvez la placer dans votre fichier |vimrc| pour
+remplacer les formats reconnus par défaut par Vim, ou bien utiliser |:set+=|
+pour ajouter ce format à ceux par défaut. >
+	:set efm=%A%f:%l:%c:%*\\d:%*\\d:,
+	    \%C%*\\s%trror:%m,
+	    \%+C%*[^:]%trror:%m,
+	    \%C%*\\s%tarning:%m,
+	    \%C%m
+
+Jikes(TM) produit des messages d'erreurs mono-lignes lorsqu'il est invoqué
+avec l'option "+E", qui correspondent avec l'entrée suivante : >
+	:set efm=%f:%l:%v:%*\\d:%*\\d:%*\\s%m
+
+
+JAVAC						    *errorformat-javac*
+
+Ces entrées de 'errorformat' semblent fonctionner correctement pour javac, qui
+génère une ligne avec '^' pour indiquer la colonne de l'erreur : >
+	:set efm=%A%f:%l:\ %m,%-Z%p^,%-C%.%#
+Ou : >
+	:set efm=%A%f:%l:\ %m,%+Z%p^,%+C%.%#,%-G%.%#
+
+
+ANT						    *errorformat-ant*
+
+Pour ant ("http://jakarta.apache.org/"), le format d'erreur ci-dessus doit
+être modifié afin de prendre en compte le "[javac]" initial au début de chaque
+ligne de sortie de javac : >
+	:set efm=%A\ %#[javac]\ %f:%l:\ %m,%-Z\ %#[javac]\ %p^,%-C%.%#
+
+L'option 'errorformat' peut aussi être configurée pour supporter ant avec
+javac ou jikes en même temps. Si vous utilisez jikes, vous devriez dire à ant
+de spécifier l'option de commande +E de jikes pour générer des messages
+d'erreurs mono-lignes. C'est ce que fait la deuxième ligne (d'un fichier
+"build.xml") ci-dessous : >
+	<property name = "build.compiler"       value = "jikes"/>
+	<property name = "build.compiler.emacs" value = "true"/>
+
+L'entrée suivante de 'errorformat' permet de supporter ant avec javac ou jikes
+indifféremment : >
+	:set efm=\ %#[javac]\ %#%f:%l:%c:%*\\d:%*\\d:\ %t%[%^:]%#:%m,
+	    \%A\ %#[javac]\ %f:%l:\ %m,%-Z\ %#[javac]\ %p^,%-C%.%#
+
+
+JADE						    *errorformat-jade*
+
+L'analyse syntaxique des erreurs de jade (voir "http://www.jclark.com/") est
+facile : >
+	:set efm=jade:%f:%l:%c:%t:%m
+
+
+LATEX						    *errorformat-LaTeX*
+
+Vous trouverez à la suite un exemple présentant comment spécifier une entrée
+de 'errorformat' pour le système de mise en forme de texte (La)TeX, qui
+affiche ses messages d'erreurs sur plusieurs lignes. La sortie des commandes
+":clist", ":cc", etc. affiche ces lignes multiples en une ligne unique,
+l'espace blanc initial est supprimé. Il devrait être facile de transposer le
+format d'erreur de LaTeX donné ci-dessous à n'importe quel compilateur
+produisant des messages d'erreurs multi-lignes.
+
+Les commandes peuvent être placées dans un fichier |vimrc| ou tout autre
+fichier de script Vim, p. ex. un script contenant des configurations
+spécifiques à LaTeX qui est chargé uniquement lors de l'édition de sources
+LaTeX.
+
+Prenez soin de bien copier toutes les lignes de l'exemple (dans l'ordre
+donné), après quoi vous pourrez supprimer les lignes de commentaires. Pour la
+notation '\' au début de certaines lignes, voir |line-continuation|.
+
+		Préparez tout d'abord 'makeprg' de façon à ce que LaTeX
+		rapporte plusieurs erreurs, sans interruption après la
+		première : >
+	:set makeprg=latex\ \\\\nonstopmode\ \\\\input\\{$*}
+<
+		Début des messages d'erreurs multi-lignes : >
+	:set efm=%E!\ LaTeX\ %trror:\ %m,
+	    \%E!\ %m,
+<		Début des messages d'avertissements multi-lignes ; les deux
+		premières lignes incluent aussi le numéro de ligne.
+		Signification de certaines expressions rationnelles :
+		- "%.%#" (".*") correspond à une chaîne (possiblement vide) ;
+		- "%*\\d" ("\d\+") correspond à un nombre. >
+	    \%+WLaTeX\ %.%#Warning:\ %.%#line\ %l%.%#,
+	    \%+W%.%#\ at\ lines\ %l--%*\\d,
+	    \%WLaTeX\ %.%#Warning:\ %m,
+<		Suites possibles des messages d'erreurs/avertissements ; la
+		première inclut aussi le numéro de ligne : >
+	    \%Cl.%l\ %m,
+	    \%+C\ \ %m.,
+	    \%+C%.%#-%.%#,
+	    \%+C%.%#[]%.%#,
+	    \%+C[]%.%#,
+	    \%+C%.%#%[{}\\]%.%#,
+	    \%+C<%.%#>%.%#,
+	    \%C\ \ %m,
+<		Les lignes qui correspondent aux motifs suivants ne
+		contiennent pas d'information importante ; ne pas les inclure
+		dans les messages : >
+	\%-GSee\ the\ LaTeX%m,
+	\%-GType\ \ H\ <return>%m,
+	\%-G\ ...%.%#,
+	\%-G%.%#\ (C)\ %.%#,
+	\%-G(see\ the\ transcript%.%#),
+<		En principe, on évite d'afficher les lignes vides ou composées
+		de seuls blancs : >
+	\%-G\\s%#,
+<		Les messages de sortie de LaTeX ne donnent pas les noms des
+		fichiers sources erronés à chaque ligne ; ils sont plutôt
+		spécifiés globalement, mis entre parenthèses.
+		Les motifs suivants essaient de trouver ces noms et de les
+		enregistrer dans une pile interne. Les motifs potentiels sont
+		recherchés sur les mêmes lignes (les uns après les autres), le
+		"%r" final indique que le « reste » de la ligne qui va être
+		analysée se poursuit jusqu'au prochain fin-de-ligne.
+
+		Recherche un nom de fichier mis entre parenthèses "(...)" ; ne
+		pas l'empiler puisque apparement ce fichier ne contient aucune
+		erreur : >
+	\%+O(%f)%r,
+<		Empile un nom de fichier. Le nom est donné après '(' : >
+	\%+P(%f%r,
+	\%+P\ %\\=(%f%r,
+	\%+P%*[^()](%f%r,
+	\%+P[%\\d%[^()]%#(%f%r,
+<		Dépile le dernier nom de fichier enregistré quand un ')' est
+		trouvé : >
+	\%+Q)%r,
+	\%+Q%*[^()])%r,
+	\%+Q[%\\d%*[^()])%r
+
+NOTE : Dans certains cas, les noms de fichiers dans les messages de sortie de
+LaTeX ne peuvent pas être détectés correctement. L'analyse syntaxique peut
+être bloquée par des parenthèses non appariées. L'exemple qui précède ne tend
+à s'appliquer qu'aux cas les plus courants. Vous pouvez en personnaliser les
+paramètres afin de définir vos préférences (par exemple, tous les ennuyeux
+avertissements "Overfull ..." peuvent être exclus de la liste d'erreurs).
+
+Plutôt que de filtrer la sortie du compilateur LaTeX, vous pouvez aussi lire
+directement le fichier ".log" produit par le compilateur (La)TeX. Celui-ci
+contient souvent des informations plus utiles sur les causes possibles des
+erreurs. Néanmoins, pour analyser correctement un tel fichier, un filtre
+externe sera nécessaire. Voir la description plus haut pour créer un tel
+filtre qui soit supporté par Vim.
+
+
+PERL						    *errorformat-Perl*
+
+Dans "$VIMRUNTIME/tools", vous pourrez trouver le script "efm_perl.pl", qui
+convertit les messages d'erreurs de Perl dans un format que le mode
+mise-au-point comprend. Lisez le début de ce fichier pour savoir comment
+l'utiliser.
+
+ vim:tw=78:ts=8:ft=help:norl:

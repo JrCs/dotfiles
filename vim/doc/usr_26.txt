@@ -1,0 +1,240 @@
+*usr_26.txt*   Pour Vim version 6.2c.
+
+	       MANUEL de l'UTILISATEUR VIM - par Bram Moolenaar
+
+                            Répéter des commandes
+
+
+L'édition est presque toujours une tâche structurée. Une modification doit
+souvent être faite plusieurs fois. Dans ce chapitre un certain nombre de
+moyens utiles pour répéter une modification seront expliqués.
+
+|26.1|  Répéter en Mode Visuel
+|26.2|  Additionner et soustraire
+|26.3|  Effectuer une modification dans plusieurs fichiers
+|26.4|  Utiliser Vim depuis un script shell
+
+ Chapitre suivant  : |usr_27.txt|  Rechercher des commandes ou des motifs
+Chapitre précédent : |usr_25.txt|  Editer du texte formaté
+Table des matières : |usr_toc.txt|
+
+==============================================================================
+*26.1*  Répéter en mode Visuel
+
+Le mode Visuel est très pratique pour faire des modifications dans une
+quelconque suite de lignes. Vous pouvez voir le texte en surbrillance, par
+conséquent vous pouvez vérifier si les bonnes lignes ont été modifiées. Mais
+la sélection nécessite de frapper un certain nombre de touches. La commande
+"gv" sélectionne de nouveau la même zone de texte. Ceci vous permet
+d'effectuer une autre opération sur le même texte.
+   Supposez que vous ayez quelques lignes dans lesquelles vous voulez
+remplacer "2001" par "2002" et "2000" par "2001" :
+
+        Les résultats financiers de 2001 sont meilleurs~
+        que ceux de 2000. Le bénéfice a augmenté de 50%,~
+        alors qu'il a plu davantage en 2001 qu'en 2000.~
+                           2000            2001 ~
+        Bénéfice          45403           66234 ~
+
+Remplaçons d'abord "2001" par "2002". Sélectionnez les lignes en mode Visuel,
+puis utilisez : >
+
+        :s/2001/2002/g
+
+Utilisez maintenant la commande "gv" pour sélectionner de nouveau le même
+texte. L'emplacement du curseur n'a aucune importance. Utilisez ensuite
+":s/2000/2001/g" pour effectuer le second remplacement.
+   Evidemment vous pouvez répéter ces changements plusieurs fois.
+
+==============================================================================
+*26.2*  Additionner et soustraire
+
+Quand vous répétez le remplacement d'un nombre par un autre, vous avez souvent
+un positionnement fixe. Dans l'exemple ci-dessus on ajoutait un à chaque
+année. Au lieu de taper une commande de substitution pour chaque année du
+tableau, la commande CTRL-A peut être utilisée.
+   Cherchez une année dans l'exemple précédent : >
+
+        /19[0-9][0-9]\|20[0-9][0-9]
+
+Appuyez maintenant sur CTRL-A. L'année augmentera d'une unité :
+
+        Les résultats financiers de 2001 sont meilleurs~
+        que ceux de 2000. Le bénéfice a augmenté de 50%,~
+        alors qu'il a plu davantage en 2001 qu'en 2000.~
+                           2000            2001 ~
+        Bénéfice          45403           66234 ~
+
+Utilisez "n" pour trouver l'année suivante et appuyez sur "." pour répéter le 
+CTRL-A ("." est un peu plus rapide à taper). Répétez "n" et "." pour toutes
+les années trouvées.
+   Conseil: activez l'option 'hlsearch' pour voir les occurrences que vous
+allez changer, vous pourrez ainsi prévoir et aller plus vite.
+
+L'on peut ajouter plus d'une unité en préfixant CTRL-A avec un nombre.
+Imaginez que vous ayez la liste suivante :
+
+        1.  item quatre ~
+        2.  item cinq ~
+        3.  item six ~
+
+Déplacez le curseur sur "1." et tapez :
+
+        3 CTRL-A
+
+Le "1." sera remplacé par "4.". Là encore, vous pouvez répéter cette opération
+avec les autres nombres.
+
+Un autre exemple :
+
+        006     foo bar ~
+        007     foo bar ~
+
+Utilisez CTRL-A avec ces nombres et vous obtiendrez :
+
+        007     foo bar ~
+        010     foo bar ~
+
+Sept plus un égale dix ? Dans ce cas-ci, Vim a reconnu "007" comme étant un
+nombre octal à cause du zéro initial. Cette notation est souvent utilisée dans
+les programmes en C. Si vous ne voulez pas qu'un nombre commençant par des
+zéros soit considéré comme un nombre octal, utilisez ceci : >
+
+        :set nrformats-=octal
+
+La commande CTRL-X opère une soustraction de la même façon.
+
+==============================================================================
+*26.3*  Effectuer une modification dans plusieurs fichiers
+
+Imaginez que vous ayez une variable "x_cnt" et que vous vouliez la remplacer
+par "x_counter". Cette variable se trouve dans plusieurs de vos fichiers C et
+vous devez effectuer la substitution dans tous les fichiers. Voici comment
+faire : >
+
+        :args *.c
+<
+Ceci trouve tous vos fichiers C et édite le premier. Vous pouvez à présent
+lancer une commande de substitution sur tous ces fichiers : >
+
+        :argdo %s/\<x_cnt\>/x_counter/ge | update
+
+La commande ":argdo" prend en argument une autre commande. Cette dernière sera
+exécutée sur tous les fichiers dans la liste des arguments.
+   La commande de substitution "%s" qui suit fonctionne pour toutes les
+lignes. Elle trouve le mot "x_cnt" grâce au motif "\<x_cnt\>". Les
+métacaractères "\<" et "\>" permettent de ne trouver que les mots entiers, et
+non "px_cnt" ou "x_cnt2" par exemple.
+   Le drapeau de la commande de substitution "g" permet de remplacer toutes
+les occurrences d'une même ligne. Le drapeau "e" permet d'éviter tout message
+d'erreur pour les fichiers où la variable "x_cnt" n'apparaîtrait pas,
+autrement ":argdo" s'arrêterait au premier fichier ne contenant pas "x_cnt".
+   Le tube ("|") permet de séparer deux commandes. La commande suivante,
+"update", enregistre le fichier uniquement si celui-ci a été modifié. Si
+aucune occurence de "x_cnt" n'a été remplacée par "x_counter", rien ne se
+produit.
+
+Il y a aussi la commande ":windo" qui exécute son argument dans toutes les
+fenêtres, et ":bufdo" qui exécute son argument sur tous les tampons. Soyez
+prudent avec cette commande, car vous pourriez avoir plus de fichiers dans la
+liste des tampons que vous ne le pensez. Vérifiez le contenu de cette liste
+avec la commande ":buffers" (ou ":ls").
+
+==============================================================================
+*26.4*  Utiliser Vim depuis un script shell
+
+Imaginez que ayez beaucoup de fichiers dans lesquels vous devez remplacer la
+chaîne "-person-" par "Jones" puis l'imprimer. Comment faire? La première
+façon consiste à taper beaucoup de texte. La seconde consiste à écrire un
+script shell pour faire le travail.
+   L'utilisation des commandes en mode Normal est parfaite pour utiliser Vim
+en tant qu'éditeur visuel. Cependant, pour les traitements en mode non 
+interactif, le mode Normal ne permet pas d'obtenir des fichiers de commandes 
+clairs et bien commentés. Dans ce cas, vous pourrez donc utiliser le mode Ex 
+au lieu du mode Normal. Ce mode vous offre donc une belle interface avec 
+ligne de commande qui facilite la saisie de commandes dans un fichier de 
+traitement.
+   Les commandes du mode Ex dont vous avez besoin sont les suivantes : >
+
+        %s/-person-/Jones/g
+        write tempfile
+        quit
+
+Placez ces commandes dans le fichier "change.vim". A présent, pour lancer
+l'éditeur en mode non interactif, utilisez le script shell suivant : >
+
+        for file in *.txt; do
+          vim -e -s $file < change.vim
+          lpr -r tempfile
+        done
+
+La boucle for-done est une construction shell permettant de répéter les deux
+lignes qu'elle contient tant que la variable $file contient un nom de fichier
+différent àchaque fois.
+   La deuxième ligne lance l'éditeur Vim en mode Ex (argument -e) sur le
+fichier $file et lit les commandes contenues dans le fichier "change.vim".
+L'argument -s indique à Vim d'opérer en mode silencieux, autrement dit de ne 
+$file and reads commands from the file "change.vim".  The -s argument tells
+Vim to operate in silent mode.  In other words, de ne pas afficher le :prompt
+ou toute autre invite.
+   La commande "lpr -r tempfile" imprime le fichier "tempfile" résultant de
+cette modification, puis l'efface (c'est ce que fait l'argument -r).
+
+
+LECTURE DEPUIS STDIN
+
+Vim peut lire du texte depuis l'entrée standard. Comme normalement c'est là
+que sont lues les commandes, vous devez indiquer à Vim d'y lire du texte à la
+place. Vous pouvez le faire grâce à l'argument "-" passé à la place d'un
+fichier. Exemple : >
+
+        ls | vim -
+
+Ceci vous permet d'éditer la sortie de la commande "ls" sans avoir à la sauver
+au préalable dans un fichier.
+   Si vous lisez du texte à partir de l'entrée standard, vous pouvez utiliser
+l'argument "-S" pour lire un script : >
+
+        producer | vim -S change.vim -
+
+
+SCRIPTS EN MODE NORMAL
+
+Si vous voulez vraiment utiliser les commandes du mode normal dans un script,
+vous pouvez les utiliser comme ceci : >
+
+        vim -s script file.txt ...
+<
+        Note:
+        "-s" a une signification différente lorsqu'il est utilisé sans "-e". 
+	Dans ce cas, il indique à Vim de sourcer le "script" comme des
+	commandes du mode Normal. Utilisé avec "-e", cela veut dire que Vim 
+	doit rester silencieux, et qu'il ne doit pas prendre l'argument 
+	suivant comme un nom de fichier.
+
+Les commandes de "script" sont exécutées telles que vous les tapez. N'oubliez
+pas qu'un retour à la ligne est interprété comme une pression sur la touche
+<Entrée>. En mode Normal, cela déplace le curseur sur la ligne suivante.
+   Pour créer le script vous pouvez éditer le fichier de script et taper les
+commandes. Vous devez imaginer quel en sera le résultat, ce qui peut-être un
+peu difficile. Une autre solution consiste à enregistrer les commandes pendant
+que vous les utilisez manuellement. Voici comment faire : >
+
+        vim -w script file.txt ...
+
+Toutes les touches frappées seront enregistrées dans "script". Si vous faites
+une petite erreur vous pouvez continuer et vous rappeler d'éditer le script
+ultérieurement.
+   L'argument "-w" permet de faire des ajouts à la fin d'un script existant.
+C'est une bonne chose quand vous voulez enregistrer le script morceau par
+morceau. Si vous voulez commencer à partir d'un brouillon et tout recommencer
+depuis le début, utiliser l'argument "-W". Cela écrasera le fichier s'il
+existe déjà.
+
+==============================================================================
+
+Chapitre suivant : |usr_27.txt|  Rechercher des commandes ou des motifs
+
+Copyright: voir |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+
+

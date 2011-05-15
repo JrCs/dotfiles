@@ -1,0 +1,646 @@
+*gui_x11.txt*   Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+Interface (IHM) graphique X11 de Vim			*gui-x11* *GUI-X11*
+							*Athena* *Motif*
+1. Démarrer l'interface graphique X11	|gui-x11-start|
+2. Ressources de l'IHM graphique	|gui-resources|
+3. Commandes shell			|gui-pty|
+4. Divers				|gui-x11-various|
+5. Version GTK+				|gui-gtk|
+6. Version GNOME 			|gui-gnome|
+7. Compilation				|gui-x11-compiling|
+8. Mécanisme de sélection X11		|x11-selection|
+
+Autres documents utiles :
+|gui.txt|	pour les éléments génériques de l'interface graphique.
+
+{Vi n'a pas d'interface graphique sous X11}
+
+==============================================================================
+1. Démarrer l'interface graphique X11			*gui-x11-start*
+
+Vous pouvez lancer la version graphique de Vim de l'une des manières
+suivantes :
+    gvim [options] [fichiers...]
+    vim -g [options] [fichiers...]
+
+Donc si vous appelez l'exécutable "gvim", ou bien faites de "gvim" un lien
+vers l'exécutable, la version avec IHMg sera automatiquement utilisée. Des
+caractères peuvent être ajoutés après "gvim", par exemple "gvim-5".
+
+Vous pouvez aussi démarrer l'IHMg depuis la version pour terminal en
+utilisant l'une de ces commandes :
+	:gui [++opt] [+cmd] [-f|-b] [fichiers...]		*:gu* *:gui*
+	:gvim [++opt] [+cmd] [-f|-b] [fichiers...]		*:gv* *:gvim*
+L'option "-f" lance Vim en tâche de premier plan.
+L'option "-b" lance Vim en tâche de fond (comportement par défaut).
+Voir aussi |++opt| et |+cmd|.
+
+							*gui-fork*
+Lorsque l'IHMg est démarrée, celle-ci fait un fork() et termine le processus
+courant. Quand gvim a été lancé depuis un shell, cela permet à ce dernier
+d'accepter d'autres commandes. Si ce n'est pas ce que vous voulez (p. ex.
+utilisation à partir d'un programme de courrier qui attend que gvim se termine),
+lancez gvim avec "gvim -f", "vim -gf" ou utilisez ":gui -f".
+N'utilisez pas "vim -fg", parce que "-fg" spécifie la couleur de premier plan
+[Foreground].
+
+En utilisant "gvim -f" puis ":gui", Vim fonctionnera en tâche de premier plan.
+L'argument "-f" sera mémorisé. Pour forcer Vim à fonctionner en tâche
+de fond utiliser ":gui -b".
+
+"gvim --nofork" fait la même chose que "gvim -f".
+
+Si vous voulez que l'IHMg fonctionne toujours au premier plan, ajoutez le
+drapeau 'f' dans 'guioptions'.  |-f|.
+
+==============================================================================
+2. Ressources de l'IHMg			*gui-resources* *.Xdefaults*
+
+Si vous utilisez la version Motif ou Athena de l'IHMg (mais pas les versions
+GTK+ ni Win32), un certain nombre de ressources X11 sont disponibles. Vous
+devriez utiliser la classe de Vim "Vim" pour les fixer. Ce sont :
+
+    NOM RESSOURCE	SIGNIFICATION~
+    reverseVideo	Booléen : doit-on utiliser le mode vidéo inverse ?
+    background		Couleur du fond.
+    foreground		Couleur du texte normal.
+    scrollBackground	Couleur de fond des glissières de barre de défilement.
+    scrollForeground	Couleur de l'ascenseur et des flèches de barre
+			de défilement.
+    menuBackground	Couleur de fond des menus.
+    menuForeground	Couleur de premier plan des menus.
+    tooltipForeground	Couleur de premier plan des bulles d'aide et ballons.
+    tooltipBackground	Couleur de fond des bulles d'aide et ballons.
+
+    font		Nom de la police utilisée pour le texte normal.
+    boldFont		Nom de la police utilisée pour le texte gras.
+    italicFont		Nom de la police utilisée pour le texte en italique.
+    boldItalicFont	Nom de la police utilisée pour le texte gras
+			en italique.
+    menuFont		Nom de la police utilisée pour les menus ;
+			pris en compte si compilé sans |+xfontset|.
+    menuFontSet		Nom du jeu de polices utilisé pour les menus,
+			pris en compte si compilé avec |+xfontset|.
+    tooltipFont		Nom de la police (si compilé sans |+xfontset|) ou du
+			jeu de polices (si compilé avec |+xfontset|) utilisé
+			pour les bulles d'aide et les ballons.
+
+    geometry		Géométrie initiale à utiliser pour la fenêtre de gvim
+			(par défaut la même taille que le terminal depuis
+                        lequel il a été lancé).
+    scrollbarWidth	Largeur des barres de défilement.
+    borderWidth		Largeur de la bordure autour de la zone de texte.
+    menuHeight		Hauteur de la barre de menu (seulement pour Athena).
+
+Une police particulière pour le texte en italique, gras, et gras en italique
+ne sera utilisée que si l'utilisateur en a spécifiée une via une ressource.
+Pour le moment, aucune tentative n'est faite pour déterminer quelles polices
+devraient être utilisées en se basant sur la police de texte normal.
+(XXX : NdT : cette traduction reste à confirmer)
+
+NOTE : Les couleurs peuvent aussi être fixées avec la commande ":highlight",
+en utilisant les groupes "Normal", "Menu", "Tooltip", et "Scrollbar".
+Exemple : >
+	:highlight Menu guibg=lightblue
+	:highlight Tooltip guibg=yellow
+	:highlight Scrollbar guibg=lightblue guifg=blue
+	:highlight Normal guibg=grey90
+<
+							*font-sizes*
+NOTE : Toutes les polices (excepté celles des menus et des bulles d'aide)
+doivent avoir la même taille !!! Sinon, le texte peut disparaître ou bien
+salir l'affichage. Vim ne vérifie pas les tailles de la police. C'est la
+taille en pixels qui doit être identique.
+NOTE : Certaines polices qui ont la même taille en points peuvent avoir une
+taille en pixels différente ! De plus, le positionnement des polices doit être
+le même (hampes et jambages). Vous pouvez le vérifier avec "xlsfonts -l
+{nompolice}".
+
+Si l'un de ces paramètres est aussi fixé avec une commande Vim, p. ex. avec
+":set guifont=Screen15", alors celle-ci prendra le pas sur la ressource X11.
+(actuellement 'guifont' est la seule option supportée).
+
+Voici un exemple de ce que vous pourriez mettre dans votre fichier
+~/.Xdefaults : >
+
+	Vim*useSchemes:			all
+	Vim*sgiMode:			true
+	Vim*useEnhancedFSB:		true
+	Vim.foreground:			Black
+	Vim.background:			Wheat
+	Vim*fontList:			7x13
+
+Les trois premières sont des ressources standards sur les machines Silicon
+Graphics qui améliorent encore l'apparence des applications Motif,
+hautement recommandé !
+
+"Vim*fontList" sert à fixer la police de menu pour Motif. Exemple : >
+	Vim*menuBar*fontList:	     -*-courier-medium-r-*-*-10-*-*-*-*-*-*-*
+Avec Athena : >
+	Vim*menuBar*SmeBSB*font:     -*-courier-medium-r-*-*-10-*-*-*-*-*-*-*
+	Vim*menuBar*MenuButton*font: -*-courier-medium-r-*-*-10-*-*-*-*-*-*-*
+
+NOTE : Une manière plus portable et donc plus correcte de spécifier la police
+de menu, aussi bien sous Motif que sous Athena, est d'utiliser la ressource : >
+	Vim.menuFont:	     -*-courier-medium-r-*-*-10-*-*-*-*-*-*-*
+Ou, lorsque compilé avec la fonctionnalité |+xfontset| : >
+	Vim.menuFontSet:     -*-courier-medium-r-*-*-10-*-*-*-*-*-*-*
+
+N'utilisez pas "Vim*geometry" dans les paramètres par défaut. Cela casserait
+les menus. Utilisez "Vim.geometry" à la place.
+
+Si vous obtenez un message d'erreur :
+	Peut pas allouer la couleur gray60
+essayez d'ajouter ceci à vos ressources Vim (changez les couleurs à votre
+convenance) : >
+
+	Vim*scrollBackground:		Black
+	Vim*scrollForeground:		Blue
+
+Les ressources peuvent aussi être fixées avec des arguments de vim :
+
+    ARGUMENT			SIGNIFICATION	~
+								*-gui*
+    -display {affichage}	Lancer vim sur {affichage}	*-display*
+    -iconic			Démarrer vim iconisé		*-iconic*
+    -background {couleur}	Utiliser {couleur} pour le fond	*-background*
+    -bg {couleur}		idem				*-bg*
+								*-foreground*
+    -foreground {couleur}	Utiliser {couleur} pour le texte normal
+    -fg {couleur}		idem				*-fg*
+    -ul {couleur}		idem				*-ul*
+								*-font*
+    -font {police}		Utiliser {police} pour le texte normal
+    -fn {police}		idem				*-fn*
+								*-boldfont*
+    -boldfont {police}		Utiliser {police} pour le texte gras
+								*-italicfont*
+    -italicfont {police}	Utiliser {police} pour le texte en italique
+								*-menufont*
+    -menufont {police}		Utiliser {police} pour les éléments de menu
+								*-menufontset*
+    -menufontset {jeupolice}	Utiliser {jeupolice} pour les éléments de menu
+    -mf {police}		idem				*-mf*
+								*-geometry*
+    -geometry {geom}		Utiliser {geom} comme géométrie initiale
+    -geom {geom}		idem, voir |-geometry-example|	*-geom*
+								*-borderwidth*
+    -borderwidth {largeur}	Utiliser une largeur de bordure de {largeur}
+    -bw {largeur}		idem				*-bw*
+				*-scrollbarwidth*
+    -scrollbarwidth {largeur}	Utiliser une largeur de barre de défilement
+                                de {largeur}
+    -sw {width}			idem				*-sw*
+								*-menuheight*
+    -menuheight {hauteur}	Utiliser une hauteur de barre de menu
+				de {hauteur}
+    -mh {hauteur}		idem				*-mh*
+				NOTE : sous Motif la valeur est ignorée,
+				étant calculée pour faire tenir les menus.
+    -reverse		    	Utiliser le mode vidéo inverse	*-reverse*
+    -rv			    	idem				*-rv*
+    +reverse		    	Ne pas utiliser vidéo inverse	*-+reverse*
+    +rv			    	idem				*-+rv*
+    -xrm {ressource}	    	Fixe la ressource spécifiée	*-xrm*
+
+NOTE : À propos de l'inversion vidéo : Vim vérifie que le résultat est
+vraiment un texte clair sur un fond sombre. La raison en est que certaines
+versions de X11 échangent les couleurs, et d'autres pas. Ces exemples vont
+tous deux donner un texte jaune sur un fond bleu : >
+	gvim -fg Yellow -bg Blue -reverse
+	gvim -bg Yellow -fg Blue -reverse
+
+							*-geometry-example*
+Un exemple pour l'argument de géométrie : >
+	gvim -geometry 80x63+8+100
+Ceci crée une fenêtre faisant 80 colonnes et 63 lignes située à 8 pixels
+du bord gauche et 100 pixels du bord supérieur de l'écran.
+
+==============================================================================
+3. Commandes Shell						*gui-pty*
+
+AVERTISSEMENT : Exécuter une commande externe ne fonctionnera pas toujours.
+Les commandes « normales » telles que "ls", "grep" et "make" fonctionnent
+correctement pour la plupart. Les commandes qui ont besoin d'un terminal
+intelligent telles que "less" et "ispell" ne fonctionneront pas. Certaines
+peuvent même se bloquer et nécessiter d'être terminées à partir d'un autre
+terminal. Donc soyez prudent !
+
+Il y a deux manières de traiter les E/S avec une commande shell : les tubes et
+les pseudo terminaux. Par défaut un pseudo terminal est utilisé. C'est ce qui
+devrait marcher le mieux sur la plupart des systèmes.
+
+Malheureusement, l'implémentation des pseudo terminaux est différente
+sur chaque système unix. Et certains systèmes nécessitent les droits
+d'administrateur. Pour éviter de rencontrer des problèmes avec un pseudo
+terminal au moment où vous vous y attendez le moins, testez-le en dehors de
+l'édition d'un fichier. Soyez préparé à « tuer » la commande démarrée ou Vim.
+Des commandes telles que ":r !cat" peuvent se bloquer !
+
+Si l'utilisation d'un pseudo terminal ne fonctionne pas pour vous,
+désactivez l'option 'guipty' : >
+
+	:set noguipty
+
+Utiliser un tube devrait fonctionner sur n'importe quel système unix,
+mais il existe des inconvénients :
+- Certaines commandes shell vont s'apercevoir qu'un tube est utilisé
+  et se comporter différemment. P. ex., ":!ls" listera les fichiers
+  sur une seule colonne.
+- La commande ":sh" n'affichera pas d'invite, bien que fonctionnant
+  d'une certaine manière.
+- En utilisant ":make", il est impossible d'interrompre avec un CTRL-C.
+
+Les caractères saisis en avance pendant que la commande externe s'exécute
+sont souvent perdus. Cela se passe aussi bien avec un tube qu'avec un
+pseudo terminal. C'est un problème connu, mais il semble qu'il ne peut
+pas être résolu (ou du moins, cela est très difficile).
+
+							*gui-pty-erase*
+Quand votre caractère d'effacement est incorrect pour une commande externe,
+vous devriez corriger cela dans votre fichier "~/.cshrc", ou tout autre
+fichier utilisé par votre shell pour son initialisation. Par exemple, lorsque
+vous voulez utiliser <RetArr> pour effacer des caractères, mais que l'appui
+sur <RetArr> produit des "^H" à la place, essayez d'ajouter
+ceci à votre "~/.cshrc": >
+	stty erase ^H
+Le ^H est réellement un CTRL-H, entrez le avec CTRL-V CTRL-H.
+
+==============================================================================
+4. Divers						*gui-x11-various*
+
+							*gui-x11-printing*
+Le menu "Fichier/Imprimer" envoie simplement le tampon courant vers "lpr".
+Aucune option ou autre. Si vous voulez quelque chose d'autre, vous pouvez
+définir votre propre commande d'impression. Par exemple : >
+
+    :10amenu File.Print :w !lpr -Php3
+    :10vmenu File.Print :w !lpr -Php3
+<
+							*X11-icon*
+Vim utilise une icone monochrome par défaut quand il a été compilé pour Motif
+ou Athena. Une icone Vim multicolore est incluse dans $VIMRUNTIME/vim32x32.xpm.
+Pour GTK+, c'est ce dernier qui est utilisé par défaut. Malheureusement,
+la manière de l'installer dépend de votre gestionnaire de fenêtres. Si vous
+voulez l'utiliser, supprimez le drapeau 'i' de 'guioptions', pour supprimer
+l'icone monochrome. >
+    :set guioptions-=i
+
+Si vous utilisez un gestionnaire de fenêtres de la famille fvwm* ajoutez
+simplement cette ligne dans votre fichier de configuration .fvwm2rc : >
+
+    Style "vim"		Icon vim32x32.xpm
+
+Assurez-vous que l'emplacement du fichier d'icone correspond bien à l'IconPath
+de votre gestionnaire de fenêtres. Soit vous modifiez l'IconPath de votre
+.fvwm2rc, soit vous placez l'icone dans l'un des répertoires prédéfinis : >
+
+    IconPath /usr/X11R6/include/X11/pixmaps:/usr/X11R6/include/X11/bitmaps
+
+Pour "dtwm" de CDE (un dérivé de Motif) ajoutez cette ligne dans
+~/.Xdefaults : >
+    Dtwm*Vim*iconImage: /usr/local/share/vim/vim32x32.xpm
+
+Pour "mwm" (Motif window manager) la ligne devrait être : >
+    Mwm*Vim*iconImage: /usr/local/share/vim/vim32x32.xpm
+
+Pointeurs de souris disponibles sous X11		*X11_mouse_shapes*
+
+En utilisant l'option |'mouseshape'|, le pointeur de souris peut être changé
+automatiquement dès que vim entre dans l'un de ses différents modes (p. ex.,
+Insertion ou Commande). Actuellement, les pointeurs disponibles sont :
+
+	arrow               une flèche pointant vers le nord-ouest
+	beam                une barre verticale en forme de I
+	size                une double flèche pointant vers le haut et le bas
+	busy                une montre-bracelet
+	blank               un pointeur invisible
+	crosshair           un signe « + » fin
+	hand1               une main sombre pointant vers le nord-est
+	hand2               une main claire pointant vers le nord-ouest
+	pencil              un crayon pointant vers le sud-est
+	question            flèche avec point d'interrogation
+	right_arrow         une flèche pointant vers le nord-est
+	up_arrow            une flèche pointant vers le haut
+
+De plus, n'importe quel pointeur de souris faisant partie de X11 peut être
+utilisé en précisant un entier du fichier d'inclusion X11/cursorfont.h.
+
+Si un nom est utilisé, qui existe sous d'autres systèmes mais pas sous X11,
+le pointeur par défaut "arrow" est utilisé.
+
+==============================================================================
+5. Version GTK+						*gui-gtk* *GTK+* *GTK*
+
+La version GTK+ de l'IHMg fonctionne de manière légèrement différente.
+
+GTK+ n'utilise _pas_ les réglages traditionnels de ressource X11. Par
+conséquent, les éléments de vos fichiers ~/.Xdefaults ou app-defaults ne sont
+pas utilisés.
+La plupart des arguments traditionnels X11 de ligne de commande ne sont pas
+supportés (p. ex., des choses comme -bg, -fg, etc). Ceux qui sont supportés
+sont :
+
+    ARGUMENT LIGNE DE COMMANDE	NOM RESSOURCE	SIGNIFICATION ~
+    -fn  ou  -font		.font		nom de la police pour le texte
+    -geom  ou  -geometry	.geometry	taille de la fenêtre gvim
+    -rv  ou  -reverse		*reverseVideo	texte blanc sur fond noir
+    -display					affichage à utiliser
+    -fg -foreground {couleur}			couleur de premier plan
+    -bg -background {couleur}			couleur de fond
+
+Pour sélectionner la police, voir |'guifont'|. Avec GTK+, il existe aussi
+une entrée du menu Edition pour cela.
+
+De plus, il existe ces arguments de ligne de commande, qui sont pris en compte
+par GTK+ en interne. Consultez la documentation de GTK+ pour savoir comment
+les utiliser :
+	--sync
+	--gdk-debug
+	--gdk-no-debug
+	--no-xshm	(pas dans GTK+ 2)
+	--xim-preedit	(pas dans GTK+ 2)
+	--xim-status	(pas dans GTK+ 2)
+	--gtk-debug
+	--gtk-no-debug
+	--g-fatal-warnings
+	--gtk-module
+	--display	(équivalent GTK+ de -display ;
+                         fonctionne de la même manière.)
+	--screen	(Le numéro d'écran ; pour le support multi-écran
+                         de GTK+ 2.2.)
+
+Ces arguments sont ignorés lorsque la fonctionnalité |+netbeans_intg|
+est utilisée :
+	-xrm
+	-mf
+
+En ce qui concerne les couleurs, les réglages de vim (pour la coloration
+syntaxique) sont encore fait à la manière traditionnelle de vim.
+Voir |:highlight| pour plus d'informations.
+
+Les couleurs des autres composants de l'IHMg (p. ex., la barre de menu, de
+défilement, ou n'importe quoi d'autre), constituent des réglages spécifiques
+à GTK+. Pour les modifier, vous devez les fixer dans une sorte de fichier
+gtkrc. Vous devrez vous référer à la documentation de GTK+, si maigre
+soit-elle, pour savoir comment le faire.
+Voir http://developer.gnome.org/doc/API/2.0/gtk/gtk-Resource-Files.html
+pour plus d'informations.
+
+							*gtk-tooltip-colors*
+Exemple, qui fixe les couleurs des bulles d'aide en noir sur fond jaune
+clair : >
+
+	style "tooltips"
+	{
+		bg[NORMAL] = "#ffffcc"
+		fg[NORMAL] = "#000000"
+	}
+
+	widget "gtk-tooltips*"		style "tooltips"
+
+Écrivez ces lignes dans le fichier ~/.gtkrc et cela sera utilisé par GTK+.
+Pour GTK+ 2 vous devrez peut-être utiliser le fichier ~/.gtkrc-2.0 à la place,
+selon votre distribution.
+
+Utiliser Vim comme un greffon GTK+			*gui-gtk-socketid*
+
+Lorsque la version GTK+ de Vim démarre normalement, elle crée sa propre
+fenêtre principale (techniquement, une 'GtkWindow'). GTK+ fournit une
+possibilité d'imbrication avec ses contrôles GtkSocket et GtkPlug. Si une
+application GTK+ crée un contrôle GtkSocket dans l'une de ses fenêtres, une
+application GTK+ totalement différente peut s'imbriquer elle-même dans la
+première application en créant une fenêtre principale de type GtkPlug
+utilisant l'ID de la douille.
+
+Si vous passez à Vim l'option de ligne de commande '--socketid' avec une
+valeur décimale ou hexadécimale, Vim créera un contrôle GtkPlug utilisant
+cette valeur plutôt qu'une GtkWindow normale. Ceci permet à Vim d'agir
+comme un greffon GTK+.
+
+Il s'agit réellement d'une interface pour programmeur, et qui n'est d'aucune
+utilité sans application pour lancer Vim correctement. Pour plus de détails
+sur les douilles GTK+, voir http://www.gtk.org/api/
+
+NOTE : Cette fonctionnalité nécessite la version la plus récente de GTK+.
+GTK+ 1.2.10 a encore un petit problème. La fonctionnalité douille n'a pas
+encore été testée avec GTK+ 2. N'hésitez pas à vous porter volontaire.
+
+==============================================================================
+6. Version GNOME				*gui-gnome* *Gnome* *GNOME*
+
+L'IHMg GNOME fonctionne exactement comme la version GTK+. Voyez |GTK+|
+ci-dessus pour connaître son fonctionnement. Néanmoins son apparence est
+légèrement différente, et GNOME implémente une fonctionnalité importante
+qui n'est pas disponible dans l'IHMg purement GTK+: l'interaction avec
+le gestionnaire de sessions. |gui-gnome-session|
+
+Voici les différences d'apparence :
+- Utilise les dialogues GNOME (GNOME 1 uniquement). L'IHMg GNOME 2 utilise
+  les mêmes dialogues agréables que la version GTK+ 2.
+- Utilise le dock GNOME, de sorte que la barre d'outils et de menu peuvent
+  être déplacées vers d'autres positions que le sommet (p. ex., la barre
+  d'outils peut être placée à gauche, à droite, en haut ou en bas).
+  Le placement des barres d'outils et de menu n'est enregistré que dans la
+  version GNOME 2.
+- Cela signifie que les poignées de barre de menu et d'outils sont de retour !
+  Ouiii ! Et la grille de redimensionnement fonctionne toujours également.
+
+La support de GNOME est automatiquement compilé si configure le trouve.
+(FIXER : Est-ce encore vrai ? Utilisez --enable-gnome-check pour forcer cela)
+
+Support de session GNOME 		*gui-gnome-session* *gnome-session*
+
+A la déconnexion, Vim ouvre un dialogue de confirmation de sortie bien connu
+si l'un des tampons est modifié. Cliquer [Annuler] arrêtera le processus
+de déconnexion. Sinon la session est enregistrée sur le disque en utilisant
+la commande |:mksession|, et restaurée la prochaine fois que vous
+vous connecterez.
+
+Le support de session GNOME devrait aussi fonctionner avec le gestionnaire
+de sessions KDE. Si vous rencontrez des problèmes veuillez les rapporter
+comme des bogues.
+
+NOTE : La sauvegarde automatique de session fonctionne de manière totalement
+transparente, de manière à éviter les conflits avec vos propres fichiers,
+scripts et commandes de session. En détail cela signifie :
+
+- Le fichier de session est stocké dans un répertoire séparé
+  (en général $HOME/.gnome2).
+- 'sessionoptions' est ignoré, et un ensemble de drapeaux codé en dur est
+  utilisé à la place : >
+	blank,curdir,folds,globals,help,options,winsize
+_ La variable interne |v:this_session| n'est pas modifiée quand la session
+  est enregistrée. De même, elle reprend son ancienne valeur lors d'une
+  connexion.
+
+La position et la taille de la fenêtre de l'IHMg ne sont pas enregistrées
+puisque cette tâche est du ressort du gestionnaire de fenêtres. Mais si le
+support de GTK+ 2 a été compilé, Vim aide le gestionnaire de fenêtres à
+identifier la fenêtre en restaurant son rôle (en utilisant l'argument de ligne
+de commande |--role|).
+
+==============================================================================
+7. Compilation						*gui-x11-compiling*
+
+Si X11 est utilisé, le Makefile de Vim essaiera par défaut de trouver les
+fichiers GTK+ nécessaires sur votre système. Si ces fichiers sont
+introuvables, alors les fichiers de Motif seront cherchés. Finalement, les
+fichiers Athena seront cherchés. Si les trois tentatives échouent, l'IHMg sera
+désactivée.
+
+Pour GTK+, le processus de configuration de Vim nécessite que GTK+ soit
+correctement installé. C'est-à-dire, le script shell 'gtk-config' doit
+être dans votre PATH, et vous pouvez déjà compiler, construire, et exécuter un
+programme GTK+. La raison en est que les drapeaux du compilateur (CFLAGS)
+et de l'éditeur de liens (LDFLAGS) sont obtenus grâce au script shell
+'gtk-config'.
+
+Si vous voulez activer le support de GTK+ 2, passez --enable-gtk2-check
+comme argument à ./configure. En option, le support de GNOME 2 sera aussi
+intégré si l'argument --enable-gnome-check est passé. Notez que le support de
+GTK+ 2 est encore expérimental. Cependant, de nombreuses personnes ont signalé
+que cela fonctionnait bien pour elles.
+
+Sinon, si vous utilisez Motif ou Athena, et que les fichiers correspondants se
+trouvent dans un répertoire que configure n'explore pas, éditez le Makefile
+pour entrer les noms des répertoires. Cherchez "GUI_INC_LOC" pour obtenir un
+exemple de réglage de répertoire Motif, "CONF_OPT_X" pour Athena.
+
+							*gui-x11-gtk*
+Au moment où ceci est écrit, vous pouvez utiliser GTK+ version 1.0.6 aussi
+bien que 1.2. Il est conseillé d'utiliser la v1.2 car toutes les
+fonctionnalités de l'IHMg de Vim ne sont pas présentes dans la v1.0.6. Par
+exemple, il n'y a pas de menus détachables dans la v1.0.6. Utiliser une
+version de l'arbre CVS de GTK+ peut fonctionner ou pas, et par conséquent
+n'est ni supporté ni recommandé.
+
+Pour l'IHMg GTK+ 2 expérimentale, l'utilisation de la dernière version des
+séries GTK+ 2.0 ou GTK+ 2.2 est recommandée. De même CVS HEAD semble bien
+fonctionner la plupart du temps.
+
+Enfin, bien que GTK+ est supposée avoir été portée vers la plate-forme Win32,
+ceci n'a pas été testé et n'est par conséquent pas supporté. Il est même peu
+probable que la compilation soit possible car l'IHMg GTK+ utilise certaines
+parties du code générique X11. Cela pourrait changer dans un futur lointain ;
+en particulier parce que se débarrasser du code basé sur X11 est nécessaire
+pour le support des tampons de trame par GTK+.
+
+							*gui-x11-motif*
+Pour Motif, vous avez besoin au minimum de Motif version 1.2 et/ou X11R5.
+Motif 2.0 et X11R6 fonctionnent. Motif 1.1 et X11R4 fonctionnent peut-être,
+sans garantie (il y a éventuellement quelques problèmes, mais vous arriverez
+peut-être à le compiler et le faire fonctionner avec quelques modifications,
+dans ce cas merci de m'envoyer les rustines). Il a été rapporté que les
+dernières versions de LessTif fonctionnent bien également.
+
+							*gui-x11-athena*
+La version Athena utilise les contrôles Xaw par défaut. Si vous avez la
+version 3D, vous souhaitez peut-être une liaison avec Xaw3d. Cela rendra
+l'apparence des menus un peu meilleure. Éditez le Makefile et cherchez
+"XAW_LIB". Les barres de menu resteront identiques, parce que Vim dispose
+de ses propres barres, qui sont déjà en 3D (en fait, elles ressemblent
+surtout aux barres de Motif).
+
+							*gui-x11-neXtaw*
+La version neXtaw est très semblable à la version Athena, mais utilise
+des contrôles différents.
+
+							*gui-x11-misc*
+En général, n'essayez pas de mixer des fichiers provenant des différentes
+versions GTK+, Motif, Athena et X11. Ceci causerait des problèmes.
+Par exemple, utiliser les fichiers d'en-tête de X11R5 avec une bibliothèque
+X11R6 ne fonctionnera probablement pas (bien que la liaison n'indiquera
+pas d'erreur, Vim s'arrêtera de fonctionner brutalement plus tard).
+
+==============================================================================
+8. Mécanisme de sélection X11				*x11-selection*
+
+Si X11 est utilisé, que se soit à travers l'IHMg ou un xterm avec un vim
+détectant X11, alors Vim fournit différents accès à la sélection et au
+presse-papiers X11. On y accède au travers des deux registres de sélection
+"* et "+.
+
+X11 fournit deux types de base de mémorisation, les sélections et les tampons
+de coupage, qui diffèrent par un aspect important : les sélections sont la
+« propriété » d'une application, et disparaissent dès que cette application
+(p. ex., Vim) se termine, en perdant donc les données, tandis que les tampons
+de coupage appartiennent au serveur X11 lui-même et leur contenu persiste
+jusqu'à ce qu'ils soient réécrits ou bien que le serveur X11 se termine
+(p. ex., à la déconnexion).
+
+Les contenus de la sélection sont maintenus par l'application qui est à leur
+origine (p. ex., copiage), et passés à une autre application seulement quand
+cette autre application les demande (p. ex., un collage).
+
+Les contenus des tampons de coupage sont immédiatement écrits, et sont
+directement accessibles à partir du serveur X11, sans contacter l'application
+qui est à leur origine.
+
+							*quoteplus* *quote+*
+Il existe trois sélections X11 documentées : PRIMARY (dont on s'attend à ce
+qu'elle représente la sélection visuelle courante - comme dans le mode Visuel
+de Vim), SECONDARY (qui est mal définie) et CLIPBOARD (dont on s'attend à ce
+qu'elle serve aux opérations de coupage, de copiage et de collage).
+
+Parmi ces trois, Vim utilise PRIMARY quand il lit et écrit le registre "*
+(Il en résulte que quand les sélections X11 sont disponibles, Vim fixe à
+"autoselect" la valeur par défaut de |'clipboard'|), et CLIPBOARD quand il lit
+et écrit le registre "+. Vim n'accède pas à la sélection SECONDARY.
+
+Exemples : (supposant les valeurs par défaut des options)
+- Sélectionnez une URL avec le mode Visuel de Vim. Allez dans un champ de
+  texte de Netscape et cliquez le bouton du milieu de la souris. Le texte
+  sélectionné sera inséré (du moins on l'espère !).
+- Sélectionnez du texte dans Netscape en déplaçant la souris. Allez dans Vim
+  et cliquez le bouton du milieu de la souris : le texte sélectionné est
+  inséré.
+- Sélectionnez du texte dans Vim et faites "+y. Allez dans Netscape,
+  sélectionnez du texte dans un champ de texte en déplaçant la souris.
+  Maintenant utilisez le bouton droit de la souris et cliquez "Coller"
+  dans le menu contextuel. Le texte sélectionné est remplacé par le texte
+  provenant de Vim.
+NOTE : Lors d'une sélection en mode Visuel, le texte sélectionné
+se trouve dans "* tandis que le texte du registre "+ reste disponible.
+Cela permet de remplacer le texte sélectionné.
+
+							*x11-cut-buffer*
+Il existe, par défaut, 8 tampons de coupage : CUT_BUFFER0 à CUT_BUFFER7.
+Vim utilise seulement CUT_BUFFER0, celui que xterm utilise par défaut.
+
+Dès que Vim est sur le point de devenir indisponible (que ce soit parce
+qu'il va se terminer ou parce qu'il va être suspendu), et donc incapable
+de répondre à une demande de sélection faite par une autre application,
+il écrit le contenu de sa propre sélection dans CUT_BUFFER0. Si Vim possède
+la sélection "+ CLIPBOARD, celle-ci est écrite de préférence, sinon si Vim
+possède la sélection "* PRIMARY, c'est celle-ci qui est écrite.
+
+De manière similaire, quand Vim tente de coller à partir de "* ou de "+
+(que se soit explicite, ou, dans le cas du registre "*, quand le bouton
+du milieu de la souris est cliqué), si la sélection X11 demandée est vide
+ou non disponible, Vim se retourne vers la lecture de la valeur courante
+de CUT_BUFFER0.
+
+NOTE : Quand du texte est copié vers CUT_BUFFER0 de cette manière, le type
+de sélection (caractère, ligne ou bloc) est toujours perdu, même si c'est
+Vim qui le colle par la suite.
+
+Xterm, par défaut, écrit toujours la sélection visible à la fois dans
+PRIMARY et dans CUT_BUFFER0. Quand il colle, il utilise PRIMARY s'il est
+disponible, sinon il se rabat sur CUT_BUFFER0. Pour cette raison, quand
+vous coupez et collez entre Vim et un xterm, vous devriez utiliser le
+registre "*. Xterm n'utilise pas CLIPBOARD, par conséquent "+ ne fonctionne
+pas avec xterm.
+
+La plupart des nouvelles applications vont fournir leur sélection courante
+via PRIMARY ("*) et utiliser CLIPBOARD ("+) pour les opération de coupage
+/copiage/collage. De là vous avez accès aux deux en choisissant l'un des
+registres "* ou "+.
+
+
+ vim:tw=78:sw=4:ts=8:ft=help:norl:

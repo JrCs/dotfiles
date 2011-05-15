@@ -1,0 +1,398 @@
+*usr_12.txt*	Pour Vim version 6.1.  Dernière modification : 23 oct 2001
+
+	     MANUEL de l'UTILISATEUR VIM - par Bram Moolenaar
+
+			   Trucs et astuces
+
+
+Vim peut quasiment tout faire, simplement en combinant quelques commandes.
+Dans ce chapitre, quelques-unes de ces combinaisons seront présentées. Elles
+utilisent les commandes abordées dans les chapitres précédents ainsi que
+quelques nouvelles.
+
+|12.1|	Remplacer un mot
+|12.2|	Remplacer "Dernier, Premier" par "Premier Dernier"
+|12.3|	Trier une liste
+|12.4|	Inverser l'ordre des lignes
+|12.5|	Compter les mots
+|12.6|	Trouver une page de manuel
+|12.7|	Supprimer les blancs superflus
+|12.8|	Trouver les occurrences d'un mot
+
+  Chapitre suivant : |usr_20.txt|  Édition rapide de la ligne de commande
+Chapitre précédent : |usr_11.txt|  Recouvrement après un plantage
+Table des matières : |usr_toc.txt|
+
+==============================================================================
+*12.1*	Remplacer un mot
+
+La commande de substitution peut être utilisée pour remplacer toutes les 
+occurrences d'un mot par un autre : >
+
+	:%s/jour/nuit/g
+
+La plage '%' indique que l'expression doit être remplacée dans toutes les 
+lignes. Le drapeau 'g' à la fin de la commande indique de remplacer toutes les 
+occurrences d'une ligne, et non pas simplement la première.
+   Cette commande ne conviendra pas si votre fichier contient "bonjour". 
+Cette chaîne serait en effet remplacée par "bonnuit". Pour éviter cela,
+utilisez "\<" pour correspondre au début d'un mot : >
+
+	:%s/\<jour/nuit/g
+
+
+Évidemment, cela restera incorrect pour remplacer "journée".  Utilisez "\>"
+pour correspondre à la fin d'un mot : >
+
+	:%s/\<jour\>/nuit/g
+
+Si vous programmez, vous souhaiterez peut-être remplacer "jour" dans les
+commentaires, mais pas dans votre code. Comme cela n'est pas aisé à
+spécifier un commentaire, ajouter le drapeau 'c' pour obtenir une demande
+de confirmation avant chaque remplacement : >
+
+	:%s/\<jour\>/nuit/gc
+
+
+REMPLACER DANS PLUSIEURS FICHIERS
+
+Supposez que vous souhaitiez remplacer un mot dans plusieurs fichiers. Vous
+pouvez éditer chaque fichier, et taper la commande manuellement. Il est
+pourtant bien plus rapide d'utiliser l'enregistrement et la ré-exécution.
+   Par exemple, vous disposez d'un répertoire contenant des fichiers C++, qui
+finissent tous par ".cpp". Il y a une fonction nommée "RenvoieReponse" que vous
+voulez renommer en "RenvoieQuestion".
+
+	vim *.cpp		Démarre Vim, avec pour liste des arguments la
+				liste qui contient tous les noms des fichiers.
+				Vous êtes maintenant dans le premier fichier.
+				
+	qq			Débute l'enregistrement dans le registre 'q'.
+	
+	:%s/\<RenvoieReponse\>/RenvoieQuestion/g
+				Fait les remplacements dans le premier
+				fichier.
+				
+	:wnext			Enregistre ce fichier et passe au suivant.
+	
+	q			Termine l'enregistrement.
+	
+	@q			Éxécute le registre 'q'.  Cela va ré-exécuter 
+				la substitution et la commande ":wnext". Vous
+				pouvez vérifier que cela ne produit pas de 
+				message d'erreur.
+				
+	999@q			Éxécute le registre 'q' sur les fichiers
+				restants.
+
+Arrivé dans le dernier fichier, vous obtenez un message d'erreur puisque
+":wnext" ne peut pas passer au fichier suivant. Cela termine l'exécution et le
+tour est joué.
+
+	NOTE :
+	Lors de la reexécution, toute erreur termine l'exécution. Aussi,
+	faites bien attention de ne pas obtenir de message d'erreur lors de
+	l'enregistrement.
+
+Il y a une exception : si un fichier .cpp ne contient pas le mot
+"RenvoieReponse", vous obtiendrez une erreur et le remplacement s'arrêtera. Pour
+éviter cela, ajoutez le drapeau 'e' à la commande de substitution : >
+
+	:%s/\<GetResp\>/GetAnswer/ge
+
+Le 'e' indique à la commande ":substitute" de ne pas provoquer une erreur si
+aucune correspondance n'est trouvée.
+
+==============================================================================
+*12.2*	Remplacer "Dernier, Premier" par "Premier Dernier"
+
+Vous avez une liste de noms de la forme : 
+
+	Martin, Pierre ~
+	Dupond, Alexandre ~
+
+Vous voulez les changer en :
+
+	Pierre Martin ~
+	Alexandre Dupond ~
+
+Cela peut être réalisé simplement en une seule commande : >
+
+	:%s/\([^,]*\), \(.*\)/\2 \1/
+
+Séparons cela en deux parties. Évidemment, cela démarre par une commande de
+substitution. Le "%" est la plage des lignes, qui désigne le fichier entier.
+Ainsi, la substitution sera effectuée sur chaque ligne du fichier. 
+   Les arguments de la commande de substitution sont "/chaîne1/chaîne2/". Les
+obliques ('/') séparent le motif "source" de la chaîne "cible". Voici une 
+dissection du motif "source" :
+   
+   							\([^,]*\), \(.*\) ~
+
+La première partie entre \( \) correspond au nom	\(     \)
+  - n'importe quel caractère excepté la virgule 	  [^,]
+  - n'importe quel nombre de fois	        	      *
+Correspond littéralement à une virgule et un espace		 ,<Espace>
+La seconde partie entre \( \) correspond au prénom		   \(  \)
+  - n'importe quel caractère		     			     .
+  - n'importe quel nombre de fois				      *
+
+Dans la partie cible, nous avons "\2" et "\1". Cela s'appelle des
+post-références.  Elles font référence au texte correspondant à une partie 
+entre \( \) de la chaîne à remplacer.  "\2" fait référence au texte correspon-
+dant au second "\( \)", donc le prénom.  "\1" fait référence au premier \( \), 
+donc le nom.
+   Vous pouvez utiliser jusqu'à neuf post-références dans la partie "cible" d'
+une commande de substitution. "\0" permet de faire correspondre l'ensemble du
+motif. Il existe aussi quelques autres fonctionnalités disponibles
+pour la commande de substitution, consultez |sub-replace-special|.
+
+==============================================================================
+*12.3*	Trier une liste
+
+Dans un fichier Makefile vous avez souvent une liste de fichiers. Par exemple :
+
+	OBJS = \ ~
+		version.o \ ~
+		pch.o \ ~
+		getopt.o \ ~
+		util.o \ ~
+		getopt1.o \ ~
+		inp.o \ ~
+		patch.o \ ~
+		backup.o ~
+
+Pour trier cette liste, filtrez le texte avec la commande externe "sort" : >
+
+	/^OBJS		
+	j
+	:.,/^$/-1!sort
+
+La première instruction permet de positionner le curseur sur la première ligne
+où "OBJS" est la première chaîne de la ligne. Ensuite, "j" fait descendre d'une
+ligne puis les lignes sont filtrées jusqu'à ce que la ligne suivante soit une 
+ligne vide. Vous pouvez aussi sélectionner les lignes en mode Visuel et utiliser
+ensuite "!sort". Cela est plus facile à taper, mais demande plus de travail 
+lorsque vous avez beaucoup de lignes.
+   Le résultat est le suivant :
+
+	OBJS = \ ~
+		backup.o ~
+		getopt.o \ ~
+		getopt1.o \ ~
+		inp.o \ ~
+		patch.o \ ~
+		pch.o \ ~
+		util.o \ ~
+		version.o \ ~
+
+
+Remarquez qu'une contre-oblique ('\') est utilisée à la fin de chaque ligne 
+pour indiquer que la ligne continue. Après le tri, cela est faux ! La ligne 
+contenant "backup.o" qui était à la fin n'avait pas de contre-oblique. 
+Maintenant que cette ligne a été déplacée à un autre endroit, elle doit finir
+par une contre-oblique.
+   La solution la plus simple est de rajouter la contre-oblique avec "A
+\<Echap>".  Vous pouvez garder la contre-oblique de la dernière ligne, si vous 
+êtes sûr qu'une ligne vide vient immédiatement après. De cette façon, vous n'
+aurez plus jamais ce problème.
+
+==============================================================================
+*12.4*	Inverser l'ordre des lignes
+
+La commande |:global| peut être combinée avec la commande |:move| pour
+déplacer toutes les lignes avant la première, dans l'ordre inverse. La
+commande est : >
+
+	:global/^/m 0
+
+Ou sous forme simplifiée : >
+
+	:g/^/m 0
+
+L'expression rationnelle "^" correspond au début de la ligne (même si la ligne
+est vide). La commande |:move| déplace la ligne correspondante après la 
+mythique zero-ième ligne, ainsi, la ligne courante devient la première ligne.
+Comme la commande |:global| ne prend pas en compte le changement des numéros
+de ligne, |:global| effectue le déplacement pour toutes les lignes restantes
+du fichier, et les amène à la première ligne.
+
+Cela marche aussi sur une plage de lignes. Tout d'abord, déplacez-vous
+au-dessus de la première ligne de la plage et marquez-la avec "mt". Ensuite,
+déplacez le curseur jusqu'à la dernière ligne de la plage et tapez : >
+
+	:'t+1,.g/^/m 't
+
+==============================================================================
+*12.5*	Compter les mots
+
+Vous aurez peut-être à écrire un texte avec un nombre de mots maximum. Vim
+peut compter les mots pour vous.
+   Lorsque vous souhaitez connaître le nombre de mots dans un fichier entier, 
+utilisez cette commande : >
+
+	g CTRL-G
+
+Ne tapez pas d'espace après le 'g', cet espace permet simplement d'améliorer
+la lisibilité de la commande.
+   Le résultat ressemble à :
+
+	Col 1 of 0; Line 141 of 157; Word 748 of 774; Byte 4489 of 4976 ~
+
+Vous pouvez voir le mot sur lequel vous êtes (748), et le nombre total de mots
+dans le fichier (774).
+
+Si le texte ne concerne qu'une partie d'un fichier, vous pourriez vous déplacer 
+au début de ce texte, taper "g CTRL-G", en notant l'index du mot courant, puis 
+aller à la fin du texte et taper une nouvelle fois "g CTRL-G". Par différence
+entre les deux index, vous obtiendriez le nombre de mots dans votre texte. 
+   C'est un bon exercice, mais il existe un moyen plus simple. Avec le mode
+Visuel, sélectionnez le texte dans lequel vous voulez compter le nombre de
+mots, puis tapez "g CTRL-G". Cela donne :
+
+	Selected 5 of 293 Lines; 70 of 1884 Words; 359 of 10928 Bytes ~
+
+Pour d'autres moyens de compter les mots, les lignes ou d'autres élements,
+voir |count-items|.
+
+==============================================================================
+*12.6*	Trouver une page de manuel				*find-manpage*
+
+Lorsque vous écrivez un script shell ou un programme en C, vous souhaitez par-
+fois trouver la page de manuel d'une commande ou d'une fonction (cela concerne
+Unix ).  Il existe une moyen très simple : déplacez le curseur sur le mot
+dont vous souhaitez obtenir l'aide et tapez : >
+
+	K
+
+Vim exécutera le programme externe "man" avec le mot courant comme argument. Si
+la page de manuel est trouvée, elle est affichée. La visionneuse normale est 
+utilisé pour faire défiler le texte (souvent le programme "more"). Lorsque
+vous arrivez à la fin de la page de manuel, <Entree> vous permettra de revenir
+dans Vim.
+
+L'inconvénient est que vous ne pouvez pas voir en même temps la page de manuel
+et le texte que vous éditez. Il y a une astuce pour afficher la page de manuel
+dans une fenêtre Vim.  Tout d'abord, chargez le greffon de type de fichier
+"man" : >
+
+	:source $VIMRUNTIME/ftplugin/man.vim
+
+Placez cette commande dans votre fichier vimrc si vous utilisez souvent 
+cette fonctionnalité. Maintenant, vous pouvez utiliser la commande ":Man"
+pour ouvrir une fenêtre sur une page de manuel : >
+
+	:Man csh
+
+Vous pouvez faire défiler le texte, et le texte est mis en surbrillance. Cela 
+vous permet de trouver l'aide que vous recherchiez. Utilisez "CTRL-W w" pour 
+passer dans la fenêtre où vous éditiez votre code.
+   Pour trouver une page de manuel dans une section spécifique, placez le
+numéro de la section en premier. Par exemple, pour rechercher la commande
+"echo" dans la section 3 : >
+
+	:Man 3 echo
+
+Pour sauter à une autre page de manuel, généralement indiquée dans le texte 
+sous la forme "commande(1)", tapez CTRL-] lorsque vous êtes dessus. Les
+commandes ":Man" utiliseront la même fenêtre.
+
+Pour afficher une page de manuel pour le mot situé sous le curseur, utilisez : >
+
+	\K
+
+(Si vous redéfinissez <Leader>, utilisez-le à la place du '\').
+Par exemple, si vous désirez connaître la valeur de retour de "strstr()" en
+éditant la ligne suivante
+
+	if (strstr(input, "aap") == ) ~
+
+déplacez le curseur sur "strstr" et tapez "\K". Une fenêtre s'ouvrira en
+affichant la page de manuel de strstr().
+
+==============================================================================
+*12.7*	Supprimer les blancs superflus
+
+Certaines personnes trouvent que les espaces et les tabulations situés à la fin
+des lignes sont sans utilité, gâchent de la place, ou sont même disgracieux. 
+Pour supprimer ces espaces blancs à la fin de chaque ligne, utilisez la commande
+suivante : >
+
+	:%s/\s\+$//
+
+La plage de ligne "%" est utilisée, cette commande sera donc valable sur
+l'ensemble du fichier. Le motif auquel correspond la commande de substitution
+est "\s\+$". Cela correspond aux caractères blancs (\s), 1 ou plus (\+),
+avant la fin de la ligne ($). L'utilisation de ces expressions régulières sera
+détaillée dans |usr_27.txt|.
+   La partie cible de la commande de substitution est vide : "//". Ainsi, on 
+remplace par une chaîne vide, supprimant effectivement l'espace blanc corres-
+pondant.
+
+Un autre cas d'inutilité des espaces se produit lorsqu'ils sont placés juste
+avant une tabulation.  La plupart du temps, ils peuvent être supprimés sans
+modifier la largeur de l'espace blanc. Mais pas toujours ! Aussi, le mieux que vous puissiez faire est de le faire manuellement. Utilisez cette commande de recherche : >
+
+	/ 	
+
+Vous ne pouvez pas le voir, mais il y a un espace avant une tabulation dans
+cette commande : "/<Espace><Tab>". Utilisez alors "x" pour effacer l'espace et
+vérifiez que la largeur de la tabulation n'est pas modifiée. Vous devrez
+peut-être insérer une nouvelle tabulation si c'est le cas. Tapez "n" pour
+trouver la prochaine correspondance. Répétez cette opération jusqu'à ce
+qu'aucune autre correspondance ne puisse être trouvée.
+
+==============================================================================
+*12.8*	Trouver les occurrences d'un mot
+
+Si vous êtes un utilisateur d'Unix, vous pouvez utiliser Vim en combinaison avec
+la commande grep pour éditer tous les fichiers qui contiennent un mot en parti-
+culier. C'est extrêmement utile si vous travaillez sur un programme et que vous
+voulez voir ou éditer tous les fichiers qui contiennent une variable spécifique.
+   Par exemple, supposez que vous vouliez éditer tous les fichiers C qui
+contiennent le mot "compteurs". Utilisez la commande : >
+
+	vim `grep -l compteurs *.c`
+
+Etudions cette commande en détail. La commande recherche au travers d'un ensem-
+ble de fichiers un mot en particulier. Comme l'argument -l est utilisé, la com-
+mande va simplement lister les fichiers contenant le mot, sans imprimer les
+lignes correspondantes. Le mot recherché est "compteurs". En fait, il pourrait 
+s'agir de n'importe quelle expression rationnelle. (Remarque : grep utilise des
+expressions rationnelles qui ne sont pas exactement celles de Vim)
+  La commande est entourée de contre-apostrophes (`).  Cela indique au shell 
+Unix d'exécuter cette commande et de faire comme si la sortie de la commande 
+avait été entrée sur la commande initiale. Aussi, la commande grep renvoie une
+liste de fichiers, et ces fichiers sont placés sur la ligne de commande de
+Vim. Vim éditera donc la liste de fichiers renvoyés par la commande grep. Vous 
+pouvez alors utiliser des commandes telles que ":next" et ":first" pour naviguer
+de fichier en fichier.
+
+
+TROUVER TOUTES LES LIGNES
+
+La commande ci-dessus permet de trouver tous les fichiers concernés par
+l'apparition d'un mot. Mais vous devez encore trouver ce mot à l'intérieur des
+fichiers.
+   Vim possède une commande interne pour rechercher une chaîne particulière dansun ensemble de fichiers une chaîne particulière. Si vous voulez trouver toutes 
+les occurrences de "chaine_erreur" dans tous les fichiers C, par exemple, entrez
+la commande suivante : >
+
+	:grep chaine_erreur *.c
+
+Cela demande à Vim de rechercher la chaîne "chaine_erreur" dans tous les
+fichiers spécifiés (*.c). L'éditeur ouvrira alors le premier fichier où une
+correspondance a été trouvée et positionnera le curseur sur la première ligne
+correspondante. Pour aller à la prochaine correspondance (indépendamment du
+fichier), utilisez la commande ":cnext". Pour aller à la correspondance 
+précédente utilisez la commande ":cprev". Utilisez ":clist" pour voir toutes 
+les correspondances et les fichiers dans lesquelles elles se trouvent.
+   La commande ":grep" utilise la commande externe grep (sur Unix) ou findstr
+(sur Windows). Vous pouvez modifier ce paramètre de configuration en
+modifiant l'option 'grepprg'.
+
+==============================================================================
+
+Chapitre suivant : |usr_20.txt|  Édition rapide de la ligne de commande
+
+Copyright : voir |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:

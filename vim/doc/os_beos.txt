@@ -1,0 +1,375 @@
+*os_beos.txt*	Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+							*BeOS* *BeBox*
+Il est question du portage de Vim 5.1 vers BeOS Preview Release 2 (également
+appelé PR2) ou ultérieur.
+
+Ce fichiers contient les particularités de la version BeBox/BeOS de Vim. Sur
+les points non abordés dans ce fichier, Vim se comporte très similairement à
+la version Unix |os_unix.txt|.
+
+ 1. Général				|beos-general|
+ 2. Compilation de Vim			|beos-compiling|
+ 3. Timeout dans le Terminal		|beos-timeout|
+ 4. Unicode et latin1			|beos-unicode|
+ 5. IHM graphique BeOS			|beos-gui|
+ 6. Le répertoire $VIM			|beos-vimdir|
+ 7. Glisser-déposer			|beos-dragndrop|
+ 8. Single Launch et Multiple Launch	|beos-launch|
+ 9. Polices				|beos-fonts|
+10. La touche Meta			|beos-meta|
+11. Mappages de boutons de la souris	|beos-mouse|
+12. Noms des couleurs			|beos-colors|
+13. Compilation avec Perl		|beos-perl|
+
+==============================================================================
+1. Général						*beos-general*
+
+La coloration syntaxique par défaut est convenable la plupart du temps pour
+mettre les éléments en surbrillance avec les différentes couleurs de premier
+plan. Cela fonctionne mieux si vous fixez votre fenêtre de Terminal à un fond
+sombre avec des caractères plus clairs. Certains fonds gris-moyen (par exemple
+(r,g,b)=(168,168,168)) avec des caractères noirs sont également agréables. Si
+vous utilisez le fond clair par défaut avec des caractères foncés, cela peut
+valoir le coup d'inverser les réglages de couleurs du fond et du premier-plan.
+Pour ce faire, ajoutez ceci dans votre fichier .vimrc (<Echap> doit être
+remplacé par le caractère d'échappement) : >
+
+  :if &term == "beos-ansi"
+  :    set t_AB=<Echap>[3%dm
+  :    set t_AF=<Echap>[4%dm
+  :endif
+
+==============================================================================
+2. Compilation de Vim					*beos-compiling*
+
+À partir de l'Advanced Access Preview Release (AAPR), Vim peut être configuré
+avec le script `configure` standard. Pour obtenir le bon compilateur avec les
+drapeaux adaptés, utilisez la ligne de commande suivante dans un shell (vous
+pouvez la copier et coller d'un seul coup) : >
+
+	CC=$BE_C_COMPILER CFLAGS="$BE_DEFAULT_C_FLAGS -O7" \
+		./configure --prefix=/boot/home/config
+
+$BE_C_COMPILER vaut habituellement "mwcc" et $BE_DEFAULT_C_FLAGS "-I- -I."
+
+Quand `configure` a été exécuté, si vous souhaitez activer le support de l'IHM
+graphique, vous devez éditer le fichier "config.mk" de façon à ce que les
+lignes contenant GUI_xxx se réfèrent à $(BEOSGUI_xxx) au lieu de $(NONE_xxx).
+Sinon, nous pouvez effectuer ce changement directement dans le Makefile ;
+l'effet sera permanent. Pour cela, recherchez "NONE_".
+
+Après la compilation, vous devez ajouter les ressources au fichier binaire.
+Ajouter les quelques lignes suivantes à la fin (mais avant la ligne contenant
+"exit $exit_value") du script "link.sh" pour le faire automatiquement. >
+
+	rmattr BEOS:TYPE vim
+	copyres os_beos.rsrc vim
+	mimeset vim
+
+Créez également un fichier "strip" bidon : >
+
+	#!/bin/sh
+	mimeset $1
+	exit 0
+
+Vous en aurez besoin quand vous installerez Vim avec `make install`.
+
+Maintenant, tapez `make` pour compiler Vim, puis `make install` pour
+l'installer.
+
+Si vous souhaitez l'installer à la main, vous devez copier Vim dans
+$HOME/config/bin, et créer un bon paquet de liens symbolique
+({g,r,rg}{vim,ex,view}). De plus, vous devez copier les fichiers de
+configuration de Vim dans $HOME/config/share/vim :
+vim-5.0s/{*.vim,doc,syntax}. Pour être complet, vous devriez également copier
+les pages de manuel de nroff dans $HOME/config/man/man1. N'oubliez pas non
+plus ctags/ctags and xxd/xxd !
+
+Bien entendu, vous avez besoin de l'éditeur de liens non limité pour
+construire Vim. Consultez http://www.metrowerks.com pour acheter le
+compilateur CodeWarrior pour BeOS. Il n'existe actuellement aucun autre
+éditeur de liens capable de le faire.
+
+Cela ne vous permettre pas d'inclure les interfaces Perl et Python même si les
+fichiers appropriés sont installés. |beos-perl|
+
+==============================================================================
+3. Timeout dans le Terminal				*beos-timeout*
+
+Parce que certaines fonctionnalités POSIX/UNIX sont encore absentes[1], il
+n'existe pas de support direct par l'OS d'une lecture avec un timeout dans le
+Terminal. Cela signifie qu'il serait impossible d'utiliser des mappages de
+plus d'un caractère, à moins de faire aussi ":set notimeout". |'timeout'|
+
+Pour contourner ce problème, du code a été ajouté. Il fournit une saisie avec
+timeout en utilisant un thread supplémentaire qui lit un caractère en avance.
+Comme effet secondaire, cela permet aussi à Vim de savoir quand la fenêtre du
+Terminal est redimmensionnée.
+
+Les touches de fonction ne sont pas supportées dans le Terminal, car elles
+produisent des séquences de caractères indiscernables. 
+
+Ces problèmes n'existent pas avec la version graphique.
+
+[1] select() n'existe pas pour les descripteurs de fichiers ; de même, les
+paramètres termios VMIN et VTIME semblent ne pas fonctionner correctement.
+C'est le cas depuis la version DR7 au moins, et cela n'a pas été corrigé dans
+la PR2.
+
+==============================================================================
+4. Unicode et latin1				*beos-utf8* *beos-unicode*
+
+BeOS utilise Unicode et UTF-8 pour les chaînes de caractères (caractères de 16
+bits codés par des caractères 8 bits). Vim suppose que le codage est
+l'ISO-Latin1 ou un autre codage sur 8 bits. Cela ne donne pas les résultats
+escomptés pour les caractères non ASCII. Essayer la commande ":digraphs" pour
+vous en rendre compte. Si l'affichage est sali, utilisez ":set isprint=@" pour
+améliorer (légèrement) l'affichage des caractères latin1 compris entre 128 et
+255. Cela fonctionne mieux dans l'IHM graphique, selon la police que vous
+utilisez (voir plus bas).
+
+Vous pouvez également utiliser la commande "/boot/bin/xtou" pour convertir les
+fichiers ISO-Latin1 en UTF-8 ("xtou -f iso1 nomfich") ou UTF-8 en ISO-Latin1
+("xtou -t iso1 nomfich").
+
+==============================================================================
+5. IHM graphique BeOS					*beos-gui*
+
+Normalement, Vim lance l'IHM graphique s'il est invoqué avec "gvim" ou 
+"vim -g". La version BeOS tente de déterminer si elle a été lancée depuis le
+Tracker plutôt que depuis le Terminal, et si c'est le cas, elle lance l'IHM
+graphique de toute façon. Toutefois, le principe de détection actuel se trompe
+si vous utilisez la commande "vim - </dev/null" ou "vim nomfich &". Cette
+dernière peut être considérée comme une fonctionnalité, mais elle ne
+fonctionne probablement que parce qu'il n'y a aucun contrôle des « jobs » à la
+manière de BSD.
+
+Parmi les points ne fonctionnant pas encore :
+
+- Exécuter des commandes externes depuis l'IHM graphique ne fonctionne pas à
+  100 % (encore une fois à cause de l'absence de select()). Un choix doit être
+  fait entre visualiser la sortie de la commande et la possibilité de
+  l'interrompre. C'est la première alternative qui a été choisie. Actuellement
+  encore, la commande plante parfois mystérieusement, apparemment dans la
+  fonction malloc_internal() de Be, appelée dans putenv(), après le fork().
+  (data exception access, ec01b0ec:  90e80000 *stw r7, 0x0000 (r8)) (":!ls"
+  fonctionne en général, mais pas ":r !ls"). Ce bogue a été rappporté sous le
+  numéro # 971215-083826.
+- Le titre de la fenêtre.
+- Le lancement de l'IHM graphique depuis la version Terminal avec ":gui" se
+  comporte toujours comme si ":gui -f" était utilisé. Il n'existe aucun moyen
+  de corriger cela à notre connaissance.
+- Il existe des petites imperfections ça et là dans l'affichage, dont la
+  correction est prévue. La plupart d'entre elles surviennent quand la fenêtre
+  est partiellement recouverte. Certaines d'entre elles semblent provenir de
+  bogues de BeOS, car le Terminal présente des problèmes similaires.
+- Les événements de la souris ne sont pas générés en dehors de la fenêtre.
+  C'est un bogue de BeOS. Vous pouvez le constater en sélectionnant du texte,
+  en déplaçant le curseur en dehors de la fenêtre, puis en relachant le bouton
+  de la souris. Vous pouvez également faire glisser la barre de défilement et
+  sortir de la fenêtre. Comme Vim pense que vous manipulez toujours la barre
+  de défilement, son affichage n'est pas remis à jour. Un coutournement est
+  fourni, il est déclenché quand la fenêtre est (dés)activée (par conséquent,
+  cela fonctionne mieux quand focus-follow-mouse (/boot/bin/ffm) est activé).
+- Le curseur ne clignote pas (priorité très faible : l'auteur n'est pas
+  certain d'apprécier le clignotement du curseur).
+
+==============================================================================
+6. Le répertoire $VIM					*beos-vimdir*
+
+$VIM est le nom symbolique de l'endroit où Vim stocke ses fichiers de support.
+La valeur par défaut de $VIM est fixée à la compilation et peut être obtenue
+avec la commande >
+
+      :version
+
+La valeur normal par défaut "/boot/home/config/share/vim". Si elle ne vous
+convient pas, vous pouvez fixer la variable d'environnement VIM pour la
+recouvrir, ou fixer l'option 'helpfile' dans votre vimrc : >
+
+      :if version >= 500
+      :    set helpfile=~/vim/vim54/doc/help.txt
+      :    syntax on
+      :endif
+
+==============================================================================
+7. Glisser-déposer					*beos-dragndrop*
+
+Vous pouvez déposer des fichiers et des répertoires, aussi bien sur l'icône de
+Vim (ce qui démarre une nouvelle session Vim, à moins que vous n'utilisiez
+l'application FileType pour que Vim soit "Single Launch"), que sur la fenêtre
+de Vim (ce qui lance l'édition des fichiers). Déposer un dossier change le
+répertoire courant de Vim. |:cd| |:pwd| Si vous déposez des fichiers ou des
+dossiers avec la touche Maj enfoncée, Vim change de répertoire pour celui du
+premier élément déposé. Si Vim démarre, il n'est pas nécessaire d'appuyer sur
+Maj : Vim fait comme si vous le faisiez.
+
+Les fichiers déposés constituent la liste des arguments. |argument-list|
+
+==============================================================================
+8. Single Launch et Multiple Launch			*beos-launch*
+
+Vim est distribué avec les Application Flags (visibles dans les préférence
+FileType) fixés à Multiple Launch. Si vous préférez, vous pouvez le rendre
+Single Launch à la place. La tentative de lancer un second Vim va provoquer
+l'ouverture des fichiers dans le premier Vim. Cela fonctionne depuis le
+Tracker, mais aussi depuis la ligne de commande. Dans ce dernier cas, les
+arguments qui ne sont pas des fichier (les « options ») ne sont pas
+supportés.
+
+NOTE : Seule la version GUI dispose d'une BApplication (et par conséquent des
+Applications Flags). Cette section n'est pas applicable à la version non
+graphique, si vous en compilez une.
+
+==============================================================================
+9. Polices						*beos-fonts*
+
+Fixez les polices avec >
+
+      :set guifont=Courier10_BT/Roman/10
+
+où la première partie correspond à la famille de la police, la deuxième à son
+style et la troisième à sa taille. Vous pouvez utiliser des soulignés '_' au
+lieu des espaces dans la famille et le style.
+
+De meilleurs résultats sont obtenus avec des polices ayant une chasse fixe
+(par exemple Courier). Vim essaie d'utiliser toutes les polices dans le mode
+B_FIXED_SPACING, mais cela ne fonctionne apparemment pas pour les polices
+proportionnelles (malgré ce qu'affirme le BeBook).
+
+Vim essaie également d'utiliser le codage B_ISO8859-1, aussi appelé
+ISO-Latin1. Cela ne fonctionne pas pour toutes les polices. Cela marche pour
+Courier, mais pas pour ProFontISOLatin1/Regular (assez bizarrement). Vous
+pouvez le vérifier en tapant la commande >
+
+      :digraphs
+
+qui donne une liste de caractères avec leur codage ISO-Latin1.
+Si vous constatez des caractères « rectangulaires » dans cette liste, ou que
+le dernier caractère n'est pas un 'y' tréma, alors le codage ne fonctionne pas
+pour cette police.
+
+Si la police spécifée n'est pas disponible, vous obtenez la police fixe du
+système.
+
+Les polices à chasse fixe standards du système sont :
+
+	      ProFontISOLatin1/Regular
+		  Courier10_BT/Roman
+		  Courier10_BT/Italic
+		  Courier10_BT/Bold
+		  Courier10_BT/Bold_Italic
+
+Les polices proportionnelles standards du système sont :
+
+		    Swis721_BT/Roman
+		    Swis721_BT/Italic
+		    Swis721_BT/Bold
+		    Swis721_BT/Bold_Italic
+		Dutch801_Rm_BT/Roman
+		Dutch801_Rm_BT/Italic
+		Dutch801_Rm_BT/Bold
+		Dutch801_Rm_BT/Bold_Italic
+		   Baskerville/Roman
+		   Baskerville/Italic
+		   Baskerville/Bold
+		   Baskerville/Bold_Italic
+		 SymbolProp_BT/Regular
+
+Essayez-en quelques unes, juste pour rigoler.
+
+==============================================================================
+10. La touche Meta					*beos-meta*
+
+Le modificateur Meta est obtenu avec les touches OPTION droite et gauche, car
+les touches ALT (ou COMMAND) ne sont pas transmises aux applications.
+
+==============================================================================
+11. Mappages de boutons de la souris			*beos-mouse*
+
+Vim appelle "LeftMouse", "MiddleMouse" et "RightMouse" les différents boutons
+de la souris. Si vous utilisez les réglages par défaut des préférences de la
+souris, ces noms correspondent à la réalité. Vim utilise ce mappage :
+
+	Button 1 -> LeftMouse				      ["Bouton gauche"]
+	Button 2 -> RightMouse				       ["Bouton droit"]
+	Button 3 -> MiddleMouse				   ["Bouton du milieu"]
+
+Si votre souris a moins de trois boutons, vous pouvez définir votre propre
+mappage avec un ou des modificateurs et un autre bouton de la souris.
+Consultez le fichier vim-5.x/macros/swapmous.vim pour un exemple.
+|gui-mouse-mapping|
+
+==============================================================================
+12. Noms des couleurs					*beos-colors*
+
+Vim dispose d'un certain nombre de noms de couleurs intégrés. Des noms
+supplémentaires sont lus dans le fichier $VIMRUNTIME/rgb.txt, s'il existe. Ce
+fichier est basiquement la base de données des couleurs de X. Les noms
+utilisés provenant de ce fichier sont mis en cache pour être efficace.
+
+==============================================================================
+13. Compilation avec Perl				*beos-perl*
+
+La compilation avec le support de Perl est un peu délicate. Le compilateur de
+Metrowerks recherche les fichiers inclus dans des endroits surprenants. Comme
+plusieurs fichiers inclus avec Perl ont le même nom que certains fichiers
+d'entêtes de Vim, ce ne sont pas les bons qui sont inclus. Pour corriger cela,
+exécuter le script Perl suivant dans le répertoire vim-5.0/src : >
+
+   preproc.pl > perl.h
+
+    #!/bin/env perl
+    # Développeur d'#include simpliste, tout juste bon 
+    # pour les fichier d'entêtes Perl.
+
+    use strict;
+    use IO::File;
+    use Config;
+
+    sub doinclude
+    {
+	my $filename = $_[0];
+	my $fh = new IO::File($filename, "r");
+	if (defined $fh) {
+	    print "/* Start of $filename */\n";
+
+	    while (<$fh>) {
+		if (/^#include "(.*)"/) {
+		    doinclude($1);
+		    print "/* Back in $filename */\n";
+		} else {
+		    print $_;
+		}
+	    }
+	    print "/* End of $filename */\n";
+
+	    undef $fh;
+	} else {
+	    print "/* Cannot open $filename */\n";
+	    print "#include \"$filename\"\n";
+	}
+    }
+
+    chdir     $Config{installarchlib}."/CORE";
+    doinclude "perl.h";
+
+Il construit le fichier d'entêtes "perl.h" à partir des autres fichiers
+d'entêtes Perl.
+
+À présent, vous pouvez exécuter `configure` et construire (`make`) Vim avec
+l'option "--enable-perlinterp". Soyez prévenu que cela augmente la taille de
+Vim d'environ 616 Ko ! Sans Perl, Vim avec ses fonctionnalités par défaut et
+l'IHM graphique occupe 575 Ko ; avec Perl, il passe à 1191 Ko.
+
+-Olaf Seibert
+<rhialto@polder.ubc.kun.nl>
+http://polder.ubc.kun.nl/~rhialto/be
+
+ vim:tw=78:fo=tcq2:isk=!-~,^*,^\|,^\":ts=8:ft=help:norl:
+

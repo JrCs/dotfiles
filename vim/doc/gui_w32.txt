@@ -1,0 +1,453 @@
+*gui_w32.txt*   Pour Vim version 6.1.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+Interface (IHM) graphique Win32 de Vim		*gui-w32* *win32-gui*
+
+1. Démarrer l'interface graphique		|gui-w32-start|
+2. Vim comme éditeur par défaut			|vim-default-editor|
+3. Utiliser le presse-papiers			|gui-clipboard|
+4. Commandes du shell				|gui-shell-win32|
+5. Couleurs particulières			|win32-colors|
+6. Sélecteurs et dialogues Windows		|gui-w32-dialogs|
+7. Divers					|gui-w32-various|
+
+Autres documents en rapport :
+|gui.txt|	pour les éléments génériques de l'interface graphique.
+|os_win32.txt|  pour les éléments spécifiques à Win32.
+
+{Vi n'a pas d'interface graphique sous Windows}
+
+==============================================================================
+1. Démarrer l'interface graphique			*gui-w32-start*
+
+La version IHM graphique Win32 de Vim démarrera toujours l'IHM graphique,
+quels que soient la manière dont vous la lancez et le nom avec lequel elle est
+invoquée.
+
+L'interface graphique fonctionnera toujours dans le sous-système Windows. En
+général, les shells rendent automatiquement la main après le démarrage de Vim,
+en affichant une invite. Sinon, vous pouvez utiliser la commande "start" : >
+	start gvim [options] fichier ...
+
+NOTE : Toutes les polices (gras, italique) doivent être de la même taille !!!
+Sinon, le texte peut disparaître ou salir l'affichage. Vim ne vérifie pas la
+taille de la police. C'est la taille en pixels qui doit être la même. Notez
+bien que des polices ayant la même taille en points peuvent avoir une taille
+en pixels différente ! De plus, le positionnement des caractères doit être le
+même (hampes et jambages).
+
+L'IHM graphique Win32 a un élément de menu supplémentaire : "Edition /
+Sélectionner police...". Il ouvre un sélecteur de polices.
+
+Fixer la hauteur du menu ne fonctionne pas avec l'IHM Graphique Win32.
+
+							*gui-win32-maximized*
+Si vous voulez que Vim démarre dans une fenêtre maximisée, ajoutez cette
+commande dans votre fichier vimrc ou gvimrc : >
+	au GUIEnter * simalt ~n
+<
+								*gui-w32s*
+Il existe une version spécifique de gvim.exe qui fonctionne dans les
+sous-systèmes Win32 de Windows 3.1 ou 3.11. Voir |win32s|.
+
+==============================================================================
+2. Vim comme éditeur par défaut				*vim-default-editor*
+
+Pour définir Vim comme éditeur par défaut pour un type de fichier
+particulier (association de fichier) :
+1. Démarrez un Explorateur Windows.
+2. Choisissez « Outils / Options des dossiers -> Types de fichiers ».
+3. Sélectionnez le chemin vers gvim pour chaque type de fichier que vous
+   voulez ouvrir avec Vim.
+   Dans l'action "open", tapez : >
+	gvim "%1"
+<  Les doubles-apostrophes sont nécessaires pour les noms de fichiers
+   contenant des espaces.
+   Vous pouvez également utiliser : >
+	gvim "%L"
+<  Cela devrait permettre d'éviter les noms de fichier courts (8.3 caractères)
+   dans certaines situations. Mais il n'est pas certain que cela fonctionne
+   partout.
+   
+Quand vous ouvrez un fichier avec Vim en double-cliquant dessus, Vim prend le
+chemin de ce fichier comme répertoire courant.
+
+Si vous voulez que Vim démarre en plein écran, utilisez ceci pour l'action
+"open" : >
+	gvim -c "simalt ~n" "%1"
+
+Une autre méthode, qui fonctionne également quand vous mettez Vim dans un
+nouveau répertoire (par exemple parce que vous venez d'installer une nouvelle
+version) [N.D.T : pour MS-W2000] :
+1. Sélectionnez un fichier que vous voulez ouvrir avec Vim.
+2. Tapez Maj + F10.
+3. Sélectionnez l'entrée "Ouvrir avec..." du menu.
+4. Cliquez au besoin sur "Choix de programme..." puis sur "Autre...".
+5. Naviguez vers le (nouvel) emplacement de Vim et cliquez "Ouvrir".
+6. Cochez la case "Toujours utiliser ce programme pour...".
+7. Cliquez sur "OK".
+
+						*send-to-menu* *sendto*
+Vous pouvez également installer Vim dans le menu "Envoyer vers" :
+1. Démarrez un Explorateur Windows.
+2. Naviguez jusqu'à votre dossier "sendto" :
+   - Windows 95: %windir%\sendto (par exemple "c:\windows\sendto") ;
+   - Windows NT: %windir%\profiles\%user%\sendto (par exemple
+		"c:\winnt\profiles\arthur\sendto").
+3. Cliquez droit dans le panneau des fichiers et sélectionner "Nouveau... /
+   Raccourci".
+4. Laissez-vous guider par l'assistant, en utilisant le chemin complet vers
+   gvim.exe.
+
+Quand vous "envoyez un fichier à Vim", Vim prend son répertoire comme
+répertoire courant. NOTE : Toutefois, les noms de répertoires longs
+apparaîtront dans leur forme courte (MS-DOS). C'est une limitation du
+mécanisme "Envoyer vers".
+
+						*notepad*
+Vous pourriez remplacer notepad.exe par gvim.exe, mais cela aurait quelques
+effets de bord. Certains programmes reposent sur les arguments de notepad, qui
+ne sont pas reconnus par Vim. Par exemple, "notepad -p" est utilisé par
+certaines applications pour imprimer un fichier. Il est préférable de laisser
+notepad tel qu'il est et d'utiliser un autre moyen pour lancer Vim. 
+
+						*win32-popup-menu*
+Une approche plus rigoureuse consiste à installer une entrée "Édite dans Vim"
+dans le menu contextuel du bouton droit de la souris. Comme cela, vous pouvez
+éditer n'importe quel fichier avec Vim.
+
+Cette méthode peut coexister avec les associations de fichiers abordées
+ci-dessus. La différence est que l'association de fichier fait du démarrage
+de Vim l'action par défaut. Avec une entrée de menu "Édite avec Vim", vous
+pouvez conserver une association de fichier existante, et éditer ce fichier
+avec Vim quand vous le souhaitez. Par exemple, vous pouvez associer les
+fichiers "*.mak" à votre programme make. Vous pouvez exécuter le fichier
+Makefile en double-cliquant dessus et utiliser l'entrée "Édite avec Vim" pour
+l'éditer.
+
+Vous pouvez sélectionner n'importe quels fichiers et cliquer droit pour
+atteindre une entrée de menu appelée "Édite avec Vim". Le choix de cette
+entrée invoquera Vim avec le fichier que vous avez sélectionné. Si vous avez
+sélectionné plusieurs fichiers, vous trouverez deux entrées relatives à Vim :
+"Édite dans plusieurs Vims" -- un gvim pour chaque fichier de la sélection
+"Édite dans un seul Vim"    -- un gvim pour tous les fichiers de la sélection
+Et si un gvim est déjà ouvert :
+"Édite dans Vim existant"   -- édite le fichier avec le gvim ouvert
+
+						*install-registry*
+Vous pouvez facilement ajouter l'entrée de menu "Édite avec Vim" avec le
+programme "install.exe". Il ajoutera plusieurs entrées dans la base de
+registres pour vous.
+
+Vous pouvez également le faire à la main. Attention : c'est compliqué !
+Utilisez "install.exe" si vous le pouvez.
+
+1. Démarrer l'éditeur de registres avec "regedit".
+2. Ajouter ces clés :
+   CLÉ		NOM DE LA VALEUR	    VALEUR  ~
+   HKEY_CLASSES_ROOT\CLSID\{51EEE242-AD87-11d3-9C1E-0090278BBD99}
+		{default}		    Vim Shell Extension
+   HKEY_CLASSES_ROOT\CLSID\{51EEE242-AD87-11d3-9C1E-0090278BBD99}\InProcServer32
+		{default}		    {chemin}\gvimext.dll
+		ThreadingModel		    Apartment
+   HKEY_CLASSES_ROOT\*\shellex\ContextMenuHandlers\gvim
+		{default}		    {51EEE242-AD87-11d3-9C1E-0090278BBD99}
+   HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Shell Extensions\Approved
+		{51EEE242-AD87-11d3-9C1E-0090278BBD99}
+					    Vim Shell Extension
+   HKEY_LOCAL_MACHINE\Software\Vim\Gvim
+		path			    {chemin}\gvim.exe
+   HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Uninstall\vim 5.6
+		DisplayName		    Vim 5.6: Edit with Vim popup menu entry
+		UninstallString		    {chemin}\uninstal.exe
+
+   Remplacez {chemin} par le chemin pour atteindre l'exécutable.
+   Ne saisissez pas {default}, c'est la valeur de la clé elle-même.
+
+Pour enlever "Édite avec Vim" du menu contextuel, retirez simplement les
+entrées de registres mentionnées ci-dessus. Le programme "uninstal.exe" peut
+le faire à votre place. Vous pouvez également utiliser l'entrée dans la liste
+"Ajout/Suppression de programmes" standard de Windows.
+
+Si vous remarquez que cette entrée remplace d'autres associations de fichiers,
+refaites ces associations à la main (en utilisant l'Explorateur Windows, voir
+ci-dessus). Cela ne semble se produire que sur certaines versions de Windows
+NT (bogue Windows ?). Procédure :
+1. Trouvez le nom du type de fichier. Vous pouvez le faire en démarrant
+   l'éditeur de registres et en cherchant l'extension dans
+   \\HKEY_CLASSES_ROOT.
+2. Dans l'Explorateur Windows, utilisez "Outil/Options des dossiers/Types de
+   fichiers". Cherchez le type de fichier dans la liste et cliquez sur
+   "Avancée". Dans la liste des actions, vous pouvez sélectionner celle qui
+   doit être utilisée par défaut (normalement l'action "open") et cliquer sur
+   le bouton "Par défaut".
+
+==============================================================================
+3. Utiliser le presse-papiers				*gui-clipboard*
+
+Windows a un presse-papiers, dans lequel vous pouvez copier du texte et depuis
+lequel vous pouvez en coller. Vim le supporte de plusieurs manières. Pour les
+autres systèmes, voir |gui-selections|.
+
+Le registre "* reflète le contenu du presse-papiers. |quotestar|
+
+Quand la chaîne "unnamed" est incluse dans l'option 'clipboard', le registre
+sans nom est le même. Ainsi, vous pouvez copier et coller avec le
+presse-papiers sans faire précéder les commandes de "*.
+
+Le drapeau 'a' n'est pas inclus par défaut dans l'option 'guioptions'. Cela
+signifie que le texte n'est mis dans le presse-papiers que lorsqu'il est
+l'objet d'une opération. une simple sélection visuelle ne suffit pas à le
+mettre dans le presse-papiers. Quand le drapeau 'a' est inclus, le texte est
+copié dans le presse-papiers même lorsqu'il ne subit aucune opération.
+
+Pour utiliser CTRL-X, CTRL-C et CTRL-V à la manière standard de MS-Windows,
+utilisez le script $VIMRUNTIME/mswin.vim. Vous pouvez ajouter cette ligne
+dans votre fichier "_vimrc" : >
+	source $VIMRUNTIME/mswin.vim
+
+Puisque CTRL-C est utilisé pour copier du texte dans le presse-papiers, il ne
+peut pas être utilisé pour interrompre une opération. Utilisez CTRL-Break XXX
+pour cela.
+
+							*CTRL-V-alternative*
+Puisque CTRL-V est utilisé pour coller, vous ne pouvez pas l'utiliser pour
+commencer une sélection visuelle par blocs. Vous pouvez utiliser CTRL-Q à la
+place. Vous pouvez également utiliser CTRL-Q en mode Insertion et en mode
+Ligne-de-commande pour retrouver l'ancienne signification de CTRL-V. Mais
+CTRL-Q ne fonctionne pas sur les terminaux dans lesquels il est utilisé pour
+le contrôle de flux.
+
+NOTE : Le support du presse-papiers souffre encore de nombre de bogues. Voir
+|todo|.
+
+==============================================================================
+4. Commandes du shell					*gui-shell-win32*
+
+Vim utilise une autre fenêtre pour les commandes externes, pour permettre de
+lancer n'importe quelle commande. La commande externe dispose de son propre
+environnement pour s'exécuter, comme si elle était lancée depuis une invite
+DOS.
+
+							*win32-vimrun*
+Une commande externe est indirectement exécutée par la commande "vimrun". Le
+programme "vimrun.exe" doit se trouver dans le chemin pour pouvoir
+fonctionner. Ou alors il doit se trouver dans le même répertoire que
+l'exécutable de Vim. Si "vimrun" est introuvable, la commande est exécutée
+directement, mais dans ce cas la fenêtre DOS se ferme immédiatement après la
+fin de la commande externe.
+AVERTISSEMENT : Si vous fermez cette fenêtre avec le bouton "X" et que vous
+confirmez votre demande de vraiment fermer l'application, Vim peut se voir
+fermé également ! (Ceci ne concerne pas les commandes asynchrones lancées avec
+":!start").
+
+Sous Windows 95, la fenêtre dans laquelle les commandes sont exécutées a
+toujours une dimension de 25x80 caractères, afin d'être compatible DOS autant
+que possible (c'est important !). La police par défaut du système est
+utilisée. Sous NT, la fenêtre aura les réglages par défaut que vous avez donné
+pour l'"Invite de Commande" dans le Panneau de Configuration. Sous Win32s, les
+propriétés de la fenêtre DOS sont déterminées par "_default.pif" dans le
+répertoire Windows.
+
+							*msdos-mode*
+Si vous obtenez une boîte de message qui annonce que "Ce programme est prévu
+pour fonctionner en mode MS-DOS..." [N.D.T : merci d'informer le traducteur du
+véritable message français si vous le rencontrez] quand vous lancez une
+commande externe, vous pouvez résoudre ce problème en changeant les propriétés
+du raccourci utilisé :
+- Utilisez l'Explorateur Windows pour trouver le command.com utilisé. Cela
+  peut être c:\command.com, c:\dos\command.com, c:\windows\command.com, etc.
+- Avec le bouton droit de la souris, accédez aux propriétés de ce command.com.
+- Parmi les onglets, sélectionnez "Avancé".
+- Désactivez "Mode MS-DOS".
+- Cliquez sur "OK" deux fois.
+
+							*win32-!start*
+Normalement, Vim attend que la commande se termine avant de continuer (cela se
+comprend pour la plupart des commandes shell, qui produisent une sortie que
+Vim va utiliser). Si vous voulez que Vim lance un programme et revienne
+immédiatement à l'édition, vous pouvez utiliser la syntaxe suivante sous W95
+et NT : >
+	:!start {commande}
+Sous Win32s, vous devrez aller dans une autre fenêtre. N'oubliez pas que vous
+devez dire à Windows 3.1x de poursuivre l'exécution de la commande en
+arrière-plan lorsque vous revenez dans Vim.
+
+==============================================================================
+5. Couleurs particulières				*win32-colors*
+
+Sous Win32, les couleurs normales du DOS peuvent être utilisées. Voir
+|dos-colors|.
+
+De plus, les couleurs configurées pour le système peuvent également être
+utilisées. Elles sont reconnues par les noms "Sys_XXX", où XXX est le nom de
+la couleur système appropriée, parmi la liste suivante (consultez la
+documentation Win32 pour une description complète). La casse est indifférente.
+NOTE : Sous Win32s, toutes ces couleurs ne sont pas supportées.
+
+Sys_3DDKShadow		Sys_3DFace			Sys_BTNFace
+Sys_3DHilight		Sys_3DHighlight			Sys_BTNHilight
+Sys_BTNHighlight	Sys_3DLight			Sys_3DShadow
+Sys_BTNShadow		Sys_ActiveBorder		Sys_ActiveCaption
+Sys_AppWorkspace	Sys_Background			Sys_Desktop
+Sys_BTNText		Sys_CaptionText			Sys_GrayText
+Sys_Highlight		Sys_HighlightText		Sys_InactiveBorder
+Sys_InactiveCaption	Sys_InactiveCaptionText		Sys_InfoBK
+Sys_InfoText		Sys_Menu			Sys_MenuText
+Sys_ScrollBar		Sys_Window			Sys_WindowFrame
+Sys_WindowText
+
+Les valeurs les plus utiles sont probablement :
+	Sys_Window	    Normal window background
+	Sys_WindowText      Normal window text
+	Sys_Highlight       Highlighted background
+	Sys_HighlightText   Highlighted text
+
+Ces couleurs supplémentaires sont également disponibles :
+    Gray, Grey, LightYellow, SeaGreen, Orange, Purple, SlateBlue, Violet.
+
+								*rgb.txt*
+De plus, des couleurs définies par un fichier "rgb.txt" peuvent être
+utilisées. Ce fichier est bien connu sous X11. En voici quelques lignes : >
+
+	255 218 185		   peach puff
+	205 133  63		   peru
+	255 181 197		   pink
+
+Ceci illustre la construction du fichier : d'abord les valeurs R, V et B
+sous forme de nombres décimaux, suivies du nom de la couleur. Les quatre
+champs sont séparés par des espaces.
+
+Vous pouvez récupérer le fichier rgb.txt de n'importe quelle distribution X11.
+Il est placé dans un répertoire tel que "/usr/X11R6/lib/X11/". Pour Vim, il
+doit être situé dans le répertoire $VIMRUNTIME. Ainsi, le fichier peut être
+trouvé avec "$VIMRUNTIME/rgb.txt".
+
+==============================================================================
+6. Sélecteurs et dialogues Windows		*gui-w32-dialogs* *dialog*
+
+L'IHM Graphique Win32 de Vim peut utiliser des composants habituels de Windows
+pour certaines opérations, tout comme la traditionnelle interface partagée
+avec la version console.
+
+
+6.1. DIALOGUES
+
+Les dialogues affichés par la famille "confirm" (c'est-à-dire l'option
+'confim', la commande |:confirm| et la fonction |confirm()|) sont graphiques,
+plutôt que textuels comme ceux utilisés dans d'autres versions. Le drapeau 'c'
+de l'option 'guioptions' permet de changer ceci.
+
+
+6.2. SÉLECTEURS DE FICHIERS
+
+En faisant précéder par ":browse" les commandes d'édition de fichier, un
+sélecteur de fichiers est ouvert pour vous permettre de choisir un fichier
+existant. Voir |:browse|.
+
+
+6.3. MENUS DÉTACHABLES
+	
+L'interface graphique Win32 émule les menus détachables de Motif. En haut de
+chaque menu, vous verrez un petit symbole graphique « Découper ici ». Cliquer
+dessus provoquera la création d'une fenêtre flottante présentant les mêmes
+entrées de menu dessus. L'accès à ce menu flottant se fait très exactement
+comme il se ferait avec l'original (y compris pour les sous-menus), mais sans
+avoir à atteindre la barre de menu à chaque fois.
+   Cela est surtout utile quand vous utilisez fréquemment une commande enfouie
+dans plusieurs sous-menus.
+Les menus détachables peuvent être placés où bon vous semble, et restent
+toujours juste au-dessus de la fenêtre principale de Vim. Vous pouvez vous en
+débarrasser en les fermant normalement ; bien entendu, ils sont également
+fermés lorsque vous quittez Vim.
+
+							*:tearoff* *:te*
+:te[aroff] {nom}	Détache le menu {nom}. Le menu nommé doit avoir au
+			moins une sous-entrée, mais n'a pas besoin
+			d'apparaître dans la barre de menus (voir
+			|win32-hidden-menus|).
+
+Exemples : >
+	:tearoff Fichier
+<		Provoque l'apparition du menu "Fichier" (s'il existe) comme
+		menu détaché. >
+
+	:amenu ]Toolbar.Make	:make<CR>
+	:tearoff ]Toolbar
+<		Crée un menu flottant qui n'existe pas dans la barre de menus
+		principale.
+
+NOTE : un menu qui commence par ']' n'est pas affiché.
+
+==============================================================================
+7. Divers						*gui-w32-various*
+
+							*gui-w32-printing*
+Le menu "Fichier/Imprimer" imprime le texte avec la coloration syntaxique,
+voir |:hardcopy|. Si vous voulez juste imprimer le texte brut et que vous avez
+une imprimante installée par défaut, ceci devrait également fonctionner : >
+	:w >>prn
+
+Vim supporte nombre de fonctionnalités standards de MS-Windows. Certaines
+d'entre elles sont détaillées ailleurs : voir |'mouse'|, |win32-hidden-menus|.
+
+							*drag-n-drop-win32*
+Vous pouvez faire glisser et déposer un ou plusieurs fichiers dans la fenêtre
+Vim, où ils seront ouverts normalement. Si vous maintenez la touche Maj
+enfoncée, Vim prend le répertoire du premier fichier déposé comme répertoire
+courant. Si vous maintenez la touche Ctrl enfoncée, Vim partagera toujours la
+fenêtre pour le fichier. Sinon, ceci n'a lieu que quand le tampon courant a
+été modifié.
+Vous pouvez également déposer un dossier, mais plutôt que d'ouvrir tous les
+fichiers de ce répertoire (ce qui n'est généralement pas ce que vous
+souhaitez), Vim le prend comme répertoire courant XXX.
+Si Vim est en cours d'édition d'une ligne de commande, les noms des
+fichiers et dossiers déposés sont insérés sous le curseur. Cela vous permet
+d'utiliser ces noms avec n'importe quelle commande Ex.
+
+							*:simalt* *:si*
+:si[malt] {touche}	Simule une pression sur {touche} pendant que la touche
+			Alt est enfoncée.
+			{absent de Vi} {uniquement pour les versions Win32}
+
+Normalement, Vim prend le contrôle de toutes les combinaisons Alt-<Touche>,
+pour augmenter le nombre de mappages possibles. Cela rentre en conflit avec
+l'utilisation standard de la touche Alt pour accéder aux menus.
+Une manière rapide de rétablir le comportement standard est de fixer l'option
+'winaltkey' à "yes". Toutefois, cela empêche tout mappage avec la touche Alt.
+Une autre manière consiste à fixer l'option 'winaltkey' à "menu". Les
+raccourcis du menu sont alors gérés par Windows, les autres combinaisons avec
+Alt peuvent servir pour les mappages. Toutefois, cela ne permet pas de
+dépendre de l'état courant.
+Pour cela, la commande ":simalt" permet à Vim (lorsque 'winaltkey' est
+différent de "yes") de simuler un appui sur la touche Alt comme Windows. Vous
+pouvez l'utiliser pour mapper des combinaisons de touches avec Alt (ou quoi
+que ce soit d'autre d'ailleurs) pour produire une action standard Windows.
+Voici quelques exemples : >
+
+	:map <M-f> :simalt f<CR>
+<		Alt-F provoque l'ouverture du menu "Fichier" (avec le Menu.vim
+		d'origine) en simulant l'appui sur les touches Alt et F. >
+	:map <M-Space> :simalt ~<CR>
+<		Alt-Espace ouvre le menu système de la fenêtre Vim.
+		NOTE : La commande ":simalt" utilise ~ pour représenter le
+		caractère <Espace>. >
+	:map <C-n> :simalt ~u<CR>
+<		Ctrl-N produit la séquence Alt-Espace suivi de Alt-U. Cela
+		réduit la fenêtre Vim via le menu système.
+
+						*intellimouse-wheel-problems*
+Avec une souris Intellimouse, quand l'utilisation de la molette provoque le
+blocage de la saisie de caractères, allez à :
+	Panneau de configuration - Souris - Molette - UniversalScrolling -
+	Exceptions [N.D.T : Merci à un sympathique utilisateur d'Intellimouse
+	de signaler au traducteur l'enchaînement exact.]
+
+Et ajouter gvim à la liste des applications. Ce problème n'apparaît qu'avec le
+pilote Intellimouse 2.2 et quand "Universal Scrolling" est activé.
+
+ vim:tw=78:sw=4:ts=8:ft=help:norl:
+

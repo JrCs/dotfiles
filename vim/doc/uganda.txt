@@ -1,0 +1,404 @@
+*uganda.txt*	Pour Vim version 6.2.  Dernière modification : 03 mar 2003
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+			    *uganda* *Uganda* *copying* *copyright* *license*
+EN BREF
+							*iccf* *ICCF*
+Vim est un « caritaticiel », ou logiciel caritatif. Vous pouvez l'utiliser
+librement et le copier autant que vous voulez, mais vous êtes encouragé à
+faire un don en faveur des orphelins d'Ouganda. Lisez |kcc| ci-dessous ou
+visitez le site Internet d'ICCF, disponible sur un de ces miroirs :
+
+	http://iccf-holland.org/
+	http://www.vim.org/iccf/
+	http://www.iccf.nl/
+
+La licence OPL ("Open Publication License") s'applique à l'intégralité de la
+documentation de Vim, voir |manual-copyright|.
+
+[N.D.T. : Le passage qui suit ayant valeur contractuelle -- et devant
+apparaître dans toute distribution de Vim -- est laissé en anglais. Une
+traduction française est proposée à la suite, à titre purement informatif.]
+
+
+=== begin of license ===
+
+VIM LICENSE
+
+I)  There are no restrictions on distributing unmodified copies of Vim except
+    that they must include this license text.  You can also distribute
+    unmodified parts of Vim, likewise unrestricted except that they must
+    include this license text.  You are also allowed to include executables
+    that you made from the unmodified Vim sources, plus your own usage
+    examples and Vim scripts.
+
+II) It is allowed to distribute a modified (or extended) version of Vim,
+    including executables and/or source code, when the following four
+    conditions are met:
+    1) This license text must be included unmodified.
+    2) The modified Vim must be distributed in one of the following five ways:
+       a) If you make changes to Vim yourself, you must clearly describe in
+	  the distribution how to contact you.  When the maintainer asks you
+	  (in any way) for a copy of the modified Vim you distributed, you
+	  must make your changes, including source code, available to the
+	  maintainer without fee.  The maintainer reserves the right to
+	  include your changes in the official version of Vim.  What the
+	  maintainer will do with your changes and under what license they
+	  will be distributed is negotiable.  If there has been no negotiation
+	  then this license, or a later version, also applies to your changes.
+	  The current maintainer is Bram Moolenaar <Bram@vim.org>.  If this
+	  changes it will be announced in appropriate places (most likely
+	  vim.sf.net, www.vim.org and/or comp.editors).  When it is completely
+	  impossible to contact the maintainer, the obligation to send him
+	  your changes ceases.  Once the maintainer has confirmed that he has
+	  received your changes they will not have to be sent again.
+       b) If you have received a modified Vim that was distributed as
+	  mentioned under a) you are allowed to further distribute it
+	  unmodified, as mentioned at I).  If you make additional changes the
+	  text under a) applies to those changes.
+       c) Provide all the changes, including source code, with every copy of
+	  the modified Vim you distribute.  This may be done in the form of a
+	  context diff.  You can choose what license to use for new code you
+	  add.  The changes and their license must not restrict others from
+	  making their own changes to the official version of Vim.
+       d) When you have a modified Vim which includes changes as mentioned
+	  under c), you can distribute it without the source code for the
+	  changes if the following three conditions are met:
+	  - The license that applies to the changes permits you to distribute
+	    the changes to the Vim maintainer without fee or restriction, and
+	    permits the Vim maintainer to include the changes in the official
+	    version of Vim without fee or restriction.
+	  - You keep the changes for at least three years after last
+	    distributing the corresponding modified Vim.  When the maintainer
+	    or someone who you distributed the modified Vim to asks you (in
+	    any way) for the changes within this period, you must make them
+	    available to him.
+	  - You clearly describe in the distribution how to contact you.  This
+	    contact information must remain valid for at least three years
+	    after last distributing the corresponding modified Vim, or as long
+	    as possible.
+       e) When the GNU General Public License (GPL) applies to the changes,
+	  you can distribute the modified Vim under the GNU GPL version 2 or
+	  any later version.
+    3) A message must be added, at least in the output of the ":version"
+       command and in the intro screen, such that the user of the modified Vim
+       is able to see that it was modified.  When distributing as mentioned
+       under 2)e) adding the message is only required for as far as this does
+       not conflict with the license used for the changes.
+    4) The contact information as required under 2)a) and 2)d) must not be
+       removed or changed, except that the person himself can make
+       corrections.
+
+III) If you distribute a modified version of Vim, you are encouraged to use
+     the Vim license for your changes and make them available to the
+     maintainer, including the source code.  The preferred way to do this is
+     by e-mail or by uploading the files to a server and e-mailing the URL.
+     If the number of changes is small (e.g., a modified Makefile) e-mailing a
+     context diff will do.  The e-mail address to be used is
+     <maintainer@vim.org>
+
+IV)  It is not allowed to remove this license from the distribution of the Vim
+     sources, parts of it or from a modified version.  You may use this
+     license for previous Vim releases instead of the license that they came
+     with, at your option.
+
+=== end of license ===
+
+
+=== début de la licence ===
+
+LICENCE VIM
+
+AVERTISSEMENT : Ceci est une traduction française littérale non officielle de
+la licence Vim. Son contenu n'a aucune valeur légale, seule la version
+anglaise originale de cette licence fixe les conditions de distribution de
+Vim. Son but est uniquement de permettre aux utilisateurs francophones de
+mieux comprendre les termes de la licence Vim.
+
+I)   La distribution de copies non modifiées de Vim est autorisée sans
+     restrictions, sous réserve que le texte de cette licence y soit toujours
+     inclus. Vous pouvez également distribuer des parties non modifiées de Vim
+     sans plus de restrictions, sous réserve que le texte de cette licence y
+     soit toujours inclus. Vous êtes également autorisé à inclure les
+     exécutables que vous produisez à partir des sources non modifiées de Vim,
+     ainsi que vos propres exemples et scripts Vim.
+
+II)  La distribution de versions modifiées (ou étendues) de Vim, incluant des
+     exécutables et/ou le code source, est autorisée si les quatre conditions
+     suivantes sont satisfaites :
+     1) Le texte non modifié de cette licence doit être inclus.
+     2) La version modifiée de Vim doit être distribuée de l'une des cinq
+	façons suivantes :
+	a) Si vous effectuez vous-même des changements à Vim, vous devez
+	   décrire clairement dans la distribution comment il est possible de
+	   vous contacter. Si le responsable vous demande (de quelque façon)
+	   une copie de la version modifiée de Vim que vous distribuez, vous
+	   devez mettre à sa disposition sans frais vos changements, code
+	   source inclus. Le responsable se réserve le droit d'inclure vos
+	   changements dans la version officielle de Vim. La façon dont vos
+	   changements seront utilisés par le responsable et la licence sous
+	   laquelle ils seront distribués sont négociables. S'il n'y a pas eu
+	   de négociation, cette licence, ou toute version ultérieure,
+	   s'applique également à vos changements. Le responsable actuel est
+	   Bram Moolenaar <Bram@vim.org>. Si cela change, une annonce sera
+	   faite aux endroits appropriés (très probablement sur vim.sf.net,
+	   www.vim.org et/ou comp.editors). S'il est complètement impossible
+	   de contacter le responsable, l'obligation de lui faire parvenir vos
+	   changements cesse. Lorsque le responsable a accusé réception de
+	   vos changements, il n'est plus nécessaire de les envoyer à nouveau.
+	b) Si vous avez reçu une version modifiée de Vim qui a été distribuée
+	   comme mentionné en a), vous êtes autorisé à en redistribuer des
+	   copies non modifiées comme mentionné en I). Si vous faites des
+	   changements supplémentaires, le texte de a) s'applique à ces
+	   changements.
+	c) Fournissez le code source des changements avec toutes les copies
+	   des versions modifiées de Vim que vous distribuez. Cela peut être
+	   fait sous la forme de différences (`diff`) contextuelles. Vous
+	   pouvez choisir la licence à utiliser pour le nouveau code que vous
+	   ajoutez. Les changements et leur licence ne doivent pas empêcher
+	   d'autres personnes d'apporter leurs propres changements à la
+	   version officielle de Vim.
+	d) Si vous possédez une version modifiée de Vim qui inclut les
+	   changements comme mentionné en c), vous pouvez la distribuer sans
+	   le code source des changements si les trois conditions suivantes
+	   sont satisfaites :
+	   - La licence qui s'applique aux changements vous autorise à
+	     distribuer les changements au responsable de Vim sans frais ni
+	     restrictions et autorise le responsable de Vim à inclure les
+	     changements dans la version officielle de Vim sans frais ni
+	     restrictions.
+	   - Vous conservez les changements pendant au moins trois ans après
+	     la dernière distribution de la version modifiée de Vim
+	     correspondante. Si le responsable ou quelqu'un à qui vous avez
+	     distribué la version modifiée de Vim vous demande (de quelque
+	     façon) les changements effectués dans cette période, vous devez
+	     les lui rendre disponibles.
+	   - Vous décrivez clairement dans la distribution comment vous
+	     contacter. Ces informations de contact doivent rester valables
+	     pendant au moins trois ans après la dernière distribution de la
+	     version modifiée de Vim correspondante, ou aussi longtemps que
+	     possible.
+	e) Lorsque la Licence Générale Publique GNU (LGP, alias GPL)
+	   s'applique aux changements, vous pouvez distribuer la version
+	   modifiée de Vim sous LGP GNU version 2 ou ultérieure.
+     3) Un message doit être ajouté, au moins dans la sortie de la commande
+	":version" et dans l'écran d'accueil, afin que l'utilisateur de la
+	version modifiée de Vim puisse voir qu'il s'agit d'une version
+	modifiée. Au cas où la distribution se ferait comme mentionné en 2)e),
+	l'ajout du message n'est requis que si cela ne rentre pas en conflit
+	avec la licence utilisée pour les changements.
+     4) Les informations de contact requises en 2)a) et 2)d) ne doivent pas
+	être supprimées ni changées, sauf corrections de la personne
+	concernée.
+
+III) Si vous distribuez une version modifiée de Vim, vous êtes encouragé à
+     utiliser la licence Vim pour vos modifications et à les rendre
+     disponibles au responsable, code source inclus. Le mieux pour cela est
+     d'envoyer un courriel, ou de déposer les fichiers concernés sur un
+     serveur et d'indiquer son adresse dans un courriel. Si le nombre de
+     modifications est peu important (p. ex., un Makefile modifié), l'envoi
+     des différences contextuelles par courriel suffira. L'adresse
+     électronique à utiliser est <maintainer@vim.org>.
+
+IV)  Il est interdit de supprimer ces restrictions de la distribution de tout
+     ou partie des sources de Vim, ou d'une version modifiée. Cette licence
+     peut être utilisée pour les versions antérieures de Vim à la place du
+     texte qui les accompagnait, à votre convenance.
+
+=== fin de la licence ===
+
+
+NOTES :
+
+- Si vous êtes satisfait par Vim, veuillez s'il vous plaît lire la suite de ce
+  fichier et considérer les moyens d'aider des enfants nécessiteux en Ouganda.
+
+- Selon Richard Stallman, la licence Vim est compatible avec la LGP GNU.
+  Quelques modifications mineures ont été apportées depuis cette vérification,
+  mais cela ne devrait pas faire de différence.
+
+- Si vous liez Vim avec une bibliothèque sous LGP GNU, toute distribution
+  ultérieure sera limitée par la LGP GNU. Même si vous n'avez effectué aucun
+  changement dans Vim.
+
+- Si un changement est inclus qui dépend de la LGP GNU, cela oblige à placer
+  tous les changements ultérieurs sous LGP GNU, ou licence compatible.
+
+- Si vous distribuez une version modifiée de Vim, vous pouvez inclure votre
+  nom et les informations de contact avec l'argument du script `configure`
+  "--with-modified-by", ou la macro MODIFIED_BY.
+
+==============================================================================
+Le "Kibaale Children's Centre"					*kcc*
+
+Le "Kibaale Children's Centre" (KCC) [« Centre pour Enfants de Kibaale »] est
+situé à Kibaale, une petite ville dans le sud de l'Ouganda, pays voisin de la
+Tanzanie, en Afrique de l'Est. Cette région est connue sous le nom de « Rakai
+District ». La population est principalement paysanne. Bien que les gens
+soient démunis, la récolte couvre leurs besoins en nourriture. Mais la région
+est ravagée par le SIDA, plus que partout ailleurs dans le monde. Certains
+pensent qu'il s'agit du foyer initial de la pandémie. Les estimations parlent
+de 10 à 30 % d'Ougandais contaminés par le VIH. À cause du décès des parents,
+les orphelins sont nombreux. Dans le « District », environ 60 000 enfants ont
+perdu au moins un parent, sur un total de 350 000. Et cette situation se
+déterriore encore.
+
+Les enfants ont besoin d'une aide importante. Le KCC travaille dur pour leur
+fournir le nécessaire en nourriture, soins médicaux et éducation : nourriture
+et soins pour contribuer à leur santé aujourd'hui, éducation pour qu'ils s'en
+chargent eux-même demain. Le KCC est initialement une association chrétienne,
+mais s'occupe de tous les enfants sans distinction de religion.
+
+La solution aux problèmes de ce pays réside dans l'éducation. Elle fut
+négligée par le passé avec le président Idi Amin et sous les années de guerre
+civile qui ont suivi. Aujourd'hui, la stabilité politique étant revenue,
+enfants et parents doivent apprendre à s'occuper d'eux-même et à se protéger
+pour enrayer les infections. Si l'aide va également aux malades et aux
+affamés, le but premier reste la prévention des maladies et l'enseignement des
+savoirs qui permettront de cultiver en suffisance une nourriture saine.
+
+La plupart des orphelins vivent dans des familles élargies, un oncle ou une
+soeur ainée s'occupant d'eux. En raison de la taille de ces foyers et de leur
+revenu faible (ou nul), les enfants sont chanceux s'ils peuvent manger une
+nourriture saine : vêtements, médicaments ou école leur sont souvent
+inaccessibles. Pour aider ces enfants dans le besoin, un programme de
+parrainage à été mis en place. Un enfant peut être financièrement assisté.
+Pour quelques dollars par mois, le KCC veille à ce qu'il ait accès aux choses
+indispensables, à sa santé, à ce qu'il aille à l'école et à tout ce qui est
+nécessaire qu'il soit entrepris pour lui ou dans sa famille.
+
+Mais aider seulement l'enfant ne suffit pas : c'est tout l'environnement où il
+grandit qu'il faut améliorer. Le KCC aide les écoles à développer leurs
+méthodes d'enseignement. Il existe à cet effet une école « modèle » au centre,
+où des instituteurs peuvent se former. Le personnel médical est entraîné,
+l'hygiène fait l'objet d'une attention particulière et chaque foyer est
+encouragé à construire des latrines convenables. J'ai aidé à mettre en place
+un site qui produit des dalles de ciment ; elles servent à la construction de
+latrines saines. Elles sont vendues à un prix inférieur à leur coût de
+revient.
+
+Il existe une petite clinique au centre, qui dispense des soins aux enfants
+et aux parents. Si nécessaire, le transport vers l'hôpital est assuré. Des
+programmes d'immunisation et de première assistance sont mis en place
+lorsqu'une épidémie se déclare (la rougeole et le choléra ont notamment posé
+problème).
+
+De l'été 1994 à l'eté 1995, j'ai passé une année entière au centre, comme
+volontaire. J'ai aidé à l'agrandissement du centre, en travaillant dans le
+domaine de l'eau et de la situation sanitaire. J'ai pu constater ainsi que
+l'action du KCC était efficace. Aujourd'hui de retour aux Pays-Bas, j'aimerais
+continuer à soutenir le KCC. Pour cela, je réunis des fonds et j'organise le
+programme de parrainage. Pour apporter votre contribution, merci de considérer
+une des possibilités suivantes :
+
+1. Parrainer un enfant à l'école primaire : 17 euros par mois (ou plus) ;
+2. Parrainer un enfant au collège : 25 euros par mois (ou plus) ;
+3. Parrainer la clinique : n'importe quelle somme (par mois ou par trimestre) ;
+4. Envoyer un don unique.
+
+Par rapport à d'autres organisations de parrainage d'enfants, la
+thésaurisation est très faible (ceci parce que l'argent va directement au
+centre). Moins de 5 % est consacré à l'administration, le KCC restant une
+organisation de petite échelle basée sur le volontariat. Si vous désirez
+parrainer un enfant, vous devrez vous engager pour au moins une année.
+
+Comment être sûr que votre argent sera bien employé ? Tout d'abord, je vous
+apporte ma garantie en tant qu'auteur de Vim. Je connais personellement les
+gens qui travaillent au centre et j'ai confiance en eux. De plus, le centre
+est co-financé et suivi par World Vision, Save the Children Fund et
+International Child Care Fund. Enfin, le centre est visité environ une fois
+par an (à nos propres frais) pour en enregistrer les progrès. Je m'y suis
+rendu personnellement en 1996, 1998, 2000 et 2001. Les rapports de ces visites
+sont disponibles sur le site Internet de l'ICCF.
+
+[N.D.T. : Les listes d'adresses et de coordonnées qui suivent jusqu'à la fin
+du fichier sont _a priori_ à usage exclusivement anglophone.]
+
+Pour toute question complémentaire, envoyez-moi un courriel : <Bram@vim.org>.
+
+L'adresse du centre est :
+			Kibaale Children's Centre
+			p.o. box 1658
+			Masaka, Uganda, East Africa
+
+Pour envoyer vos dons :
+
+Consultez le site Internet d'ICCF pour les dernières informations ! Voir
+|iccf| pour l'adresse du site.
+
+
+ÉUA et Canada : Contactez "Kibaale Children's Fund" (KCF) à Surrey, Canada.
+		Ils s'occupent des parrainages canadiens pour les enfants de
+		Kibaale. Vous pouvez leur envoyer directement un don unique.
+		Envoyez-moi une note pour me permettre de déterminer la part
+		des dons due à Vim, S.V.P. Vous pouvez demander des
+		informations sur le parrainage au KCF.
+			Kibaale Children's Fund c/o Pacific Academy
+			10238-168 Street
+			Surrey, B.C. V4N 1Z4
+			Canada
+			Tél : 604 581 5353
+		Si vous faites une donation au KCF, vous recevrez un reçu que
+		vous pourrez soumettre avec votre feuille d'impôt
+		(conformément au "Free Trade Agreement", les reçus délivrés
+		par une organisation enregistrée au Canada sont pleinement
+		acceptés par l'IRS aux ÉUA, moyennant quelques conditions).
+
+Pays-Bas :	Transférez votre don sur le compte de « Stichting ICCF
+		Holland » à Venlo. Vous pourrez bénéficier d'une déduction
+		fiscale (si vous résidez aux Pays-Bas) !
+			Postbank, n° 4548774
+
+Allemagne :	Il est possible de faire des dons qui permettent une déduction
+		fiscale. Consultez le site Internet d'ICCF pour les dernières
+		informations :
+			http://iccf-holland.org/germany.html
+
+Monde :		Envoyez un mandat-poste. Cela devrait être possible depuis
+		n'importe quel pays, souvent depuis un bureau de poste.
+		Utilisez ce nom (qui est celui qui figure sur mon passeport) :
+		« Abraham Moolenaar ». Utilisez l'euro comme devise si
+		possible.
+
+Europe :    	Effectuez un tranfert bancaire si possible. Votre banque
+		devrait disposer d'un formulaire pour cela. Voir « Autres »
+		ci-dessous pour le code SWIFT et l'IBAN.
+		Les autres méthodes devraient également marcher. Demandez des
+		informations sur le parrainage.
+
+Carte de crédit :
+		Vous pouvez utiliser PayPal pour envoyer de l'argent avec une
+		carte de crédit. C'est le système de paiement le plus répandu
+		sur Internet. Il est vraiment simple à utiliser. Suivez ce
+		lien pour plus d'informations :
+			https://www.paypal.com/affil/pal=Bram%40moolenaar.net
+		L'adresse électronique où envoyer l'argent est :
+			Bram@iccf-holland.org
+		Pour les sommes supérieures à 150 $, l'envoi d'un chèque est
+		préférable.
+
+Autres : 	Transférez vers un de ces comptes si possible :
+		    Postbank, compte 4548774
+				Code SWIFT : INGB NL 2A
+				IBAN : NL47 PSTB 0004 5487 74
+			sous le nom « stichting ICCF Holland », Venlo.
+		Si cela ne marche pas, essayez :
+		    Rabobank Venlo, compte 3765.05.117
+				Code SWIFT : RABO NL 2U
+			sous le nom de « Bram Moolenaar », Venlo.
+		Sinon, envoyez un chèque en euros ou en dollars (USD) à
+		l'adresse ci-dessous XXX. Somme minimale : 70 $. (Ma banque
+		n'accepte pas de sommes inférieures pour les chèques
+		étrangers, désolé !)
+
+Adresse où vous pouvez envoyer des chèques :
+			stichting ICCF Holland
+			Bram Moolenaar
+			Clematisstraat 30
+			5925 BE  Venlo
+			The Netherlands
+
+ vim:tw=78:ts=8:ft=help:norl:

@@ -1,0 +1,296 @@
+*if_pyth.txt*   For Vim version 6.2c.  Dernière modification : 2003 mai 22 
+
+
+		   MANUEL de RÉFÉRENCE VIM - par Paul Moore
+
+
+L'interface Python de Vim				*python* *Python*
+
+1. Les commandes	|python-commands|
+2. Le module vim	|python-vim|
+3. Les objets buffer	|python-buffer|
+4. Les objets range	|python-range|
+5. Les objets window	|python-window|
+
+{Vi n'a aucune de ces commandes}
+
+L'interface Python n'est disponible que si Vim a été compilé avec la
+fonctionnalité |+python|.
+
+==============================================================================
+1. Les commandes					*python-commands*
+
+					*:python* *:py* *E205* *E263* *E264*
+:[plage]py[thon] {instr}
+		    Exécute une instruction Python {instr}.
+
+:[plage]py[thon] << {balisefin}
+{script}
+{balisefin}
+		    Exécute un script Python {script}
+		    NOTE : Cette commande ne fonctionne pas si la
+		    fonctionnalité Python n'a pas été activée lors de la
+		    compilation. Pour éviter des erreurs, voir |script-here|.
+
+{balisefin} ne doit être précédé d'AUCUN espace blanc. Si {balisefin} est omis
+après le "<<", un point '.' doit être utilisé après {script}, comme pour les
+commandes |:append| et |:insert|.
+Cette forme de commandes |:python| est principalement utile pour inclure du
+code Python dans les scripts Vim.
+
+Exemple : >
+	function! IcecreamInitialize()
+	python << EOF
+	class GlaceALaFraise:
+		def __call__(self):
+			print 'Mangez-moi'
+	EOF
+	endfunction
+<
+NOTE : Python est très sensible à l'indentation. Par conséquent, faites très
+attention à ce que les lignes contenant "class" et "EOF" n'aient aucune
+indentation.
+
+							*:pyfile* *:pyf*
+:[plage]pyf[ile] {fichier}
+		    Exécute le script Python contenu dans {fichier}.
+		    {absent de Vi}
+
+Ces deux dernières commandes font essentiellement la même chose : elles
+exécutent un morceau de code Python, avec la « plage courante » |python-range|
+fixée à la plage spécifiée.
+
+Dans le cas de ":python", le code à exécuter est inclus dans la ligne de
+commande. Dans le cas de ":pyfile", le code à exécuter est contenu dans le
+fichier donné en argument.
+
+Il n'est pas possible d'utiliser les commandes Python dans le bac-à-sable
+|sand-box|.
+
+Voici quelques exemples :				*python-examples*  >
+
+	:python from vim import *
+	:python from string import upper
+	:python current.line = upper(current.line)
+	:python print "Salut"
+	:python str = current.buffer[42]
+<
+(NOTE : les modifications - telles que les imports - persistent d'une commande
+à l'autre, exactement comme dans l'interpréteur Python.)
+
+==============================================================================
+2. Le module vim					*python-vim*
+
+Le code Python accède à toutes les fonctionnalités Vim via le module "vim" (à
+une exception près, voir plus loin |python-output|). Le module "vim" met à
+disposition deux méthodes, trois constantes et un objet erreur.
+
+Résumé >
+	print "Salut"			# affiche un message
+	vim.command(cmd)		# exécute une commande Ex
+	w = vim.windows[n]		# récupère la fenêtre "n"
+	cw = vim.current.window		# récupère la fenêtre courante
+	b = vim.buffers[n]		# récupère le tampon "n"
+	cb = vim.current.buffer		# récupère le tampon courant
+	w.height = lines		# fixe la hauteur de la fenêtre
+	w.cursor = (row, col)		# fixe la position du curseur
+	pos = w.cursor			# récupère un tuple (row, col)
+	name = b.name			# récupère le nom du fichier 
+					# associé au tampon
+	line = b[n]			# récupère une ligne du tampon
+	lines = b[n:m]			# récupère une liste de lignes
+	num = len(b)			# récupère le nombre de lignes
+	b[n] = str			# insère une ligne dans le tampon
+	b[n:m] = [str1, str2, str3]	# insère plusieurs lignes d'un coup
+	del b[n]			# efface une ligne
+	del b[n:m]			# efface plusieurs lignes
+>
+
+MÉTHODES
+
+vim.command(str)					*python-command*
+	Exécute la commande Vim "str" (en mode Ex). Retourne None.
+	Exemples : >
+	    	vim.command("set tw=72")
+		vim.command("%s/aaa/bbb/g")
+<	La définition suivante exécute une commande en mode Normal : >
+		def normal(str):
+			vim.command("normal "+str)
+		# Remarquez l'utilisation des apostrophes simples pour
+		# délimiter une chaîne contenant des doublea-apostrophes.
+		normal('"a2dd"aP')
+<
+vim.eval(str)						*python-eval*
+	Évalue l'expression "str" en utilisant l'évaluateur interne de Vim
+	(voir |expression|). Retourne le résultat sous la forme d'une chaîne.
+	Exemples : >
+	    	text_width = vim.eval("&tw")
+		str = vim.eval("12+12")		# NB : le résultat est une
+						# chaîne ! utilisez
+						# string.atoi() pour la
+						# convertir en nombre.
+<
+
+OBJET ERREUR						*python-error*
+
+vim.error
+	Lorsqu'il rencontre une erreur dans Vim, Python lève une exception de
+	type vim.error.
+	Exemple >
+	    	try:
+			vim.command("put a")
+		except vim.error:
+			# Le registre a est vide
+<
+
+CONSTANTES
+
+	NOTE : ce ne sont pas réellement des constantes - vous pourriez les
+	réassigner. Mais ce serait stupide, car vous perdriez l'accès aux
+	objets Vim qu'elles référençaient.
+
+vim.buffers						*python-buffers*
+	Un objet séquence donnant accès la liste des tampons de Vim. Cet objet
+	supporte les opérations suivantes : >
+	   	b = vim.buffers[i]	# Accès par index (en lecture seule)
+		b in vim.buffers	# Test d'appartenance
+		n = len(vim.buffers)	# Nombre d'éléments
+		for b in vim.buffers:	# Accès séquentiel
+< 
+vim.windows						*python-windows*
+	Un objet séquence donnant accès à la liste des fenêtres de Vim. Cet
+	objet supporte les opérations suivantes : >
+	    	w = vim.windows[i]	# Accès par index (en lecture seule)
+		w in vim.windows	# Test d'appartenance 
+		n = len(vim.windows)	# Nombre d'éléments 
+		for w in vim.windows:	# Accès séquentiel
+<
+vim.current						*python-current*
+	Un objet donnant accès (via des attributs spécifiques) à divers objets
+	« courants » disponibles dans Vim :
+		vim.current.line	La ligne courante (Lect/Écr)	String
+		vim.current.buffer	Le tampon courant (Lect)	Buffer
+		vim.current.window	La fenêtre courante (Lect)	Window
+		vim.current.range	La plage courante (Lect)	Range
+
+	Le dernier objet mérite une petite explication. Lorsqu'une plage a été
+	spécifiée avec les commandes ":python" et ":pyfile", cette plage de
+	lignes devient « la plage courante ». Une plage est un peu comme un
+	tampon, mais dont tous les accès sont restreints à un sous-ensemble de
+	lignes. Voir |python-range| pour plus de détails.
+
+
+SORTIE VENANT DE PYTHON				    	*python-output*
+
+	Vim affiche toutes les sorties d'un code Python dans la zone de
+	messages de Vim. Les sortie normales apparaissent comme des messages
+	d'information, et les erreurs comme des messages d'erreur.
+
+	En terme de mise en oeuvre, cela signifie que toutes les sorties vers
+	sys.stdout apparaissent comme des messages d'information (y compris les
+	sorties de l'instruction print), et que toutes les sorties vers
+	sys.stderr apparaissent comme des messages d'erreur (y compris le
+	traçage des erreurs)
+	
+							*python-input*
+	Les entrées (via sys.stdin, input() et raw_input() y compris) ne sont
+	pas supportées, et peuvent provoquer un plantage du programme. Il
+	faudrait vraisemblablement corrigé cela.
+
+==============================================================================
+3. Les objets buffer					*python-buffer*
+
+Les objets "buffer" représentent les tampons de vim. Vous pouvez les obtenir
+de différentes manières :
+	- via vim.current.buffer (|python-current|) ;
+	- par indexation de vim.buffers (|python-buffers|) ;
+	- par l'attribut "buffer" d'une fenêtre (|python-widow|).
+
+Les objets buffer ont un attribut - name - en lecture seule, c'est le nom
+complet du fichier associé au tampon. Ils possèdent aussi trois méthodes
+(append, mark, et range ; voir plus loin).
+
+Vous pouvez aussi voir les objets buffer comme des objets de type séquence.
+Dans ce contexte, ils agissent comme s'ils étaient des listes (oui, ils sont
+mutables) de chaînes, chaque élément étant une ligne du tampon. Toutes les
+opérations usuelles sur des séquences, y compris l'indexation, l'affectation
+par indice, les intervalles et affectation par intervalles, fonctionnent comme
+vous pourriez vous y attendre. NOTE : le résultat d'une indexation (resp.
+intervalle) d'un tampon est une chaîne (resp. liste de chaînes). Cela a une
+conséquence inhabituelle - b[:] est différent de b. En particulier,
+"b[:] = None" efface tout le tampon, tandis que "b = None" met simplement à
+jour la variable b, sans aucun effet sur le tampon.
+
+Les indices de tampon commencent à zéro, comme habituellement en Python. Cela
+diffère du décompte des lignes de Vim, qui commence à 1. Cette remarque est
+particulièrement pertinente lorsqu'on manipule des marques (voir plus loin) qui
+utilisent quant à elles le décompte de Vim.
+
+Les méthodes d'un objet buffer sont :
+	b.append(str)	Ajoute une ligne au tampon
+	b.append(list)	Ajoute une liste de lignes au tampon
+			NOTE : la manière de fournir une liste de chaînes à
+			cette méthode diffèrent des méthodes équivalentes des
+			objets internes de type liste de Python.
+	b.mark(nom)	Retourne un tuple (row,col) représentant la position
+			de la marque nommée (peut aussi accéder aux marques
+			[]"<>)
+	b.range(s,e)	Retourne un objet range (voir |python-range| qui
+			représentent la partie du tampon courant comprise
+			entre les lignes numérotées s et e (incluse).
+
+Exemples (en supposant que b est le tampon courant) >
+	b[0] = "Salut !!!"	# remplace la première ligne
+	b[:] = None		# efface tout le contenu du tampon
+	del b[:]		# efface tout le contenu du tampon (comme
+				# ci-dessus)
+	b[0:0] = [ "ligne" ]	# ajoute une ligne en haut du tampon
+	del b[2]		# efface une ligne (la troisième)
+	b.append("en bas")	# ajoute une ligne en bas du tampon
+	n = len(b)		# nombre de lignes
+	(row,col) = b.mark('a') # marque nommée
+	r = b.range(1,5)	# une partie du tampon
+<
+==============================================================================
+4. Les objets range					*python-range*
+
+Les objets "range" représentent une partie d'un tampon Vim. Vous pouvez les
+obtenir de plusieurs manières :
+	- via vim.current.range (|python-current|) ;
+	- grâce a la méthode range() d'un objet buffer (|python-buffer|).
+
+Les opérations d'un objet range sont pratiquement identiques à celles d'un
+objet buffer. Toutefois, toutes les opérations sont limitées aux lignes
+contenues dans la plage correspondante (cet ensemble de lignes peut bien sûr
+être modifié à la suite d'affectations par intervalle, d'effacements de
+lignes ou de l'utilisation de la méthode range.append()).
+
+A la différence des tampons, les plages n'ont pas d'attribut "name", ni de
+méthode mark() ou range(). Elles disposent en revanche de la méthode append(),
+qui ajoute des lignes à la fin de la plage.
+
+==============================================================================
+5. Les objets window					*python-window*
+
+Les objets "window" représentent les fenêtres de Vim. Vous pouvez les obtenir
+de différentes manières :
+	- via vim.current.window (|python-current|) ;
+	- en indexant vim.windows (|python-windows|).
+
+Vous ne pouvez manipuler les objets window que par leurs attributs. Ils n'ont
+pas de méthode, ni l'interface des objets de type séquence, ni même d'autres
+interfaces.
+
+Les attributs d'une fenêtre sont :
+	buffer	(lecture seule)		Le tampon affiché dans cette fenêtre
+	cursor	(lecture/écriture)	La position courante du curseur dans
+					la fenêtre. C'est un tuple (row,col)
+	height	(lecture/écriture)	La hauteur de la fenêtre en lignes
+	width	(lecture/écriture)	La largeur de la fenêtre, en colonnes
+
+L'attribut height est accessible en écriture uniquement si l'écran est partagé
+horizontalement. L'attribut width est accessible en écriture uniquement si
+l'écran est partagé verticalement.
+    
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:

@@ -1,0 +1,968 @@
+*autocmd.txt*   Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+Commandes automatiques					*autocommand*
+
+Ce sujet est abordé dans la section |40.3| du Manuel de l'utilisateur.
+
+1. Introduction			    |autocmd-intro|
+2. Définir des autocommandes	    |autocmd-define|
+3. Supprimer des autocommandes	    |autocmd-remove|
+4. Lister des autocommandes	    |autocmd-list|
+5. Événements			    |autocmd-events|
+6. Motifs			    |autocmd-patterns|
+7. Groupes			    |autocmd-groups|
+8. Exécuter des autocommandes	    |autocmd-execute|
+9. Utiliser des autocommandes	    |autocmd-use|
+
+{absent de Vi}
+
+==============================================================================
+1. Introduction						*autocmd-intro*
+
+Vous pouvez spécifier des commandes qui s'exécuteront automatiquement lors de
+la lecture ou de l'écriture d'un fichier, à l'entrée ou à la sortie d'un
+tampon ou d'une fenêtre, et lorsque vous quitterez Vim. Par exemple, vous
+pouvez créer une autocommande pour activer l'option 'cindent' pour tous les
+fichiers correspondant à "*.c". Vous pouvez aussi utiliser les autocommandes
+pour mettre en oeuvre des fonctionnalités avancées, comme l'édition de
+fichiers compactés (voir |gzip-example|). Le meilleur endroit pour mettre vos
+autocommandes est votre fichier vimrc ou exrc.
+
+							*E203* *E204* *E143*
+ATTENTION ! L'utilisation des autocommandes se révèle particulièrement
+puissante et peut engendrer des effets de bord indésirables. Veillez à ce
+qu'elles n'endommagent pas votre texte.
+- Il est plus prudent de faire quelques essais avec la copie d'un fichier en
+  premier lieu. Par exemple : si vous utilisez des autocommandes pour
+  décompacter un fichier quand vous commencez à l'éditer, assurez-vous que les
+  autocommandes chargées de le compacter quand vous l'enregistrez fonctionnent
+  correctement.
+- Vous aurez peut-être à faire face à des erreurs survenant en cours
+  d'exécution (p. ex., disque plein). Vim devrait être capable d'annuler les
+  changements opérés sur le tampon dans la plupart des cas, mais vous devrez
+  nettoyer les autres fichiers à la main (p. ex., compacter un fichier qui a
+  été décompacté).
+- Si les événements BufRead* vous autorisent à éditer un fichier compacté, il
+  devrait en être de même pour les événements FileRead* (cela peut autoriser
+  le recouvrement dans certains cas). Essayez d'utiliser les mêmes
+  autocommandes pour les événements File* et Buf* quand c'est possible.
+
+La fonctionnalité |+autocmd| n'est incluse que si elle n'a pas été désactivée
+lors de la compilation.
+
+==============================================================================
+2. Définir des autocommandes				*autocmd-define*
+
+NOTE : La commande ":autocmd" ne peut pas être suivie par une autre commande,
+car le '|' est considéré comme une partie de la commande.
+
+							*:au* *:autocmd*
+:au[tocmd] [groupe] {even} {motif} [nested] {cmd}
+			Ajoute {cmd} à la liste des commandes que Vim
+			exécutera automatiquement à l'{even}ement pour un
+			fichier correspondant à {motif}. Vim ajoute toujours
+			la commande {cmd} après les autocommandes existantes,
+			les autocommandes sont ainsi exécutées dans l'ordre où
+			elles sont données.
+			Voir |autocmd-nested| pour [nested].
+
+NOTE : Les caractères spéciaux (p. ex., "%" ou "<cword>") dans les arguments
+de ":autocmd" ne sont pas étendus lorsque l'autocommande est définie. Ils le
+seront quand l'{even}ement sera reconnu, et la {cmd} exécutée. La seule
+exception à cette règle est "<sfile>", qui est étendu lorsque l'autocommande
+est définie. Exemple : >
+
+	:au BufNewFile,BufRead *.html so <sfile>:h/html.vim
+
+Ici, Vim étend <sfile> au nom du fichier contenant cette ligne.
+
+Si votre fichier vimrc est sourcé deux fois, les autocommandes qu'il contient
+apparaîtront deux fois. Pour éviter ceci, placez cette commande dans votre
+fichier vimrc, avant de définir les autocommandes : >
+
+	:autocmd!	" Supprime TOUTES les autocmd pour le groupe courant.
+
+Si vous ne souhaitez pas supprimer toutes les autocommandes, vous pouvez à la
+place utiliser une variable pour tester si Vim a déjà défini les autocommandes
+ou pas : >
+
+	:if !exists("autocommandes_incluses")
+	:  let autocommandes_incluses = 1
+	:  au ...
+	:endif
+
+Si l'argument [groupe] n'est pas donné, Vim utilise le groupe courant (comme
+défini avec ":augroup") ; sinon, Vim utilise le groupe donné par [groupe].
+   NOTE : [groupe] doit avoir été défini auparavant. Vous ne pouvez pas
+définir un nouveau groupe avec ":au groupe ..." ; utilisez ":augroup" pour
+cela.
+
+Lors de tests d'autocommandes, l'option 'verbose' vous sera probablement
+utile : >
+	:set verbose=9
+Ceci indique à Vim d'afficher les autocommandes au fur et à mesure qu'il les
+exécute.
+
+Si vous définissez une autocommande dans un script, elle sera capable
+d'appeler des fonctions locales au script et d'utiliser des mappages locaux au
+script. Quand l'événement est déclenché et la commande exécutée, elle sera
+lancée dans le contexte du script dans lequel elle a été définie. Cela pose
+problème lorsque |<SID>| est utilisé dans une commande.
+
+Lors de l'exécution des commandes, les messages émis par une commande
+effaceront les messages précédents. Cela diffère de l'exécution manuelle des
+commandes. La plupart du temps, l'écran ne sera pas décalé vers le haut, il
+n'y aura donc pas d'invite Appuyez-sur-entrée. Néanmoins, cela peut se
+produire si une commande renvoie deux messages.
+
+==============================================================================
+3. Supprimer des autocommandes				*autocmd-remove*
+
+:au[tocmd]! [groupe] {even} {motif} [nested] {cmd}
+			Supprime toutes les autocommandes associées à {even}
+			et {motif}, et ajoute la commande {cmd}. Voir
+			|autocmd-nested| pour [nested].
+
+:au[tocmd]! [groupe] {even} {motif}
+			Supprime toutes les autocommandes associées à {even}
+			et {motif}.
+
+:au[tocmd]! [groupe] * {motif}
+			Supprime toutes les autocommandes associées à {motif}
+			pour tous les événements.
+
+:au[tocmd]! [groupe] {even}
+			Supprime TOUTES les autocommandes pour {even}.
+
+:au[tocmd]! [groupe]	Supprime TOUTES les autocommandes.
+
+Si l'argument [groupe] n'est pas donné, Vim utilise le groupe courant (comme
+défini avec ":augroup") ; sinon, Vim utilise le groupe donné par [groupe].
+
+==============================================================================
+4. Lister des autocommandes		    		*autocmd-list*
+
+:au[tocmd] [groupe] {even} {motif}
+			Affiche toutes les autocommandes associées à {even}
+			et {motif}.
+
+:au[tocmd] [groupe] * {motif}
+			Affiche toutes les autocommandes associées à {motif}
+			pour tous les événements.
+
+:au[tocmd] [groupe] {even}
+			Affiche toutes les autocommandes pour {even}.
+
+:au[tocmd] [groupe]	Affiche toutes les autocommandes.
+
+Si l'argument [groupe] est donné, Vim ne listera que les autocommandes pour
+[groupe] ; sinon, Vim listera les autocommandes pour TOUS les groupes.
+   NOTE : Le comportement de cet argument est différent quand vous définissez
+ou supprimez des autocommandes.
+
+==============================================================================
+5. Événements					*autocmd-events* *E215* *E216*
+
+				    *autocommand-events* *{event}* *{even}*
+Vim reconnaît les événements suivants. Vim ignore la casse du nom des
+événements (p. ex., vous pouvez écrire « BUFread » ou « bufread » au lieu de
+« BufRead »).
+
+							*BufNewFile*
+BufNewFile		Quand un fichier qui n'existe pas commence à être
+			édité. Peut servir à lire dans un squelette de
+			fichier.
+						*BufReadPre* *E200* *E201*
+BufReadPre		Quand un nouveau fichier commence à être édité, avant
+			la lecture du fichier dans le tampon. Non utilisé si
+			le fichier n'existe pas.
+BufReadPost	ou				*BufRead* *BufReadPost*
+BufRead			Quand un nouveau fichier commence à être édité, après
+			la lecture du fichier dans le tampon, avant
+			l'exécution des lignes de mode. Voir |BufWinEnter| si
+			vous avez besoin d'effectuer quelque chose après
+			l'exécution des lignes de mode.
+			Ceci ne fonctionne PAS pour ":r fichier". Non utilisé
+			si le fichier n'existe pas. Également utilisé après le
+			recouvrement réussi d'un fichier.
+							*BufReadCmd*
+BufReadCmd		Avant de commencer l'édition d'un nouveau tampon.
+			Devrait lire le tampon dans le fichier. |Cmd-event|
+							*BufFilePre*
+BufFilePre		Avant de changer le nom du tampon courant avec les
+			commandes ":file" ou ":saveas".
+							*BufFilePost*
+BufFilePost		Après avoir changé le nom du tampon courant avec les
+			commandes ":file" ou ":saveas".
+							*FileReadPre*
+FileReadPre		Avant la lecture d'un fichier avec un ":read".
+							*FileReadPost*
+FileReadPost		Après la lecture d'un fichier avec une commande
+			":read".
+			NOTE : Vim fixe les marques '[ et '] aux premières et
+			dernières lignes de la lecture. Ceci peut être utilisé
+			pour opérer sur les lignes qui viennent juste d'être
+			lues.
+							*FileReadCmd*
+FileReadCmd		Avant la lecture d'un fichier avec une commande
+			":read". Devrait effectuer la lecture du fichier.
+			|Cmd-event|
+							*FilterReadPre* *E135*
+FilterReadPre		Avant la lecture d'un fichier depuis une commande de
+			filtre. Vim cherche une correspondance du motif de
+			fichier avec le nom du tampon courant, et non avec le
+			nom du fichier temporaire en sortie de la commande de
+			filtre.
+							*FilterReadPost*
+FilterReadPost		Après la lecture d'un fichier depuis une commande de
+			filtre. Vim cherche une correspondance du motif de
+			fichier avec le nom du tampon courant, comme avec
+			FilterReadPre.
+							*FileType*
+FileType		Quand l'option 'filetype' a été fixée.
+			<afile> peut être utilisé pour donner le nom du
+			fichier où cette option a été fixée, et <amatch> pour
+			la nouvelle valeur de 'filetype'. Voir |filetypes|.
+							*Syntax*
+Syntax			Quand l'option 'syntax' a été fixée.
+			<afile> peut être utilisé pour donner le nom du
+			fichier où cette option a été fixée, et <amatch> pour
+			la nouvelle valeur de 'syntax'. Voir |:syn-on|.
+							*StdinReadPre*
+StdinReadPre		Avant la lecture de stdin dans le tampon. Utilisé
+			uniquement si l'argument '-' a été donné à Vim au
+			démarrage |--|.
+							*StdinReadPost*
+StdinReadPost		Après la lecture de stdin dans le tampon, avant
+			l'exécution des lignes de mode. Utilisé uniquement si
+			l'argument '-' a été donné à Vim au démarrage |--|.
+BufWritePre	ou				*BufWrite* *BufWritePre*
+BufWrite		Avant l'écriture du tampon entier dans un fichier.
+							*BufWritePost*
+BufWritePost		Après l'écriture du tampon entier dans un fichier
+			(devrait annuler les commandes pour BufWritePre).
+							*BufWriteCmd*
+BufWriteCmd		Avant l'écriture du tampon entier dans un fichier.
+			Devrait enregistrer le fichier et désactiver
+			'modified' si cela a réussi. Ne devrait pas modifier le
+			tampon. |Cmd-event|
+							*FileWritePre*
+FileWritePre		Avant l'écriture dans un fichier, si ce n'est pas le
+			tampon entier qui est écrit.
+							*FileWritePost*
+FileWritePost		Après l'écriture dans un fichier, si ce n'est pas le
+			tampon entier qui est écrit.
+							*FileWriteCmd*
+FileWriteCmd		Avant l'écriture dans un fichier, si ce n'est pas le
+			tampon entier qui est écrit. Devrait effectuer
+			l'écriture dans le fichier. Ne devrait pas modifier le
+			tampon. |Cmd-event|
+							*FileAppendPre*
+FileAppendPre		Avant l'ajout dans un fichier.
+							*FileAppendPost*
+FileAppendPost		Après l'ajout dans un fichier.
+							*FileAppendCmd*
+FileAppendCmd		Avant l'ajout dans un fichier. Devrait effectuer
+			l'ajout dans le fichier. |Cmd-event|
+							*FilterWritePre*
+FilterWritePre		Avant l'écriture dans un fichier par une commande de
+			filtre, ou une comparaison (mode diff).
+			Vim cherche une correspondance du motif de fichier
+			avec le nom du tampon courant, et non avec le nom du
+			fichier temporaire en sortie de la commande de filtre.
+	    						*FilterWritePost*
+FilterWritePost		Après l'écriture dans un fichier par une commande de
+			filtre, ou une comparaison (mode diff).
+			Vim cherche une correspondance du motif de fichier
+			avec le nom du tampon courant, comme avec
+			FilterWritePre.
+							*FileChangedShell*
+FileChangedShell	Quand Vim s'aperçoit que la date de modification d'un
+			fichier a changé depuis que son édition est commencée.
+			|timestamp|
+			Déclenché le plus souvent après l'exécution d'une
+			commande shell, mais également avec une commande
+			|:checktime| ou lorsque Vim regagne le focus de la
+			souris.
+			Cette autocommande est déclenchée pour chaque fichier
+			modifié. Elle n'est pas utilisée quand 'autoread' est
+			activé et que le tampon n'a pas été modifié. Si une
+			autocommande FileChangedShell est présente, le message
+			d'avertissement et l'invite correspondants ne sont pas
+			donnés. C'est utile pour recharger des fichiers
+			concernés qui sont affectés par une seule commande.
+			NOTE : Lorsque cette autocommande est exécutée, le
+			tampon courant "%" peut être différent du tampon qui a
+			été modifié "<afile>".
+			NOTE : *E246* : Les commandes ne doivent pas modifier
+			le tampon courant, basculer vers un autre tampon ou
+			supprimer un tampon.
+			NOTE : Cet événement ne peut pas être imbriqué, pour
+			éviter une boucle sans fin. Cela signifie que lors de
+			l'exécution de commandes pour l'événement
+			FileChangedShell, aucun autre événement
+			FileChangedShell ne sera déclenché.
+							*FileChangedRO*
+FileChangedRO		Avant d'effectuer un premier changement dans un
+			fichier en lecture seule. Peut être utilisé pour
+			automatiser un "checkout" sur un système de gestion de
+			versions. Non déclenché si le changement est provoqué
+			par une autocommande.
+			ATTENTION ! Cet événement est déclenché lorsque le
+			changement est effectué, juste avant qu'il ne soit
+			appliqué au texte. Si l'autocommande déplace le
+			curseur, l'effet du changement est indéfini.
+							*FocusGained*
+FocusGained		Quand Vim obtient le focus de la souris. Seule la
+			version IHM graphique et certaines versions console
+			peuvent détecter cet événement.
+							*FocusLost*
+FocusLost		Quand Vim perd le focus de la souris. Seule la version
+			IHM graphique et certaines versions console peuvent
+			détecter cet événement.
+							*FuncUndefined*
+FuncUndefined		Quand une fonction utilisateur est utilisée mais n'est
+			pas définie. Utile pour définir une fonction
+			uniquement si elle est utilisée. <amatch> et <afile>
+			sont tous deux fixés au nom de la fonction.
+							*CursorHold*
+CursorHold		Quand l'utilisateur n'a pressé aucune touche au bout
+			du temps déterminé par 'updatetime'. Non redéclenché
+			jusqu'à ce que l'utilisateur presse à nouveau une
+			touche (c.-à-d. que cet événement ne se déclenche pas
+			toutes les 'updatetime' ms si vous quittez Vim pour
+			vous faire du café :). Voir |CursorHold-example| pour
+			obtenir un aperçu des marqueurs.
+			Cet événement est déclenché uniquement en mode Normal.
+			NOTE : Les commandes interactives ne peuvent pas être
+			utilisées pour cet événement. Il n'aura pas d'invite
+			Appuyez-sur-entrée, l'écran sera mis à jour
+			directement (si nécessaire).
+			NOTE : Dans une version ultérieure, il y aura
+			probablement une autre option pour fixer le temps.
+			Conseil : Pour forcer la mise à jour des lignes
+			d'état, utilisez : >
+				:let &ro = &ro
+<			{uniquement sur Amiga, Unix, Win32, MS-DOS et toutes
+			les versions IHM graphiques}
+							*BufEnter*
+BufEnter		Après l'entrée dans un tampon. Utile pour fixer des
+			options pour un type de fichier. Également exécuté
+			quand un tampon commence à être édité, après les
+			autocommande BufReadPost.
+							*BufLeave*
+BufLeave		Avant de quitter le tampon pour un autre. Également
+			quand la fenêtre courante est quittée ou fermée et que
+			la nouvelle fenêtre courante ne contient pas le même
+			tampon. Non utilisé pour ":qa" ou ":q" quand Vim est
+			quitté.
+							*BufWinEnter*
+BufWinEnter		Après l'affichage d'un tampon dans une fenêtre. Cela
+			peut être lors du chargement du tampon (après
+			traitement des lignes de mode), lorsqu'un tampon caché
+			est affiché dans une fenêtre (il n'est alors plus
+			caché) ou lorsqu'un tampon déjà visible est à nouveau
+			affiché dans une autre fenêtre.
+							*BufWinLeave*
+BufWinLeave		Avant qu'un tampon ne soit supprimé d'une fenêtre,
+			mais pas s'il est encore visible dans une autre
+			fenêtre. Également déclenché quand Vim est quitté.
+			Déclenché avant BufUnload ou BufHidden.
+			NOTE : Lorsque cette autocommande est exécutée, le
+			tampon courant "%" peut être différent du tampon qui a
+			été déchargé "<afile>".
+							*BufUnload*
+BufUnload		Avant le déchargement d'un tampon, c'est-à-dire quand
+			le texte dans le tampon va être libéré. Cela peut être
+			après un BufWritePost et avant un BufDelete. Également
+			utilisé pour tous les tampons qui sont chargés quand
+			Vim va être quitté.
+			NOTE : Lorsque cette autocommande est exécutée, le
+			tampon courant "%" peut être différent du tampon qui a
+			été déchargé "<afile>".
+							*BufHidden*
+BufHidden		Juste après qu'un tampon a été caché, c'est-à-dire
+			quand il n'y a plus de fenêtres qui affichent le
+			tampon, mais qu'il n'est pas déchargé ou supprimé. Non
+			utilisé pour ":qa" ou ":q" quand Vim est quitté.
+			NOTE : Lorsque cette autocommande est exécutée, le
+			tampon courant "%" peut être différent du tampon qui a
+			été déchargé "<afile>".
+							*BufNew*
+BufNew			Juste après la création d'un nouveau tampon. Également
+			utilisé juste après qu'un tampon a été renommé. Quand
+			le tampon est ajouté à la liste des tampons, BufAdd ne
+			sera pas déclenché.
+			NOTE : Lorsque cette autocommande est exécutée, le
+			tampon courant "%" peut être différent du tampon qui a
+			été créé "<afile>".
+BufCreate	ou					*BufCreate* *BufAdd*
+BufAdd			Juste après la création d'un nouveau tampon qui sera
+			ajouté à la liste des tampons, ou après l'ajout d'un
+			tampon à cette liste.
+			Également utilisé juste après qu'un tampon de la
+			liste des tampons a été renommé.
+			L'événement BufCreate assure la compatibilité avec les
+			versions antérieures.
+			NOTE : Lorsque cette autocommande est exécutée, le
+			tampon courant "%" peut être différent du tampon qui a
+			été créé "<afile>".
+							*BufDelete*
+BufDelete		Avant la suppression d'un tampon de la liste des
+			tampons. BufUnload peut être appelé en premier (si le
+			tampon était chargé).
+			Également utilisé juste avant qu'un tampon de la liste
+			des tampons soit renommé.
+			NOTE : Lorsque cette autocommande est exécutée, le
+			tampon courant "%" peut être différent du tampon qui a
+			été supprimé "<afile>".
+							*BufWipeout*
+BufWipeout		Avant la suppression complète (la « liquidation »)
+			d'un tampon. Les événements BufUnload et BufDelete
+			peuvent être appelés en premier (si le tampon était
+			chargé et présent dans la liste des tampons).
+			Également utilisé juste avant qu'un tampon soit
+			renommé (même quand il n'est pas présent dans la liste
+			des tampons).
+			NOTE : Lorsque cette autocommande est exécutée, le
+			tampon courant "%" peut être différent du tampon qui a
+			été supprimé "<afile>".
+							*WinEnter*
+WinEnter		Après l'entrée dans une autre fenêtre. Non déclenché
+			pour la première fenêtre, quand Vim vient d'être
+			lancé. Utile pour fixer la hauteur de la fenêtre.
+			Si la fenêtre est pour un autre tampon, Vim exécute
+			les autocommandes BufEnter après les autocommandes
+			WinEnter.
+			NOTE : Quand ":split nomfich" est utilisé, l'événement
+			WinEnter est déclenché après le partage mais avant le
+			chargement du fichier "nomfich".
+							*WinLeave*
+WinLeave		Avant de quitter une fenêtre. Si la fenêtre où Vim
+			doit ensuite entrer contient un tampon différent, Vim
+			exécutera les autocommandes BufLeave avant les
+			autocommandes WinLeave (mais pas pour ":new"). Non
+			utilisé pour ":qa" ou ":q" quand Vim est quitté.
+							*CmdwinEnter*
+CmdwinEnter		Après l'entrée dans la fenêtre command-line. Utile
+			pour fixer des options spécifiques à ce type spécial
+			de fenêtre. Cet événement est déclenché À LA PLACE de
+			BufEnter et WinEnter.
+			<afile> est fixé à un caractère simple, indiquant le
+			type de la fenêtre command-line. |cmdwin-char|
+							*CmdwinLeave*
+CmdwinLeave		Avant de quitter la fenêtre command-line. Utile pour
+			effacer des paramètres globaux fixés avec CmdwinEnter.
+			Cet événement est déclenché À LA PLACE de BufLeave et
+			WinLeave.
+			<afile> est fixé à un caractère simple, indiquant le
+			type de la fenêtre command-line. |cmdwin-char|
+							*GUIEnter*
+GUIEnter		Après que l'IHM graphique a été lancée avec succès, et
+			après l'ouverture de la fenêtre. Déclenché avant
+			VimEnter quand gvim est utilisé. Peut être utilisé
+			pour placer la fenêtre dans un fichier gvimrc : >
+				:autocmd GUIEnter * winpos 100 50
+<							*VimEnter*
+VimEnter		Après toutes les initialisations du démarrage, y
+			compris le chargement des fichiers vimrc, l'exécution
+			des arguments "-c cmd", la création de toutes les
+			fenêtres et le chargement des tampons dedans.
+							*VimLeavePre*
+VimLeavePre		Avant de quitter Vim, juste avant l'écriture du
+			fichier viminfo. N'est exécuté qu'une seule fois, s'il
+			existe une correspondance avec le nom de ce qui est le
+			tampon courant quand Vim est quitté.
+			Essentiellement utile avec un motif "*" : >
+				:autocmd VimLeavePre * call AvantDeSortir()
+<			Pour détecter une sortie anormale, utilisez |v:dying|.
+							*VimLeave*
+VimLeave		Avant de quitter Vim, juste après l'écriture du
+			fichier viminfo. N'est exécuté qu'une fois, comme
+			VimLeavePre.
+			Pour détecter une sortie anormale, utilisez |v:dying|.
+							*EncodingChanged*
+EncodingChanged		Déclenché quand l'option 'encoding' est modifiée.
+			Utile pour changer de police, par exemple.
+							*FileEncoding*
+FileEncoding		Obsolète. Est toujours supporté et est équivalent à
+			|EncodingChanged|.
+							*RemoteReply*
+RemoteReply		Lors de la réception d'une réponse de la part d'un Vim
+			qui fonctionne en tant que serveur. |server2client()|
+			<amatch> est fixé à l'{IDserveur} depuis lequel la
+			réponse a été envoyée, et <afile> à la chaîne de la
+			réponse.
+			NOTE : Même si une autocommande est définie, la
+			réponse devrait être lue avec |remote_read()| pour
+			être consommée.
+							*TermChanged*
+TermChanged		Après le changement de la valeur de 'term'. Utile pour
+			recharger le fichier de syntaxe pour mettre à jour les
+			couleurs, polices et autres paramètres dépendant du
+			terminal. Exécuté pour tous les tampons chargés.
+							*TermResponse*
+TermResponse		Après que la réponse à |t_RV| a été reçue du terminal.
+			La valeur de |v:termresponse| peut être utilisée pour
+			effectuer certaines actions dépendamment de la version
+			du terminal.
+	    						*UserGettingBored*
+UserGettingBored	Quand l'utilisateur frappe CTRL-C. Non, c'est pour
+			rire ! :-)
+							*User*
+User			Jamais exécuté automatiquement. À utiliser pour les
+			autocommandes qui sont uniquement exécutées avec
+			":doautocmd".
+
+
+Il existe trois couples d'événements possibles pour la LECTURE des fichiers.
+Vim n'en utilise qu'un seul à la fois :
+BufNewFile			au commencement de l'édition d'un fichier non
+				   existant
+BufReadPre	BufReadPost	au commencement de l'édition d'un fichier
+				   existant
+FilterReadPre	FilterReadPost	à la lecture du fichier temporaire en sortie
+				   du filtre
+FileReadPre	FileReadPost	pour toute autre lecture
+
+NOTE : Les autocommandes pour les événements *ReadPre et tous les événements
+Filter ne sont pas autorisés à modifier le tampon courant (vous obtiendrez un
+message d'erreur si cela se produit). Cela permet d'éviter que le fichier ne
+soit lu dans le mauvais tampon.
+
+NOTE : Le drapeau de modification est désactivé APRÈS l'exécution des
+autocommandes BufReadPost et BufNewFile. Mais pas si l'option 'modified' a été
+activée par les autocommandes.
+
+Vous pouvez utiliser l'option 'eventignore' pour ignorer un certain nombre
+d'événements, ou tous les événements.
+
+==============================================================================
+6. Motifs						*autocmd-patterns*
+
+Le motif de fichier {motif} est traité pour établir une correspondance avec le
+nom de fichier d'une de ces deux façons :
+1. Quand il n'y a pas de '/' dans le motif, Vim ne recherche de
+   correspondance qu'avec la « queue » du nom de fichier (sans le chemin
+   d'accès initial).
+2. Quand il y a un '/' dans le motif, Vim recherche une correspondance avec le
+   nom de fichier court (tel que vous l'avez saisi) et le nom de fichier
+   entier (après l'avoir étendu en un chemin complet et avoir résolu les liens
+   symboliques).
+
+Exemples : >
+	:autocmd BufRead *.txt		set et
+<		Active l'option 'et' pour tous les fichiers texte. >
+	:autocmd BufRead /vim/src/*.c	set cindent
+<		Active l'option 'cindent' pour les fichiers C dans le
+		répertoire "/vim/src". >
+	:autocmd BufRead /tmp/*.c	set ts=5
+<		Si "/tmp/test.c" est lié à "/home/babar/vim/src/test.c" et que
+		vous commencez à éditer le fichier "/tmp/test.c", cette
+		autocommande correspondra.
+
+NOTE : Pour correspondre à une partie d'un chemin, mais pas depuis le
+répertoire racine, utilisez un '*' comme premier caractère. Exemple : >
+	:autocmd BufRead */doc/*.txt	set tw=78
+Cette autocommande sera par exemple exécutée pour "/tmp/doc/xx.txt" et
+"/usr/home/bibi/doc/yy.txt". Le nombre de répertoires n'importe pas ici.
+
+
+Le nom de fichier auquel le motif doit correspondre est celui obtenu après
+l'expansion des jokers. Ainsi, si vous entrez cette commande >
+	:e $ROOTDIR/main.$EXT
+l'argument est d'abord étendu en
+	/usr/root/main.py ~
+avant de pouvoir correspondre avec le motif de l'autocommande. Faites
+attention à cela quand vous utilisez des événements comme FileReadCmd, la
+valeur de <amatch> peut ne pas correspondre à ce que vous espérez.
+
+
+Les variables d'environnement peuvent être utilisées dans un motif : >
+	:autocmd BufRead $VIMRUNTIME/doc/*.txt  set expandtab
+Et '~' peut être utilisé pour le répertoire personnel (si $HOME est défini) : >
+	:autocmd BufWritePost ~/.vimrc	so ~/.vimrc
+	:autocmd BufRead ~archive/*     set readonly
+La variable d'environnement est étendue quand l'autocommande est définie, pas
+quand elle est exécutée. À l'inverse de la commande !
+
+							*file-pattern*
+Le motif est interprété selon les règles généralement utilisées pour les noms
+de fichiers :
+	*	correspond à n'importe quelle séquence de caractères
+	?	correspond à n'importe quel caractère simple
+	\?	correspond à un '?'
+	.	correspond à un '.'
+	~	correspond à un '~'
+	,	sépare des motifs
+	\,	correspond à un ','
+	{ }	comme \( \) dans un motif |pattern|
+	,	entre { } : comme \| dans un motif |pattern|
+	\	signification spéciale comme dans un motif |pattern|
+	[ch]	correspond à 'c' ou 'h'
+
+NOTE : Le caractère '/' est utilisé comme séparateur de chemin pour tous les
+systèmes (même MS-DOS et OS/2). Cela a été décidé car la contre-oblique est
+difficile à utiliser dans un motif, et pour rendre les autocommandes portables
+entre les différents systèmes.
+
+
+La correspondance avec le motif est effectuée quand un événement est
+déclenché. La modification du nom du tampon dans une des autocommandes -- ou
+même la suppression du tampon -- n'infléchira pas l'exécution des
+autocommandes. Exemple : >
+
+	:au BufEnter *.blabla  bdel
+	:au BufEnter *.blabla  set modified
+
+Ceci supprimera le tampon courant puis activera 'modified' dans celui qui est
+devenu le tampon courant. Vim ne tient pas compte de ce que "*.blabla" ne
+corresponde plus au nom de ce tampon. Il correspondait au moment où
+l'événement avait été défini.
+
+==============================================================================
+7. Groupes						*autocmd-groups*
+
+Des autocommandes peuvent être réunies au sein d'un groupe. C'est pratique
+pour exécuter ou supprimer un groupe d'autocommandes. Par exemple, toutes les
+autocommandes relatives à la coloration syntaxique sont réunies dans le groupe
+"highlight", ce qui permet d'exécuter ":doautoall highlight BufRead" quand
+l'IHM graphique est lancée.
+
+Si aucun groupe particulier n'est sélectionné, Vim utilise le groupe par
+défaut. Le groupe par défaut n'a pas de nom. Vous ne pouvez pas exécuter les
+autocommandes du groupe par défaut séparément ; vous ne pouvez le faire qu'en
+exécutant les autocommandes pour tous les groupes.
+
+Normalement, quand les autocommandes sont exécutées automatiquement, Vim les
+utilise pour tous les groupes. La spécification d'un groupe n'est réalisable
+qu'avec ":doautocmd" ou ":doautoall", ou lors de la définition ou de la
+suppression d'autocommandes.
+
+Un nom de groupe peut contenir n'importe quel caractère sauf l'espace blanc.
+Le nom de groupe "end" est réservé (y compris en majuscules). Le nom de groupe
+est sensible à la casse.
+
+							*:aug* *:augroup*
+:aug[roup] {nom}	Définit le nom du groupe d'autocommandes pour les
+			commandes ":autocmd" suivantes. Le nom "end" ou
+			"END" sélectionne le groupe par défaut.
+
+						*:augroup-delete* *E367*
+:aug[roup]! {nom}	Supprime le groupe d'autocommandes {nom}. N'utilisez
+			pas ceci s'il reste une autocommande qui utilise ce
+			groupe ! Cela n'est pas vérifié.
+
+Pour entrer des autocommandes pour un groupe en particulier, utilisez cette
+méthode :
+1. Sélectionnez le groupe avec ":augroup {nom}".
+2. Supprimez toutes les anciennes autocommandes avec ":au!".
+3. Définissez les autocommandes.
+4. Revenez au groupe par défaut avec "augroup END".
+
+Exemple : >
+
+	:augroup decompactage
+	:  au!
+	:  au BufEnter *.gz	%!gunzip
+	:augroup END
+
+Cela évite d'avoir des autocommandes définies deux fois (p. ex., après un
+nouveau sourcement du fichier vimrc).
+
+==============================================================================
+8. Exécuter des autocommandes				*autocmd-execute*
+
+Vim peut aussi exécuter des autocommandes non automatiquement. C'est utile si
+vous avez modifié les autocommandes, ou quand Vim a exécuté de mauvaises
+autocommandes (p. ex., quand la correspondance avec le nom de fichier était
+mauvaise).
+
+NOTE : L'option 'eventignore' s'applique ici aussi. Les commandes reliées aux
+événements listés dans cette option ne pourront pas s'exécuter.
+
+						*:do* *:doautocmd* *E217*
+:do[autocmd] [groupe] {even} [nomfich]
+			Applique les autocommandes correspondant à [nomfich]
+			(défaut : nom du fichier courant) pour {even} au
+			tampon courant.
+			Vous pouvez utiliser ceci quand le nom de fichier
+			courant ne correspond pas au bon motif, après avoir
+			changé des paramètres, ou pour exécuter des
+			autocommandes pour un certain événement.
+			Il est également possible d'utiliser ceci à
+			l'intérieur d'une autocommande, vous pouvez alors
+			baser les autocommandes d'une extension sur une autre
+			extension. Exemple : >
+				:au Bufenter *.cpp so ~/.vimrc_cpp
+				:au Bufenter *.cpp doau BufEnter x.c
+<			Attention aux boucles sans fin !  Voir
+			|autocmd-nested|.
+
+			Quand l'argument [groupe] n'est pas donné, Vim exécute
+			les autocommandes pour tous les groupes. Quand il est
+			donné, Vim exécute uniquement les autocommandes
+			correspondant à [groupe]. NOTE : Si vous utilisez un
+			nom de groupe non défini, Vim émet un message
+			d'erreur.
+
+						*:doautoa* *:doautoall*
+:doautoa[ll] [groupe] {even} [nomfich]
+			Comme ":doautocmd", mais applique les autocommandes à
+			chaque tampon chargé. Attention ! N'utilisez pas ceci
+			pour les autocommandes qui suppriment un tampon,
+			changent pour un autre tampon ou modifient le contenu
+			d'un tampon ; le résultat serait imprévisible. Cette
+			commande est destinée aux autocommandes qui fixent des
+			options, modifient la coloration, et des choses comme
+			ça.
+
+==============================================================================
+9. Utiliser des autocommandes				*autocmd-use*
+
+Il existe quatre ensembles d'événements possibles pour l'ÉCRITURE dans des
+fichiers. Vim n'en utilise qu'un seul à la fois :
+
+    BufWriteCmd    BufWritePre     BufWritePost	     lors de l'écriture du
+							tampon entier
+		   FilterWritePre  FilterWritePost   lors de l'écriture dans un
+							fichier temp de filtre
+    FileAppendCmd  FileAppendPre   FileAppendPost    lors de l'ajout dans un
+							fichier
+    FileWriteCmd   FileWritePre    FileWritePost     pour tout autre écriture
+							dans un fichier
+
+Lorsqu'il existe une autocommande "*Cmd", Vim suppose qu'elle effectuera
+l'enregistrement. Il n'y aura pas d'enregistrement ultérieur, et les autres
+événements ne seront pas déclenchés. |Cmd-event|
+
+NOTE : Les commandes *WritePost devraient annuler les changements apportés au
+tampon par les commandes *WritePre ; sans cela, l'enregistrement du fichier
+aura pour effet de bord de modifier le tampon.
+
+Avant d'exécuter les autocommandes, le tampon duquel les lignes doivent être
+écrites devient temporairement le tampon courant. À moins que les
+autocommandes ne changent le tampon courant ou suppriment le tampon courant
+précédent, ce dernier redeviendra à nouveau le tampon courant.
+
+Les autocommandes *WritePre et *AppendPre ne doivent pas supprimer le tampon
+duquel les lignes doivent être écrites.
+
+Les marques '[ et '] ont une position spéciale :
+- Avant l'événement *ReadPre, la marque '[ est fixée à la ligne juste
+  au-dessus d'où les nouvelles lignes seront insérées.
+- Avant l'événement *ReadPost, la marque '[ est fixée à la première ligne qui
+  vient d'être lue, la marque '] à la dernière ligne.
+- Avant l'exécution des autocommandes *WritePre et *AppendPre, la marque '[
+  est fixée à la première ligne qui devra être écrite, la marque '] à la
+  dernière ligne.
+Attention ! '[ et '] changent quand des commandes qui modifient le tampon sont
+utilisées.
+
+Dans les commandes qui attendent un nom de fichier, vous pouvez utiliser
+"<afile>" pour donner le nom du fichier qui doit être lu |:<afile>| (vous
+pouvez aussi utiliser "%" pour le nom du fichier courant).
+   "<abuf>" peut être utilisé pour donner le numéro du tampon courant
+effectif. Cela marche aussi pour les tampons qui n'ont pas de nom ; mais pas
+pour les fichiers sans tampon (p. ex., avec ":r fichier").
+
+							*gzip-example*
+Exemple (pour lire et enregistrer des fichiers compactés) : >
+
+	:augroup gzip
+	:  autocmd!
+	:  autocmd BufReadPre,FileReadPre	*.gz set bin
+	:  autocmd BufReadPost,FileReadPost	*.gz '[,']!gunzip
+	:  autocmd BufReadPost,FileReadPost	*.gz set nobin
+	:  autocmd BufReadPost,FileReadPost	*.gz execute ":doautocmd BufReadPost " . expand("%:r")
+	:  autocmd BufWritePost,FileWritePost	*.gz !mv <afile> <afile>:r
+	:  autocmd BufWritePost,FileWritePost	*.gz !gzip <afile>:r
+	
+	:  autocmd FileAppendPre		*.gz !gunzip <afile>
+	:  autocmd FileAppendPre		*.gz !mv <afile>:r <afile>
+	:  autocmd FileAppendPost		*.gz !mv <afile> <afile>:r
+	:  autocmd FileAppendPost		*.gz !gzip <afile>:r
+	:augroup END
+
+Le groupe "gzip" est utilisé pour permettre de supprimer toutes les
+autocommandes existantes avec ":autocmd!", pour le cas où le fichier serait
+sourcé deux fois.
+
+("<afile>:r" est le nom du fichier sans son extension, voir |:_%:|.)
+
+Les commandes exécutées pour les événements BufNewFile, BufRead/BufReadPost,
+BufWritePost, FileAppendPost et VimLeave ne modifient pas le drapeau de
+modification du fichier. Quand vous décompactez le tampon avec les
+autocommandes BufReadPost, vous pouvez toujours quitter avec ":q". Quand vous
+utilisez ":undo" dans BufWritePost pour annuler les changements effectués par
+les commandes BufWritePre, vous pouvez toujours faire ":q" ("ZZ" fonctionnera
+aussi). Si vous souhaitez que le tampon soit marqué comme modifié, activez
+l'option 'modified'.
+
+Pour exécuter des commandes du mode Normal à partir d'une autocommande,
+utilisez la commande ":normal". Mais soyez prudent ! si la commande du mode
+Normal n'est pas terminée, l'utilisateur devra taper des caractères
+supplémentaires (p. ex., après ":normal m", vous devrez entrer le nom d'une
+marque).
+
+Si vous ne souhaitez pas que le tampon soit considéré comme modifié après
+l'avoir changé, désactivez l'option 'modified'. Cela permet de quitter le
+tampon avec ":q" au lieu de ":q!".
+
+						    *autocmd-nested* *E218*
+Par défaut, les autocommandes ne s'imbriquent pas. Si vous utilisez ":e" ou
+":w" dans une autocommande, Vim n'exécutera pas les autocommandes BufRead et
+BufWrite pour ces commandes. Pour autoriser l'imbrication, utilisez le drapeau
+"nested" avec les commandes pour lesquelles vous la souhaitez. Par exemple : >
+
+	:autocmd FileChangedShell *.c nested e!
+
+L'imbrication est limitée à 10 niveaux, pour sortir des boucles récursives.
+
+Il est possible d'utiliser la commande ":au" dans une autocommande. Cela peut
+donner une commande qui s'auto-modifie ! Cela peut être utile pour une
+autocommande qui ne devrait s'exécuter qu'une seule fois.
+
+Il n'existe actuellement aucun moyen pour désactiver les autocommandes. Si
+vous souhaitez enregistrer un fichier sans exécuter les autocommandes
+associées à son type, enregistrez-le sous un nom différent puis renommez-le
+par l'intermédiaire d'une commande shell. Dans certains cas, vous pouvez
+utiliser l'option 'eventignore'.
+
+NOTE : Lors de la lecture d'un fichier (avec ":read fichier" ou une commande
+de filtre), si la dernière ligne du fichier ne contient pas de <EOL>, Vim se
+le rappellera. Lors du prochain enregistrement (avec ":write fichier" ou une
+commande de filtre), si la même ligne est à nouveau écrite comme dernière
+ligne dans un fichier ET que 'binary' est activé, Vim n'ajoutera pas de <EOL>.
+Cela permet à une commande de filtre exécutée sur les lignes juste lues
+d'écrire le fichier tel qu'il vient d'être lu, et à une commande d'écriture
+sur les lignes juste filtrées d'écrire le fichier tel qu'il vient d'être lu
+depuis le filtre. Par exemple, pour enregistrer un fichier compacté, on peut
+aussi employer cette méthode : >
+
+	:autocmd FileWritePre	*.gz	set bin|'[,']!gzip
+	:autocmd FileWritePost	*.gz	undo|set nobin
+<
+						    *autocommand-pattern*
+Vous pouvez spécifier des motifs multiples, séparés par des virgules. Voici
+quelques exemples : >
+
+  :autocmd BufRead   *	      set tw=79 nocin ic infercase fo=2croq
+  :autocmd BufRead   .lettre  set tw=72 fo=2tcrq
+  :autocmd BufEnter  .lettre  set dict=/usr/lib/dict/words
+  :autocmd BufLeave  .lettre  set dict=
+  :autocmd BufRead,BufNewFile *.c,*.h	set tw=0 cin noic
+  :autocmd BufEnter  *.c,*.h  abbr FOR for (i = 0; i < 3; ++i)<CR>{<CR>}<Esc>O
+  :autocmd BufLeave  *.c,*.h  unabbr FOR
+
+Pour les fichiers de type Makefile ("makefile", "Makefile", "imakefile",
+"makefile.unix", etc.) : >
+
+	:autocmd BufEnter  ?akefile*	set include=^s\=include
+	:autocmd BufLeave  ?akefile*	set include&
+
+Pour toujours commencer l'édition des fichiers C à la première fonction : >
+
+	:autocmd BufRead   *.c,*.h	1;/^{
+
+Sans le "1;" ci-dessus, la recherche débuterait de l'endroit où le fichier a
+été ouvert, plutôt que du début du fichier.
+
+						    *skeleton* *template*
+Pour lire un squelette (modèle) de fichier lors de l'ouverture d'un nouveau
+fichier : >
+
+	:autocmd BufNewFile  *.c	0r ~/vim/squelette.c
+	:autocmd BufNewFile  *.h	0r ~/vim/squelette.h
+	:autocmd BufNewFile  *.java	0r ~/vim/squelette.java
+
+Pour insérer la date et l'heure courante dans un fichier ".html" lors de son
+enregistrement : >
+
+	:autocmd BufWritePre,FileWritePre *.html   ks|call DerModif()|'s
+	:fun DerModif()
+	:  if line("$") > 20
+	:    let l = 20
+	:  else
+	:    let l = line("$")
+	:  endif
+	:  exe "1," . l . "g/Dernière modification : /s/Dernière modification : .*/Dernière modification : " .
+	:  \ strftime("%d %b %Y %X %Z")
+	:endfun
+
+Vous devrez avoir une ligne "Dernière modification : <date heure>" dans les
+20 première lignes du fichier pour que cela fonctionne. Vim remplace "<date
+heure>" (et tout ce qui suit dans la même ligne) par la date et l'heure
+courante.
+   Dissection :
+	ks		 marque la position courante avec 's'
+	call DerModif()  appelle la fonction DerModif() pour effectuer le
+			    travail
+	's		 revient à l'ancienne position
+La fonction DerModif() teste si le fichier fait moins de 20 lignes, puis
+utilise la commande ":g" pour trouver les lignes qui contiennent "Dernière
+modification : ". Pour ces lignes, la commande ":s" est exécutée pour
+remplacer les date et heure existantes par les courantes. La commande
+":execute" est utilisée pour pouvoir employer une expression avec les
+commandes ":g" et ":s". La date et l'heure sont obtenues avec la fonction
+strftime(). Vous pouvez en modifier les arguments pour obtenir une autre
+chaîne d'horodatage.
+
+Quand vous entrez ":autocmd" sur la ligne de commande, le complètement des
+noms d'événements et de commandes peut être effectué (avec <Tab>, CTRL-D,
+etc.) là où c'est approprié.
+
+Vim exécute toutes les autocommandes correspondantes dans l'ordre où vous les
+avez spécifiées. Il est recommandé de placer en premier les autocommandes
+devant être exécutées pour tous les fichiers (celles qui utilisent le motif
+"*" comme motif de fichier). Cela vous permet de définir les paramètres que
+vous souhaitez par défaut pour tous vos fichiers ; s'il y a ensuite d'autres
+autocommandes correspondantes, elles recouvriront ces valeurs. Ainsi, lorsque
+vous ouvrez un fichier, il utilise au moins les paramètres par défaut, même si
+le fichier précédent avait fixé ces paramètres différemment.
+   NOTE : "*" correspondra aussi aux fichiers débutant par '.', contrairement
+aux shells Unix.
+
+						    *autocmd-searchpat*
+Les autocommandes ne modifient pas les motifs de recherche courants. Vim
+enregistre les motifs de recherche courants avant d'exécuter les
+autocommandes, puis les restaure après qu'elles ont fini. Cela signifie que
+les autocommandes n'affectent pas les chaînes mises en surbrillance avec
+l'option 'hlsearch'. À l'intérieur des autocommandes, vous pouvez toujours
+utiliser les motifs de recherche normalement, p. ex., avec la commande "n".
+   Si vous souhaitez qu'une autocommande fixe le motif de recherche afin qu'il
+reste utilisable après que l'autocommande a fini, utilisez la commande
+":let @/ =".
+   La surbrillance de recherche ne peut pas être désactivée avec ":nohlsearch"
+dans une autocommande. Utilisez le drapeau 'h' de l'option 'viminfo' pour
+désactiver la surbrillance de recherche au démarrage de Vim.
+
+						    *Cmd-event*
+Quand un des événements "*Cmd" est utilisé, les autocommandes correspondantes
+sont censées effectuer la lecture ou l'enregistrement du fichier. Ceci peut
+être utilisé lorsque vous travaillez avec des fichiers d'un type particulier,
+par exemple sur un système distant.
+   ATTENTION ! Si vous utilisez ces événements de mauvaise façon, cela peut
+avoir comme effet de rendre impossible la lecture ou l'enregistrement des
+fichiers correspondants. Assurez-vous d'abord de bien tester vos
+autocommandes. Le mieux est d'utiliser un motif qui ne pourra jamais
+correspondre à un nom de fichier normal, par exemple "ftp://*".
+
+Quand vous définissez un événement BufReadCmd, il sera difficile pour Vim de
+recouvrer une session d'édition plantée. Lors du recouvrement à partir du
+fichier original, Vim lit uniquement les parties du fichier qu'il ne trouve
+pas dans le fichier d'échange. Comme cela n'est pas possible avec BufReadCmd,
+utilisez la commande |:preserve| pour vous assurer que le fichier original ne
+sera plus nécessaire pour le recouvrement. Cela n'est utile qu'au cas où le
+fichier a été modifié.
+
+La variable |v:cmdarg| contient les arguments "++enc=" et "++ff=" effectifs.
+Ils devraient être utilisés pour la commande qui lit/enregistre le fichier.
+
+Voir $VIMRUNTIME/plugin/netrw.vim pour avoir des exemples.
+
+ vim:tw=78:ts=8:ft=help:norl:

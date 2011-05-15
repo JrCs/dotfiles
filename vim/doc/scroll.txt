@@ -1,0 +1,320 @@
+*scroll.txt*    Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+Défilement						*scrolling*
+
+Ces commandes font défiler le contenu d'une fenêtre. Si la position du curseur
+est déplacée en dehors de la fenêtre, le curseur restera placé dans celle-ci
+(entouré de 'scrolloff' lignes d'écran). Une « page » est définie comme le
+nombre de lignes d'une fenêtre moins deux.
+   La mémorisation de ces commandes peut être un peu ardue. Rappelez-vous que
+toutes ces commandes font défiler la fenêtre (partie du tampon que vous voyez)
+vers le haut ou le bas du tampon. Lorsque la fenêtre défile vers le haut du
+tampon, le texte de la fenêtre défile vers le bas de l'écran.
+
+Consultez la section |03.7| du Manuel de l'utilisateur pour une introduction.
+
+1. Défilement vers le bas		    |scroll-down|
+2. Défilement vers le haut		    |scroll-up|
+3. Défilement relatif au curseur	    |scroll-cursor|
+4. Défilement horizontal		    |scroll-horizontal|
+5. Défilement synchronisé		    |scroll-binding|
+6. Défilement avec une molette de souris    |scroll-mouse-wheel|
+
+==============================================================================
+1. Défilement vers le bas				*scroll-down*
+
+Les commandes suivantes font défiler la fenêtre d'édition (la partie visible
+du tampon) vers le bas (vous pourrez ainsi voir des lignes du bas du tampon).
+
+							*CTRL-E*
+CTRL-E			Défile de [quant] lignes vers le bas du tampon.
+								["Extra lines"]
+
+							*CTRL-D*
+CTRL-D			Défile vers le bas du tampon. Le nombre de lignes
+			dépend de l'option 'scroll' (défaut : 1/2 écran). Si
+			[quant] est donné, fixe d'abord l'option 'scroll' à
+			[quant]. Le curseur est déplacé du même nombre de
+			lignes vers le bas du fichier (si possible ; pas
+			évident lorsque les lignes sont enroulées ou qu'on
+			atteint la fin du fichier). Lorsque le curseur est sur
+			la dernière ligne du tampon, rien ne se produit et un
+			bip est émis. Voir aussi l'option 'startofline'.
+			{Vi est légèrement différent : il fait défiler de
+			'scroll' lignes de fichier, pas de lignes d'écran, ce
+			qui fait une différence lorsque les lignes sont
+			enroulées}				  ["Downwards"]
+
+<S-Bas>		ou				*<S-Down>* *<kPageDown>*
+<PageSuiv>	ou				*<PageDown>* *CTRL-F*
+CTRL-F			Défile de [quant] pages vers le bas du tampon. Voir
+			aussi l'option 'startofline'.		   ["Forwards"]
+
+							*z+*
+z+			Sans [quant] : rafraîchit avec la ligne juste sous la
+			fenêtre en haut de la fenêtre. Place le curseur au
+			premier caractère non-blanc de cette ligne.
+			Avec [quant] : comme "z<CR>".
+
+==============================================================================
+2. Défilement vers le haut				*scroll-up*
+
+Les commandes suivantes font défiler la fenêtre d'édition (la partie visible
+du tampon) vers le haut (vous pourrez ainsi voir des lignes du haut du
+tampon).
+
+							*CTRL-Y*
+CTRL-Y			Défile de [quant] lignes vers le haut du tampon.
+			NOTE : Si vous utilisez les séquences de touches
+			MS-Windows, CTRL-Y est remappé à restaurer.
+
+							*CTRL-U*
+CTRL-U			Défile vers le haut du tampon. Le nombre de lignes
+			dépend de l'option 'scroll' (défaut : 1/2 écran). Si
+			[quant] est donné, fixe d'abord l'option 'scroll' à
+			[quant]. Le curseur est déplacé du même nombre de
+			lignes vers le haut du fichier (si possible ; pas
+			évident lorsque les lignes sont enroulées ou qu'on
+			atteint la fin du fichier). Lorsque le curseur est sur
+			la première ligne du tampon, rien ne se produit et un
+			bip est émis. Voir aussi l'option 'startofline'.
+			{Vi : Vim fait défiler de 'scroll' lignes d'écran, pas
+			de lignes de fichier ; cela peut faire une différence
+			lorsque les lignes sont enroulées}	    ["Upwards"]
+
+<S-Haut>	ou					*<S-Up>* *<kPageUp>*
+<PagePrec>	ou					*<PageUp>* *CTRL-B*
+CTRL-B			Défile de [quant] pages vers le haut du tampon. Voir
+			aussi l'option 'startofline'.		  ["Backwards"]
+
+							*z^*
+z^			Sans [quant] : rafraîchit avec la ligne juste
+			au-dessus la fenêtre en bas de la fenêtre. Place le
+			curseur au premier caractère non-blanc de cette ligne.
+			Avec [quant] : fait d'abord défiler le texte pour
+			placer la ligne [quant] en bas de la fenêtre, ensuite
+			rafraîchit en mettant en bas la ligne qui est
+			maintenant en haut de la fenêtre. Place le curseur au
+			premier caractère non-blanc de cette ligne.
+
+==============================================================================
+3. Défilement relatif au curseur			*scroll-cursor*
+
+Les commandes suivantes repositionnent la fenêtre d'édition (la partie visible
+du tampon) sans changer le curseur de ligne.
+
+							*z<CR>*
+z<CR>			Rafraîchit, ligne [quant] en haut de la fenêtre
+			(défaut : ligne courante). Place le curseur sur le
+			premier caractère non-blanc.
+
+							*zt*
+zt			Comme "z<CR>", mais laisse le curseur dans la même
+			colonne. {absent de Vi}				["Top"]
+
+							*zN<CR>*
+z{hauteur}<CR>		Rafraîchit, en fixant à {hauteur} la taille de la
+			fenêtre. Utile pour réduire le nombre de lignes
+			lorsque le rafraîchissement est très lent. La hauteur
+			ne peut être fixée à une taille supérieure à celle de
+			l'écran physique.
+
+							*z.*
+z.			Rafraîchit, ligne [quant] au centre de la fenêtre
+			(défaut : ligne courante). Place le curseur sur le
+			premier caractère non-blanc.
+
+							*zz*
+zz			Comme "z.", mais laisse le curseur dans la même
+			colonne. ATTENTION ! Si la touche Verr Maj est active,
+			cette commande devient "ZZ" : enregistre et quitte !
+			{absent de Vi}
+
+							*z-*
+z-			Rafraîchit, ligne [quant] en bas de la fenêtre
+			(défaut : ligne courante). Place le curseur sur le
+			premier caractère non-blanc.
+
+							*zb*
+zb			Comme "z-", mais laisse le curseur dans la même
+			colonne. {absent de Vi}			     ["Bottom"]
+
+==============================================================================
+4. Défilement horizontal				*scroll-horizontal*
+
+Pour les quatre commandes suivantes, écran et curseur sont déplacés ensemble.
+Si le caractère sur lequel le curseur est placé sort de l'écran, le curseur
+est laissé sur le caractère le plus proche à l'écran. La valeur de
+'sidescroll' n'est pas utilisée.
+
+z<Droite>	ou					*zl* *z<Right>*
+zl			Défile de [quant] caractères vers la gauche. Cela
+			fonctionne uniquement lorsque 'wrap' est désactivé.
+			{absent de Vi}
+
+z<Gauche>	ou					*zh* *z<Left>*
+zh			Défile de [quant] caractères vers la droite. Cela
+			fonctionne uniquement lorsque 'wrap' est désactivé.
+			{absent de Vi}
+
+							*zL*
+zL			Défile d'1/2 écran vers la gauche. Cela fonctionne
+			uniquement lorsque 'wrap' est désactivé.
+			{absent de Vi}
+
+							*zH*
+zH			Défile d'1/2 écran vers la droite. Cela fonctionne
+			uniquement lorsque 'wrap' est désactivé.
+			{absent de Vi}
+
+Pour les deux commandes suivantes, le curseur reste fixe, c'est l'écran qui
+se déplace.
+							*zs*
+zs			Fait défiler l'écran horizontalement afin de
+			positionner le curseur au début (côté gauche) de
+			l'écran. Cela fonctionne uniquement lorsque 'wrap' est
+			désactivé. {absent de Vi}		      ["Start"]
+
+							*ze*
+ze			Fait défiler l'écran horizontalement afin de
+			positionner le curseur à la fin (côté droit) de
+			l'écran. Cela fonctionne uniquement lorsque 'wrap' est
+			désactivé. {absent de Vi}		        ["End"]
+
+==============================================================================
+5. Défilement synchronisé				*scroll-binding*
+
+On peut parfois désirer lier deux ou plusieurs fenêtres ensemble, afin que
+lorsque l'une d'elles défile, les autres fassent de même. Dans Vim, cela est
+réalisable en activant l'option 'scrollbind' dans chaque fenêtre dont on
+souhaite ce comportement. Lorsqu'une fenêtre où 'scrollbind' est activé
+défile, toutes les autres fenêtres 'scrollbind' défilent du même nombre de
+lignes si possible. Le comportement de 'scrollbind' peut être modifié par
+l'option 'scrollopt'.
+
+Quand vous utilisez les ascenseurs, la liaison ne sera effective que si vous
+faites défiler la fenêtre avec le focus (celle où est le curseur). Vous pouvez
+utiliser ceci pour bloquer le défilement synchronisé un moment sans toucher
+aux options.
+
+Lorsque l'option 'diff' est également activée pour une fenêtre, le défilement
+utilise les différences entre deux tampons pour synchroniser précisément les
+positions. Sinon la méthode suivante est utilisée.
+
+							*scrollbind-relative*
+Chaque fenêtre 'scrollbind' garde en mémoire son « décalage relatif », qui
+peut être définie comme la différence entre la position du défilement vertical
+dans la fenêtre courante et celle du défilement vertical dans les autres
+fenêtres. Lorsqu'une des fenêtres 'scrollbind' doit défiler verticalement en
+dehors des limites de son texte, elle s'arrête à ces limites mais mémorise
+son retrait par rapport à la position qu'elle devrait occuper. La fenêtre
+garde cette information de telle sorte qu'elle conserve toujours le même
+décalage relatif, même lorsqu'elle dépasse la fin de son tampon.
+
+De toute façon, si une fenêtre 'scrollbind' dont le décalage relatif dépasse
+la fin de son tampon reçoit le focus du curseur, les autres fenêtres
+'scrollbind' devront sauter à un emplacement où la position de la fenêtre
+courante sera valide. Ce comportement peut être modifié en supprimant le
+drapeau "jump" de l'option 'scrollopt'.
+
+							*syncbind* *:syncbind*
+:syncbind		Force toutes les fenêtres 'scrollbind' à avoir le même
+			décalage relatif. C'est-à-dire que si une des fenêtres
+			'scrollbind' est au début de son tampon, toutes les
+			autres fenêtres 'scrollbind' y seront également.
+
+							*scrollbind-quickadj*
+L'option 'scrollbind' n'a de sens que lorsque des commandes clavier sont
+utilisées pour faire défiler verticalement une fenêtre, ou lorsque l'ascenseur
+vertical de la fenêtre qui a le focus est utilisé. De toute façon, si
+l'ascenseur vertical d'une fenêtre qui n'a pas le focus du curseur est
+utilisé, 'scrollbind' est ignoré. Cela permet un ajustement rapide du décalage
+relatif des fenêtres 'scrollbind'.
+
+==============================================================================
+6. Défilement avec une molette de souris		*scroll-mouse-wheel*
+
+Si votre souris possède une molette de défilement, celle-ci devrait
+fonctionner avec Vim dans l'IHM graphique. Son fonctionnement dépendra de
+votre système. Elle devrait également être supportée dans un xterm
+|xterm-mouse-wheel|.
+
+Pour l'IHM graphique Win32, la fonction de défilement est interne. Elle
+fonctionne comme lorsqu'on déplace l'ascenseur de la fenêtre courante. Le
+nombre de lignes défilant dépend du pilote de la souris. Si le défilement pose
+des problèmes de focus, reportez-vous à |intellimouse-wheel-problems|.
+
+Pour les IHM graphiques X11 (Motif, Athena et GTK+), l'usage de la molette est
+assimilée aux touches <MouseDown> et <MouseUp> [N.D.T. : <MoletteBas> et
+<MoletteHaut> dans la traduction]. L'action par défaut de ces touches est :
+
+    <MoletteBas>      défile de trois lignes vers le bas    *<MouseDown>*
+    <S-MoletteBas>    défile d'une page vers le bas	    *<S-MouseDown>*
+    <C-MoletteBas>    défile d'une page vers le bas	    *<C-MouseDown>*
+    <MoletteHaut>     défile de trois lignes vers le haut   *<MouseUp>*
+    <S-MoletteHaut>   défile d'une page vers le haut	    *<S-MouseUp>*
+    <C-MoletteHaut>   défile d'une page vers le haut	    *<C-MouseUp>*
+
+Cela devrait fonctionner dans tous les modes, sauf en mode Ligne-de-commande.
+
+NOTE : <MoletteBas> est utilisé pour faire défiler le texte vers le bas, mais
+cela ne surviendra que lorsque vous aurez relâché la molette de la souris !
+
+Vous pouvez modifier ce comportement en mappant les touches. Par exemple, pour
+défiler d'une ligne ou d'une demi-page en mode Normal avec la molette : >
+	:map <MouseDown> <C-Y>
+	:map <S-MouseDown> <C-U>
+	:map <MouseUp> <C-E>
+	:map <S-MouseUp> <C-D>
+Vous pouvez aussi combiner des séquences avec les touches Alt et Ctrl.
+
+Cela fonctionne uniquement si Vim reçoit les événements de défilement de la
+molette, bien sûr. Utilisez le programme "xev" pour le tester.
+
+Si vous utilisez XFree86, le fichier "/etc/XF86Config" devrait contenir une
+entrée correcte pour votre souris. Par exemple, cette entrée fonctionne pour
+une souris Logitech ScrollMouse sur BSD : >
+	Protocol     "MouseMan"
+	Device       "/dev/psm0"
+	ZAxisMapping 4 5
+Consultez la documentation de XFree86 pour plus d'informations.
+
+							*xterm-mouse-wheel*
+Pour utiliser la molette dans un nouvel xterm, vous aurez seulement besoin de
+rendre la molette fonctionnelle dans votre serveur X, comme décrit ci-dessus.
+
+Pour utiliser la molette dans un xterm plus ancien, vous devrez :
+1° La rendre opérationnelle dans votre serveur X, comme décrit ci-dessus ;
+2° Ajouter des "Translations" pour votre xterm, afin qu'il passe à Vim les
+   événements de défilement de la molette comme de simples séquences
+   d'échappement ;
+3° Ajouter des mappages à Vim, afin d'interpréter ces séquences d'échappement
+   comme les touches <MoletteHaut> ou <MoletteBas>.
+
+Pour les "Tranlations", ajoutez ces lignes à votre fichier "~/.Xdefaults" (ou
+tout autre fichier qui contient vos ressources X) : >
+
+	XTerm*VT100.Translations:		#override \n\
+		s<Btn4Down>: string("0x9b") string("[64~") \n\
+		s<Btn5Down>: string("0x9b") string("[65~") \n\
+		<Btn4Down>: string("0x9b") string("[62~") \n\
+		<Btn5Down>: string("0x9b") string("[63~") \n\
+		<Btn4Up>: \n\
+		<Btn5Up>:
+
+Puis ajoutez ces mappages à votre fichier vimrc : >
+
+	:map <M-Esc>[62~ <MouseDown>
+	:map! <M-Esc>[62~ <MouseDown>
+	:map <M-Esc>[63~ <MouseUp>
+	:map! <M-Esc>[63~ <MouseUp>
+	:map <M-Esc>[64~ <S-MouseDown>
+	:map! <M-Esc>[64~ <S-MouseDown>
+	:map <M-Esc>[65~ <S-MouseUp>
+	:map! <M-Esc>[65~ <S-MouseUp>
+<
+ vim:tw=78:ts=8:ft=help:norl:

@@ -1,0 +1,1077 @@
+*various.txt*   Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+Fonctionnalités diverses				*various*
+
+1. Commandes diverses			    |various-cmds|
+2. Aide en ligne			    |online-help|
+3. Impression				    |printing|
+4. Utiliser Vim comme `less` ou `more`	    |less|
+
+==============================================================================
+1. Commandes diverses					*various-cmds*
+
+							*CTRL-L*
+CTRL-L			Efface et rafraîchit l'écran (ultérieurement).
+
+							*:redr* *:redraw*
+:redr[aw][!]		Rafraîchit l'écran immédiatement. Lorsque '!' est
+			inclus, il est d'abord effacé.
+			Utile pour garder l'écran à jour lors de l'exécution
+			d'un script ou d'une fonction. Ou également d'un
+			mappage lorsque 'lazyredraw' est activé.
+
+							*N<Del>*
+<Suppr>			Lors de la saisie d'un nombre : supprime le dernier
+			chiffre.
+			NOTE : Si vous préférez utiliser <RetArr>, ajoutez ce
+			mappage à votre fichier vimrc : >
+				:map  CTRL-V <RetArr>  CTRL-V <Suppr>
+<			Voir |:fixdel| si votre touche <Suppr> n'obéit pas
+			comme vous le souhaitez.
+
+:as[cii]	ou		    			*ga* *:as* *:ascii*
+ga			Affiche la valeur ASCII du caractère sous le curseur
+			en décimal, hexadécimal et octal. Par exemple, quand
+			le curseur est sur un 'R' :
+				<R>  82,  Hex 52,  Octal 122 ~
+			Si le caractère est un caractère non-standard, mais
+			imprimable selon l'option 'isprint', la version
+			non-imprimable est également donnée. Lorsque le
+			caractère est de code supérieur à 127, la forme <M-x>
+			est affichée en plus. Par exemple :
+				<~A>  <M-^A>  129,  Hex 81,  Octal 201 ~
+				<p>  <|~>  <M-~>  254,  Hex fe,  Octal 376 ~
+			(où <p> est un caractère spécial).
+			Le caractère <Nul> dans un fichier est enregistré en
+			interne comme <NL>, mais sera affiché ainsi :
+				<^@>  0,  Hex 00,  Octal 000 ~
+			{absent de Vi}				  ["Get Ascii"]
+
+							*g8*
+g8			Affiche les valeurs hexadécimales des octets utilisés
+			dans le caractère sous le curseur, selon l'encodage
+			|UTF-8|. Cela affiche aussi les caractères de
+			composition. Exemple d'un caractère avec trois
+			caractères de composition :
+				e0 b8 81 + e0 b8 b9 + e0 b9 89 ~
+			{absent de Vi}				  ["Get utf-8"]
+
+							*:p* *:pr* *:print*
+:[plage]p[rint]		Affiche les lignes de [plage] (défaut : ligne
+			courante).
+			NOTE : Pour imprimer vos fichiers sur papier, voir la
+			commande |:hardcopy|.
+
+:[plage]p[rint] {quant} Affiche {quant} lignes, débutant par [plage] (défaut :
+			ligne courante |cmdline-ranges|).
+
+							*:P* *:Print*
+:[plage]P[rint] [quant] Comme ":print". (Fut apparemment ajouté à Vi pour ceux
+			qui laissaient Maj enfoncé trop longtemps...)
+
+							*:l* *:list*
+:[plage]l[ist] [quant]  Comme ":print", mais rend les caractères
+			non-imprimables avec '^'.
+
+							*:nu* *:number*
+:[plage]nu[mber] [quant]
+			Comme ":print", mais fait précéder chaque ligne de
+			son numéro (voir aussi l'option 'highlight').
+
+							*:#*
+:[plage]# [quant]	Comme ":number".
+
+							*:z* *E144*
+:{plage}z[+-^.=]{quant}	Affiche plusieurs lignes de texte encadrant la ligne
+			spécifiée par {plage}, ou la ligne courante si {plage}
+			est absent. Si {quant} est précisé, il désigne le
+			nombre de lignes visibles ; sinon, la taille de la
+			fenêtre courante est utilisée.
+			":z" peut être employé seul ou suivi par un des signes
+			de ponctuation dont l'effet est décrit ci-dessous :
+
+			SIGNE  PREMIÈRE LIGNE  DERNIÈRE LIGNE  NOUVELLE POS.  ~
+			  +    ligne courante  1 écran après   1 écran après
+			  -    1 écran avant   ligne courante  ligne courante
+			  ^    2 écran avant   1 écran avant   1 écran avant
+			  .    1/2 écr. avant  1/2 écr. après  1/2 écran après
+			  =    1/2 écr. avant  1/2 écr. après  ligne courante
+
+			Si aucun signe n'est spécifié, c'est '+' qui est
+			utilisé par défaut. Si '=' est spécifié, une ligne de
+			tirets est tracée autour de la ligne courante.
+
+							*:z#*
+:{plage}z#[+-^.=]{quant}
+			Comme ":z", mais numérote les lignes.
+			{absent de certaines versions de Vi, différent dans
+			d'autres}
+
+							*:=*
+:=			Affiche le numéro de la ligne courante.
+
+:{plage}=		Affiche le numéro de la dernière ligne de {plage}.
+
+							*:norm* *:normal*
+:norm[al][!] {commandes}
+			Exécute les {commandes} en mode Normal : cela permet
+			d'exécuter des commandes du mode Normal à la ligne de
+			commande. Les {commandes} sont exécutées comme elles
+			sont tapées. En cas d'annulation, toutes sont annulées
+			en même temps.
+			Si [!] est spécifié, les mappages ne seront pas
+			utilisés.
+			Les {commandes} doivent être complètes ; si une
+			commande n'est pas terminée, Vim fera avorter à la
+			fin, comme avec <Echap> ou <C-C>.
+			L'écran ne sera pas mis à jour pendant ce temps. Ceci
+			implique qu'une commande d'insertion doit être
+			complète (pour lancer le mode Insertion, voir
+			|:startinsert|). Une commande ":" devra être complète
+			de la même façon.
+			Les {commandes} ne peuvent pas débuter par un espace.
+			Placez un '1' (un) avant l'espace, "1 " désigne un
+			espace. XXX
+			L'option 'insertmode' est ignorée pour {commandes}.
+			Cette commande ne peut être suivie par une autre,
+			puisque le séparateur '|' en est considéré comme une
+			partie. Cette commande peut être utilisée
+			récursivement, mais la profondeur est limitée par
+			'maxmapdepth'.
+			Lorsque cette commande est appelée depuis un mappage
+			non-récursif |:noremap|, son argument peut être mappé
+			malgré tout. Utilisez pour cela |:execute|, qui évalue
+			une expression comme argument. Ceci permet d'utiliser
+			des caractères imprimables. Par exemple : >
+				:exe "normal \<c-w>\<c-w>"
+<			{absent de Vi, bien sûr}
+			{uniquement si compilé avec la fonctionnalité
+			|+ex_extra|}
+
+							*:normal-range*
+:{plage}norm[al][!] {commandes}
+			Exécute  les {commandes} du mode Normal sur chaque
+			ligne de {plage}. Avant de les exécuter, le curseur
+			est placé sur la première colonne de la {plage}, à
+			chaque ligne. Identique, hormis ce point, à la
+			commande ":normal" sans spécification de plage.
+			{absent de Vi}
+			{uniquement si compilé avec la fonctionnalité
+			|+ex_extra|}
+
+							*:sh* *:shell* *E371*
+:sh[ell]		Lance un shell. Quand on quitte ce shell (après la
+			commande "exit"), on retourne dans Vim. La commande
+			lançant le shell est donnée par l'option 'shell'.
+							*E360*
+			NOTE : Cela ne fonctionne pas sur Amiga lorsque Vim a
+			été lancé en mode mise-au-point depuis un compilateur,
+			car le compilateur a fixé l'entrée standard à un mode
+			non-interactif.
+
+							*:!cmd* *:!* *E34*
+:!{cmd}			Exécute {cmd} dans un shell. Voir aussi les options
+			'shell' et 'shelltype'.
+			Tout '!' dans {cmd} est remplacé par la commande
+			externe précédente (voir aussi 'cpoptions'). Mais si
+			une contre-oblique protège le '!', il est inclus
+			littéralement. Par exemple : "!ls" puis ":!echo ! \!
+			\\!" exécute ":echo ls ! \!".
+			Après que la commande a été exécutée, l'horodatage du
+			fichier courant est contrôlé |timestamp|.
+			Il ne peut y avoir de '|' dans {cmd}, voir |:bar|.
+			{cmd} est terminé par un caractère saut-de-ligne, ce
+			qui suit sera interprété comme une commande ":"
+			suivante. Cependant, s'il y a une contre-oblique avant
+			le saut-de-ligne, elle est supprimée et la {cmd}
+			continue. Le nombre de contre-obliques précédant le
+			saut-de-ligne est sans importance, une seule est
+			supprimée.
+			Sous Unix, la {cmd} est normalement exécutée dans un
+			shell non-interactif. Si vous désirez qu'un shell
+			interactif soit utilisé (pour bénéficier des alias,
+			p. ex.), fixez 'shellcmdflag' à "-ic".
+			Pour Win32, voir aussi |:!start|.
+			Vim rafraîchit l'écran après que la commande s'est
+			terminée, car elle peut en avoir modifié le texte.
+			Ceci fait appel à une invite Appuyez-sur-entrée, pour
+			que vous puissiez lire les messages. Pour l'annuler : >
+				:silent !{cmd}
+<			L'écran ne sera alors pas rafraîchi et vous devrez
+			utiliser CTRL-L ou ":redraw!" si la {cmd} y a modifié
+			quelque chose.
+			Voir aussi |shell-window|.
+
+							*:!!*
+:!!			Répète le dernier ":!{cmd}".
+
+							*:ve* *:version*
+:ve[rsion]		Affiche la version courante de l'éditeur. Si le
+			compilateur utilisé supporte "__DATE__", la date de
+			compilation est mentionnée. Sinon, une date fixe de
+			sortie de version est utilisée.
+			Les lignes suivantes donnent des informations sur
+			l'inclusion des fonctionnalités à la compilation :
+			précédées par un '+', elles sont incluses, précédées
+			par un '-', elles sont exclues. Pour changer cela,
+			vous devez éditer "feature.h" puis recompiler Vim.
+			Pour les évaluer dans une expression, voir |has()|.
+			Ci-dessous, vous trouverez un aperçu des
+			fonctionnalités.
+			La première colonne indique la plus petite version
+			dans laquelle chacune est incluse : XXX
+			      T	    mini			       ["Tiny"]
+			      S	    légère			      ["Small"]
+			      N	    Normale
+			      B	    étendue				["Big"]
+			      H	    maxi			       ["Huge"]
+			      m	    spécifiée Manuellement, ou dépend des
+				       autres fonctionnalités
+			    (rien)  dépend du système
+			Ainsi, si une fonctionnalité est marquée d'un 'N',
+			elle sera présente dans les versions « normale »,
+			« étendue » et « maxi » de Vim.
+
+							*+feature-list*
+   *+ARP*		Amiga : inclut le support ARP
+B  *+arabic*		support de l'arabe |Arabic|
+N  *+autocmd*		|:autocmd|, commandes automatiques
+m  *+balloon_eval*	support de l'évaluation par bulle |balloon-eval|
+N  *+browse*		commande |:browse|
+N  *+builtin_terms*	quelques terminaux internes |builtin-terms|
+B  *++builtin_terms*	inclut tous les terminaux |builtin-terms|
+N  *+byte_offset*	support du drapeau 'o' pour l'option 'statusline',
+			   commandes "go" et ":goto"
+N  *+cindent*		|'cindent'|, indentation des sources C
+N  *+clientserver*	Unix et Win32 : invocation distante |clientserver|
+   *+clipboard*		support du presse-papiers |clipboard|
+N  *+cmdline_compl*	complètement en mode Lignecmd |cmdline-completion|
+N  *+cmdline_hist*	historique de la ligne de commande |cmdline-history|
+N  *+cmdline_info*	options |'showcmd'| et |'ruler'|
+N  *+comments*		support de |'comments'|
+N  *+cryptv*		support du chiffrement |encryption|
+B  *+cscope*		support |cscope|
+N  *+dialog_gui*	support de |:confirm| avec les dialogues IHM graphique
+N  *+dialog_con*	support de |:confirm| avec les dialogues console
+N  *+dialog_con_gui*	support de |:confirm| avec les dialogues console et
+			   IHM graphique
+N  *+diff*		|vimdiff| et 'diff'
+N  *+digraphs*		digrammes |digraphs|			*E196*
+   *+dnd*		support du glisser-déposer dans le registre "~ 
+			   |quote_~|
+B  *+emacs_tags*	support des marqueurs Emacs |emacs-tags|
+N  *+eval*		évaluation des expressions |eval.txt|
+N  *+ex_extra*		commandes Ex propres à Vim : |:center|, |:left|,
+   			   |:normal|, |:retab| et |:right|
+N  *+extra_search*	options |'hlsearch'| et |'incsearch'|
+B  *+farsi*		support |farsi|
+N  *+file_in_path*	|gf|, |CTRL-W_f| et |<cfile>|
+N  *+find_in_path*	recherche dans les fichiers inclus : |[I|, |:isearch|,
+   			   |CTRL-W_CTRL-I|, |:checkpath|, etc.
+N  *+folding*		support des replis |folding|
+   *+footer*		support des barres de messages Motif |gui-footer|
+   *+fork*		Unix : fourche les commandes shell |fork|
+N  *+gettext*		traduction des messages |multi-lang|
+   *+GUI_Athena*	Unix : |IHMg| Athena
+   *+GUI_neXtaw*	Unix : |IHMg| neXtaw
+   *+GUI_BeOS*		BeOS : |IHMg| BeOS
+   *+GUI_GTK*		Unix : |IHMg| GTK+
+   *+GUI_Motif*		Unix : |IHMg| Motif
+   *+GUI_Photon*	QNX :  |IHMg| Photon
+m  *+hangul_input*	support |hangul|
+   *+iconv*		compilé avec la fonction |iconv()| -- requiert |/dyn|
+N  *+insert_expand*	complètement en mode Insertion |insert_expand|
+N  *+jumplist*		liste des sauts |jumplist|
+B  *+keymap*		|'keymap'|
+B  *+langmap*		option |'langmap'|
+N  *+libcall*		|libcall()|
+N  *+linebreak*		options |'linebreak'|, |'breakat'| et |'showbreak'|
+N  *+lispindent*	|'lisp'|, indentation des sources Lisp
+N  *+listcmds*		commandes pour la liste des tampons |buffer-hidden|
+			   et la liste des arguments |:argdelete|
+N  *+localmap*		support des mappages locaux dans un tampon |:map-local|
+N  *+menu*		|:menu|
+N  *+mksession*		|:mksession|
+N  *+modify_fname*	|filename-modifiers|
+N  *+mouse*		support de la souris |mouse-using|
+N  *+mouseshape*	|'mouseshape'|
+B  *+mouse_dec*		Unix : support souris pour terminaux Dec |dec-mouse|
+N  *+mouse_gpm*		Unix : support souris pour consoles Linux |gpm-mouse|
+B  *+mouse_netterm*	Unix : support souris pour netterm |netterm-mouse|
+N  *+mouse_pterm*	QNX : support souris pour pterm |qnx-terminal|
+N  *+mouse_xterm*	Unix : support souris pour xterm |xterm-mouse|
+B  *+multi_byte*	coréen et autres langues multi-octets |multibyte|
+   *+multi_byte_ime*	méthode de saisie Win32 pour les car. multi-octets
+N  *+multi_lang*	support de langues non anglaises |multi-lang|
+m  *+netbeans_intg*	|netbeans|
+m  *+ole*		IHM graphique Win32 : |ole-interface|
+   *+osfiletype*	support pour l'option 'osfiletype' et le test associé
+   			   pour les autocommandes |autocmd-osfiletypes|
+N  *+path_extra*	recherche ascendante/descendante dans 'path' et 'tags'
+m  *+perl*		interface Perl |perl|
+   *+postscript*	|:hardcopy| génère un fichier PostScript
+N  *+printer*		commande |:hardcopy|
+m  *+python*		interface Python |python|
+N  *+quickfix*		commandes mise-au-point (voir |:make| et |quickfix|)
+B  *+rightleft*		saisie de gauche à droite |'rightleft'|
+m  *+ruby*		interface Ruby |ruby| -- requiert |/dyn|
+N  *+scrollbind*	option |'scrollbind'|
+B  *+signs*		|:sign|
+N  *+smartindent*	option |'smartindent'|
+m  *+sniff*		interface SNiFF+ (pas de doc disponible...) XXX
+N  *+statusline*	options 'statusline', 'rulerformat' et formats
+			   spéciaux de 'titlestring' et 'iconstring'
+m  *+sun_workshop*	|workshop|
+N  *+syntax*		coloration syntaxique |syntax|
+   *+system()*		Unix : alternative à |+fork|
+N  *+tag_binary*	recherche binaire des marqueurs |tag-binary-search|
+N  *+tag_old_static*	marqueurs statiques (obsolète) |tag-old-static|
+m  *+tag_any_white*	espaces dans les fichiers de marqueurs |tag-any-white|
+m  *+tcl*		interface Tcl |tcl|
+   *+terminfo*		utilise |terminfo| au lieu termcap
+N  *+termresponse*	support pour |t_RV| et |v:termresponse|
+N  *+textobjects*	sélection par objets textuels |text-objects|
+   *+tgetent*		non-Unix : utilisation d'un termcap externe
+N  *+title*		option |'title'|
+N  *+toolbar*		barre d'outils de l'IHM graphique |gui-toolbar|
+N  *+user_commands*	commandes utilisateur |user-commands|
+N  *+viminfo*		|'viminfo'|
+N  *+vertsplit*		partage vertical des fenêtres |:vsplit|
+N  *+virtualedit*	|'virtualedit'|
+S  *+visual*		mode Visuel |Visual-mode|
+N  *+visualextra*	commandes par bloc en mode Visuel |blockwise-operators|
+N  *+vreplace*		|gR| et |gr|
+N  *+wildignore*	|'wildignore'|
+N  *+wildmenu*		|'wildmenu'|
+S  *+windows*		support du multi-fenêtrage
+m  *+writebackup*	|'writebackup'| est activé par défaut
+   *+xfontset*		support du jeu de polices X |xfontset|
+m  *+xim*		méthode de saisie X |xim|
+   *+xsmp*		support XSMP (protocole de gestion de session X)
+   *+xsmp_interact*	support XSMP interactif
+N  *+xterm_clipboard*	Unix : support du presse-papiers xterm
+m  *+xterm_save*	sauve et restaure l'écran des xterm |xterm-screens|
+N  *+X11*		Unix : restaure le titre de la fenêtre sous |X11|
+
+							*/dyn* *E370* *E448*
+			La condition « /dyn » est ajoutée pour certaines
+			fonctionnalités lorsque celles-ci sont seulement
+			disponibles si la bibliothèque appropriée peut être
+			chargée dynamiquement.
+
+:ve[rsion] {no}    	Obsolète. Utilisé auparavant pour évaluer le numéro de
+			version d'un fichier vimrc. Inusité depuis que l'on
+			peut utiliser la commande ":if" pour un comportement
+			sélectif en fonction des versions. {absent de Vi}
+
+							*:redi* *:redir*
+:redi[r][!] > {fichier}	Redirige les messages dans {fichier}. Les messages
+			issus de la sortie de commandes sont écrits dans ce
+			fichier, jusqu'à la fin de la redirection ; ils seront
+			également toujours affichés à l'écran. [!] permet
+			d'écraser un fichier existant (si [!] est omis et que
+			{fichier} existe, la commande échoue).
+			Un seul ":redir" à la fois peut être actif. D'autres
+			appels de ":redir" fermeront la redirection active
+			avant de lancer la redirection vers la nouvelle cible.
+			Si vous ne souhaitez plus que les messages et
+			commandes soient affichées à l'écran, placez les
+			commandes dans une fonction et appelez-la par : >
+				:silent call Fonction()
+<			{absent de Vi}
+
+:redi[r] >> {fichier}	Redirige les messages dans {fichier}. Si {fichier}
+			existe déjà, ajoute à son contenu. {absent de Vi}
+
+:redi[r] @{a-zA-Z}	Redirige les message dans le registre {a-z}. Si le nom
+			du registre est donné en majuscule ({A-Z}), ajoute à
+			son contenu. {absent de Vi}
+
+:redi[r] @*		Redirige les messages dans le presse-papiers.
+			{absent de Vi}
+
+:redi[r] @"		Redirige les messages dans le registre sans nom.
+			{absent de Vi}
+
+:redi[r] END		Termine la redirection de messages. {absent de Vi}
+
+							*:sil* *:silent*
+:sil[ent][!] {commande}	Exécute {commande} silencieusement : les messages
+			normaux ne seront pas affichés ni ajoutés à
+			l'historique des messages.
+			Lorsque [!] est spécifié, les messages d'erreurs
+			seront également tus et les commandes et mappages ne
+			seront pas abandonnés lorsqu'une erreur est détectée.
+			La variable |v:errmsg| restera fixée.
+			Lorsque [!] n'est pas spécifié, un message d'erreur
+			réactivera l'affichage normal des messages suivant.
+			Une redirection entamée avec |:redir| se poursuivra
+			alors normalement, même s'il pourrait y avoir de
+			petites différences.
+			Cela rend possible la redirection de la sortie d'une
+			commande sans l'afficher à l'écran. Par exemple : >
+				:redir >/tmp/toto
+				:silent g/Aap/p
+				:redir END
+<			Pour exécuter une commande du mode Normal
+			silencieusement, utilisez la commande |:normal|. Par
+			exemple, pour la recherche silencieuse d'une chaîne : >
+				:silent exe "normal /zorglub\<CR>"
+<			":silent!" est utile pour exécuter une commande qui
+			peut échouer, mais dont on veut ignorer l'échec.
+			Exemple : >
+				:let v:errmsg = ""
+				:silent! /^début
+				:if v:errmsg != ""
+				: ... le motif n'a pas été trouvé
+<			":silent" évitera également les invites
+			Appuyez-sur-entrée.
+			Si vous l'utilisez pour une commande externe, l'écran
+			sera peut-être sali. Utilisez |CTRL-L| pour le
+			rafraîchir ensuite.
+			":silent menu ..." définit un menu qui n'affichera pas
+			de commande sur la ligne de commande. Cette commande
+			continuera quand même à produire des messages. Pour
+			éviter cela, utilisez ":silent" dans la commande
+			elle-même : ":silent menu ... :silent commande".
+
+							*:verb* *:verbose*
+:[quant]verb[ose] {commande}
+			Exécute {commande} avec 'verbose' fixé à [quant]. Si
+			[quant] est omis, la valeur par défaut sera '1'.
+			L'utilisation additionnelle de ":silent" permet de
+			générer des messages qui ne seront pas affichés.
+			La combinaison de ":silent" et ":verbose" peut servir
+			à produire des messages et les tester grâce aux
+			variables comme |v:statusmsg|, etc. Par exemple : >
+				:let v:statusmsg = ""
+				:silent verbose runtime toto.vim
+				:if v:statusmsg != ""
+				:  ... toto.vim ne peut pas être trouvé ...
+				:endif
+<			Lors de la concaténation avec d'autres commandes,
+			":verbose" s'applique seulement à la première : >
+				:4verbose set verbose | set verbose
+<				  verbose=4 ~
+				  verbose=0 ~
+
+			 				*K*
+K			Lance un programme prenant comme argument le mot-clé
+			sous le curseur. Le nom du programme est donné par
+			l'option 'keywordprg' ('kp' ; défaut : "man"). Un
+			mot-clé est formé des lettres, nombres et caractères
+			spécifiés par 'iskeyword'. Le mot-clé sous ou à droite
+			du curseur est utilisé. Cette commande revient à
+			exécuter : >
+				:!{programme} {mot-cle}
+<			Un exemple de programme à utiliser se trouve dans le
+			répertoire "tools" de Vim : il s'agit de "ref", qui
+			propose une correction orthographique simple.
+			Cas spéciaux :
+			- Si 'keywordprg' est vide, la commande ":help" est
+			  utilisée. C'est un bon choix en incluant plus de
+			  caractères dans 'iskeyword' afin de bénéficier d'une
+			  aide plus large.
+			- Si 'keywordprg' vaut "man", un quantificateur avant
+			  "K" sera inséré entre la commande et le mot-clé. Par
+			  exemple, taper "2K" lorsque le curseur est sur
+			  "mkdir" équivaut à : >
+				:!man 2 mkdir
+<			- Si 'keywordprg' vaut "man -s", un quantificateur
+			  avant "K" sera inséré après le "-s". S'il n'y a pas
+			  de quantificateur, le "-s" est ignoré.
+			{absent de Vi}				    ["Keyword"]
+
+			 				*v_K*
+{Visuel}K		Comme "K", mais en prenant le texte de la zone Visuel
+			comme mot-clé. Fonctionne uniquement si la zone Visuel
+			ne dépasse pas une ligne. {absent Vi}
+
+[N]gs		ou					*gs* *:sl* *:sleep*
+:[N]sl[eep] [N][m]	Met en veille durant N secondes (ou N millisecondes
+			si un 'm' est donné). Le quantificateur pour "gs"
+			utilise toujours des secondes. (Défaut : 1 seconde.) >
+				:sleep		" veille pendant une seconde
+				:5sleep		" idem, cinq secondes
+				:sleep 100m	" idem, cent millisecondes
+				10gs		" veille pendant dix secondes
+<			Cette commande peut être interrompue par CTRL-C
+			(CTRL-Attn sur MS-DOS).
+			Le curseur reste positionné dans le texte (s'il est
+			visible). {absent de Vi}		 ["Goto Sleep"]
+
+							*g_CTRL-A*
+g CTRL-A		Uniquement si Vim a été compilé avec MEM_PROFILING
+			défini (ce qui est très rare) : donne les statistiques
+			d'usage de la mémoire. Utilisé pour le débogage.
+
+==============================================================================
+2. Aide en ligne					*online-help*
+
+<Aide>		ou	*help* *<Help>* *:h* *:help* *<F1>* *i_<F1>* *i_<Help>*
+:h[elp]			Ouvre une fenêtre et affiche le fichier d'aide en mode
+			lecture seule. Si une fenêtre d'aide est déjà ouverte,
+			elle sera réutilisée. Sinon, si la fenêtre courante
+			occupe toute la largeur de l'écran ou au moins 80
+			caractères, la fenêtre d'aide apparaîtra juste
+			au-dessus. Dans les autre cas, la nouvelle fenêtre
+			sera placée au sommet. {absent de Vi}
+
+							*{subject}* *E149*
+:h[elp] {sujet}		Comme ":help", mais saute en plus au marqueur d'aide
+			{sujet}. {sujet} peut contenir des caractères
+			d'englobement comme '*', '?' et "[a-z]" : >
+				:help z?    " vers l'aide de toute commande "z"
+				:help z.    " vers l'aide de "z."
+<			S'il n'y a pas de correspondance exacte pour le motif
+			(ou s'il y en a plusieurs), c'est la « meilleure »
+			correspondance qui est choisie. Un algorithme évolué
+			permet d'arrêter ce choix, en prenant en compte les
+			éléments suivants :
+			- une correspondance de même casse est bien meilleure
+			  qu'une de casse différente ;
+			- une correspondance débutant après un caractère
+			  non-alphanumérique est meilleure qu'une débutant au
+			  milieu d'un mot ;
+			- une correspondance vers le début d'un marqueur est
+			  meilleure que vers la fin ;
+			- plus il y a de caractères alphanumériques qui
+			  correspondent, meilleure est la correspondance ;
+			- plus une correspondance est courte, meilleure elle
+			  est.
+			Remarquez que plus {sujet} sera long, moins vous aurez
+			de correspondances. Pour vous faire une idée de ce
+			fonctionnement, utilisez le complètement de la ligne
+			de commande (saisissez CTRL-D après ":help sujet").
+			S'il y a plusieurs correspondances, vous pouvez les
+			lister en tapant CTRL-D. Par exemple : >
+				:help cont<C-D>
+<			Pour utiliser une expression rationnelle |pattern|,
+			tapez d'abord ":help", puis ":tag {motif}" dans la
+			fenêtre d'aide. La commande ":tnext" peut ensuite
+			servir à sauter vers la correspondance suivante,
+			":tselect" à lister les correspondances et en choisir
+			une. >
+				:help index| :tse z.
+<			Cette commande peut être suivie par '|' et une autre
+			commande, il n'est pas nécessaire de protéger '|' par
+			un caractère d'échappement. Ces deux exemples
+			fonctionneront donc : >
+				:help |
+				:help k| only
+<			NOTE : Un espace avant '|' est considéré comme partie
+			de l'argument de ":help".
+			Vous pouvez également utiliser <LF> ou <CR> pour
+			séparer la commande d'aide des commandes suivantes.
+			Tapez d'abord CTRL-V pour insérer <LF> ou <CR> : >
+				:help so<C-V><CR>only
+<			{absent de Vi}
+
+							*:helpg* *:helpgrep*
+:helpg[rep] {motif}   	Recherche dans tous les fichiers d'aide et dresse une
+			liste de lignes dans lesquelles {motif} correspond.
+			Saute à la première correspondance.
+			Vous pouvez naviguer dans les correspondances avec les
+			commandes du mode mise-au-point |quickfix| (p. ex.,
+			|:cnext| pour sauter à la suivante). Ou utiliser
+			|:cwindow| pour obtenir la liste des correspondances
+			dans la fenêtre mise-au-point.
+			{motif} est interprété comme une exprat Vim |pattern|.
+			'ignorecase' n'est pas utilisé, ajoutez "\c" pour
+			ignorer la casse. Exemple de recherche sensible à la
+			casse : >
+				:helpgrep Uganda
+<			Exemple de recherche insensible à la casse : >
+				:helpgrep uganda\c
+<			Ne peut être suivi par une autre commande, tout étant
+			utilisé pour faire partie du motif. Mais vous pouvez
+			utiliser |:execute| si nécessaire.
+
+
+Lorsque aucun argument n'est donné, le fichier précisé par l'option 'helpfile'
+sera utilisé. Sinon, le marqueur spécifié sera recherché dans tous les
+fichiers "doc/tags" des répertoires précisés par l'option 'runtimepath'.
+
+La hauteur initiale de la fenêtre d'aide peut être modifiée par l'option
+'helpheight' (défaut : 20).
+
+On saute vers un sujet spécifique en utilisant des marqueurs. Ceci peut se
+faire de deux manières distinctes :
+1. Saisir la commande CTRL-] lorsqu'on est placé sur le nom d'une commande ou
+   d'une option (marche uniquement si le marqueur est un mot-clé).
+   "<C-Leftmouse>" et "g<Leftmouse>" fonctionnent tout comme CTRL-D.
+2. Utiliser la commande ":ta {sujet}". Ceci marche pour tous les caractères.
+
+Utilisez CTRL-T ou CTRL-O pour revenir en arrière.
+Utilisez ":q" pour fermer la fenêtre d'aide.
+
+S'il existe plusieurs correspondances pour un motif que vous recherchez, voici
+comment vous pourrez sauter sur chacun d'eux à la suite :
+1° Ouvrez une fenêtre d'aide.
+2° Utilisez la commande ":tag" avec une oblique précédant votre motif. Par
+   exemple : >
+	:tag /min
+3° Utilisez ":tnext" pour sauter au marqueur correspondant suivant.
+
+Il est possible d'ajouter des fichiers d'aide locaux pour les greffons et
+autres sujets. Vous n'aurez pas besoin de modifier les fichiers d'aide de la
+distribution pour cela. Voir |add-local-help|.
+
+Pour écrire des fichiers d'aide locaux, voir |write-local-help|.
+
+NOTE : Les lignes de titre des fichiers d'aide locaux seront automatiquement
+ajoutés à la suite de la section « AJOUTS LOCAUX » du fichier d'aide
+"help.txt" |local-additions|. Ceci est fait lors de la visualisation du
+fichier dans Vim, le fichier lui-même reste inchangé. Il s'agit en fait d'une
+extraction de la première ligne de chaque fichier d'aide : les fichiers dans
+$VIMRUNTIME/doc sont concernés.
+
+							*help-xterm-window*
+Si vous souhaitez voir s'afficher l'aide dans sa propre fenêtre xterm, essayez
+cette commande : >
+	:!xterm -e vim +help &
+<
+							*:helpf* *:helpfind*
+:helpf[ind]		Comme |:help|, mais utilise un dialogue pour saisir
+			l'argument. Présent uniquement pour compatibilité
+			ascendante. Il exécute maintenant l'entrée du menu
+			ToolBar.HelpFind au lieu d'utiliser un dialogue
+			interne.
+			{uniquement si compilé avec la fonctionnalité
+			|+GUI_GTK|}
+
+			*:helpt* *:helptags* *E154* *E150* *E151* *E152* *E153*
+:helpt[ags] {rep}	Génère le fichier de marqueurs d'aide pour le
+			répertoire {rep}.
+			Tous les fichiers "*.txt" du répertoire sont balayés
+			pour en extraire les marqueurs entre étoiles ('*'). Le
+			fichier de marqueurs généré est ensuite trié. S'il
+			contient des doublons, un message d'erreur est émis.
+			Un fichier de marqueurs existant sera écrasé sans
+			sommation.
+
+==============================================================================
+3. Impression						    *printing*
+
+Sur MS-Windows, Vim peut imprimer votre texte sur n'importe quelle imprimante
+installée. Sur les autres systèmes, un fichier PostScript est créé : il peut
+être directement envoyé à une imprimante PostScript. Pour les autres
+imprimantes, vous aurez besoin d'utiliser un programme comme ghostscript.
+
+3.1. Impression PostScript		    |postscript-printing|
+3.2. Encodages d'impression PostScript	    |postscript-print-encoding|
+3.3. Problèmes d'impression PostScript	    |postscript-print-trouble|
+3.4. Utilitaires PostScript		    |postscript-print-util|
+3.5. Caractères saut-de-page		    |printing-formfeed|
+
+{absent de Vi}
+{uniquement si compilé avec la fonctionnalité |+printer|}
+
+					*:ha* *:hardcopy* *E237* *E238* *E324*
+:[plage]ha[rdcopy][!] [arguments]
+			Envoie les lignes de [plage] à l'imprimante (défaut :
+			fichier entier).
+
+			Systèmes MS-Windows : une boîte de dialogue est
+			affichée pour permettre la sélection de l'imprimante,
+			de la taille du papier, etc. Si vous ne souhaitez pas
+			cette boîte de dialogue, utiliser [!] : l'imprimante
+			définie par 'printdevice' sera alors utilisée (ou
+			l'imprimante par défaut du système si 'printdevice'
+			est vide).
+
+			Systèmes non-MS-Windows : le PostScript est écrit dans
+			un fichier temporaire et 'printexpr' sert à
+			l'imprimer. Les [arguments] peuvent être passés à
+			'printexpr' à travers |v:cmdarg|. Sinon, ils seront
+			ignorés. 'printoptions' peut être utilisé pour définir
+			la taille du papier, l'impression recto-verso, etc.
+
+:[plage]ha[rdcopy][!] >{nomfich}
+			Comme ci-dessus, mais écrit la sortie PostScript dans
+			le fichier {nomfich}.
+			Les chaînes spéciales telles que "%" sont étendues.
+			|cmdline-special|
+			ATTENTION ! Un fichier existant sera écrasé sans
+			sommation.
+			{uniquement si compilé avec la fonctionnalité
+			|+postscript|}
+			Sur MS-Windows, utilisez la fonctionnalité "print to
+			file" XXX du pilote de l'imprimante.
+
+La progression de l'impression est donnée par le numéro de page en cours et
+le pourcentage déjà imprimé. Pour annuler l'impression, utilisez la séquence
+d'interruption (CTRL-C ou CTRL-Attn sur les systèmes MS).
+
+La sortie imprimante est contrôlée par les options 'printoptions' et
+'printfont'. L'option 'printheader' spécifie le format de l'en-tête de page.
+
+Le fichier imprimé se limite toujours aux marges sélectionnées, indépendamment
+de la valeur des options 'wrap' ou 'linebreak' dans la fenêtre courante.
+L'item "wrap" de 'printoptions' peut être utilisé pour désactiver
+l'enroulement des lignes.
+
+La coloration syntaxique courante sera respectée lors de l'impression, avec
+les restrictions suivantes :
+1° La couleur de fond normale est toujours rendue comme blanche (en fait, la
+   couleur du papier).
+2° La couleur de premier plan normale est rendue comme noire, tout comme du
+   texte blanc, de telle sorte qu'ils soient visibles !
+3° Si 'background' vaut "dark", alors les couleurs sont assombries car si
+   elles ne l'étaient pas, elles seraient trop claires pour être lisibles sur
+   du papier blanc.
+
+
+3.1. IMPRESSION POSTSCRIPT			*postscript-printing*
+						*E455* *E456* *E457* *E624*
+Si vous disposez de suffisamment d'espace disque, la génération d'un fichier
+PostScript ne devrait pas poser de problème. Vos fichiers de démarrage devront
+être correctement installés (si vous avez accès aux fichiers d'aide, cela
+devrait être le cas).
+
+Il existe à l'heure actuelle plusieurs limitations pour l'impression
+PostScript :
+
+- 'printfont' : Le nom de la police est ignorée (la famille Courrier sera
+  toujours utilisée, elle devrait être disponible sur toutes les imprimantes),
+  mais la taille sera prise en compte.
+
+- 'printoptions' : L'impression recto-verso est prise en compte lors de la
+  génération de la sortie PostScript, mais il appartient à l'imprimante de
+  la traiter correctement : si elle ne la supporte pas, elle sera ignorée
+  silencieusement. Certaines imprimantes pourtant n'imprimeront rien.
+
+- Support 8-bits : Bien que de nombreux encodages de caractères d'impression
+  8-bits soient supportés, il est possible que certains caractères ne soient
+  pas imprimés. L'impression ou non d'un caractère dépend de l'existence de ce
+  caractère dans la police de l'imprimante. Un caractère manquant sera
+  remplacé par un point d'interrogation inversé, ou bien par un espace si ce
+  caractère n'est lui-même pas présent dans la police. Il devrait être
+  possible d'obtenir tous les caractères dans un encodage d'impression en
+  installant une nouvelle version de la famille de polices Courier.
+
+- Support multi-octets : Actuellement, Vim essaiera de convertir les
+  caractères multi-octets dans l'encodage 8-bits spécifié par 'printencoding'
+  (en Latin-1 si cette option est vide). Tous les caractères qui ne peuvent
+  pas être convertis correctement sont affichés comme des caractères inconnus.
+  L'impression échouera si Vim ne peut pas convertir l'encodage multi-octets
+  en 8-bits.
+
+
+				    *postscript-print-encoding* *E618* *E619*
+3.2. ENCODAGE DE CARACTÈRES D'IMPRESSION 8-BITS PERSONNALISÉ
+
+Pour utiliser votre propre encodage de caractères d'impression lorsque vous
+imprimez des données composées de caractères 8-bits, vous devez définir votre
+propre vecteur d'encodage de police PostScript. Ce sujet dépasse largement le
+cadre de ce fichier d'aide, aussi pour obtenir des renseignements sur ce
+point, reportez-vous à l'ouvrage "PostScript Language Reference Manual", 3e
+édition, publié par Addison-Wesley et disponible au format PDF sur
+"http://www.adobe.com/". Les instructions suivantes expliquent ce que vous
+devez faire pour que Vim détecte et utilise votre encodage de caractères
+d'impression.
+
+1° Choisissez un nom unique pour votre vecteur d'encodage, qui n'entre pas en
+   conflit avec les noms d'encodages standards ou rajoutés que Vim utilise
+   (voir |encoding-names| pour une liste), et que personne d'autre ne pourrait
+   utiliser pour autre chose.
+2° Copiez $VIMRUNTIME/print/latin1.ps dans le sous-répertoire "print" de votre
+   répertoire de support personnel (voir 'runtimepath') et renommez-le avec le
+   nom que vous avez choisi.
+3° Éditez la copie renommée de "latin1.ps", remplacez toutes les occurrences
+   de "latin1" par le nom que vous avez choisi (n'oubliez pas la ligne
+   débutant par "%%Title:") et modifiez la table des noms d'oeils pour définir
+   votre nouveau vecteur d'encodage. La table doit contenir 256 entrées
+   exactement, ou il vous sera impossible d'imprimer !
+4° À l'intérieur de Vim, fixez 'printencoding' au nom d'encodage que vous avez
+   choisi, puis imprimez votre fichier. Vim utilisera alors votre encodage de
+   caractères d'impression personnel.
+
+Vim signalera une erreur concernant le fichier de ressources si vous modifiez
+l'ordre ou le contenu des 3 premières lignes, en dehors du nom de l'encodage
+sur la ligne débutant par "%%Title:" et du numéro de version sur la ligne
+débutant par "%%Version:".
+
+[Explication technique pour ceux qui connaissent le PostScript : Vim recherche
+un fichier portant le même nom que l'encodage qu'il utilisera lors de
+l'impression. Le fichier définit une nouvelle ressource d'encodage PostScript
+nommée "/VIM-{nom}", où {nom} désigne l'encodage de caractères d'impression
+que Vim doit utiliser.]
+
+
+3.3. PROBLÈMES D'IMPRESSION POSTSCRIPT		*postscript-print-trouble*
+						*E621*
+D'ordinaire, le seul problème rencontré lors de l'impression PostScript, c'est
+que la sortie d'impression n'apparaît pas. Si vous avez de la chance, vous
+obtiendrez une page imprimée qui vous indiquera l'opérateur PostScript
+responsable de l'erreur qui a empêché l'impression.
+
+Il existe plusieurs causes possibles pour expliquer l'échec de l'impression :
+
+- Mauvaise version du fichier de ressources "prolog". Le fichier de ressources
+  "prolog" contient des instructions PostScript nécessaires à Vim pour
+  l'impression. Chaque version de Vim requiert une version particulière de ce
+  fichier. Assurez-vous que les fichiers de support sont bien installés et ne
+  contiennent pas une ancienne version d'un fichier nommé "prolog" dans le
+  sous-répertoire "print" des chemins donnés par l'option 'runtimepath'.
+
+- Taille du papier. Certaines imprimantes PostScript échoueront dans
+  l'impression d'un fichier si elles ne supportent pas la taille du papier
+  spécifiée. Par défaut, Vim utilise le format A4. Recherchez quelle taille de
+  papier votre imprimante utilise par défaut et fixez cette valeur avec
+  'printoptions'. Si vous ne trouvez pas le nom du format utilisé, mesurez une
+  feuille et comparez avec le tableau des tailles de papier supportées (voir
+  |a4|), en choisissant celle qui se rapproche le plus en longueur ET en
+  largeur.
+  NOTE : Les dimensions des feuilles que vous utilisez peuvent varier
+  légèrement de celles listées. Si toutefois cet écart est trop important,
+  vous pouvez avoir recours à l'utilitaire `psresize`, cité plus bas.
+
+- Impression recto-verso. Normalement, une imprimante PostScript qui ne
+  supporte pas l'impression en recto-verso ignorera cet ordre. Chez certaines
+  imprimantes, cela provoquera l'échec. Essayez d'imprimer en désactivant
+  "duplex".
+  NOTE : L'impression recto-verso peut être réalisée manuellement avec les
+  utilitaires PS (voir ci-dessous).
+
+- Collationnure. Comme pour le recto-verso, la plupart des imprimantes
+  PostScript qui ne supportent pas la collationnure de la sortie d'impression
+  l'ignoreront simplement ; d'autres échoueront. Essayez alors d'imprimer en
+  désactivant la collationnure.
+
+- Coloration syntaxique. Certains codes de gestion d'impression peuvent
+  empêcher que le fichier PostScript généré soit imprimé sur une imprimante
+  noir et blanc lorsque la coloration syntaxique est activée, même si le noir
+  solide est la seule couleur utilisée. Essayez alors d'imprimer en
+  désactivant la coloration syntaxique.
+
+Une bonne valeur générique à essayer pour 'printoptions' est : >
+
+	:set printoptions=paper:A4,duplex:off,collate:n,syntax:n
+
+Remplacez "A4" par la taille du papier qui correspond le mieux à celle que
+vous utilisez.
+
+
+3.4. UTILITAIRES POSTSCRIPT			*postscript-print-util*
+
+3.4.1. Ghostscript
+------------------
+Ghostscript est un interpréteur PostScript et PDF qui peut être utilisé pour
+afficher et imprimer des fichiers PostScript et PDF sur des imprimantes
+non-PostScript. Il peut aussi convertir des fichiers PostScript en PDF.
+
+Ghostscript fonctionne sur un grand nombre de plates-formes.
+
+Il existe trois versions disponibles :
+
+- AFPL Ghostscript (anciennement Aladdin Ghostscript), gratuit pour un usage
+  non commercial. Disponible sur :
+
+	http://www.cs.wisc.edu/~ghost/
+
+- GNU Ghostscript, distribué sous licence LGP GNU. Disponible sur :
+
+	ftp://mirror.cs.wisc.edu/pub/mirrors/ghost/gnu/
+
+- Une version commerciale pour être incluse dans des produits commerciaux.
+
+Des informations supplémentaires sur Ghostscript peuvent être trouvées sur :
+
+	http://www.ghostscript.com/
+
+Le support de nombreuses imprimantes non-PostScript est fourni par défaut dans
+la distribution, mais si votre imprimante n'est pas reconnue, visitez le site
+de Ghostscript pour un support étendu.
+
+
+3.4.2. Prévisualisateurs Ghostscript
+------------------------------------
+L'interface de Ghostscript reste très rudimentaire, et ainsi de nombreuses
+adaptations graphiques ont vu le jour. Elles permettent une sélection des
+fichiers PostScript plus simple et offrent des fonctions de zoom et
+d'impression. Consultez les documentations fournies pour plus de détails.
+
+X11
+
+- Ghostview. Disponible sur :
+
+	http://www.cs.wisc.edu/~ghost/gv/
+
+- gv. Dérivé de Ghostview. Disponible sur :
+
+	http://wwwthep.physik.uni-mainz.de/~plass/gv/
+
+  Des copies (peut-être pas des plus récentes) peuvent également être trouvées
+  sur :
+
+	http://www.cs.wisc.edu/~ghost/gv/
+
+OpenVMS
+
+- gv-vms. Portage de gv sur OpenVMS. Disponible sur :
+
+	ftp://axp.psl.ku.dk/decwindows/xaw3d/
+	ftp://ftp.wku.edu/vms/fileserv/x11kit.zip
+
+Windows et OS/2
+
+- GSview. Disponible sur :
+
+	http://www.cs.wisc.edu/~ghost/gsview/
+
+DOS
+
+- ps_view. Disponible sur :
+
+	ftp://ftp.pg.gda.pl/pub/TeX/support/ps_view/
+	ftp://ftp.dante.de/tex-archive/support/ps_view/
+
+Linux
+
+- GSview. Version Linux du populaire visualisateur du monde Windows et OS/2.
+  Disponible sur :
+
+	http://www.cs.wisc.edu/~ghost/gsview/
+
+- BMV. Diffère de Ghostview et gv en ce qu'il n'utilise pas X mais svgalib.
+  Disponible sur :
+
+	ftp://sunsite.unc.edu/pub/Linux/apps/graphics/viewers/svga/bmv-1.2.tgz
+
+
+3.4.3. PSUtils
+--------------
+PSUtils est une collection de programmes utilitaires pour manipuler des
+documents PostScript. Les sources sont disponibles pour de nombreuses
+plates-formes, ainsi que des distributions binaires. PSUtils peut être
+trouvé sur :
+
+	http://www.tardis.ed.ac.uk/~ajcd/psutils/index.html
+
+Parmi les utilitaires les plus intéressants :
+
+- psnup      permet d'imprimer plusieurs pages par feuilles ;
+- psselect   sélectionne des plages de pages dans un document ;
+- psresize   change la taille du papier ;
+- psbook     réarrange les pages d'un document afin de produire un livre.
+
+La sortie d'un programme peut servir d'entrée au suivant, permettant ainsi la
+création de documents complexes.
+
+
+	   ---- Imprimer plusieurs pages logiques par feuille ----
+
+L'utilitaire `psnup` peut prendre un fichier PostScript généré par Vim et le
+convertir en une version contenant n pages logiques par feuille. La façon la
+plus simple d'obtenir une sortie de 2 pages par feuilles est de créer d'abord
+un fichier PS avec : >
+
+	:hardcopy > test.ps
+
+Puis d'exécuter à la ligne de commande : >
+
+	psnup -n 2 test.ps final.ps
+
+NOTE : Vous obtiendrez peut-être des avertissements de certains visualisateurs
+Ghostscript pour des fichiers produits par `psnup` ; vous pouvez les ignorer
+en toute sécurité.
+
+Pour finir, imprimez le fichier "final.ps" sur votre imprimante PostScript
+grâce à la commande d'impression de votre plate-forme. (Il vous restera alors
+seulement à supprimer ensuite les deux fichiers PostScript.) 'printexpr' peut
+être modifié pour effectuer ce travail avant l'impression.
+
+
+		---- Imprimer en recto-verso manuellement ----
+
+Il est possible de concevoir une version bricolée de l'impression recto-verso
+en utilisant l'utilitaire `psselect`. Les option "-e" et "-o" permettent de
+retenir juste les pages paires ["Even"] ou impaires ["Odd"] d'un fichier PS.
+
+Générez d'abord un fichier PS avec la commande ":hardcopy", puis créez deux
+nouveaux fichiers contenant toutes les pages impaires/paires avec : >
+
+	psselect -o test.ps impair.ps
+	psselect -e test.ps pair.ps
+
+Ensuite, imprimez "impair.ps" grâce à la commande d'impression de votre
+plate-forme ; récupérez les feuilles imprimées, retournez-les et remettez-les
+dans le bac d'alimentation ; enfin, imprimez "pair.ps" grâce à la commande
+d'impression de votre plate-forme : toutes les pages paires doivent maintenant
+apparaître au dos des pages impaires.
+
+Il convient de veiller particulièrement à deux choses :
+
+1° Position de la première page. Si la première page est placée au-dessus des
+   autres après l'impression des pages impaires, vous devrez alors inverser à
+   la main l'ordre de ces pages (afin que la page 2 soit imprimée
+   effectivement au dos de la page 1, etc.). Cela peut être fait directement
+   en passant l'option "-r" à `psselect`.
+   NOTE : Il est plus sûr d'inverser les pages impaires plutôt que les pages
+   paires, au cas où le nombre total de pages du document PS soit impair.
+
+2° Retournement du papier. Lors du retournement des pages impaires, vous
+   devrez combiner un rotation horizontale (selon le grand côté) ou verticale
+   (selon le petit côté) avec un possible renversement de 180 degrés. Tout
+   cela dépend de votre imprimante : ce sera plus facile avec une imprimante
+   jet d'encre personnelle qu'avec une petite laser de groupe de travail, où
+   le cheminement du papier est masqué à la vue.
+
+
+3.5. CARACTÈRES SAUT-DE-PAGE				*printing-formfeed*
+
+Par défaut, Vim n'opère aucun traitement spécial pour les caractères de
+contrôle saut-de-page |formfeed|. Si vous activez l'item "formfeed" dans
+'printoptions', Vim reconnaîtra les caractères saut-de-page et continuera
+l'impression de la ligne courante sur une nouvelle page. L'utilisation des
+caractères saut-de-page offre un moyen de contrôle rudimentaire de
+l'impression, mais il convient de veiller à certaines choses.
+
+Vim commencera toujours l'impression d'une ligne (numéro de ligne compris si
+activé) contenant un caractère saut-de-page, même s'il est le premier
+caractère de la ligne. Cela signifie que si une ligne débutant par un
+caractère saut-de-page est la première d'une page, Vim imprimera une page
+blanche.
+
+Comme le numéro de ligne est imprimé au début de l'impression de la ligne
+contenant le caractère saut-de-page, le reste de la ligne imprimée sur une
+nouvelle page ne disposera pas de numéro de ligne (à l'image des lignes
+longues enroulées lorsque l'item "wrap" est activé dans 'printoptions').
+
+Si le caractère saut-de-page est le dernier caractère d'une ligne,
+l'impression continuera sur la deuxième ligne de la nouvelle page, pas sur la
+première. Cela provient de ce que Vim débute toujours une nouvelle ligne après
+un caractère saut-de-page, même s'il n'y a rien après, puis saute une ligne
+pour continuer l'impression.
+
+Afin de minimiser les désagréments résultant des points précédents, il est
+recommandé, lorsque l'item "formfeed" est activé dans 'printoptions', de
+désactiver l'impression des numéros de lignes et d'éviter qu'un caractère
+saut-de-page soit le dernier dans une ligne. Même alors, vous devrez peut-être
+ajuster le nombre de lignes avant un caractère saut-de-page afin d'éviter une
+page blanche accidentelle.
+
+==============================================================================
+4. Utiliser Vim comme `less` ou `more`				*less*
+
+Quand vous visualisez un fichier avec le programme `less` ou `more`, vous
+n'avez aucune coloration syntaxique. Vous aurez peut-être envie d'utiliser Vim
+à la place : pour cela, exécutez le script "$VIMRUNTIME/macros/less.sh".
+
+Ce script shell utilise le script Vim "$VIMRUNTIME/macros/less.vim". Il
+définit des mappages pour simuler le comportement des commandes de `less`.
+Sinon, vous pouvez toujours utiliser les commandes Vim.
+
+La ressemblance n'est pas parfaite. Par exemple, lors de la visualisation d'un
+fichier très court, Vim occupera encore tout l'écran. Mais cela devrait
+suffire dans la plupart des cas, et vous fera bénéficier de la coloration
+syntaxique.
+
+La touche "h" fournira un bref descriptif des commandes disponibles.
+
+ vim:tw=78:ts=8:ft=help:norl:

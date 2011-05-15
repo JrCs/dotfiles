@@ -1,0 +1,102 @@
+*if_sniff.txt*	Pour Vim version 6.2.
+
+
+     MANUEL de RÉFÉRENCE VIM - par Anton Leherbauer <toni@takefive.co.at>
+
+
+SNiFF+ et Vim						*sniff*
+
+1. Introduction				    |sniff-intro|
+2. Commandes				    |sniff-commands|
+3. Compiler Vim avec l'interface SNiFF+	    |sniff-compiling|
+
+{absent de Vi}				    *E275* *E274* *E276* *E278* *E279*
+{uniquement si compilé avec la fonctionnalité |+sniff|}
+
+==============================================================================
+1. Introduction						*sniff-intro*
+
+Les fonctionnalités suivantes sont disponibles pour l'utilisation de SNiFF+ :
+
+   - Vim peut être utilisé pour toute tâche d'édition.
+   - SNiFF+ reconnaît et met à jour tous les navigateurs quand un fichier est
+     enregistré dans Vim.
+   - Les commandes SNiFF+ sont accessibles directement depuis Vim.
+
+Mode d'emploi pour utiliser Vim avec SNiFF+ :
+
+   1° Assurez-vous que SNiFF+ est démarré.
+   2° Dans la partie "Editor" de la boîte de dialogue "Preferences",
+      positionnez le champ "External Editor" sur "Emacs/Vim".
+   3° Démarrez Vim.
+   4° Connectez-vous à SNiFF+ (":sniff connect").
+
+Une fois la connexion établie, SNiFF+ utilise Vim pour toutes les requêtes de
+visualisation ou d'édition du code source. D'autre part, vous pouvez envoyer
+des requêtes à SNiFF+ grâce à la commande ":sniff".
+
+==============================================================================
+2. Commandes						*sniff-commands*
+
+							*:sniff* *:sni*
+:sni[ff] {requete} [symbole]
+		    Envoie une requête à SNiFF+ avec un symbole optionnel.
+		    {absent de Vi}
+
+:sni[ff]	    Affiche toutes les requêtes disponibles, ainsi que l'état
+		    de la connexion.
+
+La plupart des requêtes nécessitent un symbole (un identifiant) comme
+paramètre. Lorsqu'il est omis, Vim utilise le mot situé sous le curseur.
+   La liste des requêtes disponibles est la suivante :
+
+REQUÊTE		      MAPPAGE   DESCRIPTION  ~
+connect			sc	Établit la connexion avec SNiFF+
+				Assurez-vous que SNiFF+ y est préparé en
+				ajustant les préférences
+disconnect		sq	Coupe la connexion avec SNiFF+. Vous pouvez
+				vous reconnecter à n'importe quel moment avec
+				":sniff connect" (ou "sc")
+toggle			st	Passe du fichier de déclaration au fichier de
+				définition et inversement
+find-symbol		sf	Charge un symbole dans le Symbol Browser
+browse-class		sb	Charge une classe dans le Class Browser
+superclass		ss	Édite la classe ancêtre du symbole
+overridden		so	Édite la méthode surchargée du symbole
+retrieve-file		srf	Recherche le symbole dans le fichier courant
+retrieve-project	srp	Recherche le symbole dans le projet courant
+retrieve-all-projects	srP	Recherche le symbole dans tous les projets
+retrieve-next		sR	Recherche le symbole selon la portée actuelle
+				du Retriever
+goto-symbol		sg	Va à la déclaration ou à la définition du
+				symbole
+hierarchy		sh	Charge le symbole dans le Hierarchy Browser
+restr-hier		sH	Comme "hierarchy" mais n'affiche que les
+				classes en rapport
+xref-to			sxt	Lance une requête "refers-to" [« utilise »] 
+				sur le symbole et charge le résultat dans le
+				Cross Referencer
+xref-by			sxb	Lance une requête "referred-by" 
+				[« utilisé par »] sur le symbole
+xref-has		sxh	Affiche les composants contenus dans le symbole
+xref-used-by		sxu	Affiche les composants contenant le symbole
+show-docu		sd	Affiche la documentation du symbole
+gen-docu		sD	Génère la documentation du symbole
+
+Les mappages en mode normal sont définis dans le fichier "sniff.vim", qui fait
+partie des différentes distributions de SNiFF+
+("$SNIFF_DIR/config/sniff.vim"). Ce fichier est sourcé à chaque fois que Vim
+se connecte à SNiFF+.
+
+==============================================================================
+3. Compiler Vim avec l'interface SNiFF+			*sniff-compiling*
+
+Pour compiler Vim avec le support SNiFF+, deux fichiers de l'archive
+supplémentaire sont nécessaires : "if_sniff.c" et "if_sniff.h".
+   Sous Unix : éditez le Makefile et décommentez la ligne "--enable-sniff", ou
+bien lancez `configure` manuellement avec cet argument.
+   Sous NT : spécifiez "SNIFF=yes" dans votre commande `make`.
+
+ vim:tw=78:ts=8:ft=help:norl:
+
+

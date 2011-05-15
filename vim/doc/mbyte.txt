@@ -1,0 +1,1494 @@
+*mbyte.txt*     Pour Vim version 6.2.
+
+
+	     MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar et al.
+
+
+						*Chinese* *Japanese* *Korean*
+Support du texte multi-octets			*multibyte* *multi-byte*
+
+Ce fichier traite de l'édition de texte dans des langues qui comprennent de
+nombreux caractères représentés sur plus d'un octet. Par exemple, le chinois,
+le japonais ou le coréen. L'Unicode est également abordé ici.
+
+Pour une introduction sur les fonctionnalités les plus communes, voir
+|usr_45.txt| dans le Manuel de l'utilisateur.
+   Pour changer la langue des messages et des menus, voir |mlang.txt|.
+
+NOTE : Ce fichier contient des caractères UTF-8. Ces derniers peuvent ne pas
+s'afficher correctement (sous forme de carrés ou autres) si vous utilisez un
+encodage différent. XXX
+
+ 1. Tour d'horizon			|mbyte-first|
+ 2. Région linguistique			|mbyte-locale|
+ 3. Encodage				|mbyte-encoding|
+ 4. Utiliser un terminal		|mbyte-terminal|
+ 5. Polices sous X11			|mbyte-fonts-X11|
+ 6. Polices sous MS-Windows		|mbyte-fonts-MSwin|
+ 7. Saisie sous X11			|mbyte-XIM|
+ 8. Saisie sous MS-Windows		|mbyte-IME|
+ 9. Saisie avec un codage clavier	|mbyte-keymap|
+10. Utiliser l'UTF-8			|mbyte-utf8|
+11. Sommaire des options		|mbyte-options|
+
+{uniquement si compilé avec la fonctionnalité |+multi_byte|}
+
+==============================================================================
+1. Tour d'horizon					*mbyte-first*
+
+Voici un aperçu des fonctionnalités multi-octets dans Vim. Avec un peu de
+chance, elles fonctionneront comme décrit et vous pourrez commencer à utiliser
+Vim sans problème. Si les choses ne se passent pas comme prévu, vous devrez
+alors lire le reste. Ne soyez pas surpris si cela vous demande un peu de
+travail pour exploiter pleinement les fonctionnalités multi-octets de Vim.
+Malheureusement, chaque système traite la question de façon particulière, ce
+qui rend les choses assez complexes.
+
+
+COMPILATION
+
+Si vous disposez déjà d'un programme Vim compilé, vérifiez si la
+fonctionnalité |+multi_byte| est incluse. La commande |:version| peut être
+utilisée pour cela.
+
+Si +multi_byte n'est pas inclus, vous devrez compiler Vim avec les
+fonctionnalités de la version « étendue ». Vous pouvez aussi choisir les
+fonctionnalités que vous souhaitez inclure. Voir les fichiers "INSTALL" dans
+le répertoire source.
+
+
+RÉGION LINGUISTIQUE
+
+En premier lieu, assurez-vous que votre région linguistique courante est fixée
+correctement. Si votre système a été installé pour utiliser une langue
+particulière, les choses fonctionnent probablement bien dès à présent. Si ce
+n'est pas le cas, il est souvent possible de résoudre le problème en fixant la
+variable d'environnement $LANG dans votre shell : >
+
+	setenv lang ja_JP.EUC XXX bram
+
+Malheureusement, le nom de la région linguistique dépend de votre système. Le
+japonais peut aussi s'appeler "ja_JP.EUCjp" ou simplement "ja". Pour afficher
+la valeur courante : >
+
+	:language
+
+Pour modifier la région linguistique depuis Vim, utilisez : >
+
+	:language ja_JP.EUC
+
+Vim donnera un message d'erreur si cela ne fonctionne pas. C'est utile pour
+déterminer la nom de la région linguistique que vous voulez utiliser par
+tâtonnements. Mais il reste préférable de fixer la région linguistique dans le
+shell, afin qu'elle soit utilisée directement depuis le démarrage.
+
+Voir |mbyte-locale| pour plus de détails.
+
+
+ENCODAGE
+
+Si votre région linguistique est bien définie, Vim essaiera de fixer l'option
+'encoding' en conséquence. Si cela ne marche pas, vous pouvez recouvrir cette
+valeur : >
+
+	:set encoding=utf-8
+
+Voir |encoding-values| pour une liste de valeurs possibles.
+
+Si 'encoding' est fixé, tout le texte utilisé dans Vim sera dans cet encodage.
+Pas seulement le texte dans les tampons, mais aussi dans les registres, les
+variables, etc. Cela implique également que le changement de la valeur de
+'encoding' rend le texte existant invalide ! Le texte n'est pas modifiée, mais
+il sera mal affiché.
+
+Vous pouvez éditer des fichiers dans un autre encodage que celui auquel
+'encoding' est fixé. Vim convertira le fichier lors de la lecture et le
+convertira en retour lors de l'écriture. Voir 'fileencoding', 'fileencodings'
+et |++enc|.
+
+
+AFFICHAGE ET POLICES
+
+Si vous travaillez dans un (émulateur de) terminal, vous devez vous assurer
+qu'il accepte le même encodage que celui dans lequel Vim travaille. Si ce
+n'est pas le cas, vous pouvez utiliser l'option 'termencoding' pour que Vim
+convertisse automatiquement le texte.
+
+Pour l'IHM graphique, vous devez sélectionner des polices qui conviennent pour
+l'encodage courant. C'est un point délicat : cela dépend du système que vous
+utilisez, de la région linguistique et de quelques autres choses. Voir les
+chapitres sur les polices : |mbyte-fonts-X11| pour X Window et
+|mbyte-fonts-MSwin| pour MS-Windows.
+
+Pour GTK+ 2, vous pouvez sauter la majorité de cette sous-section. L'option
+'guifontset' n'est désormais plus utilisée. Vous n'avez qu'à fixer 'guifont'
+et tout devrait « fonctionner simplement ». Si votre système dispose de Xft2
+et de `fontconfig`, et que la police courante ne contient pas tel oeil
+particulier, une police différente sera automatiquement utilisée si
+disponible. L'option 'guifontwide' est toujours supportée mais normalement
+vous ne devriez pas en avoir besoin. Elle n'est nécessaire que si la sélection
+automatique de police ne répond pas à votre attente.
+
+Pour X11, vous pouvez fixer l'option 'guifontset' à une liste de polices qui
+couvrent l'ensemble des caractères qui sont utilisés. Exemple pour le
+coréen : >
+
+	:set guifontset=k12,r12
+
+Vous pouvez aussi choisir de fixer 'guifont' et 'guifontwide'. 'guifont' est
+utilisé pour les caractères de largeur simple, 'guifontwide' pour ceux de
+largeur double. Ainsi, la police 'guifontwide' doit être exactement deux fois
+plus large que 'guifont'. Exemple pour UTF-8 : >
+
+  :set guifont=-misc-fixed-medium-r-normal-*-18-120-100-100-c-90-iso10646-1
+  :set guifontwide=-misc-fixed-medium-r-normal-*-18-120-100-100-c-180-iso10646-1
+
+Si vous fixez juste 'guifont' tout seul, Vim essaiera de trouver la valeur de
+'guifontwide' appropriée pour vous.
+
+
+SAISIE
+
+Il y a plusieurs manières de saisir des caractères multi-octets :
+- Pour X11, XIM peut être utilisé. Voir |XIM|.
+- Pour MS-Windows, IME peut être utilisé. Voir |IME|.
+- Pour tous les systèmes, les codages claviers peuvent être utilisés. Voir
+  |mbyte-keymap|.
+
+Les options 'iminsert', 'imsearch' et 'imcmdline' peuvent être utilisées pour
+choisir les différentes méthodes de saisie ou les désactiver temporairement.
+
+==============================================================================
+2. Région linguistique					*mbyte-locale*
+
+La configuration la plus simple est obtenue quand votre système entier utilise
+la région linguistique dans laquelle vous souhaitez travailler. Mais il est
+aussi possible de fixer la région linguistique pour le shell dans lequel vous
+travaillez, ou d'utiliser simplement une certaine région linguistique dans
+Vim.
+
+
+QU'EST-CE QU'UNE RÉGION LINGUISTIQUE ?			*locale*
+
+Il existe de nombreuses langues dans le monde, et encore plus d'environnements
+et de cultures. Un environnement linguistique correspondant à une zone
+géographique délimitée est appelé « région linguistique ». Elle comprend des
+informations sur la langue utilisée, le jeu de caractères, l'ordre de tri
+lexicographique, le format de la date, le format monétaire, etc. Pour Vim,
+seuls la langue et le jeu de caractères sont pris en compte.
+
+Vous ne pouvez utiliser de région linguistique que si votre système le permet.
+Certains systèmes n'en incluent que quelques-unes, en particulier aux ÉUA. La
+langue que vous voulez utiliser peut ne pas être sur votre système. Dans ce
+cas, vous devriez pouvoir l'installer sous forme de paquetage supplémentaire.
+Consultez la documentation de votre système sur ce point.
+
+L'emplacement où les régions linguistiques sont installées varie de système en
+système. Par exemple, "/usr/share/locale" ou "/usr/lib/locale". Consultez la
+page de manuel de votre système pour setlocale().
+
+Un coup d'oeil dans ces répertoires vous donnera le nom exact de chaque région
+linguistique. La plupart du temps, la casse est prise en compte, ainsi
+"ja_JP.EUC" et "ja_jp.euc" sont différents. Certains systèmes disposent d'un
+fichier "locale.alias", qui permet la traduction d'un nom court tel que "nl"
+en un nom complet "nl_NL.ISO_8859-1".
+
+NOTE : X Window gère lui-même ses régions linguistiques. Et utilise
+malheureusement des noms différents de ceux utilisés ailleurs. C'est une
+source de confusion ! Pour Vim, c'est la valeur utilisée par la fonction
+setlocale() qui importe, qui n'est généralement PAS la même que celle de X
+Window. Vous devrez peut-être tâtonner un peu pour trouver la valeur qui
+fonctionne bien pour vous.
+
+							*locale-name*
+Le format (simplifié) du nom d'une région linguistique |locale| est :
+
+	langue
+ou	langue_territoire
+ou	langue_territoire.encodage
+
+« territoire » désigne un pays (ou une de ses parties) et « encodage » un jeu
+de caractères |charset|. Par exemple, le nom de région linguistique
+"ja_JP.eucJP" signifie :
+	ja	    la langue est le japonais
+	JP	    le pays est le Japon
+	eucJP	    le jeu de caractères utilisé est l'EUC-JP
+Mais "ja", "ja_JP.EUC", "ja_JP.ujis"... auraient aussi pu être utilisés. Et
+malheureusement, le nom de la région linguistique pour une langue, un
+territoire et un encodage donnés dépend de votre système.
+
+Exemples de noms de régions linguistiques :
+
+    JEU DE CAR	 LANGUE		       NOMS DE RÉGION LINGUISTIQUE  ~
+    GB2312	 chinois (simplifié)   zh_CN.EUC, zh_CN.GB2312
+    Big5	 chinois (classique)   zh_TW.BIG5, zh_TW.Big5
+    CNS-11643	 chinois (classique)   zh_TW
+    EUC-JP	 japonais	       ja, ja_JP.EUC, ja_JP.ujis, ja_JP.eucJP
+    Shift_JIS	 japonais	       ja_JP.SJIS, ja_JP.Shift_JIS
+    EUC-KR	 coréen		       ko, ko_KR.EUC
+
+
+UTILISER UNE RÉGION LINGUISTIQUE
+
+Pour utiliser une région linguistique dès le démarrage pour le système entier,
+consultez la documentation de votre système. Le plus souvent, vous devrez
+modifier un fichier de configuration dans "/etc".
+
+Pour utiliser une région linguistique dans un shell, fixez la variable
+d'environnement $LANG. Par exemple, pour utiliser le coréen (dont le nom de
+région linguistique |locale| est "ko"), faites ceci :
+
+	sh  :	export LANG=ko
+	csh :	setenv LANG ko
+
+Vous pouvez placez ces commandes dans votre fichier ~/.profile ou ~/.cshrc
+pour les utilisez systématiquement.
+
+Pour utiliser une région linguistique dans Vim uniquement, utilisez la
+commande |:language| : >
+
+	:language ko
+
+Placez ceci dans votre fichier ~/.vimrc pour l'utiliser systématiquement.
+
+Il est également possible de fixer $LANG au démarrage de Vim :
+
+	sh  :	LANG=ko vim {arguments-vim}
+   	csh :	env LANG=ko vim {arguments-vim}
+
+Vous pouvez créer un petit script shell pour cela.
+
+==============================================================================
+3. Encodage						*mbyte-encoding*
+
+Vim utilise l'option 'encoding' pour spécifier comment les caractères sont
+identifiés et encodés lorsqu'ils sont utilisés dans Vim. Ceci s'applique à
+tous les endroits où du texte est utilisé, tampons (fichiers chargés en
+mémoire), registres et variables compris.
+
+							*charset* *codeset*
+Le terme « jeu de caractères » est parfois aussi utilisé pour « encodage ». Il
+existe des différences subtiles, mais qui n'importent pas dans Vim.
+
+Chaque caractère est encodé sous la forme d'un ou plusieurs octets. Quand tous
+les caractères sont encodés sur un octet, on parle d'encodage mono-octet (le
+plus répandu est appelé « Latin-1 »). Le nombre de caractères y est limité à
+256. Certains étant des caractères de contrôle, le nombre de ceux qui sont
+donc réellement utilisés pour le texte est encore moindre.
+
+Quand certains caractères utilisent deux octets ou plus, on parle d'encodage
+multi-octets. Cela autorise l'utilisation de plus de 256 caractères, ce qui
+est nécessaire pour la plupart des langues est-asiatiques.
+
+La plupart des encodages multi-octets utilisent un seul octet pour les 127
+premiers caractères. Ils sont équivalents à l'ASCII, ce qui rend la conversion
+en ASCII brut facile, indépendamment de la langue utilisée. Vous pouvez ainsi
+voir le bon texte même si l'encodage a été mal défini.
+
+							*encoding-names*
+Vim peut utiliser de nombreux encodages de caractères différents. Il existe
+trois groupes principaux :
+
+1   8 bits	Encodages mono-octets, 256 caractères différents.
+		Principalement utilisés aux ÉUA et en Europe. Exemple :
+		ISO-8859-1 (Latin-1). Tous les caractères occupent une seule
+		cellule d'écran.
+
+2   2 octets	Encodages multi-octets, plus de 10 000 caractères différents.
+		Principalement utilisés dans les pays asiatiques. Exemple :
+		euc-kr (pour le coréen). Le nombre de cellules d'écran est
+		égal au nombre d'octets (sauf pour euc-jp lorsque le premier
+		octet vaut 0x8e).
+
+u   Unicode	Encodage universel, capable de remplacer tous les autres.
+		ISO-10646. Des millions de caractères différents. Exemple :
+		UTF-8. Le rapport entre le nombre d'octets et de cellules
+		d'écran occupées est complexe.
+
+Les autres encodages ne peuvent pas être utilisés par Vim en interne. Mais des
+fichiers dans d'autres encodages peuvent être édités après conversion, voir
+'fileencoding'.
+   NOTE : Tous les encodages doivent utiliser l'ASCII pour les caractères
+jusqu'au 128 (sauf si compilé pour EBCDIC).
+
+Valeurs supportées pour 'encoding' :			*encoding-values*
+1   latin1	caractères 8-bits (ISO-8859-1)
+1   iso-8859-N	variante ISO-8859 (N = 2 à 15)
+1   koi8-r	russe
+1   koi8-u	ukrainien
+1   8bit-{nom}	n'importe quel encodage 8-bits (nom spécifique de Vim)
+1   cp{nombre}	MS-Windows : n'importe quelle page de codes mono-octet
+		   installée
+2   cp932	japonais (Windows uniquement)
+2   euc-jp	japonais (Unix uniquement)
+2   sjis	japonais (Unix uniquement)
+2   cp949	coréen (Unix et Windows)
+2   euc-kr	coréen (Unix uniquement)
+2   cp936	chinois simplifié (Windows uniquement)
+2   euc-cn	chinois simplifié (Unix uniquement)
+2   cp950	chinois classique (sur Unix, alias pour big5)
+2   big5	chinois classique (sur Windows, alias pour cp950)
+2   euc-tw	chinois classique (Unix uniquement)
+2   2byte-{nom}	Unix : n'importe quel encodage sur deux octets (nom spécifique
+		   de Vim)
+2   cp{nombre}	MS-Windows : n'importe quelle page de codes sur deux octets
+		   installée
+u   utf-8	Unicode UTF-8 encodé sur 32 bits (ISO/IEC 10646-1)
+u   ucs-2	Unicode UCS-2 encodé sur 16 bits (ISO/IEC 10646-1)
+u   ucs-2le	comme ucs-2, en petit boutiste
+u   utf-16	ucs-2 étendu avec des mots doubles pour plus de caractères
+u   utf-16le	comme utf-16, en petit boutiste
+u   ucs-4	Unicode UCS-4 encodé sur 32 bits (ISO/IEC 10646-1)
+u   ucs-4le	comme ucs-4, en petit boutiste
+
+Le {nom} peut être n'importe quel nom d'encodage supporté par votre système.
+Il est passé à iconv() pour conversion entre l'encodage du fichier et la
+région linguistique courante. Pour MS-Windows, "cp{nombre}" implique
+l'utilisation de la page de codes {nombre}.
+   Exemples : >
+	:set encoding=8bit-cp1252
+	:set encoding=2byte-cp932
+
+Plusieurs alias peuvent être utilisés, ils sont traduits dans un des noms
+ci-dessus. Voici une liste incomplète :
+
+1   ansi	comme latin1 (obsolète, pour compatibilité ascendante)
+2   japan	japonais : sur Unix "euc-jp", sur MS-Windows cp932
+2   korea	coréen : sur Unix "euc-kr", sur MS-Windows cp949
+2   prc		chinois simplifié : sur Unix "euc-cn", sur MS-Windows cp936
+2   chinese	comme "prc"
+2   taiwan	chinois classique : sur Unix "euc-tw", sur MS-Windows cp950
+u   utf8	comme utf-8
+u   unicode	comme ucs-2
+u   ucs2be	comme ucs-2 (gros boutiste)
+u   ucs-2be	comme ucs-2 (gros boutiste)
+u   ucs-4be	comme ucs-4 (gros boutiste)
+
+Pour les codes UCS, l'ordre des octets est pris en compte. C'est peu pratique,
+utilisez UTF-8 si vous le pouvez. Par défaut, les variantes gros boutistes
+sont utilisées (l'octet de poids le plus fort vient en premier) :
+	    NOM	      OCTETS	    CAR    ~
+	    ucs-2	    11 22	1122
+	    ucs-2le	    22 11	1122
+	    ucs-4     11 22 33 44   11223344
+	    ucs-4le   44 33 22 11   11223344
+
+Sur les systèmes MS-Windows, vous voudrez certainement utiliser "ucs-2le", car
+ils utilisent un UCS-2 petit boutiste.
+
+Il existe quelques encodages qui sont similaires mais pas exactement
+identiques. Vim les traite comme des encodages distincts et effectue la
+conversion si nécessaire. Préférez l'utilisation du nom d'encodage similaire
+pour éviter la conversion ou lorsque celle-ci est impossible :
+
+	cp932, shift-jis, sjis
+	cp936, euc-cn
+
+							*encoding-table*
+Normalement, 'encoding' est égal à la région linguistique courante et
+'termencoding' est vide. Cela signifie que votre clavier et votre affichage
+fonctionnent avec les caractères encodés dans votre région linguistique
+courante, et que Vim utilise les même caractères en interne.
+
+Pour que Vim utilise des caractères dans un encodage différent, fixez l'option
+'encoding' à une valeur différente. Comme le clavier et l'affichage utilisent
+toujours la région linguistique courante, une conversion devra être effectuée.
+Il faut donc que 'termencoding' soit fixé à la valeur de la région
+linguistique courante, de sorte que Vim convertisse entre 'encoding' et
+'termencoding'. Exemple : >
+	:let &termencoding = &encoding
+	:set encoding=utf-8
+
+Néanmoins, toutes les combinaisons de valeurs ne sont pas possibles. Le
+tableau ci-dessous vous indique comment chacune des neuf combinaisons
+fonctionne. Il peut exister des restrictions supplémentaires si certaines
+conversions ne sont pas réalisables, iconv() n'est pas présent, etc. Comme
+cela dépend du système utilisé, il est impossible d'en fournir une liste.
+
+('tenc' est le nom court pour 'termencoding', et 'enc' pour 'encoding'.)
+
+'tenc'     'enc'      REMARQUE	    ~
+8 bits     8 bits     Fonctionne. Si 'termencoding' est différent de
+		      'encoding', la saisie et l'affichage peuvent être faux
+		      pour certains caractères, Vim n'effectuant PAS de
+		      conversion (fixez 'encoding' à "utf-8" pour cela).
+8 bits     2 octets   MS-Windows : fonctionne pour toutes les pages de codes
+		      installées sur votre système ; vous ne pouvez taper que
+		      des caractères 8 bits ;
+		      Autres systèmes : ne fonctionne PAS.
+8 bits     Unicode    Fonctionne, mais vous ne pouvez taper que des caractères
+		      8 bits ; dans un terminal, vous ne pourrez voir que des
+		      caractères 8 bits ; l'IHM graphique peut afficher tous
+		      les caractères que 'guifont' supporte.
+
+2 octets   8 bits     Fonctionne, mais la saisie de caractères non-ASCII peut
+		      poser problème.
+2 octets   2 octets   MS-Windows : fonctionne pour toutes les pages de codes
+		      installées sur votre système ; la saisie de caractères
+		      peut poser problème quand la région linguistique est
+		      différente de 'encoding'.
+		      Autres systèmes : ne fonctionne que lorsque
+		      'termencoding' est identique à 'encoding' (vous pouvez
+		      aussi le laisser vide).
+2 octets   Unicode    Fonctionne. Vim traduira les caractères tapés.
+
+Unicode    8 bits     Fonctionne (inhabituel).
+Unicode    2 octets   Ne fonctionne PAS.
+Unicode    Unicode    Fonctionne très bien (pareillement si 'termencoding' est
+		      laissé vide, car tout encodage Unicode est traité en
+		      interne en UTF-8).
+
+
+CONVERSION						*charset-conversion*
+
+Vim effectuera automatiquement la conversion d'un encodage à un autre dans
+plusieurs cas :
+- lors de la lecture d'un fichier, si 'fileencoding' est différent de
+  'encoding' ;
+- lors de l'écriture d'un fichier, si 'fileencoding' est différent de
+  'encoding' ;
+- lors de l'affichage des caractères, si 'termencoding' est différent de
+  'encoding' ;
+- lors de la lecture de l'entrée, si 'termencoding' est différent de
+  'encoding' ;
+- lors de l'affichage des messages, si l'encodage utilisé pour LC_MESSAGES est
+  différent de 'encoding' (requiert une version de `gettext` qui supporte
+  cela) ;
+- lors de la lecture d'un script Vim où |:scriptencoding| est différent de
+  'encoding' ;
+- Lors de la lecture ou de l'écriture du fichier |viminfo|.
+La fonctionnalité |+iconv| est requise pour la plupart de ces points. La
+conversion pour lire et écrire des fichiers peut également être spécifiée avec
+l'option 'charconvert'.
+
+Voici quelques utilitaires pour convertir les jeux de caractères :
+
+Tous : `iconv`
+	GNU iconv peut convertir la plupart des encodages. L'Unicode est
+	utilisé comme encodage intermédiaire, ce qui autorise la conversion à
+	partir de et jusqu'à tous les encodages. Voir
+	http://www.gnu.org/directory/libiconv.html.
+
+Japonais : `nkf`
+	NKF signifie "Network Kanji code conversion Filter". Une des
+	particularités de `nkf` est qu'il est capable de deviner l'encodage
+	kanji d'entrée. Vous n'avez donc pas besoin de connaître le jeu de
+	caractères |charset| utilisé par le fichier d'entrée. Pour convertir
+	de l'EUC-JP en ISO-2022-JP ou Shift_JIS, tapez simplement la commande
+	suivante dans Vim : >
+		:%!nkf -e
+<	Vous pouvez trouver `nkf` sur :
+	http://www.sfc.wide.ad.jp/~max/FreeBSD/ports/distfiles/nkf-1.62.tar.gz
+
+Chinois : `hc`
+	HC signifie "Hanzi Converter". `hc` convertit un fichier GB en fichier
+	Big5, ou inversement. Vous pouvez trouver `hc` sur :
+	ftp://ftp.cuhk.hk/pub/chinese/ifcss/software/unix/convert/hc-30.tar.gz
+
+Coréen : `hmconv`
+	`hmconv` est un utilitaire de conversion d'encodage coréen
+	spécialement destiné au courrier électronique. Il peut convertir entre
+	EUC-KR et ISO-2022-KR. Vous pouvez trouver `hmconv` sur :
+	ftp://ftp.kaist.ac.kr/pub/hangul/code/hmconv/hmconv1.0pl3
+
+Multilingue : `lv`
+	`lv` est un visualisateur de fichiers multilingue polyvalent. Il peut
+	être utilisé comme convertisseur de jeux de caractères |charset|. Jeux
+	de caractères supportés : ISO-2022-CN, ISO-2022-JP, ISO-2022-KR,
+	EUC-CN, EUC-JP, EUC-KR, EUC-TW, UTF-7, UTF-8, l'ensemble des ISO-8859,
+	Shift_JIS, Big5 et HZ. Vous pouvez trouver `lv` sur :
+	http://www.ff.iij4u.or.jp/~nrt/freeware/lv4493.tar.gz
+
+
+							*mbyte-conversion*
+En cas de lecture ou d'écriture de fichiers dans un encodage différent de
+'encoding', une conversion doit être effectuée. Les conversions suivantes sont
+supportées :
+- toutes les conversions entre Latin-1 (ISO-8859-1), UTF-8, UCS-2 et UCS-4
+  (gérées en interne) ;
+- pour MS-Windows, lorsque 'encoding' est fixé à un encodage Unicode, les
+  conversions à partir de et jusqu'à n'importe quelle page de codes devraient
+  fonctionner ;
+- les conversions spécifiées avec 'charconvert' ;
+- les conversions effectuées avec la bibliothèque iconv, si elle est
+  disponible.
+  NOTE : Les anciennes versions de GNU iconv() peuvent entraîner l'échec de la
+  conversion (elle nécessitent un tampon très grand, plus que Vim ne peut
+  fournir). Essayez dans ce cas de vous procurer une autre version de iconv().
+
+==============================================================================
+4. Utiliser un terminal					*mbyte-terminal*
+
+L'IHM graphique supporte pleinement les caractères multi-octets. C'est aussi
+le cas dans un terminal, si le terminal supporte l'encodage utilisé par Vim.
+Cela reste donc moins flexible.
+
+Par exemple, vous pouvez lancer Vim dans un xterm avec le support multi-octets
+et/ou |XIM|. Comme les terminaux kterm ("Kanji term") et hanterm (pour le
+coréen), Eterm ("Enlightened term") et rxvt.
+
+Si votre terminal ne supporte pas le bon encodage, vous pouvez fixer l'option
+'termencoding'. Vim convertira alors les caractères tapés de 'termencoding' en
+'encoding'. Et le texte affiché sera converti de 'encoding' en 'termencoding'.
+Si l'encodage supporté par le terminal n'inclut pas tous les caractères
+utilisés par Vim, des caractères seront perdus. Cela peut salir l'affichage.
+Si vous utilisez un terminal qui supporte l'Unicode, comme le xterm mentionné
+ci-dessous, les choses devraient fonctionner correctement, puisque presque
+tous les jeux de caractères peuvent être convertis en Unicode sans perte
+d'information.
+
+
+UTF-8 DANS UN XTERM XFREE86				*UTF8-xterm*
+
+Cette section contient une courte explication sur l'utilisation d'un encodage
+de caractères UTF-8 dans le xterm de Thomas Dickey livré avec XFree86 (texte
+de Markus Kuhn).
+
+Procurez-vous la dernière version de xterm qui supporte à présent l'UTF-8 :
+
+	http://www.clark.net/pub/dickey/xterm/xterm.tar.gz
+
+Compilez-la avec `./configure --enable-wide-chars ; make`.
+
+Récupérez aussi la version ISO-10646-1 des différentes polices de caractères,
+disponible sur
+
+	http://www.cl.cam.ac.uk/~mgk25/download/ucs-fonts.tar.gz
+
+et installez la police comme décrit dans le fichier "README".
+
+Lancez maintenant xterm avec >
+
+  xterm -u8 -fn -misc-fixed-medium-r-semicondensed--13-120-75-75-c-60-iso10646-1
+
+ou, pour des caractères plus gros : >
+
+  xterm -u8 -fn -misc-fixed-medium-r-normal--15-140-75-75-c-90-iso10646-1
+
+Vous obtenez un émulateur de terminal UTF-8 fonctionnel. Essayez à la fois >
+
+	cat utf-8-demo.txt
+	vim utf-8-demo.txt
+
+avec le texte de démonstration livré avec ucs-fonts.tar.gz, afin de voir s'il
+y a des problèmes avec l'UTF-8 dans votre xterm.
+
+Pour Vim, vous devrez peut-être fixer 'encoding' à "utf-8".
+
+==============================================================================
+5. Polices sous X11					*mbyte-fonts-X11*
+
+Hélas, l'utilisation des polices sous X11 est complexe. Le nom d'une police
+mono-octet est une chaîne longue. Pour les polices multi-octets, plusieurs
+noms sont nécessaires...
+
+NOTE : Cette section est désormais en grande partie périmée pour GTK+ 2. La
+sélection d'une police via son nom XLFD n'est plus supportée ; voir 'guifont'
+pour avoir un exemple pour fixer la police. Vous pouvez donc vous épargner la
+lecture des sous-sections |XLFD| et |xfontset| ci-dessous.
+
+Tout d'abord, Vim accepte uniquement des polices à espacement constant pour
+afficher du texte. Vous ne pouvez pas utiliser de polices à espacement
+proportionnel. Cela exclut de nombreuses polices (et qui sont agréables à
+l'oeil). Cependant, pour les menus et les bulles d'aides, n'importe quelle
+police peut être utilisée.
+
+NOTE : L'affichage et la saisie sont indépendants. Vous pouvez voir votre
+langue même si vous n'avez pas la méthode de saisie consacrée.
+
+Par défaut, vous devriez disposer d'une police correcte pour les menus et les
+bulles d'aide, mais qui risque d'être inesthétique. Lisez la suite pour savoir
+comment choisir une meilleure police.
+
+
+NOMMAGE DES POLICES SOUS X11 (XLFD)				*XLFD*
+
+XLFD ("X Logical Font Description") désigne le nom de la police X et contient
+l'information sur la taille, le jeu de caractères, etc. Le nom respecte cette
+forme :
+
+  FONDERIE-FAMILLE-GRAISSE-INCL-CHASSE-STYLE-PIXEL-POINT-X-Y-ESPACE-MOY-FJ-EJ
+
+Chaque champ signifie :
+
+- FONDERIE : Champ « fonderie ». La compagnie qui a créé la police.
+- FAMILLE :  Champ « nom de la famille ». Le nom de base de la famille de la
+	     police ("helvetica", "gothic", "times", etc.).
+- GRAISSE :  Champ « nom de la graisse ». Indique l'épaisseur des lettres
+	     ("light", "medium", "bold", etc.).
+- INCL :     Champ « inclinaison ».
+		 r : Romain (pas d'inclinaison)
+		 i : Italique
+		 o : Oblique
+		 ri : italique inversé			     ["Reverse Italic"]
+		 ro : oblique inversé			      ["Reverse Oblic"]
+		 ot : autre					      ["Other"]
+		 nombre : police étirée
+- CHASSE :   Champ « nom de la chasse ». Indique la largeur des caractères
+	     ("normal", "condensed", "narrow", "double wide").
+- STYLE :    Champ « nom de style supplémentaire ». Information supplémentaire
+	     pour décrire la police (Serif, Sans Serif, Informal, Decorated,
+	     etc.).
+- PIXEL :    Champ « taille en pixels ». Hauteur des caractères en pixels.
+- POINT :    Champ « taille en points ». Dix fois la hauteur des caractères
+	     en points.
+- X :	     Champ « résolution X ». Résolution X (en points par pouce).
+- Y :	     Champ « résolution Y ». Résolution Y (en points par pouce).
+- ESPACE :   Champ « espacement ».
+		 p : espacement Proportionnel
+		 m : Monochasse (espacement constant)
+		 c : cellule Carrée
+- MOY :      Champ « largeur moyenne ». Dix fois la largeur moyenne en pixels.
+- FJ :	     Champ « Famille du Jeu de caractères ». Le nom de la famille du
+	     jeu de caractères.
+- EJ :	     Champ « Encodage du Jeu de caractères ». Le reste du nom du jeu
+	     de caractères. Pour certains jeux de caractères, tels que
+	     JIS X 0208, si ce champ vaut 0, code points has the same value as
+	     GL, and GR if 1. XXX
+
+Par exemple, pour une police de 14 XXX points correspondant à JIS X 0208, on
+utilise : >
+	-misc-fixed-medium-r-normal--16-110-100-100-c-160-jisx0208.1990-0
+
+
+JEUX DE POLICES X					*fontset* *xfontset*
+
+Un jeu de caractères mono-octet est en général associé à une police. Pour des
+jeux de caractères multi-octets, une combinaison de polices est souvent
+utilisée. Cela signifie qu'un groupe de caractères est utilisé dans une police
+et une autre groupe dans une autre police (qui peut posséder une largeur
+double). Cette combinaison de polices est appelée un jeu de polices.
+
+Les polices qui sont nécessaires dans un jeu de polices dépendent de la région
+linguistique courante. X Window maintient une liste des groupes de caractères
+requis pour une région linguistique. Vous devez spécifier toutes les polices
+requises pour une région linguistique dans l'option 'guifontset'.
+
+NOTE : Le jeu de polices utilise toujours la région linguistique courante,
+même si 'encoding' peut être fixé pour utiliser un jeu de caractères
+différent. Dans cette situation, vous voudrez peut-être utiliser 'guifont' et
+'guifontwide' au lieu de 'guifontset'.
+
+Exemple :
+    JEU DE CAR	 LANGUE		       « GROUPES DE CARACTÈRES »  ~
+    GB2312    	 chinois (simplifié)   ISO-8859-1 et GB 2312
+    Big5      	 chinois (classique)   ISO-8859-1 et Big5
+    CNS-11643 	 chinois (classique)   ISO-8859-1, CNS 11643-1 et CNS 11643-2
+    EUC-JP    	 japonais	       IS X 0201 et JIS X 0208
+    EUC-KR    	 coréen		       ISO-8859-1 et KS C 5601 (KS X 1001)
+
+Vous pouvez recherchez des polices en utilisant le programme `xlsfonts`. Par
+exemple, si vous recherchez une police pour KS C 5601 : >
+	xlsfonts | grep ksc5601
+
+Tout ceci est compliqué et prête à confusion. Vous pouvez consulter la
+documentation de X Window s'il y a un point que vous ne comprenez pas.
+
+							*base_font_name_list*
+Quand vous avez trouvé les noms des polices que vous souhaitez utiliser, vous
+devez fixer l'option 'guifontset'. C'est une liste de noms de polices séparés
+par des virgules.
+
+Par exemple, quand vous utilisez la région linguistique "ja_JP.eucJP", vous
+aurez besoin de JIS X 0201 et JIS X 0208. Vous pourriez utiliser une liste de
+polices qui spécifie explicitement les jeux de caractères, comme : >
+
+	:set guifontset=-misc-fixed-medium-r-normal--14-130-75-75-c-140-jisx0208.1983-0,
+	 \-misc-fixed-medium-r-normal--14-130-75-75-c-70-jisx0201.1976-0
+
+Vous pourriez aussi fournir une liste de bases de noms de polices qui omette
+le nom du jeu de caractère, laissant X Window choisir les caractères
+nécessaires pour la région linguistique. Par exemple : >
+
+	:set guifontset=-misc-fixed-medium-r-normal--14-130-75-75-c-140,
+	 \-misc-fixed-medium-r-normal--14-130-75-75-c-70
+
+Vous pourriez aussi fournir une simple base de nom de police qui autorise X
+Window à choisir parmi toutes les polices disponibles. Par exemple : >
+
+	:set guifontset=-misc-fixed-medium-r-normal--14-*
+
+Enfin, vous pourriez spécifier des noms d'alias. Voir le fichier "fonts.alias"
+dans le répertoire des polices (p. ex., /usr/X11R6/lib/X11/fonts/). Par
+exemple : >
+
+	 :set guifontset=k14,r14
+<
+							*E253*
+NOTE : Dans les polices est-asiatiques, la cellule standard du caractère est
+carrée. Quand vous mélangez une police latine et une police est-asiatique, la
+largeur de cette dernière devrait être le double de la première.
+
+Si 'guifontset' n'est pas vide, l'argument "font" de la commande |:highlight|
+est également interprété comme un jeu de polices. Par exemple, vous pourriez
+utiliser pour la surbrillance : >
+	:hi Comment font=police_latine,votre_police
+Si vous utilisez un mauvais argument "font", vous obtiendrez un message
+d'erreur.
+   Assurez-vous aussi que vous avez fixé 'guifontset' avant de fixer les
+polices pour les groupes de surbrillance.
+
+
+UTILISER DES FICHIERS DE RESSOURCES
+
+Plutôt que de fixer 'guifontset', vous pouvez définir des ressources X11 que
+Vim emploiera. Cela ne concerne que ceux qui savent comment les fichiers de
+ressources X fonctionnent.
+
+Pour Motif et Athena, insérez ces trois lignes dans votre fichier
+$HOME/.Xdefaults :
+
+	Vim.font: |base_font_name_list|
+	Vim*fontSet: |base_font_name_list|
+	Vim*fontList: votre_police_de_langue
+
+NOTE : - Vim.font sert pour la zone de texte ;
+       - Vim*fontSet sert pour le menu ;
+       - Vim*fontList sert pour le menu (pour l'IHM graphique Motif).
+
+Par exemple, pour utiliser le japonais avec une police de 14 points >
+
+	Vim.font: -misc-fixed-medium-r-normal--14-*
+	Vim*fontSet: -misc-fixed-medium-r-normal--14-*
+	Vim*fontList: -misc-fixed-medium-r-normal--14-*
+
+ou : >
+
+	Vim*font: k14,r14
+	Vim*fontSet: k14,r14
+	Vim*fontList: k14,r14
+
+Pour que ces valeurs prennent effet immédiatement, vous devrez faire : >
+
+	xrdb -merge ~/.Xdefaults
+
+Sinon, vous devrez arrêter et relancer le serveur X pour que les modifications
+prennent effet.
+
+
+La version GTK+ de l'IHM graphique de Vim n'utilise pas ~/.Xdefaults mais
+~/.gtkrc à la place. Les valeurs par défaut devraient convenir. Mais pour les
+menus, vous voudrez peut-être les changer. Exemple : >
+
+	style "default"
+	{
+		fontset="-*-*-medium-r-normal--14-*-*-*-c-*-*-*"
+	}
+	widget_class "*" style "default"
+
+==============================================================================
+6. Polices sous MS-Windows				*mbyte-fonts-MSwin*
+
+Le plus simple est d'utiliser le sélecteur de polices et de les essayer. Vous
+pouvez y accéder via le menu "Edition->Sélectionner police...". Quand vous
+avez trouvé une police qui convient, vous pouvez utiliser cette commande pour
+voir son nom : >
+
+	:set guifont
+
+Ajoutez ensuite une commande dans votre fichier |gvimrc| pour fixer
+'guifont' : >
+
+	:set guifont=courier_new:h12
+
+==============================================================================
+7. Saisie sous X11					*mbyte-XIM*
+
+GÉNÉRALITÉS SUR LA MÉTHODE DE SAISIE X (XIM)	*XIM* *xim* *x-input-method*
+
+XIM ("X Input Method") est un module de saisie internationale pour X. La
+saisie peut se faire soit entièrement via la Xlib, soit en utilisant un
+programme autonome : le « serveur IM » (pour "Input Method", voir
+|IM-server|). Il est préférable d'utiliser un serveur IM pour les saisies
+complexes, comme les langues est-asiatiques.
+
+Serveur IM						*IM-server*
+----------
+Dans les structures de saisie de type serveur IM, l'événement de saisie est
+traité par un des deux systèmes : système frontal ou système dorsal. Dans le
+système frontal, les événements de saisie sont capturés par le serveur IM en
+premier, puis le serveur IM donne à l'application le résultat de la saisie. Le
+système dorsal, lui, fonctionne dans l'ordre inverse. MS-Windows adopte le
+système dorsal. Sous X, la plupart des serveurs IM adoptent le système
+frontal. L'inconvénient du système dorsal est le délai important dans les
+communications, mais il fournit un synchronisation efficace, sans restrictions
+pour les applications.
+
+Par exemple, il existe les serveurs IM japonais xwnmo et kinput2, tous deux
+sont des systèmes frontaux. Xwnmo est distribué avec Wnn (voir plus bas),
+kinput2 peut être trouvé sur :
+	ftp://ftp.sra.co.jp/pub/x11/kinput2/
+
+Pour le chinois, il existe un bon serveur XIM nommé "xcin", avec lequel vous
+pouvez saisir à la fois des caractères classiques et simplifiés. Et il peut
+accepter une autre région linguistique si vous créez une table d'entrée
+correcte. Xcin peut être trouvé sur :
+	http://xcin.linux.org.tw/
+
+Serveur de conversion					*conversion-server*
+---------------------
+Certains systèmes ont besoin d'un serveur supplémentaire : le serveur de
+conversion. La plupart des serveurs IM |IM-server| japonais ont besoin d'un
+serveur de conversion kana-kanji. Pour la saisie en chinois, cela dépend de la
+méthode de saisie : avec certaines méthodes, un serveur de conversion pinyin
+ou zhuyin en hanzi est nécessaire. Pour la saisie en coréen, si vous voulez
+saisir en hanja, un serveur de conversion hangul-hanja est nécessaire.
+
+Par exemple, le processus de saisie en japonais est divisé en deux étapes.
+D'abord, une pré-saisie en hira-gana, ensuite une conversion kana-kanji. Il y
+a énormément de caractères kanji (6349 caractères kanji sont définis en JIS X
+0208), alors qu'il n'y a que 76 caractères hira-gana. Ainsi, en premier lieu,
+on effectue une pré-saisie du texte tel qu'il est prononcé en hira-gana, et
+dans un second temps, on convertit le hira-gana en kanji ou en kata-kana, si
+nécessaire.
+   Il existe plusieurs serveurs de conversion kana-kanji : jserver (distribué
+avec Wnn, voir ci-dessous) et canna. Canna peut être trouvé sur :
+	ftp://ftp.nec.co.jp/pub/Canna/
+
+Il existe un bon système de saisie : Wnn 4.2. Wnn 4.2 contient :
+- xwnmo (serveur IM |IM-server|) ;
+- jserver (serveur de conversion japonais kana-kanji) ;
+- cserver (serveur de conversion chinois pinyin ou zhuyin en hanzi simplifié) ;
+- tserver (serveur de conversion chinois pinyin ou zhuyin en hanzi classique) ;
+- kserver (serveur de conversion coréen hangul-hanja).
+Wnn 4.2 peut être trouvé sur :
+	ftp://ftp.FreeBSD.ORG/pub/FreeBSD/ports/distfiles/Wnn4.2.tar.gz
+
+Style de saisie						*xim-input-style*
+---------------
+Lors de la saisie des langues est-asiatiques, quatre zones sont définies :
+1. La zone d'affichage de la saisie pendant qu'elle est composée ;
+2. La zone d'affichage du mode de saisie courant ;
+3. La zone d'affichage du candidat suivant pour la sélection ;
+4. La zone d'affichage des autres outils.
+
+La troisième zone a besoin d'être convertie. Par exemple, pour la saisie en
+japonais, des caractères kanji multiples peuvent avoir la même prononciation,
+et une séquence de caractères hira-gana pourrait donc correspondre à une
+séquence de caractères kanji distincte.
+
+Les première et deuxième zones sont définies dans le module de saisie
+internationale de X sous les noms respectifs de « Zone de Préédition » et
+« Zone d'État ». Les troisième et quatrième zones ne sont pas définies et sont
+laissées à la charge du serveur IM |IM-server|. Pour la saisie internationale,
+quatre styles de saisie ont été définis par combinaison des Zone de Préédition
+et d'État : |OnTheSpot|, |OffTheSpot|, |OverTheSpot| et |Root|.
+
+Actuellement, l'IHM graphique de Vim supporte trois styles, |OverTheSpot|,
+|OffTheSpot| et |Root|.
+
+- on-the-spot						*OnTheSpot*
+    Les Zone de Préédition et d'État sont gérées par l'application cliente
+    dans la zone de l'application. L'application cliente est dirigée par le
+    serveur IM |IM-server| pour afficher toutes les données de pré-édition à
+    l'emplacement de l'insertion de texte. Le client enregistre les fonctions
+    de rappel invoquées par la méthode de saisie durant la pré-édition.
+- over-the-spot						*OverTheSpot*
+    La Zone d'État est créée à une position fixe dans la zone de l'application
+    (la ligne d'état supplémentaire dans le cas de Vim). La Zone de Préédition
+    correspond à la position de saisie courante de l'application. La méthode
+    de saisie affiche les données de pré-édition dans une fenêtre displays
+    pre-edit data in a window which it brings up directly over the text
+    insertion position. XXX
+- off-the-spot						*OffTheSpot*
+    Les Zone de Préédition et d'État sont gérées dans la zone de l'application
+    (la ligne d'état supplémentaire dans le cas de Vim). L'application cliente
+    fournit XXX provides display windows for the pre-edit data to the input
+    method which displays into them directly.
+- root-window						*Root*
+    Les Zone de Préédition et d'État sont extérieures à l'application. La
+    méthode de saisie affiche toutes les données de pré-édition dans une zone
+    séparée de l'écran, une fenêtre spécifique pour la méthode de saisie.
+
+
+UTILISER XIM			*multibyte-input* *E284* *E286* *E287* *E288*
+				*E285* *E291* *E292* *E290* *ez4* XXX *E289*
+
+NOTE : L'affichage et la saisie sont indépendants. Vous pouvez voir votre
+langue même si vous n'avez pas la méthode de saisie consacrée. Mais quand
+votre méthode d'affichage ne correspond pas à votre méthode de saisie, le
+texte peut apparaître mal affiché.
+
+	NOTE :
+	Vous ne pouvez pas utiliser de méthode de saisie sans spécifier
+	'guifontset'. Même les utilisateurs de l'alphabet latin doivent
+	utiliser 'guifontset' s'il utilisent une méthode de saisie.
+
+Pour saisir dans votre langue, vous devriez lancer un serveur IM |IM-server|
+qui supporte votre langue, ainsi qu'un serveur de conversion
+|conversion-server| si nécessaire.
+
+Les 3 lignes suivantes devraient être placées dans votre fichier ~/.Xdefaults.
+Elles sont communes à toutes les applications X qui utilisent |XIM|. Si vous
+utilisez déjà |XIM|, vous pouvez passer cette étape. >
+
+	*international: True
+	*.inputMethod: votre_serveur_de_saisie
+	*.preeditType: votre_style_de_saisie
+
+votre_serveur_de_saisie	    désigne le nom de votre serveur IM |IM-server|
+			       (consultez la page de manuel en rapport).
+votre_style_de_saisie	    désigne un des mots suivants : |OverTheSpot|,
+			       |OffTheSpot|, |Root|.
+			       Voir aussi |xim-input-style|.
+
+*international n'est pas toujours nécessaire si vous utilisez X11R6.
+*.inputMethod et *.preeditType sont optionnels si vous utilisez X11R6.
+
+Par exemple, quand vous utilisez kinput2 comme serveur IM |IM-server| : >
+
+	*international: True
+	*.inputMethod: kinput2
+	*.preeditType: OverTheSpot
+
+Quand vous utilisez |OverTheSpot|, l'IHM graphique de Vim se connecte toujours
+au serveur IM même en mode Normal, afin que vous puissiez utiliser votre
+langue même avec des commandes telles que "f" et "r". Mais quand vous utilisez
+une des deux autres méthodes, l'IHM graphique de Vim se connecte au serveur IM
+uniquement si elle n'est pas en mode Normal.
+
+Si votre serveur IM ne supporte pas |OverTheSpot| et que vous voulez utiliser
+votre langue avec certaines commandes du mode Normal comme "f" ou "r", vous
+devriez alors utiliser un xterm régionalisé ou un xterm supportant |XIM|.
+
+Si nécessaire, vous pouvez fixer la variable d'environnement XMODIFIERS :
+
+	sh  :	export XMODIFIERS="@im=nom_du_serveur_de_saisie"
+	csh :	setenv XMODIFIERS "@im=nom_du_serveur_de_saisie"
+
+Par exemple, quand vous utilisez kinput2 comme serveur IM |IM-server| et un
+shell de type Bourne : >
+
+	export XMODIFIERS="@im=kinput2"
+
+
+CONTRÔLE TOTAL DE XIM
+
+Vous pouvez contrôler totalement XIM, comme avec IME sous MS-Windows (voir
+|multibyte-ime|). Actuellement, cela n'est possible que pour l'IHM graphique
+GTK+.
+
+Avant d'utiliser le contrôle total de XIM, un paramètre est nécessaire. Fixez
+l'option 'imactivatekey' à la séquence clavier utilisée pour l'activation de
+la méthode de saisie. Par exemple, si vous utilisez kinput2 + canna comme
+serveur IM, la touche d'activation sera probablement Maj + Espace : >
+
+	:set imactivatekey=S-space
+
+Voir 'imactivatekey' pour le format.
+
+==============================================================================
+8. Saisie sous MS-Windows				*mbyte-IME*
+
+SUPPORT D'IME SUR WINDOWS				*multibyte-ime* *IME*
+
+{uniquement dans l'IHM graphique Windows et si compilé avec la fonctionnalité
+|+multi_byte_ime|}
+
+Pour saisir des caractères multi-octets sur Windows, vous devez utiliser
+l'éditeur de méthode de saisie (IME : "Input Method Editor"). Au cours de
+votre édition de texte, vous devrez changer l'état d'IME (actif/inactif) très
+très souvent. Cela tient au fait que si IME est activé, il s'étendra à toutes
+vos saisies clavier et vous ne pourrez plus saisir 'j', 'k', ni la plupart
+des autres touches directement dans Vim.
+
+La fonctionnalité |+multi_byte_ime| vous aide un peu. Elle permet de limiter
+les changements d'états manuels d'IME. En mode Normal, l'activation d'IME
+n'est souvent pas nécessaire, même lors de l'édition de texte multi-octets.
+C'est pourquoi, à la sortie du mode Insertion avec Échap, Vim mémorisera le
+dernier état d'IME et forcera sa désactivation. Lors d'une ré-entrée en mode
+Insertion, Vim rétablira automatiquement l'état mémorisé d'IME.
+
+Cela ne fonctionne pas simplement en mode Insertion/Normal, mais aussi pour
+la saisie des commandes de recherche et le mode Remplacement.
+   Les options 'iminsert', 'imsearch' et 'imcmdline' peuvent être utilisées
+pour choisir les différentes méthodes de saisie ou les désactiver
+temporairement.
+
+Qu'est-ce qu'IME ?
+------------------
+IME fait partie des versions est-asiatiques de Windows. Il aide à saisir des
+caractères multi-octets. Les versions anglaises ou similaires de Windows
+n'intègrent pas IME (il n'est habituellement pas nécessaire). Mais il en
+existe une appelée Microsoft Global IME. Global IME fait partie d'Internet
+Explorer 4.0 ou supérieur. Pour plus d'informations sur Global IME,
+reportez-vous à l'adresse ci-dessous.
+
+Qu'est-ce que Global IME ?				*global-ime*
+--------------------------
+Global IME rend possible la saisie de texte chinois, japonais ou coréen dans
+un tampon de Vim quelle que soit la version linguistique de Windows 95/98/NT
+utilisée.
+   Sur MS-Windows 2000 et XP, cela devrait également fonctionner (sans
+téléchargement). Sur MS-Windows 2000 Professional, Global IME est intégré, et
+des Langues d'Entrées peuvent être ajoutées dans le Panneau de
+Configuration/Options régionales et linguistiques/Langues/Détails.
+   On Windows 2000 and XP it should work as well (without downloading). On
+Windows 2000 Professional, Global IME is built in, and the Input Locales can
+be added through Control Panel/Regional Options/Input Locales. XXX
+   Consultez l'adresse ci-dessous pour plus d'informations sur Global IME.
+Vous y trouverez aussi différentes versions linguistiques de Global IME.
+
+- Informations détaillées sur Global IME :
+	http://www.microsoft.com/windows/ie/features/ime.asp
+
+- Active Input Method Manager XXX (Global IME) :
+	http://msdn.microsoft.com/workshop/misc/AIMM/aimm.asp
+
+Le support de Global IME est une fonctionnalité expérimentale.
+
+NOTE : Pour qu'IME fonctionne correctement, vous devez vous assurer que les
+régions linguistiques de saisie de votre langue sont bien installées sur votre
+système. Leur emplacement exact dépend de la version de Windows que vous
+utilisez. Par exemple, sur W2P :
+1. Panneau de Configuration ;
+2. Options régionales et linguistiques ;
+3. Langues / bouton Détails ; XXX
+4. Services installés -> Chinois (République Populaire de Chine).
+   La valeur par défaut reste Français (France).
+
+
+COULEUR DU CURSEUR LORSQUE IME OU XIM EST ACTIVÉ	*CursorIM*
+
+Il existe une petite fonctionnalité pratique pour IME. Le curseur peut
+indiquer l'état d'IME en changeant de couleur. Habituellement, l'état d'IME
+est indiqué par une petite icône dans un coin du bureau (ou de la barre des
+tâches). Il n'est pas facile de vérifier l'état d'IME. Mais cette
+fonctionnalité permet de le faire simplement.
+   Cela fonctionne de la même façon lorsque XIM est utilisé.
+
+Vous pouvez sélectionner la couleur du curseur en utilisant le groupe de
+surbrillance CursorIM. Par exemple, ajoutez ces lignes dans votre "_gvimrc" : >
+
+	if has('multi_byte_ime')
+	    highlight Cursor guibg=Green guifg=NONE
+	    highlight CursorIM guibg=Purple guifg=NONE
+	endif
+
+Le curseur sera alors vert si IME est désactivé et violet s'il est activé.
+
+==============================================================================
+9. Saisie avec un codage clavier			*mbyte-keymap*
+
+Quand le clavier ne produit pas les caractères que vous voulez saisir dans
+votre texte, vous pouvez utiliser l'option 'keymap'. Ceci traduira un ou
+plusieurs caractères (latins) en d'autres caractères (non latins). Cela ne
+vaut que pour la saisie de texte, pas pour celle de commandes Vim. Cela évite
+de jongler entre deux configurations du clavier.
+
+La valeur de l'option 'keymap' spécifie un fichier de codage clavier à
+utiliser. Le nom de ce fichier correspond à une de ces deux formes :
+
+	keymap/{keymap}_{encoding}.vim
+	keymap/{keymap}.vim
+
+Ici, {keymap} désigne la valeur de l'option 'keymap' et {encoding} la valeur
+de l'option 'encoding'. Le nom de fichier avec {encoding} est essayé en
+premier.
+
+'runtimepath' est utilisé pour trouver ces fichiers. Pour avoir un aperçu de
+tous les fichiers de codage clavier disponibles, utilisez ceci : >
+	:echo globpath(&rtp, "keymap/*.vim")
+
+En mode Insertion et Ligne-de-commande, vous pouvez utiliser CTRL-^ pour
+activer/désactiver un codage clavier différent. |i_CTRL-^| |c_CTRL-^|
+   Ce drapeau est mémorisé pour le mode Insertion avec l'option 'iminsert'.
+Lors de l'entrée et de la sortie en mode Insertion, la valeur précédente est
+utilisée. La même valeur est aussi utilisée pour les commandes qui prennent un
+caractère simple en argument, comme |f| et |r|.
+   Pour le mode Ligne-de-commande, le drapeau n'est PAS mémorisé. Vous êtes
+censé taper une commande Ex en premier, qui est en ASCII.
+   Pour la saisie des motifs de recherche, l'option 'imsearch' est utilisée.
+Elle peut être fixée pour utiliser la même valeur que pour 'iminsert'.
+
+Il est possible de donner au curseur de l'IHM graphique une couleur différente
+lorsque les mappages de langue sont utilisés. Ce n'est pas le cas par défaut,
+afin d'éviter que le curseur ne devienne invisible quand vous utilisez une
+couleur de fond non standard. Par exemple, utilisez ces valeurs pour obtenir
+des couleurs claires pour le curseur : >
+	:highlight Cursor guifg=NONE guibg=Green
+	:highlight lCursor guifg=NONE guibg=Cyan
+<
+			    *keymap-file-format* *:loadk* *:loadkeymap* *E105*
+Le fichier de codage clavier ressemble à peu près à ceci :
+
+	" Responsable		:  Nom <adresse@électronique> ~
+	" Dernière modification :  01 jan 2001 ~
+
+	let b:keymap_name = "nomcourt" ~
+
+	loadkeymap ~
+	a	A ~
+	b	B	commentaire ~
+
+Les lignes débutant par un '"' sont des commentaires et seront ignorées. Les
+lignes vides sont également ignorées. Les lignes avec les mappages peuvent
+contenir un commentaire après le texte utile.
+
+La variable "b:keymap_name" peut être fixée à un nom court, qui sera affiché
+dans la ligne d'état. L'intérêt est que cela prend moins de place que la
+valeur de 'keymap', qui peut être longue pour distinguer les différents
+claviers, encodages et langues.
+
+Les mappages courants sont dans les lignes sous "loadkeymap". Dans l'exemple,
+'a' est mappé à 'A' et 'b' à 'B'. Ainsi, le premier élément est mappé au
+second. Cela vaut pour chaque ligne jusqu'à la fin du fichier.
+   Ces éléments sont exactement identiques à ceux qui peuvent être spécifiés
+dans une commande |:lnoremap|, "<buffer>" étant utilisé pour rendre ces
+mappages locaux au tampon...
+   Vous pouvez examiner le résultat avec cette commande : >
+	:lmap
+Les deux éléments doivent être séparés par un espace blanc. Vous ne pouvez pas
+inclure d'espace blanc dans un élément, utilisez les noms spéciaux "<Tab>" et
+"<Space>" à la place. La longueur des deux éléments réunis ne doit pas excéder
+200 octets.
+
+Il est possible d'avoir plusieurs caractères dans la première colonne. Cela
+fonctionne alors comme une touche morte. Exemple : >
+	'a	Ã¡
+Comme Vim ne peut pas savoir si le caractère suivant après une apostrophe est
+un 'a', il attendra qu'un caractère soit saisi. Pour pouvoir insérer une
+apostrophe simple, ajoutez également cette ligne : >
+	''	'
+Comme le mappage est défini avec |:lnoremap|, l'apostrophe résultante ne sera
+pas utilisée pour le début d'un autre caractère.
+
+Bien qu'il soit possible d'avoir plusieurs caractères dans la deuxième
+colonne, c'est assez inhabituel. Mais vous pouvez utiliser différentes façons
+de spécifier le caractère : >
+	A	a		caractère littéral
+	A	<char-97>	valeur décimale
+	A	<char-0x61>	valeur hexadécimale
+	A	<char-0141>	valeur octale
+	x	<Space>		nom de touche spécial
+
+Les caractères sont censés être encodés pour la valeur courante de 'encoding'.
+Il est possible d'utiliser ":scriptencoding" quand tous les caractères sont
+donnés littéralement. Cela ne marche pas avec la construction <char->, car la
+conversion est effectuée sur le fichier de codage clavier, pas sur le
+caractère résultant.
+
+Les lignes après "loadkeymap" sont interprétées avec 'cpoptions' fixé à "C".
+Cela signifie que les continuations de lignes ne sont pas utilisées et qu'une
+contre-oblique possède une signification particulière dans les mappages.
+Exemples : >
+	" une ligne de commentaire
+	\"	x	mappe " à x
+	\\	y	mappe \ à y
+
+Si vous écrivez un fichier de codage clavier qui pourra être utile à d'autres,
+merci de bien vouloir l'envoyer au responsable de Vim afin qu'il soit inclus
+dans la distribution : <maintainer@vim.org>.
+
+
+CODAGE CLAVIER HÉBREU					*keymap-hebrew*
+
+Cette partie décrit les caractères disponibles dans les encodages UTF-8 et
+CP1255, et les codages clavier nécessaires pour obtenir ces caractères.
+
+	     'encoding'	     'keymap'		~
+OEIL	   utf-8 cp1255   hebrew hebrewp   NOM  ~
+×        0x5d0  0xe0      t       a      'aleph
+×‘        0x5d1  0xe1      c       b      bet
+×’        0x5d2  0xe2      d       g      gimel
+×“        0x5d3  0xe3      s       d      dalet
+×”        0x5d4  0xe4      v       h      he
+×•        0x5d5  0xe5      u       v      vav
+×–        0x5d6  0xe6      z       z      zayin
+×—        0x5d7  0xe7      j       j      het
+×˜        0x5d8  0xe8      y       T      tet
+×™        0x5d9  0xe9      h       y      yod
+×š        0x5da  0xea      l       K      kaf sofit
+×›        0x5db  0xeb      f       k      kaf
+×œ        0x5dc  0xec      k       l      lamed
+×        0x5dd  0xed      o       M      mem sofit
+×        0x5de  0xee      n       m      mem
+×Ÿ        0x5df  0xef      i       N      nun sofit
+×         0x5e0  0xf0      b       n      nun
+×¡         0x5e1  0xf1      x       s      samech
+×¢         0x5e2  0xf2      g       u      `ayin
+×£         0x5e3  0xf3      ;       P      pe sofit
+×¤         0x5e4  0xf4      p       p      pe
+×¥         0x5e5  0xf5      .       X      tsade sofit
+×¦         0x5e6  0xf6      m       x      tsade
+×§         0x5e7  0xf7      e       q      qof
+×¨         0x5e8  0xf8      r       r      resh
+×©         0x5e9  0xf9      a       w      shin
+×ª         0x5ea  0xfa      ,       t      tav
+XXX
+Signes de vocalisation et ponctuation spéciale :
+×”Ö°      0x5b0  0xc0      A:      A:     sheva
+×”Ö±      0x5b1  0xc1      HE      HE     hataf segol
+×”Ö²      0x5b2  0xc2      HA      HA     hataf patah
+×”Ö³      0x5b3  0xc3      HO      HO     hataf qamats
+×”Ö´      0x5b4  0xc4      I       I      hiriq
+×”Öµ      0x5b5  0xc5      AY      AY     tsere
+×”Ö¶      0x5b6  0xc6      E       E      segol
+×”Ö·      0x5b7  0xc7      AA      AA     patah
+×”Ö¸      0x5b8  0xc8      AO      AO     qamats
+×”Ö¹      0x5b9  0xc9      O       O      holam
+×”Ö»      0x5bb  0xcb      U       U      qubuts
+×›Ö¼      0x5bc  0xcc      D       D      dagesh
+×”Ö½      0x5bd  0xcd      ]T      ]T     meteg
+×”Ö¾      0x5be  0xce      ]Q      ]Q     maqaf
+×‘Ö¿      0x5bf  0xcf      ]R      ]R     rafe
+×‘×€     0x5c0  0xd0      ]p      ]p     paseq
+×©×      0x5c1  0xd1      SR      SR     shin-dot
+×©×‚      0x5c2  0xd2      SL      SL     sin-dot
+×ƒ        0x5c3  0xd3      ]P      ]P     sof-pasuq
+×°         0x5f0  0xd4      VV      VV     double-vav
+×±         0x5f1  0xd5      VY      VY     vav-yod
+×²         0x5f2  0xd6      YY      YY     yod-yod
+
+The following are only available in UTF-8. XXX
+
+Signes de cantillation :
+OEIL	   utf-8   hebrew   NOM  ~
+×‘Ö‘     0x591     C:     etnahta
+×‘Ö’     0x592     Cs     segol
+×‘Ö“     0x593     CS     shalshelet
+×‘Ö”     0x594     Cz     zaqef qatan
+×‘Ö•     0x595     CZ     zaqef gadol
+×‘Ö–     0x596     Ct     tipeha
+×‘Ö—     0x597     Cr     revia
+×‘Ö˜     0x598     Cq     zarqa
+×‘Ö™     0x599     Cp     pashta
+×‘Öš     0x59a     C!     yetiv
+×‘Ö›     0x59b     Cv     tevir
+×‘Öœ     0x59c     Cg     geresh
+×‘Ö     0x59d     C*     geresh qadim
+×‘Ö     0x59e     CG     gershayim
+×‘ÖŸ     0x59f     CP     qarnei-parah
+×‘Öª      0x5aa     Cy     yerach-ben-yomo
+×‘Ö«      0x5ab     Co     ole
+×‘Ö¬      0x5ac     Ci     iluy
+×‘Ö­      0x5ad     Cd     dehi
+×‘Ö®      0x5ae     Cn     zinor
+×‘Ö¯      0x5af     CC     masora circle
+
+Formes composées :
+ï¬        0xfb20    X`     Alternative `ayin
+ï¬¡        0xfb21    X'     Alternative 'alef
+ï¬¢        0xfb22    X-d    Alternative dalet
+ï¬£        0xfb23    X-h    Alternative he
+ï¬¤        0xfb24    X-k    Alternative kaf
+ï¬¥        0xfb25    X-l    Alternative lamed
+ï¬¦        0xfb26    X-m    Alternative mem-sofit
+ï¬§        0xfb27    X-r    Alternative resh
+ï¬¨        0xfb28    X-t    Alternative tav
+ï¬©        0xfb29    X-+    Alternative plus
+ï¬ª        0xfb2a    XW     shin+shin-dot
+ï¬«        0xfb2b    Xw     shin+sin-dot
+ï¬¬        0xfb2c    X..W   shin+shin-dot+dagesh
+ï¬­        0xfb2d    X..w   shin+sin-dot+dagesh
+ï¬®        0xfb2e    XA     alef+patah
+ï¬¯        0xfb2f    XO     alef+qamats
+ï¬°        0xfb30    XI     alef+hiriq (mapiq)
+ï¬±        0xfb31    X.b    bet+dagesh
+ï¬²        0xfb32    X.g    gimel+dagesh
+ï¬³        0xfb33    X.d    dalet+dagesh
+ï¬´        0xfb34    X.h    he+dagesh
+ï¬µ        0xfb35    Xu     vav+dagesh
+ï¬¶        0xfb36    X.z    zayin+dagesh
+ï¬¸        0xfb38    X.T    tet+dagesh
+ï¬¹        0xfb39    X.y    yud+dagesh
+ï¬º        0xfb3a    X.K    kaf sofit+dagesh
+ï¬»        0xfb3b    X.k    kaf+dagesh
+ï¬¼        0xfb3c    X.l    lamed+dagesh
+ï¬¾        0xfb3e    X.m    mem+dagesh
+ï­€       0xfb40    X.n    nun+dagesh
+ï­       0xfb41    X.s    samech+dagesh
+ï­ƒ       0xfb43    X.P    pe sofit+dagesh
+ï­„       0xfb44    X.p    pe+dagesh
+ï­†       0xfb46    X.x    tsadi+dagesh
+ï­‡       0xfb47    X.q    qof+dagesh
+ï­ˆ       0xfb48    X.r    resh+dagesh
+ï­‰       0xfb49    X.w    shin+dagesh
+ï­Š       0xfb4a    X.t    tav+dagesh
+ï­‹       0xfb4b    Xo     vav+holam
+ï­Œ       0xfb4c    XRb    bet+rafe
+ï­       0xfb4d    XRk    kaf+rafe
+ï­       0xfb4e    XRp    pe+rafe
+ï­       0xfb4f    Xal    alef-lamed
+XXX
+==============================================================================
+10. Utiliser l'UTF-8			*mbyte-utf8* *UTF-8* *utf-8* *utf8*
+							    *Unicode*
+Le jeu de caractères Unicode a été conçu afin d'inclure tous les caractères
+des autres jeux de caractères. On peut ainsi écrire du texte dans n'importe
+quelle langue en utilisant l'Unicode (à l'exception de quelques langues très
+rarement utilisées). Et on peut aussi mélanger ces langues dans un fichier, ce
+qui est impossible avec les autres encodages.
+
+L'Unicode peut être encodé de différentes manières. Les deux les plus
+populaires sont l'UCS-2, qui utilise des mots de 16 bits, et l'UTF-8, qui
+utilise un ou plusieurs octets pour chaque caractères. Vim peut supporter
+toutes les variantes de l'Unicode, mais utilise toujours l'UTF-8 en interne.
+
+Vim possède un support UTF-8 étendu. Il semble fonctionner dans :
+- xterm avec le support UTF-8 activé ;
+- les IHM graphiques Athena, Motif et GTK+ ;
+- l'IHM graphique MS-Windows.
+
+Les caractères de largeur double sont supportés. Cela fonctionne mieux avec
+'guifontwide' ou 'guifontset'. Si vous utilisez uniquement 'guifont', les
+caractères larges sont affichés dans la largeur normale et un espace est
+inséré pour combler le vide. NOTE : L'option 'guifontset' n'est désormais
+plus utilisée dans l'IHM graphique GTK+ 2.
+
+Il est possible d'utiliser jusqu'à deux caractères de composition. Le
+caractère de composition est affiché par dessus le caractère précédent. Lors
+de l'édition de texte, un caractère de composition sera le plus souvent
+considéré comme faisant partie du caractère précédent. Par exemple, "x"
+coupera un caractère et ses caractères de composition suivants par défaut. Si
+l'option 'delcombine' est activée, l'utilisation de "x" coupera les caractères
+de composition un par un, puis coupera le caractère de base. Mais lors de
+l'insertion, vous taperez le premier caractère et les caractères de
+composition suivants séparément, après quoi ils seront fusionnés. La commande
+"r" ne vous autorise pas à saisir de caractère de composition, car elle ne
+peut pas savoir si un est attendu ou pas. Utilisez "R" à la place.
+
+Les octets qui ne font pas partie d'une séquence d'octets UTF-8 valide sont
+gérés comme un caractère simple et affichés sous forme <xx>, où "xx" désigne
+la valeur hexadécimale de l'octet.
+
+Les séquences surdimensionnées ne sont pas traitées spécifiquement et sont
+affichées comme un caractère valide. Néanmoins, les motifs de recherche ne
+peuvent pas correspondre avec une séquence surdimensionnée. (Une séquence est
+dite « surdimensionnée » si elle utilise plus d'octets que nécessaire pour le
+caractère.) Le caractère NUL (zéro) fait exception, qui est rendu par "<00>".
+
+Dans le fichier et le tampon, la plage complète des caractères Unicode peut
+être utilisée (31 bits). Néanmoins, l'affichage ne fonctionne que pour des
+caractères 16-bits, et uniquement pour les caractères présents dans la police
+sélectionnée.
+
+Commandes utiles :
+- "ga" affiche la valeur décimale, hexadécimale et octale du caractère sous le
+  curseur. S'il y a des caractères de composition, il sont affichés également.
+  (Si le message est tronqué, utilisez ":messages".)
+- "g8" affiche les octets utilisés dans un caractère UTF-8, caractères de
+  composition inclus, sous forme de nombres hexadécimaux.
+- ":set encoding=utf-8 fileencodings=" oblige à utiliser l'UTF-8 pour tous les
+  fichiers. Par défaut, la région linguistique courante est utilisée pour
+  'encoding' et 'fileencodings' est fixé automatiquement selon l'encodage du
+  fichier.
+
+
+DÉMARRAGE DE VIM
+
+Si votre région linguistique courante est dans un encodage UTF-8, Vim
+démarrera automatiquement en mode utf-8.
+
+Si vous utilisez une autre région linguistique : >
+
+	:set encoding=utf-8
+
+Vous voudrez peut-être choisir aussi la police utilisée pour les menus.
+Malheureusement, cela ne fonctionne pas toujours. Voir les remarques
+spécifiques aux systèmes ci-dessous XXX et 'langmenu'.
+
+
+UTILISER L'UTF-8 SOUS X WINDOW				*utf-8-in-xwindows*
+
+NOTE : Cette partie ne s'applique pas à l'IHM graphique GTK+ 2.
+
+Vous devrez spécifier une police à utiliser. Pour les caractères de largeur
+double, une autre police est nécessaire, dont la largeur doit être exactement
+le double. Il y a trois façons de procéder :
+
+1. Fixer 'guifont' et laisser Vim trouver le 'guifontwide' correspondant.
+2. Fixer 'guifont' et 'guifontwide'.
+3. Fixer 'guifontset'.
+
+Lire la documentation de chaque option pour plus de détails. Exemple : >
+
+	:set guifont=-misc-fixed-medium-r-normal--15-140-75-75-c-90-iso10646-1
+
+Vous voudrez peut-être fixer aussi la police utilisée pour les menus. Cela ne
+fonctionne que pour Motif. Utilisez la commande ":hi Menu font={nompolice}"
+pour ce faire. |:highlight|
+
+
+TAPER EN UTF-8						*utf-8-typing*
+
+Si vous utilisez X Window, vous devrez trouver une méthode de saisie qui
+supporte l'UTF-8.
+
+Si votre système ne fournit pas de support pour la saisie en UTF-8, vous
+pouvez utiliser la fonctionnalité 'keymap'. Cela permet l'écriture d'un
+fichier de codage clavier, qui définit un caractère UTF-8 en tant que séquence
+de caractères ASCII. Voir |mbyte-keymap|.
+
+Une autre méthode consiste à fixer la région linguistique courante à la langue
+que vous souhaitez utiliser et pour laquelle vous disposez d'une XIM. Fixez
+ensuite 'termencoding' à cette langue et Vim convertira pour vous les
+caractères saisis en 'encoding'.
+
+Si tout le reste échoue, vous pouvez saisir n'importe quel caractère sous
+forme de quadruplet hexadécimal : >
+
+	CTRL-V u 1234
+
+"1234" est interprété comme un nombre hexadécimal. Vous devez saisir quatre
+caractères, préfixez un zéro si nécessaire.
+
+
+ARGUMENTS DE COMMANDES					*utf-8-char-arg*
+
+Des commandes comme |f|, |F|, |t| et |r| prennent en argument un caractère
+simple. Avec l'UTF-8, cet argument peut inclure un ou deux caractères de
+composition. Ceux-ci doit être produits en même temps que le caractère de
+base, Vim n'attendra pas la saisie du caractère suivant pour déterminer s'il
+s'agit ou pas d'un caractère de composition. L'emploi de 'keymap' ou |:lmap|
+est un bon moyen de taper ces caractères.
+
+Les commandes qui recherchent un caractère dans une ligne gèrent les
+caractères de composition comme suit. Lors de la recherche d'un caractère sans
+caractère de composition, elles trouveront les correspondances dans le texte
+avec ou sans caractères de composition. Lors de la recherche d'un caractère
+avec un caractère de composition, elles ne trouveront que les correspondances
+avec ce caractère de composition. Les choses ont été faites ainsi car tout le
+monde n'est pas capable de taper un caractère de composition.
+
+==============================================================================
+11. Sommaire des options				*mbyte-options*
+
+Ces options peuvent être utiles pour éditer des fichiers multi-octets.
+Reportez-vous à l'aide dans le fichier options.txt pour plus d'informations.
+
+'encoding'	Encodage utilisé pour le clavier et l'affichage. Détermine
+		également l'encodage utilisé par défaut pour les fichiers.
+
+'fileencoding'	Encodage d'un fichier. S'il est différent de 'encoding', la
+		conversion est effectuée lors de la lecture ou de
+		l'enregistrement du fichier.
+
+'fileencodings'	Liste des encodages possibles pour un fichier. Lors de
+		l'ouverture d'un fichier, ces valeurs seront utilisées et la
+		première et la première qui ne provoque pas d'erreur est
+		utilisée pour 'fileencoding'.
+
+'charconvert'	Expression utilisée pour convertir des fichiers d'un encodage
+		à un autre.
+
+'formatoptions' Le drapeau 'm' peut être inclus pour que la mise en forme
+		coupe une ligne sur un caractère multi-octets supérieur à 255.
+		Utile pour des langues où une séquence de caractères peut être
+		coupée n'importe où.
+
+'guifontset'	Liste de noms de polices utilisées pour un encodage
+		multi-octets. Si cette option est non-vide, elle 'guifont'.
+
+'keymap'	Spécifie le nom d'un codage clavier.
+
+==============================================================================
+
+Contributions particulières pour les fonctionnalités multi-octets de :
+	Chi-Deok Hwang <hwang@mizi.co.kr>
+	Nam SungHyun <namsh@lge.com>
+	K. Nagano <nagano@atese.advantest.co.jp>
+	Taro Muraoka <koron@tka.att.ne.jp>
+	Yasuhiro Matsumoto <mattn@mail.goo.ne.jp>
+
+ vim:tw=78:ts=8:ft=help:norl:

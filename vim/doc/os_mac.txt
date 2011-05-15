@@ -1,0 +1,106 @@
+*os_mac.txt*    Pour Vim version 6.2.  Dernière modification : 07 oct 2002
+
+
+		   MANUEL de RÉFÉRENCE VIM - Bram Moolenaar
+
+
+					*mac* *Mac* *macintosh* *Macintosh*
+
+La version 3.0 de Vim existait déjà pour Mac. Voici les premières lignes de
+cet ancien fichier :
+
+    VIM Release Notes
+    Initial Macintosh release, VIM version 3.0
+    19 October 1994
+
+    Eric Fischer
+    <enf1@midway.uchicago.edu>, <eric@jcp.uchicago.edu>, <etaoin@uchicago.edu>
+    5759 N. Guilford Ave
+    Indianapolis IN 46220 USA
+
+Ce fichier documente les particularités de la version Macintosh de Vim.
+
+NOTE : cette version 5 est toujours au niveau alpha.
+
+1. Conventions sur les noms de fichiers		|mac-filename|
+2. Fichiers ".vimrc" et ".vim"			|mac-vimfile|
+3. Ce que l'on sait manquer sur Mac		|mac-lack|
+4. Rapport de bogue pour Mac			|mac-bug|
+5. Compiler Vim					|mac-compile|
+
+==============================================================================
+1. Conventions sur les noms de fichiers			*mac-filename*
+
+En ce qui concerne le séparateur de chemin pour les fichiers, vous pouvez
+utiliser celui de Mac, celui d'Unix ou même mélanger les deux. L'algorithme
+utilisé pour déterminer si le nom du fichier est absolu (c'est-à-dire relatif
+au "Bureau") ou relatif au répertoire courant, est le suivant :
+
+	Si le chemin commence par un "/", 
+		alors il est absolu
+	Si le chemin commence par un ":",
+		alors il est relatif
+	Si le chemin ne commence ni par un "/" ou par un ":",
+	  et qu'un ":" est rencontré avant un "/",
+		alors le chemin est absolu.
+>
+	:e /HD/texte
+	:e HD:texte
+édite le fichier "texte" du disque "HD" >.
+>
+	:e :src:main.c
+	:e src/main.c
+édite le fichier "main.c" dans le sous-répertoire "src" du répertoire courant.
+>
+	:e os_mac.c
+édite le fichier "os_mac.c" dans le répertoire courant.
+
+Vous pouvez utiliser les variables |$VIM| et |$VIMRUNTIME|. >
+
+		:so $VIMRUNTIME:syntax:syntax.vim
+
+==============================================================================
+2. Fichiers ".vimrc" et ".vim"				*mac-vimfile*
+
+Sur le Mac, les fichiers commençant avec un point "." sont déconseillés, de ce
+fait, les fichiers rc (c'es-à-dire, de configuration) sont appelés "vimrc" ou
+"_vimrc" et "gvimrc" ou "_gvimrc". Ces fichiers peuvent être de n'importe quel
+format (mac, dos ou unix). Vim peut comprendre n'importe quel format quand
+l'option |'nocompatible'| est activée. Dans le cas contraire, il ne prend en
+charge que le format Mac.
+
+==============================================================================
+3. Ce que l'on sait manquer sur Mac			*mac-lack*
+
+- Les noms de fichiers qui contiennent à la fois de ":" et des "/" sont
+  parfois mal compris (il suffit d'exécuter la commande une nouvelle fois) ;
+- Les barres de défilement ne sont pas interactives et, quand on utilise les
+  flèches ou les zones de défilement, il existe une limite de 32 lignes ou 32
+  pages ;
+- La coloration syntaxique fonctionne sur les Mac 68k mais est vraiment _très_
+  lente.
+
+==============================================================================
+4. Rapport de bogue pour Mac				*mac-bug*
+
+Quand vous rapportez un bogue spécifique au Mac ou que vous demandez une
+nouvelle fonctionnalité pour cette plate-forme, vous êtes prié d'utiliser la
+liste de diffusion |vim-mac|. Cependant, vous devez être enregistré. Une autre
+possibilité est d'envoyer un message à la personne actuellement responsable de
+MacVim :
+
+	mac@vim.org
+
+==============================================================================
+5. Compiler Vim						*mac-compile*
+
+La compilation de Vim se fait sans encombre si vous utilisez le projet
+CodeWarrior fourni avec CodeWarrior 9. Si vous utilisez une version plus
+récente (CW Pro par exemple) vous devrez d'abord convertir le projet.
+
+Si vous compilez Vim pour Mac 68k, vous devez modifier la ressource "size"
+avec `ResEdit` et activer le bouton "High level events aware" pour que le
+glisser-déposer fonctionne. Vous devez augmenter la part de mémoire à au moins
+1024 Ko pour éviter que Vim ne plante à cause d'un manque de mémoire.
+
+ vim:tw=78:ts=8:ft=help:norl:

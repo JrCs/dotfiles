@@ -1,0 +1,184 @@
+*if_ole.txt*	Pour Vim version 6.2.  Dernière modification : 12 oct 2002
+
+
+		   MANUEL de RÉFÉRENCE VIM - par Paul Moore
+
+
+Interface OLE de Vim					*ole-interface*
+
+1. Activation				|ole-activation|
+2. Méthodes				|ole-methods|
+3. La commande "normal"			|ole-normal|
+4. Enregistrement			|ole-registration|
+5. Intégration à MS Visual Studio	|MSVisualStudio|
+
+{absent de Vi}
+
+L'interface OLE n'est disponible que si Vim a été compilé avec la
+fonctionnalité |+ole|. Voir le fichier "src/if_ole.INSTALL".
+
+Une alternative consiste à utiliser la fonctionnalité de communication
+|clientserver| de Vim.
+
+==============================================================================
+1. Activation						*ole-activation*
+
+Vim peut se comporter comme un serveur OLE Automation, accessible depuis
+n'importe quel client Automation, comme par exemple Visual Basic, Python ou
+Perl. Le "nom" de l'application Vim (son "ProgID" dans la terminologie OLE)
+est "Vim.Application".
+
+En conséquence, pour démarrer une instance de Vim (ou pour vous connectez à
+une instance déjà démarrée), vous pouvez utiliser un code similaire à celui
+qui suit :
+
+[Visual Basic] >
+	Dim Vim As Object
+	Set Vim = CreateObject("Vim.Application")
+
+[Python] >
+	from win32com.client.dynamic import Dispatch
+	vim = Dispatch('Vim.Application')
+
+[Perl] >
+	use Win32::OLE;
+	$vim = new Win32::OLE 'Vim.Application';
+
+Vim ne peut pas se comporter comme un serveur OLE "caché", tel que le peuvent
+certains serveurs OLE Automation. Quand un client active une instance de Vim,
+cette dernière est immédiatement visible. La simple fermeture de la connexion
+OLE avec l'instance de Vim n'est pas suffisante pour détruire l'instance de
+Vim -- il est nécessaire d'exécuter explicitement une commande pour quitter
+(par exemple ":qa!" ou ":wqa").
+
+==============================================================================
+2. Méthodes						*ole-methods*
+
+Un serveur OLE Vim propose quatre méthodes aux clients.
+
+							*ole-sendkeys*
+SendKeys(touches)	Exécute une séquence de touches clavier.
+
+Cette méthode prend un seul paramètre, qui est une chaîne de caractères
+représentant des touches du clavier. Ces touches du clavier sont exécutées
+exactement comme si elles avaient été tapées. Les touches spéciales peuvent
+être spécifiées en utilisant la notation |<>|, comme dans le côté droit des
+mappages.
+
+NOTE : L'exécution de la commande Ex "normal" n'est pas possible -- voir 
+|ole-normal| ci-après.
+
+Exemples (syntaxe Visual Basic) : >
+
+	Vim.SendKeys "iSalut<Esc>"
+	Vim.SendKeys "ma1GV4jy`a"
+
+Ces exemples supposent que Vim démarre en mode Normal. Pour forcer le mode 
+Normal, faite débuter la séquence de touches par CTRL-\ CTRL-N, comme suit : >
+
+	Vim.SendKeys "<C-\><C-N>iSalut<Esc>"
+
+CTRL-\ CTRL-N passe Vim en mode Normal, qu'il se trouve en mode Insertion ou
+en mode Ligne-de-Commande. Notez que ceci ne marche pas au beau milieu d'une
+commande Vim.
+
+							*ole-eval*
+Eval(expr) 		Évaluer une expression.
+
+Cette méthode prend un seul paramètre, qui est une expression au format Vim
+(voir |expression|). Elle renvoie une chaîne de caractères contenant le
+résultat de l'évaluation de l'expression. 
+
+Exemples (syntaxe Visual Basic) : >
+
+	Ligne20 = Vim.Eval("getline(20)")
+	Douze = Vim.Eval("6 + 6")  'Notez bien, c'est une chaîne de caractères 
+	Police = Vim.Eval("&guifont")
+<
+							*ole-setforeground*
+SetForeground()		Place la fenêtre Vim au premier plan.
+
+Cette méthode ne prend aucun argument. Aucune valeur n'est renvoyée.
+
+Exemple (syntaxe Visual Basic) : >
+
+	Vim.SetForeground
+<
+							*ole-gethwnd*
+GetHwnd()		Retourne le descripteur de la fenêtre Vim.
+
+Cette méthode ne prend pas d'argument. Elle renvoie le descripteur de la
+fenêtre principale de Vim. Vous pouvez utiliser cette méthode si vous
+développez un programme qui a besoin de manipuler la fenêtre de Vim, de la
+localiser dans le Z-Order (Le Z-Order indique la position d'une fenêtre dans
+l'empilement des fenêtres), etc.
+
+Exemple (syntaxe Visual Basic) : >
+
+	Vim_Hwnd = Vim.GetHwnd
+
+==============================================================================
+3. La commande "normal"					*ole-normal*
+
+La façon dont Vim exécute les commandes OLE Automation, ainsi que la manière
+dont la commande Ex ":normal" est mise en oeuvre dans le code, empêchent
+l'utilisation de la commande ":normal" par le biais de OLE Automation. Toute
+tentative est vouée à l'echec et sera probablement inoffensive, bien que le
+résultat soit possiblement imprédictible.
+
+Il n'existe actuellement aucune solution pratique à cette situation. Les 
+utilisateurs doivent simplement être conscients de cette limite.
+
+==============================================================================
+4. Enregistrement				*ole-registration* *E243*
+
+							*-register*  >
+Avant que Vim ne joue le rôle d'un serveur OLE, il doit être enregistré dans 
+la base de registres. Pour ce faire, Vim doit être lancé avec argument
+"-register" seul : >
+
+	gvim -register
+
+Si gvim avec le support OLE est exécuté et s'aperçoit qu'aucun serveur OLE n'a
+été enregistré dans la base de registres, une boîte de dialogue apparaîtra et
+vous permettra d'enregistrer un serveur OLE Vim en cliquant sur le bouton
+"Yes".
+
+Parfois, l'enregistrement est impossible. Cela arrive lorsque la base de
+registres est en lecture seule. Si vous rencontrez ce problème, vous devrez
+exécuter gvim en tant qu'administrateur.
+
+							*-unregister*  >
+Une fois que Vim est enregistré, le chemin de l'application est stocké dans la
+base de registres. Avant de déplacer, supprimer, ou mettre à jour Vim, les
+entrées de la base de registres doivent être retirées en utilisant l'argument
+"-unregister" : >
+
+	gvim -unregister
+
+Le mécanisme OLE utilisera le premier Vim enregistré qu'il trouvera. Si un Vim
+est déjà en cours d'exécution, il sera utilisé. Si vous voulez ouvrir
+plusieurs sessions Vim qui ne doivent pas répondre aux commandes OLE, utilisez
+une version de Vim sans le support OLE et placez-la dans un répertoire
+différent. Dans ce cas, la version OLE devrait être placée dans un répertoire
+qui n'est pas référencé par la variable d'environnement PATH, de sorte que
+l'invocation de `gvim` démarre la version non-OLE.
+
+							*-silent*
+Pour éviter l'apparition de la boîte message indiquant le résultat de
+l'enregistrement, spécifiez l'argument "-silent" avant l'argument "-register"
+ou "-unregister".
+>
+	gvim -silent -register
+	gvim -silent -unregister
+
+==============================================================================
+5. Intégration à MS Visual Studio		*MSVisualStudio* *VisVim*
+
+La version OLE permet d'utiliser Vim comme éditeur dans Microsoft Visual
+Studio. Cette version, appelée "VisVim", est incluse dans l'archive qui
+contient la version OLE. La documentation est disponible dans le fichier
+"README.txt" du répertoire "VisVim".
+
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:

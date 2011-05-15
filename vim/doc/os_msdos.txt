@@ -1,0 +1,305 @@
+*os_msdos.txt*  Pour Vim version 6.2c.  Dernière modification : 03 sep 2001
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+					*msdos* *ms-dos* *MSDOS* *MS-DOS*
+Ce fichier contient les particularités de la version MS-DOS de Vim.
+
+1. Deux versions pour MS-DOS			|msdos-versions|
+2. Problèmes connus				|msdos-problems|
+3. Noms de fichiers longs			|msdos-longfname|
+4. Codes termcap				|msdos-termcap|
+5. Combinaisons Maj + touches fléchées		|msdos-arrows|
+6. Extensions des fichiers 			|msdos-fname-extensions|
+7. Utilisation de la mémoire et limitations	|msdos-limitations|
+8. Fichiers et liens symboliques		|msdos-linked-files|
+9. Copier/coller dans une fenêtre DOS		|msdos-copy-paste|
+
+De plus, il existe des éléments communs aux versions Win32 et DOS :
+Emplacement des fichiers	|dos-locations|
+Utilisation des contre-obliques	|dos-backslash|
+Mappages standards		|dos-standard-mappings|
+Rendu à l'écran et couleurs	|dos-colors|
+Formats des fichiers		|dos-file-formats|
+Commande ":cd"			|dos-:cd|
+Interruption			|dos-CTRL-Break|
+Fichiers temporaires		|dos-temp-files|
+Options par défaut du shell	|dos-shell|
+
+Pour compiler Vim, consultez src/INSTALL.pc.		*msdos-compiling*
+
+==============================================================================
+1. Deux versions pour MS-DOS				*msdos-versions*
+
+Il existe deux versions de Vim qui peuvent être utilisées avec des machines
+MS-DOS :
+							*dos16*
+Version Dos16	Peut être utilisée sur n'importe quel système MS-DOS,
+		n'utilise pas plus de 640 ko de mémoire. Fonctionne également
+		sous OS/2, Windows 95 et NT. Ne contient pas certaines
+		fonctionnalités spécifiques de Vim (autocommandes, coloration
+		syntaxique, etc.). Recommandé pour les machines pré-386.
+							*dos32*
+Version Dos32	Requiert un processeur 386 et un pilote |DPMI|, utilise toute
+		la mémoire disponible. Supporte les noms de fichiers longs et
+		le presse-papiers Windows, sauf sur Windows NT. Recommandé pour
+		MS-DOS, Windows 3.1 et Windows 95.
+
+Il existe également deux versions qui fonctionnent sous Windows :
+Version Win32	Requiert Windows 95 ou Windows NT, utilise toute la mémoire
+		disponible, supporte les noms de fichiers longs, etc. Connaît
+		quelques problèmes sur Windows 95. Recommandé pour Windows NT.
+		Voir |os_win32.txt|.
+IHMg Win32	Mêmes besoins que la version Win32, mais fonctionne dans sa
+		propre fenêtre au lieu de la console. Dispose d'ascenceurs,
+		menus, etc. Recommandé pour Windows 95 et Windows NT. Voir
+		|gui-w32|.
+
+Il est recommandé d'utiliser les versions Dos32 ou Win32. Bien que la version
+Dos16 soit capable d'éditer de très gros fichiers, elle manque rapidement de
+mémoire lors de changements importants. Il peut alors être utile de désactiver
+l'annulation : ":set ul=-1". Le rafraîchissement de l'écran de la version
+Dos16 est le plus rapide des 3 versions sur DOS ou Windows 95 ; sur Windows
+NT, la version Win32 est aussi rapide.
+
+								*DPMI*
+Pour la version Dos32, vous pourriez avoir besoin d'un pilote DPMI sous DOS.
+Si vous utilisez Windows ou un gestionnaire de mémoire intelligent, cela
+fonctionnera sans doute déjà. Si vous obtenez le message "No DPMI", vous devez
+installer un pilote DPMI. Un tel pilote est inclus dans l'exécutable de
+CSDPMI4B.ZIP. Lancez "cwsdpmi" avant chaque lancement de Vim. il vous est
+également possible d'inclure "cwsdpmi -p" dans votre AUTOEXEC.BAT pour le
+rendre résident. La dernière version de "CSDPMI*.ZIP" peut être récupérée
+sur : "ftp.neosoft.com:pub/users/s/sandmann".
+
+							*minimal-features*
+La version DOS 16 bits a été compilée avec un minimum de fonctionnalités.
+Voir |+feature-list| pour déterminer celle qui sont incluses (marquées avec un 
+"T").
+   Vous pouvez inclure d'autres fonctionnalités en éditant "feature.h" et en
+recompilant.
+
+==============================================================================
+2. Problèmes connus					*msdos-problems*
+
+Lors de l'utilisation de SmartDrive (MS-DOS 6.x) avec le cache en écriture, il
+est possible que Vim essaye de créer un fichier d'échange sur un système de
+fichiers en lecture seule (par exemple une disquette protégée en écriture).
+Vous obtiendrez alors le message
+	A serious disk error has occurred .., Retry (r)? ~
+Il n'y a pas grand chose à faire, à part dé-protéger la disquette ou éteindre
+l'ordinateur. Même Ctrl + Alt + Suppr ne vous sera d'aucun secours. Il s'agit
+d'un problème de SmartDrive, et non pas de Vim. SmartDrive fonctionne
+correctement par ailleurs. Si cela vous gêne, n'utilisez pas le cache en
+écriture.
+
+Vim ne peut pas lire des fichiers d'échanges qui ont déjà été ouverts, a moins
+qu'ils ne l'aient été avec la commande "share". Si vous obtenez des
+avertissements isolés à propos de fichiers d'échanges existants, ajoutez la
+commande "share" dans votre CONFIG.SYS ou AUTOEXEC.BAT (consultez votre
+documentation MS-DOS).
+
+La version Dos16 ne peut avoir qu'environ 10 fichiers ouverts (dans une
+fenêtre ou cachés) à la fois. Avec plus de fichiers, vous obtiendrez des
+messages d'erreurs en tentant de lire ou d'écrire un fichier, ou pour les
+commandes de filtre. Ou bien Vim peut manquer de mémoire, ce qui peut avoir
+des effets inattendus.
+
+La version Dos32 ne peut pas avoir un nombre illimité de fichiers ouverts au
+même moment. La limite dépend du paramètre FILES dans votre CONFIG.SYS (15 par
+défaut). Si vous avez besoin d'éditer beaucoup de fichiers, vous devriez
+augmenter cette valeur. Si vous fixez cette valeur trop bas, vous risquez
+d'obtenir des erreurs bizarres, et les commandes du shell peuvent provoquer un
+plantage !
+
+La version Dos32 peut fonctionner avec des noms de fichiers longs. Lors du
+complètement des noms de fichiers, les correspondances avec le nom court
+seront également proposées. Mais elles renverront au nom long correspondant.
+Par exemple, pour le nom de fichier long "ceci_est_un_essai" avec le nom court
+"ceci_e~1", la commande ":e *1" lancera l'édition de "ceci_est_un_essai".
+
+Si vous utilisez la version Dos32 et que vous rencontrez des problèmes avec le
+support du DPMI, vérifiez s'il y a un programme qui consomme des ressources
+dans votre CONFIG.SYS. Un programme connu pour provoquer ce problème est
+"netx", qui renvoie "NetWare v. 3.26 Workstation shell". Remplacez-le par la
+version 3.32 pour résoudre le problème.
+
+La version Dos32 analyse ses arguments pour prendre en compte les
+doubles-apostrophes. C'est utile pour éditer un fichier dont le nom contient
+des espaces, par exemple : >
+	vim "Program Files\accessoires\ppp.scp"
+Les apostrophes simples sont alors supprimées, par effet de bord. Insérez une
+contre-oblique pour éviter cette suppression. Par exemple, pour éditer le
+fichier "fic'hier.txt" : >
+	vim fic\'hier.txt
+
+==============================================================================
+3. Noms de fichier longs				*msdos-longfname*
+
+Si la version Dos32 est lancée sur Windows 95, elle peut utiliser les noms de
+fichiers longs. Cela fonctionne par défaut. Si vous voulez le désactiver,
+utilisez cette variable d'environnement : >
+	set LFN=N
+Vous pouvez mettre ceci dans votre fichier AUTOEXEC.BAT.
+
+NOTE : Si vous avez installé DJGPP sur votre machine, vous avez probablement
+un fichier "djgpp.env", qui contient "LFN=n". Vous devez alors utiliser
+"LFN=y" pour activer l'utilisation des noms de fichiers longs.
+
+==============================================================================
+4. Codes termcap 					*msdos-termcap*
+
+Si vous voulez utiliser une autre méthode de sortie (par exemple, lorsque vous
+utilisez un terminal sur un port COM), fixez le nom du terminal à "pcansi".
+Vous pouvez changer les options termcap au besoin (voir |terminal-options|).
+Note : Le "ansi.sys" normal d'IBM ne supporte pas tous les codes du terminal
+pcansi interne. Si vous utilisez ansi.sys, vous aurez besoin d'effacer les
+entrées termcap 't_al' et 't_dl' avec >
+	:set t_al= t_dl=
+Autrement, l'écran ne sera pas rafraîchi correctement. Il est préférable
+d'utiliser "nansi.sys", "nnansi.sys" ou un équivalent au lieu de "ansi.sys".
+
+Si vous voulez utiliser Vim sur un terminal connecté à un port COM:,
+réinitialisez l'option 'bioskey'. Sinon, les commandes seront lues depuis le
+clavier du PC. CTRL-C et CTRL-P peuvent ne pas fonctionner correctement avec
+'bioskey' réinitialisée.
+
+==============================================================================
+5. Combinaisons Maj + touches fléchées		*msdos-arrows*
+
+Utilisez Ctrl + flèche-gauche et Ctrl + flèche-droite à la place de Maj +
+flèche-gauche et Maj + flèche-droite. Les flèches haut et bas ne peuvent pas
+être utilisées avec Maj ou Ctrl.
+
+==============================================================================
+6. Extensions des fichiers			*msdos-fname-extensions*
+
+MS-DOS n'autorise qu'une seule extension pour les noms de fichiers. Par
+conséquent, lors de l'ajout d'une extension, le '.' du fichier original est
+remplacé par un '_', le nom est tronqué à 8 caractères et la nouvelle
+extension (par exemple, ".swp") est ajoutée. Deux exemples : "test.c" devient
+"test_c.bak", "voiciunt.est" devient "voiciunt.bak". Pour réduire ces
+problèmes, la valeur par défaut de 'backupext' est "~" au lieu de ".bak". Le
+fichier de sauvegarde pour "voiciunt.est" devient "voiciunt.es~". L'option
+'shortname' n'est pas disponible, car elle serait toujours activée.
+
+==============================================================================
+7. Utilisation de la mémoire et limitations	*msdos-limitations*
+
+Un fichier d'échange est utilisé pour stocker la majorité du texte. Vous
+devriez pouvoir éditer de très gros fichiers. Cependant, la mémoire est
+utilisée pour les annulations et d'autres choses. Si vous coupez beaucoup de
+texte, vous pouvez manquer de mémoire avec la version Dos16.
+
+Si Vim donne un avertissement "Out of memory", vous devriez arrêter d'éditer.
+Les effets des actions d'édition suivantes sont imprévisibles. Vous pouvez
+fixer 'undolevels' à 0 pour économiser un peu de mémoire. Lancer la macro
+"maze" sur un gros labyrinthe garantit l'épuisement de la mémoire, car chaque
+changement est mémorisé pour annulation. Dans ce cas, fixez 'undolevels' à une
+valeur négative. Cela desactivera complètement l'annulation.
+
+						*msdos-clipboard-limits*
+Dans la version Dos32, la mémoire étendue est utilisée pour éviter ces
+problèmes. Toutefois, si vous utilisez le presse-papiers, vous risquez
+toujours recontrer des problèmes de limitation de mémoire, car le
+presse-papiers Windows ne peut communiquer avec Vim qu'en utilisant de la
+mémoire DOS. Cela signifie que la quantité de mémoire DOS libre disponible sur
+votre système limite la quantité de texte susceptible d'être envoyée ou reçue
+du presse-papiers.
+
+Vous pouvez habituellement augmenter la quantité de mémoire DOS disponible en
+ajoutant les lignes suivantes dans le fichier "config.sys" du DOS : >
+
+	DOS=HIGH,UMB
+	DEVICE=C:\WINDOWS\himem.sys
+	DEVICE=C:\WINDOWS\emm386.exe RAM
+
+Cette modification du CONFIG.SYS vous aidera également à avoir davantage de
+mémoire disponible pour la version Dos16, si vous l'utilisez.
+
+Dans la version Dos16, la longueur des lignes est limitée à 32000 caractères.
+Lors de la lecture d'un fichier, les lignes sont automatiquement coupées. Mais
+l'édition d'une ligne qui la ferait devenir trop longue peut avoir des avoir
+des conséquences inattendues.
+
+==============================================================================
+8. Fichiers et liens symboliques		*msdos-linked-files*
+
+Quand vous utilisez Vim pour éditer des fichiers sur un serveur de fichiers
+Unix NFS au travers de liens symboliques, vous pouvez rencontrer des
+problèmes.
+   Lors de l'écriture du fichier, Vim n'écrit pas « au travers » du lien
+symbolique. Au lieu de cela, il efface le lien symbolique et le remplace par
+un nouveau fichier.
+
+Sur Unix, Vim s'attend à trouver des liens (symboliques ou physiques). Une
+copie du fichier original est réalisée puis le fichier original est écrasé.
+Ceci assure que toutes les propriétés du fichier restent les mêmes. Sur les
+systèmes non-Unix, le fichier original est renommé et un nouveau fichier est
+écrit. Seuls les bits de protection sont positionnés comme pour le fichier
+original. Toutefois, cela ne fonctionne pas correctement lorsque l'on
+travaille sur un système de fichiers NFS monté localement, où les liens et
+d'autres choses existent. La seule manière de corriger ceci dans la version
+actuelle est de ne pas créer de fichier de sauvegarde, avec 
+":set nobackup nowritebackup". Voir |'writebackup'|.
+
+==============================================================================
+9. Copier/coller dans une fenêtre DOS			*msdos-copy-paste*
+
+					*E450* *E451* *E452* *E453* *E454*
+La version 32 bits peut copier/coller directement depuis/vers le
+presse-papiers Windows. Utilisez le registre "*. D'importantes quantités de
+textes peuvent être copiées de cette manière, sous réserve qu'il soit possible
+d'allouer de la mémoire pour cela, voir |msdos-clipboard-limits|. Lors du
+déplacement d'un texte d'un Vim vers un autre, le type de sélection (par
+caractères, lignes ou blocs) est préservé.
+
+Pour les autres versions, la méthode suivante peut être utilisée.
+
+(Posté sur comp.editors par John Velman <velman@igate1.hac.com>.)
+
+Comment copier/coller du texte depuis/vers Vim dans une fenêtre DOS :
+
+1° Pour que Vim fonctionne dans une fenêtre plutôt qu'en plein écran, appuyez
+   sur Alt + Entrée. Cela permet de basculer entre les modes plein écran et
+   fenêtre.
+   NOTE : Sous Windows 95, la propriété "Fast Pasting" ne doit pas être
+   cochée. Dans la boîte de dialogue des propriétés de la fenêtre MS-DOS,
+   allez dans "MS-DOS Prompt/Misc/Fast pasting" XXX et assurez-vous qu'elle
+   n'est PAS activée. Pour rendre ce changement permanent, changez cette
+   propriété dans "\windows\system\conagent.exe". (Source : Philip Nelson, non
+   vérifié.)
+
+2° Pour coller quelquechose _dans_ Vim, passez en mode Insertion.
+
+3° Mettez le texte que vous souhaitez coller dans le presse-papiers Windows.
+
+4° Cliquez sur le bouton de contrôle dans le coin supérieur gauche de la
+   fenêtre Vim (il ressemble à un gros signe moins). Si vous ne voulez pas
+   utiliser la souris, vous pouvez l'atteindre avec Alt + Espace.
+
+5° Choisissez "Édition" dans le menu qui vient de s'ouvrir.
+
+6° Choisissez "Coller" dans le sous-menu correspondant.
+
+Pour copier du texte depuis la fenêtre Vim vers le presse-papiers :
+
+1° Ouvrez le menu du bouton de contrôle.
+
+2° Choisissez "Édition".
+
+3° Choisissez "Marquer" XXX.
+
+4° Avec le clavier ou la souris, sélectionnez la partie de la fenêtre Vim que
+   vous voulez copier. Avec le clavier, utilisez les touches fléchées en
+   maintenant la touche Maj enfoncée pour étendre la sélection.
+
+5° Lorsque votre sélection est faite, appuyez sur <Entree>. La sélection est
+   maintenant dans le presse-papiers. En fait, cela peut être n'importe quelle
+   sélection rectangulaire, par exemple des colonnes 4 à 25 et des lignes 7 à
+   10. Elle peut inclure tout ce qui se trouve dans la fenêtre Vim : par
+   exemple la sortie d'un ":!dir".
+
+ vim:tw=78:ts=8:ft=help:norl:

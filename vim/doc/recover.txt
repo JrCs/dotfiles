@@ -1,0 +1,185 @@
+*recover.txt*   Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+Recouvrement après un plantage				*crash-recovery*
+
+Vous venez de passer plusieurs heures à saisir ce texte qui devait
+impérativement être terminé pour le lendemain matin, et soudain patatras !
+votre ordinateur plante.
+
+			    GARDEZ VOTRE CALME !
+
+Vous pouvez recouvrer la plupart de vos changements à partir des fichiers que
+Vim utilise pour enregistrer le contenu des fichiers en cours d'édition. La
+plupart du temps, vous pouvez recouvrer votre travail avec cette commande : >
+	vim -r nomfichier
+
+1. Le fichier d'échange	    |swap-file|
+2. Recouvrement		    |recovery|
+
+==============================================================================
+1. Le fichier d'échange					*swap-file*
+
+Vim enregistre toutes vos modifications dans un fichier d'échange. En
+utilisant le fichier original duquel vous êtes parti plus le fichier
+d'échange, vous pouvez recouvrer le plus gros de votre travail.
+
+							*:sw* *:swapname*
+Vous pouvez voir le nom du fichier d'échange courant avec la commande :
+
+	:sw[apname]
+
+Le nom du fichier d'échange est normalement le même que celui du fichier que
+vous éditez, plus l'extension ".swp".
+- Sous Unix, un '.' est préfixé aux noms des fichiers d'échange situés dans le
+  même répertoire que le fichier original. Cela évite que les fichiers
+  d'échange ne soient visibles quand vous listez un répertoire.
+- Sous MS-DOS, lorsque l'option 'shortname' est activée, tout '.' dans le nom
+  de fichier original est remplacé par '_'.
+- Si ce fichier existe déjà (p. ex., lorsque vous êtes en train de recouvrer),
+  un avertissement est émis et une autre extension est utilisée : ".swo",
+  ".swn", etc.
+- Un fichier existant ne sera jamais écrasé.
+- Le fichier d'échange est supprimé dès que Vim cesse d'éditer le fichier.
+
+Détails techniques :
+	Le remplacement de '.' par '_' est effectué afin d'éviter les
+	problèmes avec les systèmes de fichiers compatibles MS-DOS (crossdos
+	ou multidos, p. ex.). Si Vim est capable de détecter que le fichier
+	est sur un système de fichiers MS-DOS ou apparenté, un drapeau est
+	positionné qui a le même effet que l'option 'shortname'. Ce drapeau
+	est désactivé lorsque vous débutez l'édition d'un autre fichier.
+							*E326*
+	Si le nom de fichier en ".swp" existe déjà, le dernier caractère est
+	décrémenté jusqu'à ce qu'il n'y ait plus de fichier portant ce nom ou
+	que ".saa" soit atteint. Dans ce dernier cas, le fichier d'échange ne
+	sera pas créé.
+
+En fixant l'option 'directory', vous pouvez placer le fichier d'échange dans
+un autre répertoire que celui du fichier édité.
+Avantages :
+- Vous ne polluerez pas vos répertoires avec des fichiers ".swp".
+- Si le répertoire de 'directory' est situé sur une partition différente, le
+  risque d'endommager le système de fichiers où se trouve le fichier édité est
+  réduit (lors d'un plantage).
+Inconvénients :
+- Vous risquez des conflits nominaux entre des fichiers de même nom mais
+  situés dans des répertoires différents (bien que Vim essaie d'éviter cela en
+  comparant les noms de chemins). Cela produira un message d'avertissement
+  ATTENTION erroné.
+- Si vous utilisez votre répertoire personnel et que quelqu'un d'autre essaie
+  d'éditer le même fichier que vous, il ne verra pas votre fichier d'échange
+  et n'obtiendra pas de message d'avertissement ATTENTION.
+
+Sur Amiga, vous pouvez en outre utiliser un disque en mémoire recouvrable
+["recoverable ram disk"] XXX, mais le résultat n'est pas garanti à 100 %.
+Mettre vos fichiers d'échange sur des disques en mémoire normaux (comme RAM:
+sur Amiga) ou à des endroits qui sont purgés lors d'un redémarrage (comme /tmp
+sous Unix) n'a pas beaucoup de sens, car vous les perdriez après un plantage.
+
+Si vous voulez mettre vos fichiers d'échange dans un endroit fixe, placez une
+commande comme l'une des suivantes dans votre fichier vimrc : >
+	set dir=dh2:tmp		" pour Amiga
+	set dir=~/tmp		" pour Unix
+	set dir=c:\\tmp		" pour MS-DOS et Win32
+C'est également très commode lors de l'édition de fichiers sur disquettes.
+Mais vous devrez bien sûr créer ce répertoire "tmp" pour que ça marche !
+
+Pour les fichiers en lecture seule, aucun fichier d'échange n'est utilisé (à
+moins que le fichier ne soit lourd, faisant que l'espace mémoire à utiliser
+dépasse celui fixé par 'maxmem' ou 'maxmemtot'). Mais si vous faites un
+changement dans un fichier en lecture seule, un fichier d'échange sera quand
+même créé.
+
+L'option 'swapfile' peut être désactivée afin d'annuler la création d'un
+fichier d'échange.
+
+
+DÉTECTER UN FICHIER D'ÉCHANGE EXISTANT
+
+Sur ce point, se reporter au Manuel de l'utilisateur, section |11.3|.
+
+
+METTRE À JOUR LE FICHIER D'ÉCHANGE
+
+Le fichier d'échange est mis à jour après la saisie de 200 caractères ou si
+vous n'avez rien tapé pendant quatre secondes. Cela survient uniquement si le
+tampon a été modifié, pas si vous vous êtes seulement déplacé dans le texte.
+Si le fichier d'échange n'est pas mis à jour en permanence, c'est que cela
+ralentirait trop le travail normal. Vous pouvez modifier cette quantité de 200
+caractères via l'option 'updatecount'. Le délai de mise à jour peut être fixé
+avec 'updatetime' (en millisecondes).
+   Après l'écriture dans le fichier d'échange, Vim synchronise le fichier sur
+le disque. Cela peut prendre du temps, en particulier sur des systèmes Unix
+chargés. Si vous ne souhaitez pas cela, vous pouvez fixer l'option 'swapsync'
+à une chaîne vide. Le risque de perdre des données est cependant accru. Sur
+certains systèmes non-Unix (MS-DOS, Amiga), le fichier d'échange n'est pas
+écrit du tout.
+
+Vous pouvez empêcher l'écriture du fichier d'échange en fixant l'option
+'updatecount' à 0. La même chose se produit si Vim est lancé avec l'option
+"-n". Pour restaurer l'écriture du fichier d'échange, il suffit de fixer
+l'option 'updatecount' à un nombre non-nul. Les fichiers d'échange seront
+créés pour tous les tampons si vous faites cela. Mais en ramenant
+'updatecount' à zéro, les fichiers d'échange existants ne seront pas
+supprimés, seuls seront affectés les fichiers ouverts après cela.
+
+Si vous voulez être sûrs que vos changements sont bien dans le fichier
+d'échange, utilisez cette commande :
+
+					*:pre* *:preserve* *E313* *E314*
+:pre[serve]		Écrit tout le texte de tous les tampons dans le
+			fichier d'échange. Le fichier original n'est plus
+			nécessaire pour le recouvrement.
+			{Vi : sortie d'urgence}
+
+Un fichier d'échange Vim peut être reconnu par ces six premiers caractères :
+"b0VIM ". Ensuite vient le numéro de version, p. ex., "3.0".
+
+==============================================================================
+2. Recouvrement					    *recovery* *E308* *E311*
+
+Les bases sur le recouvrement d'un fichier sont abordées dans le Manuel de
+l'utilisateur |usr_11.txt|.
+
+Une autre manière d'effectuer un recouvrement est de lancer Vim et d'utiliser
+la commande ":recover". C'est pratique lorsque vous démarrez Vim et que vous
+obtenez le message "ATTENTION: Found a swap file ...". Dans ce cas, une simple
+commande ":recover" se charge du travail. Vous pouvez également donner le nom
+du fichier ou du fichier d'échange à la commande de recouvrement :
+
+					*:rec* *:recover* *E305* *E306* *E307*
+:rec[over] [fichier]	Essaie de recouvrer [fichier] depuis le fichier
+			d'échange. Si [fichier] n'est pas précisé, le nom de
+			fichier du tampon courant est utilisé. Le contenu du
+			tampon courant est perdu. Cette commande échoue si le
+			tampon a été modifié.
+
+:rec[over]! [fichier]	Comme ":recover", mais toutes le modifications du
+			tampon seront perdues.
+
+						    *E312* *E309* *E310*
+Vim sait réagir avec discernement s'il trouve un fichier d'échange corrompu de
+quelque façon. Si Vim a des doutes sur ce qu'il trouve, il émettra un message
+d'erreur et insérera les lignes avec "???" dans le texte. Lorsque vous
+observez ce message d'erreur pendant un recouvrement, recherchez "???" dans le
+fichier pour voir ce qui est mauvais. Vous voudrez peut-être copier/coller
+pour obtenir le texte que vous souhaitez.
+
+Assurez-vous que le recouvrement s'est bien déroulé avant d'écraser le fichier
+original ou de supprimer de fichier d'échange. C'est une bonne habitude
+d'écrire le fichier à recouvrir dans un autre endroit et de lancer `diff` pour
+repérer si les changements que vous souhaitez sont présent dans le fichier
+recouvert.
+
+Lorsque vous êtes sûr que le recouvrement s'est bien effectué, supprimez le
+fichier d'échange. Sinon, vous continuerez de voir s'afficher des messages
+d'avertissement vous prévenant qu'un fichier ".swp" existe déjà.
+
+{Vi : le recouvrement s'effectue d'une autre façon, et un courriel est envoyé
+s'il y a quelque chose à recouvrer}
+
+ vim:tw=78:ts=8:ft=help:norl:

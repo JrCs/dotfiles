@@ -1,0 +1,295 @@
+*usr_06.txt*	Pour Vim version 6.2.
+
+	       MANUEL de l'UTILISATEUR VIM - par Bram Moolenaar
+
+		      Utiliser la coloration syntaxique
+
+
+Travailler sur un texte en noir et blanc, c'est fastidieux. Avec des couleurs,
+vos fichiers prennent vie. Ce n'est pas qu'une question d'esthétique, votre
+travail s'en trouvera aussi facilité. Vous pouvez changer les couleurs
+utilisées pour les différents types de textes. Ou imprimez votre texte avec
+les couleurs que vous voyez à l'écran.
+
+|06.1|	Activer la coloration
+|06.2|	Couleurs absentes ou incorrectes
+|06.3|	Utiliser des couleurs différentes
+|06.4|	Avec couleurs ou sans couleurs
+|06.5|	Imprimer avec les couleurs
+|06.6|	Lectures complémentaires
+
+  Chapitre suivant : |usr_07.txt|  Éditer plusieurs fichiers
+Chapitre précédent : |usr_05.txt|  Fixer vos préférences
+Table des matières : |usr_toc.txt|
+
+==============================================================================
+*06.1*	Activer la coloration
+
+Tout commence avec une simple commande : >
+
+	:syntax enable
+
+Cela devrait marcher dans la plupart des situations pour mettre vos fichiers
+en surbrillance. Vim détectera automagiquement le type du fichier et chargera
+la coloration syntaxique appropriée. Immédiatement, les commentaires
+apparaîtront en bleu, les mots-clés en marron et les chaînes en rouge. La
+visualisation du fichier se trouve alors grandement facilitée. Vous ne pourrez
+bientôt plus vous passer de la couleur !
+
+Si vous désirez systématiquement utiliser la coloration syntaxique, placez la
+commande ":syntax enable" dans votre fichier |vimrc|.
+
+Si vous ne désirez la coloration syntaxique que dans les terminaux qui
+supportent les couleurs, placez ceci dans votre fichier |vimrc| : >
+
+	if &t_Co > 1
+	   syntax enable
+	endif
+
+Si vous désirez n'avoir la coloration syntaxique que dans la version IHM
+graphique, placez la commande ":syntax enable" dans votre fichier |gvimrc|.
+
+==============================================================================
+*06.2*	Couleurs absentes ou incorrectes
+
+L'absence de couleurs peut avoir plusieurs raisons :
+
+- Votre terminal ne supporte pas les couleurs.
+	Vim utilisera du texte en gras, italique et souligné, mais cela n'est
+	pas très esthétique. Essayez plutôt d'utiliser un terminal avec des
+	couleurs. Pour Unix, je recommande le xterm du projet XFree86 :
+	|xfree-xterm|.
+
+- Votre terminal supporte les couleurs, mais Vim ne le sait pas.
+	Assurez-vous que votre variable $TERM est correcte. Par exemple, quand
+	vous utilisez un xterm qui supporte les couleurs >
+
+		setenv TERM xterm-color
+<
+	ou bien (selon votre shell) : >
+
+		TERM=xterm-color; export TERM
+<
+	Le nom du terminal doit correspondre au terminal que vous utilisez. Si
+	cela ne marche pas, reportez-vous à |xterm-color|, qui indique
+	plusieurs moyens pour faire afficher des couleurs à Vim (pas seulement
+	pour un xterm).
+
+- Le type du fichier n'est pas reconnu.
+	Vim ne reconnaît pas tous les types de fichiers, et parfois il est
+	presque impossible de déterminer quel langage est employé dans un
+	fichier. Essayez cette commande : >
+
+		:set filetype
+<
+	Si le résultat est "filetype=", alors le problème vient certainement
+	de ce que Vim ne reconnaît pas de quel type de fichier il s'agit. Vous
+	pouvez fixer un type manuellement : >
+
+		:set filetype=fortran
+<
+	Pour savoir quels types sont disponibles, regardez dans le répertoire
+	"$VIMRUNTIME/syntax". Dans l'IHM graphique, vous disposez du menu
+	Syntax.
+	Il est également possible de fixer un type de fichier dans une ligne
+	de mode |modeline|, afin que le fichier soit mis en surbrillance à
+	chaque fois que vous l'éditez. Par exemple, cette ligne peut être
+	utilisée dans un fichier Makefile (placez-la près du début ou de la
+	fin du fichier) : >
+
+		# vim: syntax=make
+<
+	Vous devriez vous-même savoir comment détecter le type d'un fichier.
+	Souvent, on utilise l'extension de son nom (après le point).
+	Voir |new-filetype| pour indiquer à Vim un nouveau type de fichier.
+
+- Il n'existe pas de coloration pour votre type de fichier.
+	Vous pouvez essayer d'utiliser un type de fichier proche en fixant le
+	type manuellement comme décrit ci-dessus. Si cela n'est pas
+	satisfaisant, vous pouvez écrire votre propre fichier de coloration,
+	voir |mysyntaxfile|.
+
+
+De même, si les couleurs sont incorrectes :
+
+- Le texte mis en surbrillance est très difficile à lire.
+	Vim essaie de deviner la couleur utilisée pour le fond. Si c'est le
+	noir (ou une autre couleur sombre), il choisira des couleurs claires
+	pour le texte. Si c'est le blanc (ou une autre couleur claire), il
+	choisira des couleurs sombres pour le texte. Si Vim se trompe sur la
+	couleur de fond, le texte sera difficile à lire. Pour résoudre ce
+	problème, fixez l'option 'background'. Pour un fond sombre : >
+
+		:set background=dark
+<
+	Et pour un fond clair : >
+
+		:set background=light
+<
+	Assurez-vous que cela soit fait AVANT la commande ":syntax enable",
+	sans quoi les couleurs auront déjà été fixées. Vous pourriez faire
+	":syntax reset" après avoir fixé 'background' pour que Vim
+	réinitialise les couleurs par défaut.
+
+- Les couleurs ne sont pas correctes lorsque vous défilez de bas en haut.
+	Vim ne lit pas le fichier entier pour analyser le texte. L'analyse
+	débute à l'endroit où vous visualisez le texte. Cela permet
+	d'économiser beaucoup de temps, mais parfois les couleurs sont
+	incorrectes. Pour une correction rapide, tapez CTRL-L. Ou bien défilez
+	un peu en arrière et revenez au même endroit.
+	Pour une correction plus poussée, voir |:syn-sync|. Certains fichiers
+	de syntaxe disposent de mécanismes pour prendre en compte du texte
+	situé plus loin, lisez l'aide spécifique à chaque fichier. Par
+	exemple, |tex.vim| pour la syntaxe de TeX.
+
+==============================================================================
+*06.3*	Utiliser des couleurs différentes	    *:syn-default-override*
+
+Si vous n'aimez pas les couleurs par défaut, vous pouvez choisir un autre jeu
+de couleurs. Dans l'IHM graphique, utilisez le menu Edition->Jeu de couleurs.
+Vous pouvez aussi taper la commande : >
+
+	:colorscheme evening
+
+"evening" est le nom du jeu de couleurs. Il y en a plusieurs autres que vous
+pouvez essayez. Regardez dans le répertoire "$VIMRUNTIME/colors".
+
+Quand vous aurez trouvé le jeu de couleurs qui vous convient, ajoutez la
+commande ":colorscheme" dans votre fichier |vimrc|.
+
+Vous pouvez aussi écrire votre propre jeu de couleurs. Voici comment procéder :
+
+1. Choisir un jeu de couleur proche. Copier ce fichier dans votre répertoire
+   Vim personnel. Pour Unix, ceci devrait fonctionner : >
+
+	!mkdir ~/.vim/colors
+	!cp $VIMRUNTIME/colors/morning.vim ~/.vim/colors/monjeu.vim
+<
+   Ceci est fait dans Vim, car la variable $VIMRUNTIME y est définie.
+
+2. Éditer le fichier du jeu de couleurs. Ces entrées sont utiles :
+
+	term		attributs dans un terminal noir et blanc
+	cterm		attributs dans un terminal couleur
+	ctermfg		couleur de premier plan dans un terminal couleur
+	ctermbg		couleur de fond dans un terminal couleur
+	gui		attributs dans l'IHM graphique
+	guifg		couleur de premier plan dans l'IHM graphique
+	guibg		couleur de fond dans l'IHM graphique
+
+   Par exemple, pour avoir les commentaires en vert : >
+
+	:highlight Comment ctermfg=green guifg=green
+<
+   Les attributs que vous pouvez utiliser pour "cterm" et "gui" sont "bold" et
+   "underline". Si vous voulez les deux, spécifiez "bold,underline". Pour plus
+   de détails, voir la commande |:highlight|.
+
+3. Préciser à Vim de toujours utiliser votre jeu de couleurs. Placez cette
+   ligne dans votre |vimrc| : >
+
+	colorscheme monjeu
+
+Si vous voulez examiner les combinaisons de couleurs les plus utilisées,
+entrez ces commandes : >
+
+	:edit $VIMRUNTIME/syntax/colortest.vim
+	:source %
+
+Vous verrez du texte mis en surbrillance selon les différentes combinaisons.
+Vous pourrez déterminer lesquelles sont lisibles et agréables.
+
+==============================================================================
+*06.4*	Avec couleurs ou sans couleurs
+
+L'affichage d'un texte avec des couleurs consomme beaucoup de ressources. Si
+vous trouvez que c'est trop lent, vous pouvez désactiver temporairement la
+coloration syntaxique : >
+
+	:syntax clear
+
+Si vous éditez un autre fichier (ou le même), les couleurs reviendront.
+
+							*:syn-off*
+Si vous souhaitez arrêter définitivement la coloration : >
+
+	:syntax off
+
+Ceci la désactivera complètement et la supprimera immédiatement pour tous les
+tampons.
+
+							*:syn-manual*
+Si vous ne désirez la coloration syntaxique que pour des fichiers
+particuliers, utilisez ceci : >
+
+	:syntax manual
+
+Cela activera la coloration syntaxique, mais ne la lancera pas automatiquement
+lors de l'entrée dans un tampon. Pour lancer la coloration pour le tampon
+courant, fixez l'option 'syntax' : >
+
+	:set syntax=ON
+
+==============================================================================
+*06.5*	Imprimer avec les couleurs			*syntax-printing*
+
+Dans la version MS-Windows, vous pouvez imprimer le fichier courant avec cette
+commande : >
+
+	:hardcopy
+
+Vous obtiendrez le dialogue habituel de l'imprimante, où vous pourrez
+sélectionner l'imprimante et quelques autres paramètres. Si vous disposez
+d'une imprimante couleur, la sortie papier devrait ressembler à ce que vous
+voyez dans Vim. Mais si vous utilisez un fond sombre, les couleurs seront
+ajustées pour être lisibles sur papier blanc.
+
+Plusieurs options affectent l'impression dans Vim :
+	'printdevice'
+	'printheader'
+	'printfont'
+	'printoptions'
+
+Pour imprimer uniquement une plage de lignes, utilisez le mode Visuel pour
+sélectionner les lignes et tapez une commande comme : >
+
+	v100j:hardcopy
+
+"v" lance le mode Visuel. "100j" déplace de cent lignes vers le bas (elles
+seront mises en surbrillance). La commande ":hardcopy" imprimera ces lignes.
+Vous pouvez utiliser n'importe quel mouvement en mode Visuel, bien sûr.
+
+Cela fonctionne aussi sur Unix, si vous possédez une imprimante PostScript.
+Sinon, vous devrez effectuer quelques manipulations. Il vous faudra convertir
+le texte en HTML d'abord, puis l'imprimer dans un navigateur comme Netscape.
+
+Convertissez le fichier courant en HTML avec la commande : >
+
+	:source $VIMRUNTIME/syntax/2html.vim
+
+Vous verrez la conversion se faire, cela peut prendre un bon moment pour un
+gros fichier. Enfin, une fenêtre apparaîtra contenant le code HTML.
+Enregistrez-en le contenu où vous voulez (vous vous en débarrasserez le moment
+venu) : >
+
+	:write main.c.html
+
+Ouvrez ce fichier dans votre navigateur favori et imprimez-le de là. Si tout
+va bien, la sortie doit être exactement comme dans la fenêtre Vim. Voir
+|2html.vim| pour plus de détails. N'oubliez pas de supprimer le fichier HTML
+quand vous aurez fini.
+
+Plutôt que de l'imprimer, vous pouvez aussi rendre le fichier HTML accessible
+sur la Toile, pour que d'autres personnes puissent le voir avec les couleurs.
+
+==============================================================================
+*06.6*	Lectures complémentaires
+
+|usr_44.txt|  Créer ses propres colorations syntaxiques.
+|syntax|      Tous les détails sur la coloration.
+
+==============================================================================
+
+Chapitre suivant : |usr_07.txt|  Éditer plusieurs fichiers
+
+Copyright : voir |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:

@@ -1,0 +1,82 @@
+*os_amiga.txt*  Pour Vim version 6.1.
+
+
+		  MANUEL DE REFERENCE DE VIM    by Bram Moolenaar
+
+
+							*Amiga*
+Ce fichier contient les particularités pour la version Amiga de Vim.
+
+Installation sur Amiga:
+- Assigner "VIM:" au répertoire où le répertoire "doc" de Vim se trouve. Vim
+  cherchera le fichier "VIM:doc/help.txt" (pour la commande d'aide).
+  Positionner la variable d'environnement $VIM fonctionne aussi. Et l'autre
+  manière : lorsque $VIM est utilisé mais n'est pas défini, "VIM:" est
+  utilisé.
+- Avec le DOS 1.3 ou plus récent : mettre "arp.library" dans "libs:". Vim doit
+  avoir été compilé avec l'option |+ARP| activée. S'assurer que "newcli" et
+  "run" se trouvent dans "C:" (pour l'exécution de commandes externes).
+- Mettre un shell qui accepte une commande avec "-c" (i.e. "Csh" du Fish disk
+  624) dans "c:" ou n'importe quel autre répertoire qui se trouve dans les
+  répertoires de recherche (pour l'exécution de commandes externes).
+
+Si vous avez assez de mémoire, vous pouvez éviter les délais de démarrage en
+faisant de Vim et csh des programmes résidents en utilisant la commande "rez
+csh vim". Vous devrez mettre "rezlib.library" dans votre répertoire "libs:".
+Sous 2.0 vous aurez besoin de rez version 0.5.
+
+Si vous n'utilisez pas digraphs, vous pouvez économiser de la mémoire en
+recompilant sans l'option |+digraphs|. Si vous voulez utiliser Vim avec
+d'autre terminaux, vous pouvez recompiler avec l'option TERMCAP. Vim se
+compile avec Manx 5.x et SAS 6.x.  Regardez les fichiers makefiles et
+feature.h
+
+Si vous voulez utiliser d'autre jeux de couleur, les codes termcap sont :
+	t_mr (pour l'inversion video)
+	t_md (pour le gras)
+	t_me (pour le mode normal après t_mr et t_md)
+	t_so (pour le surlignage)
+	t_se (pour le mode normal après t_so)
+	t_us (pour le soulignement)
+	t_ue (pour le mode normal après t_us)
+	t_ZH (pour l'italique)
+	t_ZR (pour le mode normal après t_ZH)
+
+Les séquences d'échappement ANSI standard sont utilisées. Les codes sont :
+30 caractères gris   40 gris cell   >0 fond gris   0 tous les attributs éteints
+31 caractères noir   41 noir cell   >1 fond noir   1 caractère gras
+32 caractères blanc  42 blanc cell  >2 fond blanc  2 faible
+33 caractères bleu   43 bleu cell   >3 fond bleu   3 italique
+34 caractères gris   44 gris cell   >4 fond gris   4 souligné
+35 caractères noir   45 noir cell   >5 fond noir   7 inversion vidéo
+36 caractères blanc  46 blanc cell  >6 fond blanc  8 invisible
+37 caractères bleu   47 bleu cell   >7 fond bleu
+
+Les codes avec '>' doivent être les derniers. Les couleurs de fond et de cell
+doivent être les mêmes. Les codes peuvent être combinés en les séparant avec
+un point-virgule.
+Par exemple pour obtenir un texte blanc sur fond bleu : >
+  :set t_me=^V<Esc>[0;32;43;>3m
+  :set t_se=^V<Esc>[0;32;43;>3m
+  :set t_ue=^V<Esc>[0;32;43;>3m
+  :set t_ZR=^V<Esc>[0;32;43;>3m
+  :set t_md=^V<Esc>[1;32;43;>3m
+  :set t_mr=^V<Esc>[7;32;43;>3m
+  :set t_so=^V<Esc>[0;31;43;>3m
+  :set t_us=^V<Esc>[4;32;43;>3m
+  :set t_ZH=^V<Esc>[3;32;43;>3m
+
+Lorsque l'on utilise plusieurs commandes avec une commande de filtrage, i.e. >
+  :r! echo ceci; echo cela
+Seule la sortie de la dernière commande est utilisée. Pour corriger cela, vous
+devez regrouper les commandes. Cela dépend su shell que vous utilisez (c'est
+pour cela que ce n'est pas fait automatiquement dans Vim). Exemples : >
+  :r! (echo ceci; echo cela)
+  :r! {echo ceci; echo cela}
+
+Les commandes qui ne prennent qu'un seul nom de fichier sont autorisées à
+recevoir des espaces dans le nom de fichier.  Cependant, lorsque l'on utilise
+des commandes acceptant plusieurs noms de fichier, les espaces du nom du
+fichier doivent être préfixés avec le caractère "barre oblique inverse".
+
+ vim:tw=78:ts=8:ft=help:norl:

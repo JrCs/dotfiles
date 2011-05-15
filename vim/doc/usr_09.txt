@@ -1,0 +1,317 @@
+*usr_09.txt*	Pour Vim version 6.2.
+
+	       MANUEL de l'UTILISATEUR VIM - par Bram Moolenaar
+
+			Utiliser l'interface graphique
+
+
+Vim s'exécute dans un terminal ordinaire. GVim peut faire les mêmes choses et
+même un peu plus. L'interface (ou « IHM ») graphique offre des menus, une
+barre d'outils, des ascenseurs et d'autres éléments. Ce chapitre concerne ces
+fonctionnalités supplémentaires offertes par l'IHM graphique.
+
+|09.1|	Les différents éléments de l'IHM graphique
+|09.2|	Utiliser la souris
+|09.3|	Le presse-papiers
+|09.4|	Mode Sélection
+
+  Chapitre suivant : |usr_10.txt|  Effectuer des modifications importantes
+Chapitre précédent : |usr_08.txt|  Gérer plusieurs fenêtres
+Table des matières : |usr_toc.txt|
+
+==============================================================================
+*09.1*	Les différents éléments de l'IHM graphique
+
+Vous disposez peut-être d'une icône sur votre bureau pour lancer gVim. Sinon,
+une de ces commandes devrait fonctionner : >
+
+	gvim fichier.txt
+	vim -g fichier.txt
+
+Si ce n'est pas le cas, c'est que vous ne possédez pas une version de Vim qui
+supporte l'IHM graphique. Vous devrez d'abord en installer une.
+   Vim ouvrira une fenêtre et y affichera "fichier.txt". L'apparence de la
+fenêtre dépend de la version de Vim. Elle devrait ressembler au dessin qui
+suit (pour autant que cela puisse être montré en ASCII !).
+
+  +-----------------------------------------------------+
+  | fichier.txt + (~/rép) - VIM			      X | <- titre de fenêtre
+  +-----------------------------------------------------+
+  | Fichier Edition Outils Syntaxe Tampons Fenêtre Aide | <- barre de menus
+  +-----------------------------------------------------+
+  | aaa  bbb  ccc  ddd  eee  fff  ggg  hhh  iii  jjj    | <- barre d'outils
+  | aaa  bbb  ccc  ddd  eee  fff  ggg  hhh  iii  jjj    |
+  +---------------------------------------------------+-+
+  | texte du fichier				      |^|
+  | ~						      |#|
+  | ~						      |#| <- ascenseur
+  | ~						      |#|
+  | ~						      |#|
+  | ~						      |#|
+  |						      |V|
+  +---------------------------------------------------+-+
+
+La plus grande partie de la fenêtre est occupée par le texte du fichier.
+Celui-ci est affiché comme il l'est dans un terminal. Avec des couleurs et une
+police différentes peut-être.
+
+
+LE TITRE DE LA FENÊTRE
+
+Tout en haut figure le titre de la fenêtre. Il est affiché par votre système
+de fenêtrage. Vim fixera le titre pour donner le nom du fichier courant. Le
+nom du fichier viendra en premier. Suivront certains caractères spéciaux puis
+le nom du répertoire du fichier entre parenthèses. Les caractères spéciaux
+suivants peuvent apparaître :
+
+	-	Le fichier ne peut pas être modifié (fichier d'aide, p. ex.)
+	+	Le fichier contient des modifications
+	=	Le fichier est en lecture seule
+	=+	Le fichier est en lecture seule, mais contient tout de même
+		   des modifications
+
+Si aucun n'est présent, c'est que vous avez un fichier ordinaire non modifié.
+
+
+LA BARRE DE MENUS
+
+Vous savez comment les menus fonctionnent, pas vrai ? Vim dispose des éléments
+habituels, et de quelques autres en plus. Explorez-les pour vous faire une
+idée des fonctionnalités qu'ils proposent. Le sous-menu Edition->Paramètres
+Globaux XXX est particulièrement utile. Vous trouverez ces entrées :
+
+	Toggle Toolbar		fait apparaître/disparaître la barre d'outils
+	Toggle Bottom Scrollbar	fait apparaître/disparaître un ascenseur
+				   horizontal
+	Toggle Left Scrollbar	fait apparaître/disparaître un ascenseur à
+				   gauche
+	Toggle Right Scrollbar	fait apparaître/disparaître un ascenseur à
+				   droite
+XXX
+Sur la plupart des systèmes, vous pouvez détacher les menus. Sélectionnez
+l'élément en haut du menu, celui qui ressemble à une ligne de tirets. Vous
+obtiendrez une fenêtre séparée contenant les éléments du menu. Elle restera
+présente jusqu'à ce que vous la fermiez.
+
+
+LA BARRE D'OUTILS
+
+Elle contient des icônes pour la plupart des actions courantes. Ces icônes
+sont suffisamment explicites par elles-mêmes. Il y a aussi des bulles d'aide
+pour obtenir un supplément d'information (amenez le pointeur de la souris sur
+l'icône sans cliquer et sans bouger pendant une seconde).
+
+L'élément de menu "Edit/Global Settings/Toggle Toolbar" XXX peut être utilisé
+pour faire disparaître la barre d'outils. Si vous ne voulez jamais de barre
+d'outils, placez cette commande dans votre fichier vimrc : >
+
+	:set guioptions-=T
+
+Ceci supprime le drapeau 'T' de l'option 'guioptions'. D'autres éléments de
+l'IHM graphique peuvent aussi être activés ou désactivés via la même option.
+Consultez l'aide en rapport.
+
+
+LES ASCENSEURS
+
+Par défaut, un ascenseur est présent sur la droite. Il fait ce que tous font.
+Quand vous partagez la fenêtre, chaque fenêtre aura son propre ascenseur.
+   Vous pouvez faire apparaître un ascenseur horizontal grâce à l'élément de
+menu Edit/Global Settings/Toggle Bottom Scrollbar XXX. C'est utile en mode
+diff, ou lorsque l'option 'wrap' a été désactivée (ce point sera repris
+ultérieurement). XXX nous reviendrons sur cela
+
+Lorsqu'il y a des fenêtres partagées verticalement, seules celles disposées
+côté droit auront un ascenseur. Cependant, quand vous déplacez le curseur dans
+une fenêtre disposée côté gauche, ce sera cette fenêtre que l'ascenseur
+contrôlera. Il faut un peu de temps pour s'habituer à ce comportement.
+   Si vous travaillez avec des fenêtres partagées verticalement, il est
+judicieux d'ajouter un ascenseur sur la gauche. Cela peut être fait via les
+menus, ou avec l'option 'guioptions' : >
+
+	:set guioptions+=l
+
+Ceci ajoute le drapeau 'l' à 'guioptions'.
+
+==============================================================================
+*09.2*	Utiliser la souris
+
+Les standards sont une chose merveilleuse. Avec Microsoft Windows, vous pouvez
+utiliser la souris pour sélectionner le texte de façon standard. Le système
+X Window possède également un système standard pour utiliser la souris. Hélas,
+ces deux standards ne sont pas compatibles.
+   Heureusement, vous pouvez configurer Vim. Vous pouvez choisir pour votre
+souris un comportement de type X Window ou de type Microsoft Windows. La
+commande suivante fera se comporter votre souris comme une souris X Window : >
+
+	:behave xterm
+
+Et celle-ci fera se comporter votre souris comme une souris Microsoft
+Windows : >
+
+	:behave mswin
+
+Le comportement par défaut de la souris sur les systèmes Unix est "xterm". Sur
+les systèmes Microsoft Windows, le comportement par défaut est sélectionné au
+cours de la procédure d'installation. Pour des détails sur les deux
+comportements, voir |:behave|. Ci-dessous se trouve un résumé.
+
+
+COMPORTEMENT DE LA SOURIS "xterm"
+
+Clic gauche		positionne le curseur
+Glissement gauche	sélectionne du texte en mode Visuel
+Clic du milieu		colle le texte du presse-papiers
+Clic droit 		étend le texte sélectionné jusqu'au pointeur de la
+			   souris
+
+
+COMPORTEMENT DE LA SOURIS "mswin"
+
+Clic gauche		positionne le curseur
+Glissement gauche	sélectionne du texte en mode Sélection (voir |09.4|)
+Clic gauche avec Maj	étend le texte sélectionné jusqu'au pointeur de la
+			   souris
+Clic du milieu		colle le texte du presse-papiers
+Clic droit 		affiche un menu contextuel
+
+
+La souris peut être configurée plus finement. Ces options vous seront utiles
+si vous souhaitez modifier la façon dont votre souris fonctionne :
+
+	'mouse'		    modes dans lesquels la souris est utilisée par Vim
+	'mousemodel'	    effet produit par un clic de souris
+	'mousetime'	    délai entre deux clics pour un double clic
+	'mousehide'	    masque la souris lors de la saisie de texte
+	'selectmode'	    quand la souris lance le mode Sélection ou Visuel
+
+==============================================================================
+*09.3*	Le presse-papiers
+
+Dans la section |04.7|, l'utilisation classique du presse-papiers était
+expliquée. Il y a une chose essentielle à comprendre à propos de X Window : il
+existe en réalité deux emplacements pour échanger du texte entre des
+programmes. Ce n'est pas le cas avec MS-Windows.
+
+Sous X Window, il y a la « sélection courante ». Il s'agit du texte qui est
+actuellement mis en surbrillance. Dans Vim, cela correspond à la zone Visuel
+(en supposant que vous utilisez un paramétrage des options par défaut). Vous
+pouvez coller cette sélection dans une autre application directement.
+   Par exemple, sélectionnez quelques mots dans ce texte avec la souris. Vim
+passera en mode Visuel et mettra la sélection en surbrillance. Lancez un autre
+gVim, sans argument de nom de fichier, afin qu'il affiche une fenêtre vide.
+Cliquez sur le bouton du milieu de la souris. Le texte sélectionné sera
+inséré.
+
+La « sélection courante » ne restera valide que jusqu'à ce qu'un autre texte
+soit sélectionné. Après avoir effectué le collage dans l'autre gVim,
+sélectionnez à présent quelques caractères dans cette fenêtre. Vous
+remarquerez que les mots qui avaient été précédemment sélectionnés dans
+l'autre fenêtre gVim sont affichés différemment. Cela signifie qu'ils ne
+constituent plus la sélection courante.
+
+Il n'est pas nécessaire de sélectionner du texte avec la souris, l'utilisation
+des commandes au clavier pour le mode Visuel fonctionne tout aussi bien.
+
+
+LE VRAI PRESSE-PAPIERS
+
+Parlons maintenant de l'autre emplacement avec lequel un texte peut être
+échangé. Nous l'appellerons le « vrai presse-papiers », pour éviter la
+confusion. Souvent, la « sélection courante » et le « vrai presse-papiers »
+sont appelés tous deux presse-papiers, soyez-y attentifs.
+   Pour coller du texte dans le vrai presse-papiers, sélectionnez quelques
+mots différents dans un des gVim que vous avez lancé. Puis utilisez l'entrée
+de menu Edition->Copier. Le texte a maintenant été copié dans le vrai
+presse-papiers. Vous ne pouvez pas le voir, à moins que vous ne disposiez
+d'une application qui montre le contenu du presse-papiers (p. ex., klipper
+sous KDE).
+   Sélectionnez à présent l'autre gVim, placez le curseur quelque part et
+utilisez le menu Edition->Coller. Vous verrez que le texte du vrai
+presse-papiers est inséré.
+
+
+UTILISER LES DEUX
+
+Parler d'utiliser à la fois la « sélection courante » et le « vrai
+presse-papiers » peut sembler un peu déroutant. Mais cela se révèle très
+utile. Illustrons notre propos par un exemple. Utilisez un gVim contenant le
+texte d'un fichier et effectuez ces actions :
+
+- sélectionnez deux mots en mode Visuel ;
+- utilisez le menu Edition->Copier pour placer ces mots dans le
+  presse-papiers ;
+- sélectionnez un autre mot en mode Visuel ;
+- utilisez l'élément de menu Edition->Coller : vous verrez le mot simple
+  sélectionné remplacé par les deux mots du presse-papiers ;
+- amenez le pointeur de la souris à un autre endroit et cliquez avec le bouton
+  du milieu : vous verrez le mot que vous venez juste de recouvrir être inséré
+  à cet endroit.
+
+Si vous utilisez la « sélection courante » et le « vrai presse-papiers » avec
+soin, vous pourrez accomplir de nombreuses tâches d'édition utiles.
+
+
+UTILISER LE CLAVIER
+
+Si vous n'aimez pas utiliser la souris, vous pouvez accéder à la sélection
+courante et au vrai presse-papiers grâce à deux registres. Le registre "*
+désigne la sélection courante.
+   Pour que du texte devienne la sélection courante, utilisez le mode Visuel.
+Par exemple, pour sélectionner une ligne entière, pressez simplement "V".
+   Pour insérer la sélection courante avant le curseur : >
+
+	"*P
+
+Notez bien le "P" majuscule. Le "p" minuscule colle le texte après le curseur.
+
+Le registre "+ désigne le vrai presse-papiers. Par exemple, pour copier le
+texte depuis la position du curseur jusqu'à la fin de la ligne dans le
+presse-papiers : >
+
+	"+y$
+
+Rappelez-vous que "y" est mis pour "yank", qui veut dire « copier » dans Vim.
+   Pour insérer le contenu du vrai presse-papiers avant le curseur : >
+
+	"+P
+
+C'est la même commande que pour la sélection courante, mais en utilisant le
+registre plus (+) au lieu de l'étoile (*).
+
+==============================================================================
+*09.4*	Mode Sélection
+
+Et maintenant, parlons d'une fonctionnalité qui est utilisée plus souvent sous
+MS-Windows que sous X Window, bien que les deux systèmes la supportent. Vous
+connaissez déjà le mode Visuel. Le mode Sélection est similaire au mode
+Visuel, car il est aussi utilisé pour sélectionner du texte. Mais il existe
+une différence importante : quand vous tapez du texte, la sélection est coupée
+et le texte tapé la remplace.
+
+Pour pouvoir travailler en mode Sélection, vous devez préalablement l'activer
+(sur MS-Windows, ce sera probablement déjà fait, mais vous pouvez utiliser
+cette commande malgré tout) : >
+
+	:set selectmode+=mouse
+
+Utilisez à présent la souris pour sélectionner un texte. Il est mis en
+surbrillance comme en mode Visuel. Puis pressez une lettre. Le texte
+sélectionné est coupé et remplacé par la lettre simple. Vous êtes à présent en
+mode Insertion et vous pouvez poursuivre votre saisie.
+
+Comme la saisie d'un texte normal provoque le coupage de la sélection, vous ne
+pouvez pas utiliser les commandes de déplacement "hjkl", "w", etc. Utilisez à
+la place les touches fléchées avec Maj. <S-Gauche> (Maj + flèche gauche)
+déplace le curseur vers la gauche. Le texte sélectionné est affecté comme en
+mode Visuel. Les autres touches fléchées avec Maj se comportent comme vous
+vous y attendez. <S-Fin> et <S-Debut> fonctionnent également.
+
+Vous pouvez configurer la façon dont le mode Sélection fonctionne grâce à
+l'option 'selectmode'.
+
+==============================================================================
+
+Chapitre suivant : |usr_10.txt|  Effectuer des modifications importantes
+
+Copyright : voir |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:

@@ -1,0 +1,702 @@
+*usr_40.txt*	Pour Vim version 6.2.  Dernière modification : 29 oct 2002
+
+	       MANUEL de l'UTILISATEUR VIM - par Bram Moolenaar
+
+			 Créer de nouvelles commandes
+
+
+Vim est un éditeur extensible. Vous pouvez prendre une séquence de commandes
+que vous utilisez souvent et en faire une nouvelle commande. Ou redéfinir une
+commande existante. Les autocommandes vous permettent d'exécuter
+automatiquement des commandes.
+
+|40.1|	Mapper des touches
+|40.2|	Définir des commandes pour la ligne de commande
+|40.3|	Autocommandes
+
+  Chapitre suivant : |usr_41.txt|  Écrire un script Vim
+Chapitre précédent : |usr_31.txt|  Exploiter l'interface graphique
+Table des matières : |usr_toc.txt|
+
+==============================================================================
+*40.1*	Mapper des touches
+
+Un mappage simple a été expliqué dans la section |05.3|. Le principe est
+qu'une séquence de touches est traduite en une autre séquence de touches.
+C'est un mécanisme simple, mais puissant.
+   La forme la plus simple est quand une touche est mappée à une séquence de
+touches. Puisque les touches de fonctions, à l'exception de <F1>, n'ont pas de
+signification prédéfinies dans Vim, elles sont des candidates de choix pour
+les mappages. Exemple : >
+
+	:map <F2> GoDate : <Esc>:read !date<CR>kJ
+
+Cet exemple montre comment les modes sont utilisés. Après s'être rendu sur la
+dernière ligne avec "G", la commande "o" ouvre une nouvelle ligne et passe en
+mode Insertion. Le texte "Date : " est inséré et <Esc> quitte le mode
+Insertion.
+   Remarquez la notation des touches spéciales entre <>. Cela s'appelle la
+notation entre chevrons [N.D.T. ou encore la notation <>]. Vous les tapez
+comme des caractères séparés, et non pas en pressant la touche elle-même. Cela
+rend les mappages bien plus lisibles, et vous pouvez copier et coller le texte
+sans aucun problème.
+   Le caractère ":" passe Vim sur la ligne de commande. La commande ":read
+!date" lit la sortie de la commande `date` et l'ajoute sous la ligne courante.
+Le <CR> est requis pour exécuter la commande ":read".
+   À ce moment de l'exécution, le texte ressemble à ceci :
+
+	Date :  ~
+	Fri Jun 15 12:54:34 CEST 2001 ~
+
+À présent, "kJ" déplace le curseur vers le haut puis fusionne les deux lignes.
+   Pour savoir quelle(s) touche(s) utiliser pour les mappages, voir
+|map-which-keys|.
+
+
+MAPPAGES ET MODES
+
+La commande ":map" définit le remappage de touches en mode Normal. Vous pouvez
+aussi définir des mappages pour les autres modes. Par exemple, ":imap"
+s'applique au mode Insertion. Vous pouvez l'utiliser pour insérer la date sous
+le curseur : >
+
+	:imap <F2> <CR>Date : <Esc>:read !date<CR>kJ
+
+Cet exemple ressemble beaucoup au mappage de <F2> en mode Normal, seul le
+début est différent. Le mappage de <F2> en mode Normal existe toujours. Ainsi,
+vous pouvez mapper la même touche différemment pour chaque mode.
+   Notez que, bien que ce mappage commence en mode Insertion, il se termine en
+mode Normal. Si vous voulez qu'il poursuive le mode Insertion, ajoutez un "a"
+à la fin du mappage.
+
+Voici un résumé des commande de mappages, avec le mode dans lequel ils
+fonctionnent :
+
+	:map		Normal, Visuel et Opérateur-en-cours
+	:vmap		Visuel
+	:nmap		Normal
+	:omap		Opérateur-en-cours
+	:map!		Insertion et Ligne-de-commande
+	:imap		Insertion
+	:cmap		Ligne-de-commande
+
+Le mode Opérateur-en-cours est actif quand vous tapez un caractère opérateur,
+tel que "d" ou "y", et que Vim attend la saisie d'une commande de mouvement ou
+un objet textuel. Ainsi, quand vous tapez "dw", le "w" est saisi en mode
+Opérateur-en-cours.
+
+Supposons que vous voulez définir <F7> de façon que la commande d<F7> efface
+le bloc d'un programme en C (texte entouré d'accolades, {}). Similairement,
+y<F7> copierait le bloc dans le registre sans nom. En conséquence, ce dont
+vous avez besoin est de définir <F7> de sorte qu'il sélectionne le bloc de
+programme courant. Vous pouvez le faire avec la commande suivante : >
+
+	:omap <F7> a{
+
+Cela entraîne que <F7> réalise la sélection du bloc "a{" (objet textuel "un
+bloc {}") en mode Opérateur-en-cours, comme si vous l'aviez tapé. Ce mappage
+est pratique si la saisie d'un '{' est pénible sur votre clavier.
+
+
+LISTER LES MAPPAGES
+
+Pour visualiser les mappages actuellement définis, utilisez ":map" sans
+argument. Ou l'une de ses variantes qui inclut le mode dans lequel elle
+fonctionne. La sortie pourrait ressembler à ceci :
+
+	   _g		 :call MyGrep(1)<CR> ~
+	v  <F2>		 :s/^/> /<CR>:noh<CR>`` ~
+	n  <F2>		 :.,$s/^/> /<CR>:noh<CR>`` ~
+	   <xHome>	 <Home> ~
+	   <xEnd>	 <End> ~
+
+La première colonne de la liste indique le mode dans lequel le mappage opère.
+"n" pour le mode Normal, "i" pour le mode Insertion, etc. Un espace blanc
+indique un mappage défini avec la commande ":map", donc un mappage effectif en
+mode Normal et en mode Visuel.
+   L'un des objectifs pratiques de la liste des mappages est de vérifier si
+les touches spéciales en notation <> ont été reconnues (ce qui ne fonctionne
+que si la coloration est supportée). Par exemple, quand "<Esc>" est affiché en
+couleur, il représente le caractère d'échappement. Quand il est de la même
+couleur que le reste du texte, ce sont simplement cinq caractères.
+
+
+REMAPPER
+
+Le résultat d'un mappage est inspecté pour y trouver d'autres mappages. Par
+exemple, le mappage de <F2> des exemples précédents pourrait s'écrire : >
+
+	:map <F2> G<F3>
+	:imap <F2> <Esc><F3>
+	:map <F3>  oDate : <Esc>:read !date<CR>kJ
+
+En mode Normal, <F2> est mappé pour aller à la dernière ligne, puis faire
+comme si <F3> était pressé. En mode Insertion, <F2> quitte le mode Insertion
+avec <Esc> puis utilise également <F3>. Alors <F3> est mappé pour faire
+réellement le travail.
+
+Supposons que vous n'utilisiez que rarement le mode Ex, et que vous vouliez
+utiliser la commande "Q" pour mettre du texte en forme (à l'image des
+anciennes versions de Vim). Voici la mappage qui le fera : >
+
+	:map Q gq
+
+Mais dans certains cas, vous avez tout de même besoin du mode Ex. Mappons "gQ"
+à "Q", afin que vous puissiez toujours passer en mode Ex : >
+
+	:map gQ Q
+
+Ce qui se produit maintenant, c'est que quand vous tapez "gQ", la séquence est
+mappée à "Q". Pas de problème jusque là. Mais "Q" est mappé à "gq", ainsi
+taper "gQ" aboutit à "gq", et vous ne passez pas du tout en mode Ex.
+   Pour éviter que des touches soient mappées à nouveau, utilisez la commande
+":noremap" : >
+
+	:noremap gQ Q
+
+Maintenant, Vim sait que "Q" ne doit pas être inspecté pour y appliquer des
+mappages. Il existe une commande similaire pour chaque mode :
+
+	:noremap	Normal, Visuel and Opérateur-en-cours
+	:vnoremap	Visuel
+	:nnoremap	Normal
+	:onoremap	Opérateur-en-cours
+	:noremap!	Insertion et Ligne-de-commande
+	:inoremap	Insertion
+	:cnoremap	Ligne-de-commande
+
+
+MAPPAGES RÉCURSIFS
+
+Quand un mappage s'appelle lui-même, il boucle indéfiniment. Cela peut servir
+à répéter indéfiniment une action.
+   Par exemple, vous avez une liste de fichiers contenant un numéro de version
+dans la première ligne. Vous ouvrez ces fichiers avec "vim *.txt". Vous éditez
+à présent le premier fichier. Définissez ce mappage : >
+
+	:map ,, :s/5.1/5.2/<CR>:wnext<CR>,,
+
+Maintenant, tapez ",,". Cela déclenche le mappage. Il remplace "5.1" par "5.2"
+dans la première ligne. Puis il effectue un ":wnext" pour écrire le fichier et
+éditer le suivant. Le mappage se termine par ",,". Cela déclenche à nouveau le
+même mappage, et par conséquent réalise la substitution, etc.
+   Cela continue jusqu'à ce qu'une erreur se produise. Dans ce cas, cela
+pourrait être un fichier dans le lequel la commande de substitution ne trouve
+pas de correspondance pour "5.1". Vous pouvez alors faire une modification
+pour insérer "5.1" et poursuivre, en tapant ",," à nouveau. Ou alors ":wnext"
+échoue, parce que vous avez atteint le dernier fichier de la liste.
+   Quand un mappage rencontre une erreur en milieu de parcours, la fin du
+mappage est silencieusement ignoré. CTRL-C interrompt le mappage (CTRL-Attn
+sur MS-Windows).
+
+
+SUPPRIMER UN MAPPAGE
+
+Pour supprimer un mappage, utilisez la commande ":unmap". Encore une fois, le
+mode dans lequel la suppression s'applique dépend de la commande utilisée :
+
+	:unmap		Normal, Visuel et Opérateur-en-cours
+	:vunmap		Visuel
+	:nunmap		Normal
+	:ounmap		Opérateur-en-cours
+	:unmap!		Insertion et Ligne-de-commande
+	:iunmap		Insertion
+	:cunmap		Ligne-de-commande
+
+Il existe une astuce pour définir un mappage qui fonctionne en mode Normal et
+Opérateur-en-cours, mais pas en mode Visuel. Définissez-le d'abord pour les
+trois modes, puis supprimez-le pour le mode Visuel : >
+
+	:map <C-A> /---><CR>
+	:vunmap <C-A>
+
+Notez que les cinq caractères "<C-A>" représentent la combinaison simple
+CTRL-A.
+
+Pour supprimer tous les mappages, utilisez la commande |:mapclear|. Vous
+pouvez deviner les variations disponibles pour les différents modes. Soyez
+prudent avec cette commande, il est impossible de l'annuler.
+
+
+CARACTÈRES SPÉCIAUX
+
+La commande ":map" peut être suivie par une autre commande. Un caractère '|'
+sépare les deux commandes. Cela signifie aussi qu'un caractère '|' ne peut pas
+être utilisé à l'intérieur d'une commande de mappage. Pour l'utiliser tout de
+même, employez <Bar> (cinq caractères). Exemple : >
+>
+	:map <F8> :write <Bar> !checkin %<CR>
+
+Le même problème existe avec la commande ":unmap", en plus de l'attention
+particulière que vous devez apporter aux espaces finaux. Ces deux commandes
+sont différentes : >
+
+	:unmap a | unmap b
+	:unmap a| unmap b
+
+La première commande tente de supprimer le mappage "a ", avec un espace final.
+
+Pour utiliser un espace dans un mappage, employez <space> (sept caractères) : >
+
+	:map <Space> W
+
+Cela a pour résultat que la barre espace avance le curseur au prochain mot
+suivant un espace blanc.
+
+Il n'est pas possible de mettre un commentaire après un mappage, car le
+caractère '"' est considéré comme une partie du mappage.
+
+
+MAPPAGES ET ABRÉVIATIONS
+
+Les abréviations sont assez semblables à des mappages en mode Insertion. Les
+arguments sont gérés de la même façon. La principale différence est la manière
+dont elles sont déclenchées. Une abréviation est déclenchée en tapant un
+caractère non-mot après le mot. Un mappage est déclenché quand le dernier
+caractère est tapé.
+   Une autre différence est que les caractères que vous tapez pour une
+abréviation sont insérés dans le texte pendant que vous les tapez. Quand
+l'abréviation est déclenchée, ces caractères sont effacés et remplacés par le
+produit de l'abréviation. Quand vous tapez des caractères pour un mappage,
+rien n'est inséré jusqu'à ce que vous tapiez le dernier caractère qui le
+déclenche. Si l'option 'showmode' est activée, les caractères tapés sont
+affichés dans la dernière ligne de la fenêtre Vim.
+   Une exception existe quand un mappage est ambigu. Supposons que vous avez
+deux mappages : >
+
+	:imap aa foo
+	:imap aaa bar
+
+À présent, si vous tapez "aa", Vim ne sait pas s'il doit appliquer le premier
+ou le second mappage. Il attend qu'un autre caractère soit tapé. Si c'est un
+'a', le second mappage est appliqué et aboutit à "bar". Si c'est un espace,
+par exemple, le premier mappage est appliqué, aboutissant à "foo", puis
+l'espace est inséré.
+
+
+ET PLUS ENCORE...
+
+le mot-clé <script> permet de rendre un mappage local à un script. Voir
+|:map-<script>|.
+
+le mot-clé <buffer> permet de rendre un mappage local à un tampon particulier.
+Voir |:map-<buffer>|
+
+le mot-clé <unique> permet de faire échouer la définition d'un nouveau mappage
+s'il existe déjà. Sinon, le nouveau écrase simplement l'ancien. Voir
+|:map-<unique>|.
+
+Pour qu'une touche ne fasse rien, mappez-là à <Nop> (cinq caractères). Ceci
+fera que la touche <F7> ne fera rien du tout : >
+
+	:map <F7> <Nop>| map! <F7> <Nop>
+
+Aucun espace ne doit se trouver après <Nop>.
+
+==============================================================================
+*40.2*	Définir des commandes pour la ligne de commande
+
+L'éditeur Vim vous permet de définir vos propres commandes. Vous exécutez ces
+commandes comme n'importe quelle autre commande du mode Ligne-de-commande.
+   Pour définir une commande, utilisez la commande ":command", de la façon
+suivante : >
+
+	:command EffacerPremiere 1delete
+
+Maintenant, quand vous exécutez la commande ":EffacerPremiere", Vim exécute
+":1delete", ce qui efface la première ligne.
+
+	NOTE :
+	Les commandes définies par l'utilisateur doivent commencer par une
+	lettre majuscule. Vous ne pouvez pas utiliser ":X", ":Next" et
+	":Print". Vous ne pouvez pas utiliser le caractère de soulignement
+	([underscore], '_') ! Vous pouvez utiliser des chiffres, mais c'est
+	fortement déconseillé.
+
+Pour connaître la liste des commandes définies par l'utilisateur, exécutez la
+commande suivante : >
+
+	:command
+
+Tout comme les commandes intégrées, les commandes définies par l'utilisateur
+peuvent être abrégées. Vous devez taper juste assez de caractères pour
+distinguer la commande d'une autre. Le complètement de la ligne de commande
+vous permet d'obtenir son nom complet.
+
+
+NOMBRE D'ARGUMENTS
+
+Les commandes définies par l'utilisateur peuvent prendre une série
+d'arguments. Le nombre d'arguments doit être spécifié avec l'option "-nargs".
+Par exemple, la commande ":EffacerPremiere" de l'exemple précédent ne prend
+pas d'argument, donc vous auriez pu la définir ainsi : >
+
+	:command -nargs=0 EffacerPremiere 1delete
+
+Toutefois, comme la valeur par défaut de l'argument est 0, il n'est pas
+indispensable d'ajouter "-nargs=0". Les autres valeurs de "-nargs" sont :
+
+	-nargs=0	Pas d'argument
+	-nargs=1	Un argument
+	-nargs=*	N'importe quel nombre d'arguments
+	-nargs=?	Aucun ou un argument
+	-nargs=+	Un argument ou plus
+
+
+UTILISER LES ARGUMENTS
+
+Au sein de la définition de la commande, les arguments sont représentés par le
+mot-clé <args>. Par exemple : >
+
+	:command -nargs=+ Dire :echo "<args>"
+
+Maintenant, quand vous tapez >
+
+	:Dire Bonjour tout le monde
+
+Vim affiche "Bonjour tout le monde". Toutefois, si vous ajoutez des
+doubles-apostrophes, cela ne fonctionnera plus. Par exemple : >
+
+	:Dire Il a dit "bonjour"
+
+Pour que les caractères spéciaux soient changés en une chaîne correctement
+protégée pour l'utiliser dans une expression, utilisez "<q-args>" : >
+
+	:command -nargs=+ Dire :echo <q-args>
+
+À présent, la commande ":Dire" ci-dessus entraînera l'exécution de : >
+
+	:echo "Il a dit \"bonjour\""
+
+Le mot-clé <f-args> contient les mêmes informations que le mot-clé <args>,
+mais dans un format adapté à leur utilisation comme argument d'une fonction.
+Par exemple : >
+
+	:command -nargs=* FaitLe :call UneFonction(<f-args>)
+	:FaitLe a b c
+
+exécute la commande suivante : >
+
+	:call UneFonction("a", "b", "c")
+
+
+PLAGE DE LIGNES
+
+Certaines commandes prennent une plage de lignes comme argument. Pour indiquer
+à Vim que vous définissez une telle commande, vous devez spécifier l'option
+"-range". Les valeurs de cette option sont les suivantes :
+
+	-range		Plage autorisée, ligne courante par défaut.
+	-range=%	Plage autorisée, fichier entier par défaut.
+	-range={quant}	Plage autorisée, le dernier nombre spécifié est
+			utilisé comme un nombre unique dont la valeur par
+			défaut est {quant}.
+
+Quand une plage est spécifiée, les mots-clés <line1> et <line2> prennent les
+valeurs des première et dernière lignes de la plage. Par exemple, la commande
+suivante définit la commande ":Enregistre", qui écrit la plage spécifiée dans
+le fichier "fich_enreg" : >
+
+	:command -range=% Enregistre :<line1>,<line2>write! fich_enreg
+
+
+AUTRES OPTIONS
+
+Voici d'autres options et mots-clés :
+
+	-count={nombre}		La commande accepte un quantificateur dont la
+				valeur par défaut est {nombre}. Le
+				quantificateur correspondant peut être utilisé
+				par le biais du mot-clé <count>.
+	-bang			La commande accepte un "!". S'il est présent,
+				l'utilisation de <bang> donnera le caractère
+				"!".
+	-register		Vous pouvez spécifier un registre. Le registre
+				sans nom est utilisé par défaut. Le registre
+				spécifié est disponible avec <reg> (ou encore
+				<register>).
+	-complete={type}	Type de complètement pour la ligne de
+				commande. voir |:command-completion| pour une
+				liste des valeurs possibles.
+	-bar			La commande peut être suivie d'un '|' et d'une
+				autre commande, ou d'un '"' et un commentaire.
+	-buffer			La commande n'est disponible que pour le
+				tampon courant.
+
+Enfin, il existe le mot-clé <lt>. Il correspond au caractère '<'. Utilisez-le
+pour éviter la signification spéciale des éléments entre <> mentionnés ici.
+
+
+REDÉFINIR ET SUPPRIMER
+
+Pour redéfinir la même commande, utilisez l'argument "!" : >
+
+	:command -nargs=+ Dire :echo "<args>"
+	:command! -nargs=+ Dire :echo <q-args>
+
+Pour effacer une commande utilisateur, utilisez ":delcommand". Elle prend un
+unique argument, qui est le nom de la commande. Exemple : >
+
+	:delcommand Enregistre
+
+Pour effacer toutes les commandes définies par l'utilisateur : >
+
+	:comclear
+
+Attention, il est impossible de l'annuler !
+
+Plus de détails à ce sujet dans le manuel de référence : |user-commands|.
+
+==============================================================================
+*40.3*	Autocommandes
+
+Une autocommande est une commande qui est exécutée automatiquement en réponse
+à certains événements, tels que la lecture d'un fichier, son écriture ou la
+modification d'un tampon. Avec l'utilisation des autocommandes, vous pouvez
+par exemple rendre Vim capable d'éditer des fichiers compressés. C'est ce qui
+est employé dans le greffon |gzip|.
+   Les autocommandes sont très puissantes. Utilisez-les soigneusement et elles
+vous épargneront la saisie de nombreuses commandes. Utilisez-les négligemment
+et elles seront à l'origine de beaucoup de problèmes.
+
+Supposons que vous vouliez remplacer l'horodatage à la fin d'un fichier à
+chaque fois qu'il est écrit. Vous définissez d'abord une fonction : >
+
+	:function InsererDate()
+	:  $delete
+	:  read !date
+	:endfunction
+
+Vous souhaitez que cette fonction soit appelée à chaque fois que le fichier
+est écrit. C'est ce qui va se produire avec ceci : >
+
+	:autocmd FileWritePre *  call InsererDate()
+
+"FileWritePre" est l'événement pour lequel cette autommande est déclenchée :
+juste avant ("Pre") d'écrire un fichier ["FileWrite"]. "*" est un motif qui
+doit correspondre avec le nom de fichier. Dans le cas présent, tous les
+fichiers correspondent.
+   Avc cette autocommande activée, quand vous faites un ":write", Vim vérifie
+les autocommandes FileWritePre correspondant et les exécute, puis il effectue
+la commande d'écriture ":write".
+   La forme générale de la commande ":autocommand" est la suivante : >
+
+	:autocmd [groupe] {evenement} {motiffichier} [nested] {commande}
+
+Le nom d'un [groupe] est optionnel. Il permet de gérer et d'appeler des
+commandes (davantage d'informations à ce sujet plus loin). le paramètre
+{evenement} est la liste des événements (séparés par des virgules) qui
+déclenchent la commande.
+   {motiffichier} est un nom de fichier, généralement avec des jokers. Par
+exemple, l'utilisation de "*.txt" active le déclenchement de l'autocommande
+pour tous les fichiers dont le nom se termine par ".txt". Le drapeau optionnel
+[nested] permet d'imbriquer les autocommandes (voir plus bas), et enfin,
+{commande} est la commande à exécuter.
+
+
+ÉVÉNEMENTS
+
+Un des événements les plus utiles est BufReadPost. Il est déclenché après la
+lecture d'un nouveau fichier. Il est communément employé pour fixer la valeur
+des options. Par exemple, vous savez que les fichiers "*.gsm" sont en langage
+assembleur GNU. Pour que la coloration syntaxique soit correcte, définissez
+cette autocommande : >
+
+	:autocmd BufReadPost *.gsm  set filetype=asm
+
+Si Vim est capable de détecter le type du fichier, il fixera l'option
+'filetype' pour vous. Cela déclenche l'événement Filetype. Utilisez-le pour
+faire certaines choses quand un type de fichier particulier est édité. Par
+exemple, pour charger une liste d'abréviations avec les fichiers de textes : >
+
+	:autocmd Filetype text  source ~/.vim/abrevs.vim
+
+Au début de l'édition d'un nouveau fichier, vous pourriez demander à Vim
+d'insérer un squelette : >
+
+	:autocmd BufNewFile *.[ch]  0read ~/squelettes/squel.c
+
+Voir |autocmd-events| pour la liste complète des événements.
+
+
+MOTIFS
+
+L'argument {motiffichier} peut être une liste de motifs de fichiers séparés
+par des virgules. Par exemple : "*.c,*.h" correspond aux fichiers se terminant
+par ".c" et ".h".
+   Les jokers habituels sont disponibles. Voici un résumé des plus fréquents :
+
+	*		N'importe quel caractère, autant que possible
+	?		N'importe quel caractère, mais un seul
+	[abc]		L'un des caractères a, b ou c
+	.		Un point
+	a{b,c}		"ab" et "ac"
+
+Si le motif contient une oblique (/), Vim compare les noms des répertoires.
+Sans oblique, seule la dernière partie du nom du fichier est utilisée. Par
+exemple, "*.txt" correspond avec "/home/bram/readme.txt". Le motif
+"/home/bram/*" aussi, mais pas "/home/foo/*.txt".
+   Si une oblique est incluse, Vim recherche des correspondances avec le
+chemin complet ("/home/bram/readme.txt") et relatif ("bram/readme.txt") du
+fichier.
+
+	NOTE :
+	Quand vous travaillez sur un système utilisant les contre-obliques
+	comme séparateur pour les fichiers, tel que MS-Windows, utilisez tout
+	de même les obliques normales dans les autocommandes. Cela facilite
+	l'écriture des motifs, car la contre-oblique possède une signification
+	spéciale. Cela rend aussi les autocommandes portables.
+
+
+SUPPRIMER
+
+Pour supprimer une autocommande, utilisez la même autocommande que celle qui a
+été définie, mais sans la partie {commande} à la fin et en utilisant un "!".
+Exemple : >
+
+	:autocmd! FileWritePre *
+
+Cela va supprimer toutes les autocommandes de l'événement "FileWritePre" qui
+utilisent le motif "*".
+
+
+LISTER LES AUTOCOMMANDES
+
+Pour obtenir la listes des autocommandes actuellement définies, utilisez : >
+
+	:autocmd
+
+La liste peut être très longue, en particulier si vous utilisez la détection
+du type de fichier. Pour ne lister qu'une partie des commandes, spécifiez un
+groupe, un événement et/ou un motif. Par exemple, pour lister toutes les
+autocommandes BufNewFile : >
+
+	:autocmd BufNewFile
+
+Pour lister toutes les autocommandes avec le motif "*.c" : >
+
+	:autocmd * *.c
+
+L'utilisation de "*" comme événement donnera la liste de tous les événements.
+Pour lister les autocommandes du groupe "programmec" : >
+
+	:autocmd programmec
+
+
+GROUPES
+
+L'élément [groupe], utilisé lors de la définition d'une autocommande, regroupe
+les autocommandes apparentées. Cela permet d'effacer les autocommandes d'un
+certain groupe, par exemple.
+   Si vous définissez plusieurs autocommandes pour un groupe particulier,
+utilisez la commande ":augroup". Par exemple, définissons des autocommandes
+pour les programmes en C : >
+
+	:augroup programmec
+	:  autocmd BufReadPost *.c,*.h :set sw=4 sts=4
+	:  autocmd BufReadPost *.cpp   :set sw=3 sts=3
+	:augroup END
+
+Cela revient exactement à faire : >
+
+	:autocmd programmec BufReadPost *.c,*.h :set sw=4 sts=4
+	:autocmd programmec BufReadPost *.cpp   :set sw=3 sts=3
+
+Pour supprimer toutes les autocommandes du groupe "programmec" : >
+
+	:autocmd! programmec
+
+
+IMBRICATION
+
+En général, les commandes exécutées suite à l'événement d'une autocommande ne
+déclencheront pas de nouveaux événements. Si vous lisez un fichier en réponse
+à l'événement FileChangedShell, cela ne déclenchera pas les autocommandes qui
+activeraient la syntaxe, par exemple. Pour que ces événements soient
+déclenchés, ajoutez l'argument "nested" : >
+
+	:autocmd FileChangedShell * nested  edit
+
+
+EXÉCUTER DES AUTOCOMMANDES
+
+Il est possible de déclencher une autocommande en prétendant qu'un événement
+s'est produit. C'est pratique pour qu'une autocommande en déclenche une autre.
+Exemple : >
+
+	:autocmd BufReadPost *.new  execute "doautocmd BufReadPost " . expand("<afile>:r")
+
+Cet exemple définit une autocommande qui est déclenchée quand un nouveau
+fichier a été édité. Le nom du fichier doit se terminer par ".new". La
+commande ":execute" utilise l'évaluation de l'expression pour former une
+nouvelle commande puis l'exécute. Lors de l'édition du fichier "essai.c.new",
+la commande exécutée sera : >
+
+	:doautocmd BufReadPost essai.c
+
+La fonction expand() prend l'argument "<afile>", qui correspond au nom du
+fichier pour lequel l'autocommande a été exécutée, et uniquement la racine du
+nom de fichier avec ":r".
+
+":doautocmd" est exécuté sur le tampon courant. La commande ":doautoall"
+fonctionne de la même façon que ":doautocmd", sauf qu'elle est exécutée sur
+tous les tampons.
+
+
+UTILISER LES COMMANDES DU MODE NORMAL
+
+Les commande exécutées par une autocommande sont des commandes du mode
+Ligne-de-commande. Si vous voulez utiliser une commande du mode Normal, vous
+pouvez utiliser la commande ":normal". Exemple : >
+
+	:autocmd BufReadPost *.log normal G
+
+Cela fait sauter le curseur sur la dernière ligne des fichiers "*.log" quand
+vous débutez leur édition.
+   L'utilisation de la commande ":normal" est un peu délicate. Avant tout,
+assurez-vous que son argument est une commande complète, incluant tous les
+arguments. Quand vous utilisez "i" pour passer en mode Insertion, il doit
+également se trouver un <Esc> pour retourner en mode Normal. Si vous utilisez
+un "/" pour débuter un motif de recherche, il doit également se trouver un
+<CR> pour l'exécuter.
+   La commande ":normal" considère tout le texte qui la suit comme des
+commandes. Ainsi, impossible d'y placer un '|' suivi d'une autre commande.
+Pour contourner ce problème, placez la commande ":normal" dans une commande
+":execute". Cela permet également d'utiliser des caractères non-imprimables
+plus confortablement. Exemple : >
+
+	:autocmd BufReadPost *.chg execute "normal ONouvelle entrée : \<Esc>" |
+		\ 1read !date
+
+Cela montre également l'utilisation d'une contre-oblique pour couper une
+longue commande en deux lignes. Cela fonctionne dans les scripts Vim, mais pas
+sur la ligne de commande.
+
+Si vous voulez qu'une autocommande réalise quelque chose de compliqué, qui
+entraîne des sauts dans le fichier puis un retour à la position de départ,
+vous voudrez probablement restaurer la vue sur le fichier. Voir
+|restore-position| pour un exemple.
+
+
+IGNORER DES ÉVÉNEMENTS
+
+Parfois, vous ne voudrez par déclencher une autocommande. L'option
+'eventignore' contient une liste des événements qui seront totalement
+ignorés. Par exemple, les événements lors de l'entrée et de la sortie d'une
+fenêtre seront ignorés avec : >
+
+	:set eventignore=WinEnter,WinLeave
+
+Pour que tous les événements soit ignorés, utilisez la commande suivante : >
+
+	:set eventignore=all
+
+Pour restaurer le comportement normal, videz l'option 'eventignore' : >
+
+	:set eventignore=
+
+==============================================================================
+
+Chapitre suivant : |usr_41.txt|  Écrire un script Vim
+
+Copyright : voir |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:

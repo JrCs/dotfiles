@@ -1,0 +1,1055 @@
+*cmdline.txt*   Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+				*Cmdline-mode* *Command-line-mode*
+Mode Ligne-de-commande		*Cmdline* *Command-line* *mode-cmdline* *:*
+
+Le mode Ligne-de-commande est utilisé pour entrer des commandes Ex (":"),
+motifs de recherche ("/" et "?") et commandes de filtre ("!").
+
+Les bases de l'édition de la ligne de commande sont abordées au chapitre 20 du
+Manuel de l'utilisateur |usr_20.txt|.
+
+1. Édition en mode Ligne-de-commande		|cmdline-editing|
+2. Complètement en mode Ligne-de-commande	|cmdline-completion|
+3. Lignes de commandes Ex			|cmdline-lines|
+4. Plages de lignes pour commandes Ex		|cmdline-ranges|
+5. Caractères spéciaux Ex			|cmdline-special|
+6. La fenêtre command-line			|cmdline-window|
+
+==============================================================================
+1. Édition en mode Ligne-de-commande			*cmdline-editing*
+
+Normalement, les caractères sont insérés devant la position du curseur. Vous
+pouvez vous déplacer dans la ligne de commande avec les touches fléchées
+gauche et droite. La touche <Inser> vous permet de basculer entre insertion et
+remplacement de caractères.
+{Vi : seul le dernier caractère de la ligne peut être édité}
+
+NOTE : Si votre clavier ne dispose pas de touches fléchées fonctionnelles,
+ou de toute autre touche spéciale, vous pouvez utiliser ":cnoremap" pour
+définir d'autres touches à la place. Par exemple, pour utiliser des touches
+émulant le style d'édition tcsh :			*tcsh-style*  >
+	:cnoremap <C-A> <Home>
+	:cnoremap <C-F> <Right>
+	:cnoremap <C-B> <Left>
+	:cnoremap <Esc>b <S-Left>
+	:cnoremap <Esc>f <S-Right>
+(Notation <> |<>| ; tapez tout ceci littéralement.)
+
+							*cmdline-too-long*
+Quand la ligne de commande devient plus longue que ce qui peut tenir sur
+l'écran, seule la partie qui y rentre sera affichée. Le curseur peut être
+déplacé uniquement dans cette partie visible, vous ne pouvez donc pas éditer
+au-delà.
+
+						*cmdline-history* *history*
+Les lignes de commandes que vous saisissez sont mémorisées dans un historique.
+Vous pouvez les rappeler avec les touches fléchées haut et bas. Il existe en
+fait quatre historiques :
+- un pour les commandes ":" ;
+- un pour les motifs de recherche ;
+- un pour les expressions ;
+- un pour les lignes d'entrée, tapées pour la fonction |input()|.
+Ces listes sont complètement distinctes. Chaque historique peut être rappelé
+uniquement lorsque vous entrez le même type de ligne.
+   Utilisez l'option 'history' pour fixer le nombre de lignes à mémoriser
+(défaut : 20).
+
+NOTES :
+- Si vous entrez une ligne de commande exactement identique à une autre plus
+  ancienne, l'ancienne est supprimée (afin d'éviter que des commandes répétées
+  n'en fassent disparaître d'autres de l'historique).
+- Seules les commandes tapées sont mémorisées. Celles qui proviennent
+  entièrement de mappages ne sont pas placées dans l'historique.
+- Toutes les recherches sont placées dans l'historique de recherche, y compris
+  celles provenant des commandes "*" et "#". Mais pour un mappage, seule la
+  dernière recherche est mémorisée (afin d'éviter que les mappages longs ne
+  pourrissent l'historique).
+
+{Vi n'a pas d'historique}
+{uniquement si compilé avec la fonctionnalité |+cmdline_hist|}
+
+Il existe un mécanisme de complètement automatique des noms sur la ligne de
+commande ; voir |cmdline-completion|.
+
+							*c_CTRL-V*
+CTRL-V		Insère le non-chiffre suivant littéralement. Des chiffres
+		(jusqu'à trois) forment la valeur décimale d'un octet simple.
+		Le non-chiffre ou les trois chiffres ne sont pas pris en
+		compte pour les mappages. Cela fonctionne de la même manière
+		qu'en mode Insertion (voir |i_CTRL-V|).
+		NOTE : Sous Windows, CTRL-V est souvent mappé pour coller du
+		texte. Utilisez alors CTRL-Q à la place.
+							*c_CTRL-Q*
+CTRL-Q		Comme CTRL-V. Mais sur certains terminaux, est utilisé pour
+		le contrôle du flux, et ne fonctionne pas le cas échéant.
+
+							*c_<Left>*
+<Gauche>	Curseur à gauche.
+							*c_<Right>*
+<Droite>	Curseur à droite.
+							*c_<S-Left>*
+<S-Gauche>  ou						*c_<C-Left>*
+<C-Gauche>	Curseur un MOT à gauche.
+							*c_<S-Right>*
+<S-Droite>  ou						*c_<C-Right>*
+<C-Droite>	Curseur un MOT à droite.
+							*c_CTRL-B*
+CTRL-B	    ou						*c_<Home>*
+<Debut>		Curseur au début de la ligne de commande.	   ["Begining"]
+							*c_CTRL-E*
+CTRL-E	    ou						*c_<End>*
+<Fin>		Curseur à la fin de la ligne de commande.		["End"]
+
+							*c_<LeftMouse>*
+<ClicGauche>	Curseur à la position du clic de la souris.
+
+CTRL-H	    ou						*c_<BS>* *c_CTRL-H*
+<RetArr>	Supprime le caractère avant le curseur (voir |:fixdel| si
+		votre touche <RetArr> ne fait pas ce que vous voulez).
+							*c_<Del>*
+<Suppr>		Supprime le caractère sous le curseur (à une fin de ligne :
+		le caractère avant le curseur) (voir |:fixdel| si votre
+		touche <Suppr> ne fait pas ce que vous voulez).
+							*c_CTRL-W*
+CTRL-W		Supprime le mot avant le curseur.		       ["Word"]
+							*c_CTRL-U*
+CTRL-U		Supprime tous les caractères entre la position du curseur et
+		le début de la ligne. Les versions précédentes de Vim
+		supprimaient tous les caractères sur la ligne. Si vous
+		préférez ce comportement, ajoutez le mappage suivant dans
+		votre fichier vimrc : >
+			:cnoremap <C-U> <C-E><C-U>
+<
+		NOTE : Si la ligne de commande est mise à blanc à cause d'une
+		des commandes de suppression précédentes, le mode
+		Ligne-de-commande est quitté. XXX Ce n'est pas ce que j'observe...
+
+							*c_<Insert>*
+<Inser>		Bascule entre les modes Insertion et Remplacement.
+		{absent de Vi}
+
+{car1} <RetArr> {car2}	ou				*c_digraph*
+CTRL-K {car1} {car2}					*c_CTRL-K*
+		Entre un digramme (voir |digraphs|). Si {car1} est une
+		touche spéciale, le code pour cette touche est inséré sous la
+		forme <>. {absent de Vi}
+
+							*c_CTRL-R* *c_<C-R>*
+CTRL-R {0-9a-z"%#:-=.}
+		Insère le contenu d'un registre numéroté ou nommé. Entre la
+		saisie de CTRL-R et du second caractère, '"' sera affiché pour
+		indiquer qu'un nom de registre est attendu.
+		Le texte est inséré comme si vous l'aviez saisi, mais les
+		mappages et abréviations ne sont pas pris en compte. Le
+		complètement en mode Lignecmd avec 'wildchar' n'est pas non
+		plus géré. Et les caractères qui terminent la ligne de
+		commande sont insérés littéralement (<Echap>, <CR>, <NL>,
+		<C-C>). Un <RetArr> ou CTRL-W pourra toujours faire quitter la
+		ligne de commande cependant, et les caractères restants
+		seraient alors interprétés dans un autre mode, ce qui peut ne
+		pas correspondre à ce que vous attendiez.
+		Registres spéciaux :
+		    '"'	    le registre sans nom, contenant le dernier texte
+			       coupé ou copié
+		    '%'	    le nom du fichier courant
+		    '#'	    le nom du fichier alternatif
+		    '*'	    le contenu du presse-papiers XXX manque '+' ?
+		    '/'	    le dernier motif de recherche
+		    ':'	    la dernière ligne de commande
+		    '.'	    le dernier texte inséré
+		    '-'	    le dernier petit (moins d'une ligne) coupage
+		    '='	    le registre d'expression, contenant la dernière
+			       expression que vous avez été invité à entrer
+			       (voir |expression|)
+		Pour plus d'informations sur les registres, voir |registers|.
+		{absent de Vi}
+
+CTRL-R CTRL-F				*c_CTRL-R_CTRL-F* *c_<C-R>_<C-F>*
+CTRL-R CTRL-P				*c_CTRL-R_CTRL-P* *c_<C-R>_<C-P>*
+CTRL-R CTRL-W				*c_CTRL-R_CTRL-W* *c_<C-R>_<C-W>*
+CTRL-R CTRL-A				*c_CTRL-R_CTRL-A* *c_<C-R>_<C-A>*
+		Insère l'objet sous le curseur :
+			CTRL-F	le nom de fichier sous le curseur
+			CTRL-P	le nom de fichier sous le curseur, étendu avec
+				   'path' comme dans |gf|
+			CTRL-W	le mot sous le curseur		       ["Word"]
+			CTRL-A	le MOT sous le curseur ; voir |MOT|
+		{absent de Vi}
+		CTRL-F et CTRL-P : {uniquement si compilé avec la
+		fonctionnalité |+file_in_path|}
+
+					*c_CTRL-R_CTRL-R* *c_<C-R>_<C-R>*
+					*c_CTRL-R_CTRL-O* *c_<C-R>_<C-O>*
+CTRL-R CTRL-R {0-9a-z"%#:-=. CTRL-F CTRL-P CTRL-W CTRL-A}
+CTRL-R CTRL-O {0-9a-z"%#:-=. CTRL-F CTRL-P CTRL-W CTRL-A}
+		Insère le registre ou l'objet sous le curseur. Fonctionne
+		comme |c_CTRL-R|, mais insère le texte littéralement. Par
+		exemple, si le registre "a contient "xy^Hz" (où ^H désigne un
+		retour arrière), "CTRL-R a" insérera "xz", tandis que
+		"CTRL-R CTRL-R a" insérera "xy^Hz".
+
+							*c_CTRL-Y*
+CTRL-Y		Quand il y a une sélection amodale, copie la sélection dans
+		le presse-papiers. |modeless-selection|
+		Sinon, CTRL-Y est inséré comme un caractère simple.    ["Yank"]
+
+CTRL-J	    ou						*c_CTRL-J*
+<NL>	    ou						*c_<NL>* *c_<CR>*
+<CR>		Exécute la commande entrée.
+							*c_<Esc>*
+<Echap>		Si tapé et si 'x' n'est pas présent dans 'cpoptions', quitte
+		le mode Lignecmd sans exécution. Dans les macros ou si 'x'
+		est présent dans 'cpoptions', lance la commande entrée.
+							*c_CTRL-C*
+CTRL-C		Quitte la ligne de commande sans l'exécuter.
+
+							*c_<Up>*
+<Haut>		Rappelle une ligne de commande plus ancienne dans
+		l'historique, dont le début correspond avec la ligne de
+		commande courante (voir ci-dessous).
+
+							*c_<Down>*
+<Bas>		Rappelle une ligne de commande plus récente dans l'historique,
+		dont le début correspond avec la ligne de commande courante
+		(voir ci-dessous).
+		{uniquement si compilé avec la fonctionnalité |+cmdline_hist|}
+
+<S-Haut>    ou					*c_<S-Up>* *c_<PageUp>*
+<PagePrec>	Rappelle une ligne de commande plus ancienne dans l'historique.
+		{uniquement si compilé avec la fonctionnalité |+cmdline_hist|}
+<S-Bas>	    ou					*c_<S-Down>* *c_<PageDown>*
+<PageSuiv>	Rappelle une ligne de commande plus récente dans l'historique.
+		{uniquement si compilé avec la fonctionnalité |+cmdline_hist|}
+
+CTRL-D		Complètement en mode Lignecmd (voir |cmdline-completion|).
+option 'wildchar'
+		Complètement en mode Lignecmd (voir |cmdline-completion|).
+CTRL-N		Complètement en mode Lignecmd (voir |cmdline-completion|).
+CTRL-P		Complètement en mode Lignecmd (voir |cmdline-completion|).
+CTRL-A		Complètement en mode Lignecmd (voir |cmdline-completion|).
+CTRL-L		Complètement en mode Lignecmd (voir |cmdline-completion|).
+
+							*c_CTRL-_*
+CTRL-_		1. Bascule entre les modes clavier latin et hébreu, mais
+		   uniquement pour la ligne de commande, sans incidence sur
+		   'hkmap'. Utile lorsqu'une saisie de texte hébreu est
+		   requise sur la ligne de commande, pour les recherches,
+		   abréviations, etc.
+		   Voir |rileft.txt|.
+		   {uniquement si compilé avec la fonctionnalité |+rightleft|
+		   et si l'option 'allowrevins' est activée}
+
+		2. Bascule entre les modes clavier latin et farsi, mais
+		   uniquement pour la ligne de commande, sans incidence sur
+		   'fkmap'. En mode clavier farsi, les caractères sont insérés
+		   en sens inversé. Utile lorsqu'une saisie de texte farsi est
+		   requise sur la ligne de commande, pour les recherches,
+		   abréviations, etc.
+		   Voir |farsi.txt|.
+		   {uniquement si compilé avec la fonctionnalité |+farsi|}
+
+							*c_CTRL-^*
+CTRL-^		Inverse l'utilisation des mappages de langue |:lmap| et/ou de
+		la méthode de saisie (IM).
+		Quand vous tapez un motif pour une commande de recherche et
+		que 'imsearch' ne vaut pas -1, VAL désigne la valeur de
+		'imsearch', sinon VAL désigne la valeur de 'iminsert'.
+		Lorsque des mappages de langue sont définis :
+		- Si VAL vaut 1 (mappages de langue utilisés), il est fixé à
+		  0 (pas de mappages de langue).
+		- Si VAL ne vaut pas 1, il est fixé à 1 (les mappages de
+		  langue sont activés).
+		Lorsque aucun mappage de langue n'est défini :
+		- Si VAL vaut 2 (IM utilisée), il est fixé à 0 (pas de méthode
+		  de saisie utilisée).
+		- Si VAL possède une autre valeur, il est fixé à 2 (la méthode
+		  de saisie est activée).
+		Les mappages de langue sont normalement utilisés pour saisir
+		des caractères qui diffèrent de ce que le clavier produit.
+		L'option 'keymap' peut être utilisée pour installer un grand
+		nombre d'entre eux. Lorsque vous entrez en mode Lignecmd, les
+		mappages de langue sont désactivés, car la saisie d'une
+		commande est attendue. Après avoir été activé avec CTRL-^, le
+		nouvel état n'est pas réutilisé pour la commande ou le motif
+		de recherche suivant.
+		{absent de Vi}
+
+Pour une édition de la ligne de commande à la Emacs, voir |emacs-keys|.
+
+Les touches <Haut> et <Bas> traitent la ligne de commande courante comme une
+chaîne de recherche. Le début des lignes de commandes précédentes/suivantes
+est comparé avec cette chaîne. La première ligne qui correspond devient la
+nouvelle ligne de commande. Si vous tapez ces deux touches à la suite, la même
+chaîne sera insérée à nouveau.
+   Cela peut être utilisé, par exemple, pour trouver la commande de
+substitution précédente : tapez ":s" puis <Haut>. La même chose peut être
+obtenue en tapant <S-Haut> jusqu'à ce que la ligne de commande désirée soit
+affichée. (NOTE : La séquence « Maj + touche fléchée » ne fonctionne pas sur
+certains terminaux.)
+
+							*his* *:history*
+:his[tory]	Affiche l'historique des dernière commandes entrées.
+		{absent de Vi}
+		{uniquement si compilé avec la fonctionnalité |+cmdline_hist|}
+
+:his[tory] [{nom}] [{premier}][, [{dernier}]]
+		Liste le contenu de l'historique {nom}, qui peut être :
+		    c[md]     ou  :	historique de la ligne de commande
+		    s[earch]  ou  /	historique de la chaîne de recherche
+		    e[xpr]    ou  =	historique du registre d'expression
+		    i[nput]   ou  @	historique de la ligne d'entrée
+		    a[ll]		tous les précédents
+		{absent de Vi}
+
+		Si les nombres {premier} et/ou {dernier} sont donnés, la plage
+		respective des entrées d'un historique est listée. Ces nombres
+		peuvent être spécifiés comme suit :
+							*:history-indexing*
+		Un nombre positif représente l'index absolu d'une entrée tel
+		qu'il est donné dans la première colonne d'un listage avec
+		"history" XXX. Ce numéro reste fixe même si d'autres entrées sont
+		supprimées.
+		Un nombre négatif fait référence à la position relative d'une
+		entrée, comptée depuis la plus récente (d'index -1) à la plus
+		ancienne.
+
+		Exemples :
+		Liste les entrées de 6 à 12 de l'historique de recherche : >
+			:history / 6,12
+<		Liste les cinq plus récentes entrées de tous les
+		historiques : >
+			:history all -5,
+
+==============================================================================
+2. Complètement en mode Ligne-de-commande    		*cmdline-completion*
+
+Lorsque vous éditez la ligne de commande, plusieurs commandes peuvent être
+utilisées pour compléter le mot avant le curseur. Elles sont disponibles
+pour :
+- les noms de commandes : au début de la ligne de commande ;
+- les marqueurs : uniquement après la commande ":tag" ;
+- les noms de fichiers (on parle alors de complètement par nom de fichier) :
+  uniquement après une commande qui accepte un nom de fichier ou pour la
+  valeur d'une option lorsqu'elle peut être un nom de fichier ;
+- les options : uniquement après la commande ":set" ;
+- les mappages : uniquement après une commande ":map" ou similaire ;
+- les variables et noms de fonctions : uniquement après une commande ":if",
+  ":call" ou similaire.
+
+Si Vim a été compilé sans la fonctionnalité |+cmdline_compl|, seuls les noms
+de fichiers, répertoires et sujets d'aide peuvent être complétés.
+
+Les commandes que vous pouvez utiliser sont :
+
+							*c_CTRL-D*
+CTRL-D		Liste les noms qui correspondent au motif avant le curseur.
+		Quand il s'agit de noms de fichiers, les répertoires sont mis
+		en surbrillance (voir l'option 'highlight'). Les noms
+		correspondant à 'suffixes' sont affichés en dernier.
+
+					    *c_CTRL-I* *c_wildchar* *c_<Tab>*
+option 'wildchar'
+		Recherche une correspondance pour le motif devant le curseur.
+		La correspondance (la première s'il y en a plusieurs) est
+		insérée à la place du motif. (NOTE : Cela ne fonctionne pas à
+		l'intérieur d'un mappage, car <Tab> et <Echap> sont souvent
+		utilisés pour 'wildchar', et ils possèdent une signification
+		spéciale dans certains mappages.) Si tapé à nouveau lorsqu'il
+		y a plusieurs correspondances, la suivante est insérée. Après
+		la dernière correspondance, la première est utilisée à nouveau
+		(bouclage).
+		Le comportement peut être changé avec l'option 'wildmode'.
+
+							*c_CTRL-N*
+CTRL-N		Après une utilisation de 'wildchar' qui a trouvé plusieurs
+		correspondances, va à la suivante. Sinon, rappelle la ligne de
+		commande la plus récente de l'historique.	       ["Next"]
+<S-Tab>	    ou						*c_CTRL-P* *c_<S-Tab>*
+CTRL-P		Après une utilisation de 'wildchar' qui a trouvé plusieurs
+		correspondances, va à la précédente. Sinon, rappelle la ligne
+		de commande la plus ancienne de l'historique. <S-Tab>
+		fonctionne uniquement avec l'IHM graphique, sur Amiga ou
+		MS-DOS.
+
+							*c_CTRL-A*
+CTRL-A		Tous les noms qui correspondent au motif avant le curseur
+		sont insérés.						["All"]
+
+							*c_CTRL-L*
+CTRL-L		Une correspondance est effectuée sur le motif avant le
+		curseur. S'il n'y en a qu'une, elle est insérée à la place du
+		motif ; s'il y en a plusieurs, c'est la plus longue partie
+		commune qui est insérée. Si le résultat est plus court que le
+		motif, le complètement n'est pas effectué.
+
+L'option 'wildchar' vaut <Tab> par défaut (ou CTRL-E en mode compatible Vi ;
+dans une version antérieure, <Echap> était utilisé). Les jokers standards '*'
+et '?' sont acceptés dans le motif : '*' correspond à n'importe quelle chaîne,
+'?' à exactement un caractère.
+
+Si vous aimez le complètement "autolist" de tcsh, vous pouvez essayer ce
+mappage >
+	:cnoremap X <C-L><C-D>
+où X désigne la séquence de touches à utiliser, <C-L> CTRL-L et <C-D> CTRL-D.
+Cela trouvera la plus longue correspondance commune, puis listera tous les
+noms correspondants.
+
+Si vous aimez le complètement "autolist" de tcsh, vous pouvez aussi utiliser
+l'option 'wildmode' pour l'imiter. Par exemple, pour imiter la valeur tcsh
+"autolist=ambiguous" : >
+	:set wildmode=longest,list
+Ceci trouvera la plus longue correspondance commune avec le premier
+'wildchar', puis listera tous les noms correspondants avec le suivant.
+
+							*suffixes*
+Pour le complètement par nom de fichier, vous pouvez vous servir de l'option
+'suffixes' pour fixer une priorité entre des fichiers aux noms très proches.
+S'il y a plusieurs correspondances, les fichiers qui possèdent une extension
+spécifiée dans 'suffixes' sont ignorés.
+   La valeur par défaut est ".bak,~,.o,.h,.info,.swp,.obj", ce qui signifie
+que les fichiers se terminant par ".bak", "~", ".o", ".h", ".info", ".swp" et
+".obj" sont parfois ignorés. Il est impossible d'ignorer des suffixes
+contenant deux points. Exemples :
+
+	MOTIF   FICHIERS	       CORRESPONDANCES  ~
+	test*   test.c test.h test.o   test.c
+	test*   test.h test.o	       test.h et test.o
+	test*   test.i test.h test.c   test.i et test.c
+
+S'il existe plus d'une correspondance (après avoir ignoré celles correspondant
+à l'option 'suffixes'), le premier nom de fichier est inséré. Vous pouvez voir
+qu'il n'y a qu'une seule correspondance si, lorsque vous tapez 'wildchar' deux
+fois, la chaîne insérée reste la même. Pour accéder aux autres
+correspondances, saisissez 'wildchar', CTRL-N ou CTRL-P. Tous les fichiers
+sont inclus, également ceux dont l'extension se retrouve dans l'option
+'suffixes'.
+
+Pour ignorer complètement les fichiers avec une certaine extension, utilisez
+'wildignore'.
+
+L'ancienne valeur d'une option peut être obtenue en tapant 'wildchar' juste
+après le '='. Par exemple, la saisie de 'wildchar' après ":set dir=" insérera
+la valeur courante de 'dir'. Cela recouvre le complètement par nom de fichier
+pour les options qui acceptent un nom de fichier.
+
+Si vous voulez utiliser <S-Tab> pour CTRL-P dans un xterm, placez cette
+commande dans votre fichier ".cshrc" : >
+	xmodmap -e "keysym Tab = Tab Find"
+Et ajoutez ceci dans votre ".vimrc" : >
+	:cmap <Esc>[1~ <C-P>
+
+==============================================================================
+3. Lignes de commandes Ex				*cmdline-lines*
+
+Les commandes Ex possèdent plusieurs particularités :
+
+							*:quote*
+Un '"' au début d'une ligne fait ignorer la ligne entière. Un '"' après une
+commande fait ignorer le reste de la ligne. Cela peut être utilisé pour
+insérer des commentaires. Exemple : >
+	:set ai		" active l'option 'autoindent'
+Il n'est pas possible d'ajouter un commentaire après une commande shell
+":!cmd", ou après une commande ":map" ou similaire, car elles considéreraient
+le '"' comme faisant partie de leur argument.
+
+							*:bar* *:\bar*
+Un '|' peut être utilisé pour séparer les commandes, ainsi vous pourrez donner
+plusieurs commandes en une ligne. Si vous voulez utiliser '|' dans un
+argument, faites-le précéder par '\'.
+
+Ces commandes considèrent le '|' comme faisant partie de leur argument, et ne
+peuvent donc pas être suivies par une autre commande :
+    :argdo
+    :autocmd
+    :bufdo
+    :command
+    :cscope
+    :debug
+    :folddoopen
+    :folddoclosed
+    :global
+    :help
+    :helpfind
+    :make
+    :normal
+    :perl
+    :perldo
+    :promptfind
+    :promptrepl
+    :pyfile
+    :python
+    :registers
+    :read !
+    :scscope
+    :tcl
+    :tcldo
+    :tclfile
+    :vglobal
+    :windo
+    :write !
+    :[plage]!
+    toute commande définie par l'utilisateur sans l'argument "-bar" |:command|
+
+NOTE : Avec ":g", le '|' est inclus dans la commande, mais pas avec ":s" :
+cela peut prêter à confusion (mais c'est l'héritage de Vi).
+
+Pour pouvoir malgré tout enchaîner plusieurs commandes, utilisez la commande
+":execute". Par exemple >
+	:execute 'r !ls' | '[
+ajoute la sortie de `ls` au tampon courant et saute à sa première ligne.
+
+Il existe une exception : lorsque le drapeau 'b' est inclus dans 'cpoptions',
+avec les commande ":map", ":abbr" et similaires, CTRL-V doit être utilisé au
+lieu de '\'. Vous pouvez également utiliser "<Bar>" à la place. Voir aussi
+|map_bar|.
+
+Exemples : >
+	:!ls | wc	      affiche la sortie de deux commandes
+	:r !ls | wc	      insère la même sortie dans le texte
+	:%g/toto/p|>	      décale les lignes correspondantes de 'shiftwidth'
+	:%s/toto/titi/|>      décale une ligne de 'shiftwidth'
+	:map q 10^V|	      mappe "q" à "10|"
+	:map q 10\| map \ l   mappe "q" à "10\" et mappe "\" à "l" (si 'b'
+			         est inclus dans 'cpoptions')
+
+Vous pouvez aussi utiliser <NL> pour séparer des commandes de la même façon
+qu'avec '|'. Pour insérer un <NL>, utilisez "CTRL-V CTRL-J". "^@" sera
+affiché. L'utilisation de '|' est la méthode préconisée, mais pour les
+commandes externes, un <NL> doit être utilisé parce qu'un '|' serait inclus
+dans la commande externe. Pour annuler la valeur spéciale de <NL>, il faut le
+faire précéder par une contre-oblique ('\'). Par exemple >
+	:r !date<NL>-join
+lit la date courante dans le fichier et la fusionne avec la ligne précédente.
+
+NOTE : Si la commande avant un '|' produit une erreur, les commandes suivantes
+ne seront pas exécutées.
+
+
+Pour assurer la compatibilité Vi, les étranges commandes suivantes sont
+supportées : >
+	:|		      affiche la ligne courante (comme ":p")
+	:3|		      affiche la ligne 3 (comme ":3p")
+	:3		      va à la ligne 3
+
+Un deux-points est autorisé entre la plage et le nom de la commande. Il est
+ignoré (c'est compatible Vi). Par exemple : >
+	:1,$:s/ancien/nouveau
+
+Quand le caractère '%' (resp. '#') est utilisé à un endroit où un nom de
+fichier était attendu, il est étendu au nom de fichier courant (resp.
+alternatif). Voir le chapitre « Édition de fichiers » XXX, |:_%| et |:_#|.
+
+L'inclusion d'espaces dans les noms de fichiers est autorisé sur Amiga si un
+nom de fichier est attendu comme argument. Les espaces finaux seront ignorés,
+à moins qu'ils ne soient protégés par une contre-oblique ou CTRL-V. NOTE : La
+commande ":next" utilise les espaces pour séparer les noms de fichiers.
+Protégez-les pour les inclure dans un nom de fichier. Par exemple : >
+	:next Mille\ milliards de\ mille sabords\
+débute l'édition de trois fichiers : "Mille milliards", "de mille" et
+"sabords ".
+
+Quand vous souhaitez utiliser les caractères spéciaux '"' ou '|' dans une
+commande, ou utiliser '%' ou '#' dans un nom de fichier, faites-les précéder
+par une contre-oblique ('\'). La contre-oblique n'est pas nécessaire dans une
+plage ni dans la commande ":substitute".
+
+							*:_!*
+Le caractère '!' (point d'exclamation) après une commande Ex provoque un
+comportement différent pour la commande. Le '!' doit être placé immédiatement
+après la commande, sans espace blanc entre. Si vous insérez des blancs, le '!'
+sera considéré comme un argument pour la commande, ce qui produira un résultat
+différent. Par exemple >
+	:w! nom
+écrit le tampon courant dans le fichier "nom", en écrasant un fichier déjà
+existant. Mais >
+	:w !nom
+envoie le tampon courant sur l'entrée standard de la commande "nom".
+
+==============================================================================
+4. Plages de lignes pour commandes Ex	  *cmdline-ranges* *[range]* *[plage]*
+							*E16* *E493*
+Certaines commandes Ex acceptent une plage de lignes devant elles. Cette plage
+est notée [plage]. Elle consiste en un ou plusieurs spécificateurs de lignes,
+séparés par ',' ou ';'.
+
+Les bases sont abordées dans la section |10.3| du Manuel de l'utilisateur.
+
+							*:,* *:;*
+Lorsque le séparateur ';' est utilisé, la position du curseur sera fixé à la
+ligne précédemment spécifiée avant l'interprétation du spécificateur de ligne
+suivant. Cela n'est pas le cas avec ','.
+Exemples : >
+	4,/une ligne/
+de la ligne 4 jusqu'à la correspondance avec "une ligne" après le curseur. >
+	5;/une ligne/
+de la ligne 5 jusqu'à la correspondance avec "une ligne" après la ligne 5.
+
+Le spécificateur de ligne par défaut pour la plupart des commandes est la
+position du curseur, mais les commandes ":write" et ":global" prennent le
+fichier entier ("1,$") comme plage par défaut.
+
+Si vous donnez plus de spécificateurs que nécessaire pour une commande, le ou
+les premiers seront ignorés.
+
+Les numéros de lignes peuvent être spécifiés avec :	*:range* *E14*
+	{nombre}	un numéro de ligne absolu
+	.		la ligne courante			    *:.*
+	$		la dernière ligne du fichier		    *:$*
+	%		comme "1,$" (le fichier entier)		    *:%*
+	't		la position de la marque t (minuscule)	    *:'*
+	'T		la position de la marque T (majuscule) ; si la marque
+			   est dans un autre fichier, elle ne peut pas être
+			   utilisée dans une plage
+	/{motif}[/]	la prochaine ligne où {motif} correspond    *:/*
+	?{motif}[?]	la précédente ligne où {motif} correspond   *:?*
+	\/		la prochaine ligne où le dernier motif de recherche
+			   utilisé correspond
+	\?		la précédente ligne où le dernier motif de recherche
+			   utilisé correspond
+	\&		la prochaine ligne où le dernier motif de substitution
+			   utilisé correspond
+
+Chaque élément peut être suivi (plusieurs fois) par '+' ou '-' et un nombre
+optionnel. Ce nombre est ajouté ou soustrait au numéro de ligne précédent. Si
+le nombre est omis, 1 est utilisé.
+
+Les "/" et "?" après {motif} sont nécessaires pour séparer ce motif de tout ce
+qui pourrait suivre.
+
+Les "/" et "?" peuvent être précédés par une autre adresse. La recherche
+débutera alors de là. La différence avec l'utilisation de ';', c'est que le
+curseur n'est pas déplacé.
+Exemples : >
+	/mtf1//mtf2/
+trouve la ligne contenant "mtf2" après celle contenant "mtf1", sans déplacer
+le curseur. >
+	7;/mtf2/
+trouve la ligne contenant "mtf2" après la ligne 7, laissant le curseur sur la
+ligne 7.
+
+Le {nombre} doit être compris entre 0 et le nombre total de lignes du fichier.
+Lorsqu'un 0 (zéro) est utilisé, il est interprété comme un 1 par la plupart
+des commandes. Les commandes qui l'utilisent comme quantificateur l'utilisent
+pourtant comme un zéro (|:tag|, |:pop|, etc). Certaines commandes interprètent
+le zéro comme voulant dire « avant la première ligne » (|:read|, motif de
+recherche, etc.).
+   Exemples : >
+	.+3		trois lignes sous le curseur
+	/oui/+1		la ligne sous la prochaine ligne contenant "oui"
+	.,$		depuis la ligne courante jusqu'à la fin du fichier
+	0;/non		la première ligne contenant "non", même sur la ligne 1
+	1;/non		la première ligne après la ligne 1 contenant "non"
+
+Certaines commandes acceptent un quantificateur après la commande. Ce
+quantificateur set à désigner le nombre de lignes à utiliser, en débutant par
+le dernier spécificateur de ligne donné (ligne du curseur par défaut). Les
+commandes qui acceptent un tel quantificateur sont celles qui utilisent une
+plage mais n'ont pas de nom de fichier comme argument (car un nom de fichier
+peut aussi être un nombre).
+   Exemples : >
+	:s/x/X/g 5
+remplace 'x' par 'X' dans la ligne courante et les quatre lignes suivantes. >
+	:23d 4
+coupe les lignes 23, 24, 25 et 26.
+
+
+PLAGES ET REPLIS
+
+Lorsque les replis sont actifs, les numéros de lignes sont ajustés pour
+inclure tout le repli fermé. Voir |fold-behavior|.
+
+
+PLAGES INVERSÉES
+
+Dans une plage, le plus petit numéro de ligne devrait apparaître en premier.
+Si ce n'est pas le cas, Vim vous demandera si vous voulez permuter les numéros
+de lignes. Cela ne sera pas fait à l'intérieur de la commande ":g".
+
+
+PLAGES ET QUANTIFICATEURS				*N:*
+
+Lorsqu'un quantificateur est donné avant la saisie de ":", il est traduit en :
+	:.,.+(quant - 1)
+En d'autres termes : les [quant] lignes depuis et après le curseur. Par
+exemple, pour couper trois lignes >
+	3:d<CR>
+est traduit en ":.,.+2d<CR>".
+
+
+PLAGES ET MODE VISUEL					*v_:*
+
+{Visuel}:	Débute une ligne de commande avec les lignes de la zone Visuel
+		comme plage. Le code ":'<,'>" est utilisé pour cette plage, ce
+		qui rend possible la sélection d'une ligne similaire dans
+		l'historique de la ligne de commande afin de répéter une
+		commande sur différentes zones Visuel.
+
+==============================================================================
+5. Caractères spéciaux Ex				*cmdline-special*
+
+Dans les commandes Ex, aux endroits où un nom de fichier peut être utilisé,
+les caractères suivants ont une signification spéciale. Ils peuvent aussi être
+utilisés dans l'expression de la fonction |expand()|.
+							*:_%*
+	%	est remplacé par le nom de fichier courant
+							*:_#*
+	#	est remplacé par le nom de fichier alternatif
+	#N	(où N est un nombre) est remplacé par le nom de fichier du
+		   tampon N ; "#0" est identique à "#"
+							*:_##*
+	##	est remplacé par tous les noms concaténés de la liste des
+		   arguments, séparés par des espaces ; chaque espace dans un
+		   nom est précédé par une contre-oblique
+
+NOTE : Ces caractères spéciaux donnent le nom de fichier tel qu'il a été tapé.
+Si un chemin absolu est nécessaire (quand le nom de fichier est utilisé dans
+un répertoire différent), vous devrez ajouter ":p". Voir |filename-modifiers|.
+   NOTE : Des contre-obliques sont insérées avant les espaces, pour que la
+commande interprète correctement le nom de fichier. Mais cela n'est pas
+effectué pour les commandes shell. Pour celles-ci, vous devrez probablement
+utiliser des doubles-apostrophes : >
+	:!ls "%"
+	:r !spell "%"
+
+Pour annuler la signification spéciale de '%' et '#', déspécialisez-les avec
+une contre-oblique ('\'). Détail : la signification spéciale est toujours
+annulée lorsque des contre-obliques les précèdent, quel que soit leur nombre.
+	SAISIE   RÉSULTAT  ~
+	#	 fichier_alternatif
+	\#	 #
+	\\#	 \#
+
+				*:<cword>* *:<cWORD>* *:<cfile>* *<cfile>*
+				*:<sfile>* *<sfile>* *:<afile>* *<afile>*
+				*:<abuf>* *<abuf>* *:<amatch>* *<amatch>*
+				*E495* *E496* *E497* *E498* *E499* *E500*
+NOTE : Les séquences suivantes sont tapées littéralement, ce ne sont pas des
+touches spéciales !
+	<cword>    est remplacé par le mot sous le curseur (comme |star|)
+	<cWORD>    est remplacé par le MOT sous le curseur (voir |MOT|)
+	<cfile>    est remplacé par le nom de chemin sous le curseur (comme
+		      ce que |gf| utilise)
+	<afile>    pendant l'exécution d'autocommandes, est remplacé par le
+		      nom de fichier d'un fichier lu ou écrit
+	<abuf>     pendant l'exécution d'autocommandes, est remplacé par le
+		      numéro du tampon courant réel (pour ":r fich" c'est le
+		      tampon courant, le fichier lu n'est pas dans un tampon)
+	<amatch>   pendant l'exécution d'autocommandes, est remplacé par la
+		      correspondance pour laquelle cette autocommande était
+		      exécutée ; diffère de <afile> uniquement lorsque le nom
+		      de fichier n'est pas utilisé pour effectuer une
+		      correspondance avec (pour les événements FileType et
+		      Syntax)
+	<sfile>    pendant l'exécution d'une commande ":source", est remplacé
+		      par le nom de fichier du fichier sourcé ;
+		   pendant l'exécution d'une fonction, est remplacé par
+		      "function {nom-fonction}" ; l'appel de fonctions
+		      imbriquées est indiqué comme suit :
+		      "function {nom-fonction1}..{nom-fonction2}".
+		   NOTE : Les modificateurs de nom de fichier
+		   |filename-modifiers| sont moins utiles lorsque <sfile> est
+		   utilisé à l'intérieur d'une fonction.
+
+							*filename-modifiers*
+		 *:_%:* XXX déjà donné plus haut *::p* *::.* *::~* *::h* *::t* *::r* *::e* *::s* *::gs*
+Les modificateurs de nom de fichier peuvent être utilisés après "%", "#",
+"#n", "<cfile>", "<sfile>", "<afile>" ou "<abuf>". Ils sont également utilisés
+avec la fonction |fnamemodify()|.
+
+{uniquement si compilé avec la fonctionnalité |+modify_fname|}
+
+Les modificateurs suivants peuvent être donnés, dans cet ordre :
+	:p	Donne le nom du fichier avec son chemin absolu. Doit être le
+		premier modificateur. Si le nom est un répertoire, un
+		séparateur de chemin est ajouté à la fin.	       ["Path"]
+	:8	Convertit le chemin au format court 8.3 (actuellement
+		uniquement sur Win32). Essaiera autant que possible d'utiliser
+		un chemin qui existe déjà. XXX marqueur manquant ::8
+	:~	Réduit le nom de fichier pour qu'il soit relatif au répertoire
+		personnel, si possible. Le nom de fichier n'est pas modifié
+		s'il n'est pas en dessous du répertoire personnel.
+	:.	Réduit le nom de fichier pour qu'il soit relatif au répertoire
+		courant, si possible. Le nom de fichier n'est pas modifié
+		s'il n'est pas en dessous du répertoire courant.
+		NOTE : Pour une longueur minimale, utilisez ":~:.".
+	:h	Tête du nom de fichier (le dernier segment et les séparateurs
+		sont supprimés). Ne peut pas être utilisé avec :e, :r ou :t.
+		Peut être répété pour supprimer plusieurs segments à la fin.
+		Quand le nom de fichier se termine par un séparateur de
+		chemin, seul le séparateur est supprimé. Ainsi, ":p:h" sur un
+		nom de répertoire donne le nom de ce répertoire (sans le
+		séparateur final).
+		Quand le nom de fichier est un chemin absolu (débute par "/"
+		pour Unix ; "X:\" pour MS-DOS, Win32, OS/2 ; "périphérique:"
+		pour Amiga), cette partie n'est pas supprimée. S'il n'y pas de
+		tête (le chemin est relatif au répertoire courant), le
+		résultat est vide.				       ["Head"]
+	:t	Queue du nom de fichier (le dernier segment du nom). Doit
+		précéder tout :r ou :e.				       ["Tail"]
+	:r	Racine du nom de fichier (la dernière extension est
+		supprimée). Quand il n'y a qu'une seule extension (le nom de
+		fichier débute par '.', p. ex. : ".vimrc"), elle n'est pas
+		supprimée. Peut être répété pour supprimer plusieurs
+		extensions (la dernière en premier).
+	:e	Extension du nom de fichier. N'a de sens qu'utilisé tout seul.
+		Quand il n'y a pas d'extension, le résultat est vide.
+		Quand il n'y a qu'une seule extension (le nom de fichier
+		débute par '.'), le résultat est vide. Peut être répété pour
+		inclure plusieurs extensions. S'il n'y a pas assez
+		d'extensions (mais au moins une), il en sera inclus autant que
+		possible.
+	:s?mtf?sub?
+		Substitue la première occurrence de "mtf" par "sub". Cela
+		fonctionne comme la commande |:s|. "mtf" est une expression
+		rationnelle. N'importe quel caractère peut être utilisé à la
+		place de '?', mais il ne doit pas apparaître dans "mtf" ou
+		"sub".
+		Après cela, tous les modificateurs précédents peuvent être
+		utilisés à nouveau. Par exemple ":p", pour utiliser le chemin
+		absolu après la substitution.
+	:gs?mtf?sub?
+		Substitue toutes les occurrences de "mtf" par "sub". Sinon,
+		cela fonctionne comme |:s|.
+
+Exemples (le nom du fichier est "src/version.c" et celui du répertoire courant
+"/home/mool/vim") : >
+	:p			/home/mool/vim/src/version.c
+	:p:.				       src/version.c
+	:p:~				 ~/vim/src/version.c
+	:h				       src
+	:p:h			/home/mool/vim/src
+	:p:h:h			/home/mool/vim
+	:t					   version.c
+	:p:t					   version.c
+	:r				       src/version
+	:p:r			/home/mool/vim/src/version
+	:t:r					   version
+	:e						   c
+	:s?version?main?		       src/main.c
+	:s?version?main?:p	/home/mool/vim/src/main.c
+	:p:gs?/?\\?		\home\mool\vim\src\version.c
+
+Exemples (le nom du fichier est "src/version.c.gz") : >
+	:p			/home/mool/vim/src/version.c.gz
+	:e						     gz
+	:e:e						   c.gz
+	:e:e:e						   c.gz
+	:e:e:r						   c
+	:r				       src/version.c
+	:r:e						   c
+	:r:r				       src/version
+	:r:r:r				       src/version
+<
+						*extension-removal* *:_%<*
+Si un '<' est ajouté à "%", "#", "#n" ou "CTRL-V p", l'extension du nom de
+fichier est supprimée (tout ce qui suit le dernier '.' dans le nom de fichier,
+'.' inclus). Ceci permet d'assurer la compatibilité ascendante avec la version
+3.0, la forme ":r" étant actuellement privilégiée.
+   Exemples : >
+
+	%		nom du fichier courant
+	%<		nom du fichier courant sans extension
+	#		nom du fichier alternatif pour la fenêtre courante
+	#<		idem, sans extension
+	#31		fichier alternatif numéro 31
+	#31<		idem, sans extension
+	<cword>		mot sous le curseur
+	<cWORD>		MOT sous le curseur (voir |MOT|)
+	<cfile>		nom du chemin sous le curseur
+	<cfile><	idem, sans extension
+
+NOTE : À l'endroit où un nom de fichier est attendu, l'expansion des
+caractères d'englobement est effectuée. Sous Unix, un shell est utilisé, à
+moins que cela puisse être fait en interne (c'est plus rapide).
+   Les contre-apostrophes sont également supportées, comme dans : >
+	:n `echo *.c`
+(L'expansion des contre-apostrophes n'est pas possible en mode restreint
+|restricted-mode|.)
+   L'expansion est uniquement effectuée s'il y a des jokers avant l'expansion
+de '%', '#', etc. Cela évite l'expansion des caractères d'englobement dans un
+nom de fichier. Si vous voulez étendre le résultat de <cfile>, ajoutez-y un
+caractère d'englobement.
+   Exemples (le nom du fichier alternatif est "?lisezmoi?") :
+
+	COMMANDE       ÉTENDUE EN	~
+	:e #	       :e ?lisezmoi?
+	:e `ls #`      :e {fichiers correspondant à "?lisezmoi?"}
+	:e #.*	       :e {fichiers correspondant à "?lisezmoi?.*"}
+	:cd <cfile>    :cd {nom du fichier sous le curseur}
+	:cd <cfile>*   :cd {nom du fichier sous le curseur plus "*", le tout
+			  étendu}
+
+Lorsque l'argument étendu contient un '!' et qu'il est utilisé pour une
+commande shell (":!cmd", ":r !cmd" ou ":w !cmd"), il est protégé par une
+contre-oblique afin d'éviter qu'il ne soit étendu en une commande précédemment
+utilisée. Si l'option 'shell' contient "sh", cela est effectué deux fois, pour
+éviter que le shell n'essaie d'étendre le '!'.
+
+						*filename-backslash*
+Pour les systèmes de fichiers qui utilisent la contre-oblique comme séparateur
+de chemin (MS-DOS, Windows, OS/2), il est difficile de reconnaître une
+contre-oblique qui est utilisée pour déspécialiser le caractère suivant. La
+règle générale est que si la contre-oblique est suivie par un caractère de nom
+de fichier normal, elle n'a pas de signification spéciale. Ainsi,
+"\fichier\toto" est un nom de fichier valide, vous n'avez pas à doubler les
+contre-obliques.
+
+Le symbole '$' fait exception : c'est un caractère de nom de fichier valide,
+mais pour éviter qu'un nom de fichier tel que "$home" ne soit interprété comme
+une variable d'environnement, il doit être précédé par une contre-oblique.
+Ainsi, vous devrez utiliser "/\$home" pour le fichier "$home" dans le
+répertoire racine. Quelques exemples :
+
+	NOM DE FICHIER	 INTERPRÉTÉ COMME...	~
+	$home		 valeur de la variable d'environnement $home
+	\$home		 fichier "$home" dans le répertoire courant
+	/\$home		 fichier "$home" dans le répertoire racine
+	\\$home		 fichier "\\" suivi par la valeur étendue de "$home"
+
+==============================================================================
+6. La fenêtre command-line			*cmdline-window* *cmdwin*
+
+Dans la fenêtre command-line, la ligne de commande peut être éditée exactement
+comme du texte dans n'importe quelle autre fenêtre. C'est une fenêtre
+spéciale, car vous ne pouvez pas la quitter d'une façon normale.
+{uniquement si compilé avec les fonctionnalités |+cmdline_hist| et
+|+vertsplit|}
+
+
+OUVERTURE
+
+Il y a deux moyens d'ouvrir la fenêtre command-line :
+1. Depuis le mode Ligne-de-commande, utiliser la séquence définie par l'option
+   'cedit' option (CTRL-F par défaut si 'compatible' n'est pas activé).
+2. Depuis le mode Normal, utiliser "q:", "q/" ou "q?".	    *q:* *q/* *q?*
+   Cela débute l'édition d'une fenêtre de lignes de commandes Ex ("q:") ou de
+   motifs de recherche ("q/" ou "q?").
+   NOTE : Cela n'est pas possible pendant qu'un enregistrement est en cours
+   (le "q" ferait alors cesser l'enregistrement).
+
+Quand la fenêtre s'ouvre, elle est remplie avec le contenu de l'historique. La
+dernière ligne contient la dernière commande saisie. La colonne de gauche
+affichera un caractère qui indique le type de la ligne de commande en cours
+d'édition, voir |cmdwin-char|.
+
+Vim est en mode Normal lorsque l'éditeur est ouvert, sauf si 'insertmode' est
+activé.
+
+La hauteur de la fenêtre est donnée par 'cmdwinheight' (ou y est inférieure
+s'il n'y a pas assez de place). La fenêtre occupe toujours la largeur entière
+et est positionnée juste au-dessus de la ligne de commande.
+
+
+ÉDITION
+
+Vous pouvez maintenant utiliser des commandes pour vous déplacer et pour
+éditer du texte dans la fenêtre. En mode Normal comme en mode Insertion.
+
+Il est possible d'utiliser ":", "/" et autres commandes utilisées par la ligne
+de commande, mais il n'est pas possible d'ouvrir une autre fenêtre
+command-line. L'imbrication n'est pas permise.
+							*E11*
+La fenêtre command-line n'est pas une fenêtre normale. Il n'est pas possible
+de sauter vers une autre fenêtre ou d'éditer un autre tampon. Toutes les
+commandes qui effectueraient une telle action sont désactivées dans la fenêtre
+command-line. Naturellement, il _est_ possible d'exécuter n'importe quelle
+commande que vous avez saisie dans la fenêtre command-line.
+
+
+FERMETURE   						*E199*
+
+Il y a plusieurs moyens de quitter la fenêtre command-line :
+
+<CR>		Exécute la ligne de commande sous le curseur. Fonctionne en
+		mode Insertion comme en mode Normal.
+CTRL-C		Continue en mode Ligne-de-commande. La ligne de commande sous
+		le curseur est utilisée comme ligne de commande. Fonctionne en
+		mode Insertion et en mode Normal. ":close" marche aussi. Il
+		n'y a pas de rafraîchissement, ainsi la fenêtre restera
+		visible.
+:quit		Quitte la ligne de commande et retourne en mode Normal.
+		":exit", ":xit" et "CTRL-\ CTRL-N" marchent aussi.
+:qall		Quitte Vim, à moins qu'il n'y ait des changements dans
+		certains tampons.
+:qall!		Quitte Vim, en ignorant tous les changements.
+
+Une fois que la fenêtre command-line est fermée, les anciennes tailles des
+fenêtres seront restaurées. La commande exécutée s'applique à la fenêtre et au
+tampon d'où la ligne de commande a été appelée. Tout se passe comme si la
+fenêtre command-line n'avait pas été ouverte, sauf que l'écran a été
+rafraîchi.
+   Le tampon utilisé pour la ligne de commande est supprimé. Tous les
+changements faits aux lignes autres que celle exécutée avec <CR> sont perdus.
+
+
+DIVERS
+
+La fenêtre command-line ne peut pas être utilisée :
+- quand il y a déjà une fenêtre command-line (pas d'imbrication) ;
+- pour entrer une clé de chiffrement, ou lors de l'utilisation de
+  inputsecret() ;
+- quand Vim n'a pas été compilé avec la fonctionnalité +vertsplit.
+
+Certaines options sont fixées quand la fenêtre command-line est ouverte :
+	'filetype'	"vim", à l'édition d'une ligne de commande Ex ; cela
+			   fera utiliser la coloration syntaxique si active
+	'rightleft'	désactivé
+	'modifiable'	activé
+	'buftype'	"nofile"
+	'swapfile'	désactivé
+
+Il est permis d'écrire le contenu du tampon dans un fichier. C'est pratique
+pour sauvegarder l'historique la ligne de commande et le relire
+ultérieurement.
+
+Si l'option 'wildchar' est fixée à <Tab> et que la fenêtre command-line est
+utilisée pour une commande Ex, alors deux mappages seront ajoutés pour
+utiliser <Tab> pour le complètement de la ligne de commande : >
+	:imap <buffer> <Tab> <C-X><C-V>
+	:nmap <buffer> <Tab> a<C-X><C-V>
+NOTE : La saisie de <Tab> en mode Normal lancera le complètement sur le
+caractère suivant. De cette façon, il fonctionne en fin de ligne. Si vous ne
+désirez pas ces mappages, désactivez-les par : >
+	au CmdwinEnter [:>] iunmap <Tab>
+	au CmdwinEnter [:>] nunmap <Tab>
+Vous pouvez placer ces lignes dans votre fichier vimrc.
+
+Tant que vous êtes dans la fenêtre command-line, vous ne pouvez pas utiliser
+la souris pour placer le curseur sur une autre fenêtre, ou tirer les lignes
+d'état d'autres fenêtres. Mais vous pouvez tirer la ligne d'état de la fenêtre
+command-line, ainsi que celle de la fenêtre supérieure. Vous pouvez donc
+redimensionner la fenêtre command-line, mais pas les autres.
+
+
+AUTOCOMMANDES
+
+Deux événements d'autocommande sont utilisés : |CmdwinEnter| et |CmdwinLeave|.
+Comme cette fenêtre est d'un type spécial, les événements WinEnter, WinLeave,
+BufEnter et BufLeave ne sont pas déclenchés. Vous pouvez utiliser les
+événements Cmdwin pour spécifier des paramètres pour la fenêtre command-line.
+Attention de ne pas provoquer des effets de bord !
+   Exemple : >
+	:au CmdwinEnter :  let b:cpt_sauv = &cpt | set cpt=v
+	:au CmdwinLeave :  let &cpt = b:cpt_sauv
+Ceci fixe 'complete' pour utiliser le complètement de la ligne de commande en
+mode Insertion pour CTRL-N.
+   Autre exemple : >
+	:au CmdwinEnter [/?]  startinsert
+Ceci lancera Vim en mode Insertion dans la fenêtre command-line.
+
+							*cmdwin-char*
+Le caractère utilisé pour le motif indique le type de la ligne de commande :
+	:	commande Ex normale
+	>	commande du mode débogage |debug-mode|
+	/	chaîne de recherche vers le haut
+	?	chaîne de recherche vers le bas
+	=	expression pour "= |expr-register|
+	@	chaîne pour |input()|
+	-	texte pour |:insert| ou |:append|
+
+ vim:tw=78:ts=8:ft=help:norl:

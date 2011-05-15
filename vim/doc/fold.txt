@@ -1,0 +1,633 @@
+*fold.txt*	Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+Repliage						*Folding* *folding*
+
+Vous pouvez trouver une introduction sur les replis dans le chapitre 28 du
+Manuel de l'utilisateur. |usr_28.txt|
+
+1. Méthodes de repliage		|fold-methods|
+2. Commandes de repliage	|fold-commands|
+3. Options de repliage		|fold-options|
+4. Comportement des replis	|fold-behavior|
+
+{absent de Vi}
+{uniquement si compilé avec la fonctionnalité |+folding|}
+
+==============================================================================
+1. Méthodes de repliage					*fold-methods*
+
+La méthode de repliage peut être fixée avec l'option 'foldmethod'.
+
+Quand 'foldmethod' est fixé à une valeur autre que "manual", tous les replis
+sont supprimés et de nouveaux sont créés. Le retour à la méthode "manual" ne
+supprime pas les replis existants. Cela peut être utilisé pour définir des
+replis automatiquement dans un premier temps, puis les modifier manuellement.
+
+Il y a six méthodes pour définir des replis :
+	manual		définition manuelle
+	indent		le niveau de repli varie avec l'indentation
+	expr		une expression est utilisée pour définir les replis
+	syntax		replis définis par la coloration syntaxique
+	diff		replis pour du texte inchangé
+	marker		replis définis par des balises dans le texte
+
+
+MANUAL							*fold-manual*
+
+Utilise les commandes pour définir manuellement les régions de replis. Cela
+peut également être utilisé par un script qui analyse un texte pour trouver
+les replis.
+
+Le niveau d'un repli dépend uniquement de son imbrication. Pour augmenter le
+niveau de repli d'un repli pour une plage de lignes, définissez un repli à
+l'intérieur qui englobe les mêmes lignes.
+
+Les replis manuels sont perdus quand vous abandonner le fichier. Pour
+enregistrer les replis, utilisez la commande |:mkview|. La vue pourra être
+restaurée ultérieurement avec |:loadview|.
+
+
+INDENT							*fold-indent*
+
+Les replis sont définis automatiquement en suivant l'indentation des lignes.
+
+Le niveau de repli est calculé à partir de l'indentation d'une ligne divisée
+par 'shiftwidth' (arrondi à l'entier inférieur). Une plage de lignes avec une
+indentation identique ou supérieure forme un repli, les lignes de niveau
+supérieur formant un repli imbriqué.
+
+L'imbrication des replis est limitée par 'foldnestmax'.
+
+Certaines lignes sont ignorées et héritent du niveau de repli des lignes
+situées au-dessus ou en dessous d'elles, selon le niveau le plus bas. Il
+s'agit des lignes vides ou blanches et des lignes débutant par un caractère de
+'foldignore'. Les espaces blancs sont sautés avant la recherche des caractères
+de 'foldignore'. Pour le C, utilisez "#" pour ignorer des lignes de
+préprocesseur.
+
+Si vous cherchez une autre façon d'ignorer des lignes, utilisez la méthode
+"expr". La fonction |indent()| peut être utilisée dans 'foldexpr' pour donner
+l'indentation d'une ligne.
+
+
+EXPR							*fold-expr*
+
+Les replis sont définis automatiquement suivant leurs niveaux, comme avec la
+méthode "indent". La valeur de l'option 'foldexpr' est évaluée pour donner le
+niveau de repli d'une ligne. Exemples : >
+	:set foldexpr=getline(v:lnum)[0]==\"\\t\"
+<		Ceci créera un repli pour toutes les lignes consécutives qui
+		débutent par une tabulation. >
+	:set foldexpr=MonFoldLevel(v:lnum)
+<		Ceci appellera une fonction pour calculer le niveau de repli. >
+	:set foldexpr=getline(v:lnum)=~'^\\s*$'&&getline(v:lnum+1)=~'\\S'?'<1':1
+<		Ceci créera un repli pour les paragraphes séparés par des
+		lignes blanches. >
+	:set foldexpr=getline(v:lnum-1)=~'^\\s*$'&&getline(v:lnum)=~'\\S'?'>1':1
+<		Ceci revient au même.
+NOTE : Des contre-obliques doivent être employées pour protéger les caractères
+que la commande ":set" interprète spécialement (espace, contre-oblique,
+double-apostrophe, etc., voir |option-backslash|).
+
+L'expression est évaluée avec ces conditions :
+- les tampon et fenêtre courants sont fixés pour la ligne ;
+- la variable "v:lnum" est fixée au numéro de ligne ;
+- la valeur de retour est utilisée pour le niveau de repli de cette façon :
+  VALEUR	    SIGNIFICATION   ~
+  0		    la ligne n'est pas dans un repli
+  1, 2, ..	    la ligne est dans un repli de ce niveau
+  -1		    le niveau de repli est indéfini, utiliser le niveau d'une
+		       ligne précédente ou suivante, selon le plus bas
+  "="		    utiliser le niveau de repli de la ligne précédente
+  "a1", "a2", ...   ajouter un, deux,... au niveau de repli de la ligne
+		       précédente
+  "s1", "s2", ...   soustraire un, deux,... du niveau de repli de la ligne
+		       précédente
+  "<1", "<2", ...   un repli de ce niveau se termine à cette ligne ligne
+  ">1", ">2", ...   un repli de ce niveau commence à cette ligne ligne
+
+Il n'est pas nécessaire de marquer le début (resp. la fin) d'un repli avec
+">1" (resp. "<1"), un nouveau repli débutera (resp. se terminera) quand le
+niveau de repli est supérieur (resp. inférieur) au niveau de repli de la ligne
+précédente.
+
+L'expression ne doit pas avoir d'effets de bord. Le texte dans le tampon, la
+position du curseur, les motifs de recherche, les options, etc. ne doivent pas
+être changés.
+
+S'il y a une erreur dans l'expression, ou que la valeur de retour n'est pas
+reconnue, il n'y aura aucun message d'erreur et le niveau de repli vaudra
+zéro.
+   Pour le débogage, l'option 'debug' peut être fixée à "msg", les messages
+d'erreurs seront alors visibles.
+
+NOTE : Comme l'expression doit être évaluée pour chaque ligne, cette méthode
+de repliage peut être très lente !
+
+Essayez d'éviter les valeurs de retour "=", "a" et "s", car Vim doit souvent
+rechercher vers l'arrière une ligne pour laquelle le niveau de repli est
+défini. L'utilisation de foldlevel() peut vous aider ici. Exemple : >
+	" extra correspond à la différence de niveau avec la ligne précédente
+	let niveau = foldlevel(v:lnum - 1)
+	if niveau >= 0
+	  return niveau + extra
+	endif
+	" retourne "=", "a" ou "s"
+
+
+SYNTAX							*fold-syntax*
+
+Un repli est défini par les éléments de syntaxe qui incluent l'argument
+"fold". |:syn-fold|
+
+Le niveau de repli est défini par des replis imbriqués. L'imbrication des
+replis est limitée par 'foldnestmax'.
+
+
+DIFF							*fold-diff*
+
+Les replis sont automatiquement définis pour le texte qui ne fait pas partie
+d'un changement ou est juste mitoyen à un changement.
+
+Cette méthode ne fonctionne correctement que lorsque l'option 'diff' est
+activée pour la fenêtre courante et que des changements sont affichés. Sinon,
+le tampon entier sera placé dans un grand repli.
+
+L'option 'diffopt' peut être utilisée pour spécifier le contexte. Il s'agit du
+nombre de lignes entre le repli et un changement qui ne seront pas incluses
+dans le repli. Par exemple, pour utiliser 8 lignes de contexte : >
+	:set diffopt=filler,context:8
+Par défaut, le contexte est de six lignes.
+
+
+MARKER							*fold-marker*
+
+Des balises dans le texte délimitent le début et la fin des replis. Cela vous
+permet de spécifier précisément les replis. Vous pourrez alors couper/coller
+des replis sans risquer d'inclure de mauvaises lignes. L'option 'foldtext' est
+normalement fixée de telle sorte que le texte avant la balise s'affiche dans
+la ligne repliée. Cela vous permet de donner un nom au repli.
+
+Les balises peuvent inclure un niveau, ou procéder par appariement de paires.
+Il est plus facile d'inclure un niveau, vous n'aurez pas à ajouter des balises
+de fin et éviterez les problèmes avec des balises dépariées. Exemple :
+
+	/* variables globales {{{1 */ ~
+	int varA, varB; ~
+
+	/* fonctions {{{1 */ ~
+	/* foncA() {{{2 */ ~
+	void funcA() {} ~
+
+	/* foncB() {{{2 */ ~
+	void funcB() {} ~
+
+Un repli débute à une balise "{{{". Le nombre suivant spécifie le niveau du
+repli. La façon dont il est interprété dépend de la différence entre le niveau
+de repli courant et le niveau donné par la balise :
+1. Si une balise de même niveau de repli est rencontrée, le repli précédent se
+   termine et un autre repli de même niveau débute.
+2. Si une balise d'un niveau de repli supérieur est rencontrée, un repli
+   imbriqué débute.
+3. Si une balise d'un niveau de repli inférieur est rencontrée, tous les
+   replis d'un niveau supérieur ou égal se terminent et un repli du niveau
+   spécifié débute.
+
+Le nombre indique le niveau du repli. Zéro ne peut pas être utilisé.
+   Vous pouvez utiliser "}}}" suivi d'un nombre pour indiquer le niveau du
+repli qui se termine. Le niveau de repli de la ligne suivante sera inférieur
+de un au niveau indiqué. NOTE : Vim ne recherche pas en arrière le niveau de
+la balise appariée (cela prendrait trop de temps). Exemple :
+
+	{{{1 ~
+	le niveau de repli est ici de 1 ~
+	{{{3 ~
+	le niveau de repli est ici de 3 ~
+	}}}3 ~
+	le niveau de repli est ici de 2 ~
+
+Vous pouvez également utiliser des paires appariées de balises "{{{" et "}}}"
+pour définir des replis. Chaque "{{{" incrémente le niveau de repli de un,
+chaque "}}}" décrémente le niveau de repli de un. Veillez à ce que les balises
+soient toujours bien appariées ! Exemple :
+
+	{{{ ~
+	le niveau de repli est ici de 1 ~
+	{{{ ~
+	le niveau de repli est ici de 2 ~
+	}}} ~
+	le niveau de repli est ici de 1 ~
+
+Vous pouvez utiliser à la fois des balises avec un nombre et des sans nombre.
+Cela peut être utile si vous utilisez des balises avec nombre pour les replis
+principaux, et des balises sans nombre localement dans une fonction.
+   Par exemple, utilisez des balises de niveau 1 pour des sections de vos
+fichiers telles que « définitions des structures », « variables locales » et
+« fonctions ». Utilisez des balises de niveau 2 pour chaque définition et
+fonction. Utilisez des balises sans nombre à l'intérieur des fonctions. Quand
+vous effectuerez des changements dans une fonction qui créeront de nouveaux
+replis, vous n'aurez pas à renuméroter les balises.
+
+Les balises peuvent être fixées avec l'option 'foldmarker'. Il est recommandé
+de conserver la valeur par défaut de "{{{,}}}", afin que de faciliter
+l'échange de fichiers entre les utilisateurs de Vim. Ne modifiez cette option
+que si c'est nécessaire pour un fichier (p. ex., si celui-ci contient des
+balises provenant d'un autre éditeur gérant les replis, ou que les balises par
+défaut risquent d'être mal interprétées au sein du fichier).
+
+							*fold-create-marker*
+"zf" peut être utilisé pour créer un repli défini par des balises. Vim
+insérera les balises pour vous : il ajoutera les balises de début et de fin,
+comme spécifié par 'foldmarker'. Les balises sont ajoutées à la fin d'une
+ligne. L'option 'commentstring' est utilisée si elle n'est pas vide.
+   Cela ne fonctionne pas correctement quand :
+- la ligne contient déjà une balise avec un numéro de niveau : dans ce cas,
+  Vim ignore ce qu'il faut faire ;
+- les replis adjacents utilisent un numéro de niveau qui sort de l'ordinaire ;
+- la ligne est à l'intérieur d'un commentaire, 'commentstring' n'est pas vide
+  et il est impossible d'imbriquer des commentaires. Exemple pour le C :
+  l'ajout de "/* {{{ */" dans un commentaire tronquera ce commentaire. Dans ce
+  cas, vous pouvez soit placer la balise avant ou après le commentaire, soit
+  ajouter la balise manuellement.
+En général, il est déconseillé de laisser Vim créer des balises quand vous
+possédez déjà des balises avec un numéro de niveau.
+
+							*fold-delete-marker*
+"zd" peut être utilisé pour supprimer un repli défini par des balises. Vim
+supprimera les balises pour vous : il recherchera les balises de début et de
+fin, comme spécifié par 'foldmarker', au début et à la fin du repli. Les
+balises sont ajoutées à la fin d'une ligne. Si le texte entourant la balise
+correspond à 'commentstring', il est également supprimé.
+   Cela ne fonctionne pas correctement quand :
+- une ligne contient plus d'une balise et l'une d'entre elles spécifie un
+  niveau : dans ce cas, seule la première est supprimée, sans vérifier si cela
+  engendre bien la suppression de repli souhaitée ;
+- la balise contient un numéro de niveau et est utilisée pour faire débuter ou
+  terminer plusieurs replis en même temps.
+
+==============================================================================
+2. Commandes de repliage				*fold-commands* *E490*
+
+Toutes les commandes de repliage commencent par 'z'. Truc mnémotechnique : le
+'z' ressemble à une feuille de papier pliée, si vous la regardez de côté.
+
+
+CRÉER ET SUPPRIMER DES REPLIS
+
+zf{mouv}    ou						*zf* *E350*
+{Visuel}zf	Opérateur pour créer un repli.
+		Cela ne fonctionne que lorsque 'foldmethod' vaut "manual" ou
+		"marker". Le nouveau repli sera fermé pour la méthode
+		"manual". 'foldenable' sera activé.
+		Voir aussi |fold-create-marker|.		       ["Fold"]
+
+							*zF*
+zF		Crée un repli pour N lignes. Fonctionne comme "zf".
+
+							*:fold* *:fo*
+:{plage}fo[ld]	Crée un repli pour les lignes de {plage}. Fonctionne comme
+		"zf".
+
+							*zd* *E351*
+zd		Supprime un repli sous le curseur. Lorsque le curseur est sur
+		une ligne repliée, ce repli est supprimé. Le niveau des replis
+		imbriqués est incrémenté de un. En mode Visuel, tous les
+		replis contenus (même partiellement) dans la zone sélectionnée
+		sont supprimés. Attention ! cela peut supprimer plus de replis
+		que vous ne souhaitiez, et il n'y a pas d'annulation.
+		Cela ne fonctionne que lorsque 'foldmethod' vaut "manual" ou
+		"marker". Voir aussi |fold-delete-marker|.	     ["Delete"]
+
+							*zD*
+zD		Supprime récursivement les replis sous le curseur. En mode
+		Visuel, tous les replis contenus (même partiellement) dans la
+		zone sélectionnée et tous les replis imbriqués dedans sont
+		supprimés.
+		Cela ne fonctionne que lorsque 'foldmethod' vaut "manual" ou
+		"marker". Voir aussi |fold-delete-marker|.
+
+							*zE* *E352*
+zE		Élimine tous les replis dans la fenêtre.
+		Cela ne fonctionne que lorsque 'foldmethod' vaut "manual" ou
+		"marker". Voir aussi |fold-delete-marker|.
+
+
+OUVRIR ET FERMER DES REPLIS
+
+Un repli contenant moins de 'foldminlines' lignes sera toujours affiché comme
+s'il était ouvert. Ainsi, les commandes ci-dessous peuvent fonctionner
+différemment sur de petits replis.
+
+							*zo*
+zo		Ouvre un repli sous le curseur. Si un quantificateur est
+		donné, il est interprété comme la profondeur de replis à
+		ouvrir. En mode Visuel, un niveau de replis est ouvert pour
+		toutes les lignes dans la zone sélectionnée.
+
+							*zO*
+zO		Ouvre récursivement tous les replis sous le curseur. Les
+		replis qui ne contiennent pas la ligne du curseur restent
+		intacts.
+		En mode Visuel, cela ouvre tous les replis qui sont dans la
+		zone sélectionnée, même ceux qui ne sont sélectionnés que
+		partiellement.
+
+							*zc*
+zc		Ferme un repli sous le curseur. Si un quantificateur est
+		donné, il est interprété comme la profondeur de replis à
+		fermer. En mode Visuel, un niveau de replis est fermé pour
+		toutes les lignes dans la zone sélectionnée.
+		'foldenable' sera activé.			      ["Close"]
+
+							*zC*
+zC		Ferme récursivement tous les replis sous le curseur. Les
+		replis qui ne contiennent pas la ligne du curseur restent
+		intacts.
+		En mode Visuel, cela ferme tous les replis qui sont dans la
+		zone sélectionnée, même ceux qui ne sont sélectionnés que
+		partiellement.
+		'foldenable' sera activé.
+
+							*za*
+za		Sur un repli fermé : l'ouvre. Quand des replis sont imbriqués,
+		vous devrez utiliser "za" plusieurs fois. Si un quantificateur
+		est donné, il est interprété comme le nombre de replis fermés
+		à ouvrir.
+		Sur un repli ouvert : le ferme et active 'foldenable'. Cela ne
+		fermera qu'un seul niveau, car une nouvelle utilisation de
+		"za" rouvrira le repli. Si un quantificateur est donné, il
+		est interprété comme le nombre de replis à fermer (ce qui est
+		différent de la répétition de "za" ce nombre de fois).
+
+							*zA*
+zA		Sur un repli fermé : l'ouvre récursivement.
+		Sur un repli ouvert : le ferme récursivement et active
+		'foldenable'.
+
+							*zv*
+zv		Visualise la ligne du curseur : ouvre juste assez de replis
+		pour que la ligne du curseur ne soit plus repliée.
+
+							*zx*
+zx		Met à jour les replis : annule manuellement les replis ouverts
+		et fermés : réapplique 'foldlevel', puis "zv" (visualiser la
+		ligne du curseur).
+
+							*zX*
+zX		Met à jour manuellement les replis ouverts et fermés :
+		réapplique 'foldlevel'.
+
+							*zm*
+zm		Augmente le repliage : soustrait un de 'foldlevel'. Si
+		'foldlevel' était déjà nul, n'effectue rien.
+		'foldenable' sera activé.			       ["More"]
+
+							*zM*
+zM		Ferme tous les replis : fixe 'foldlevel' à 0.
+		'foldenable' sera activé.
+
+							*zr*
+zr		Réduit le repliage : ajoute un à 'foldlevel'.
+
+							*zR*
+zR		Ouvre tous les replis : fixe 'foldlevel' au plus haut niveau
+		de repli.
+
+							*:foldo* *:foldopen*
+:{plage}foldo[pen][!]
+		Ouvre les replis dans {plage}. Si [!] est utilisé, tous les
+		replis sont ouverts. C'est utile pour voir tout le texte dans
+		{plage}. Sans [!], seul un niveau de replis est ouvert.
+
+							*:foldc* *:foldclose*
+:{plage}foldc[lose][!]
+		Ferme les replis dans {plage}. Si [!] est utilisé, tous les
+		replis sont fermés. C'est utile pour masquer tout le texte
+		dans {plage}. Sans [!], seul un niveau de replis est fermé.
+
+							*zn*
+zn		Aucun repli : désactive 'foldenable'. Tous les replis seront
+		ouverts.					       ["None"]
+
+							*zN*
+zN		Repliage normal : active 'foldenable'. Tous les replis seront
+		tels qu'ils étaient avant.
+
+							*zi*
+zi		Inverse 'foldenable'.
+
+
+NAVIGUER DANS LES REPLIS
+							*[z*
+[z		Amène au début du repli ouvert courant. Si déjà au début,
+		amène au début du repli qui le contient. S'il n'y a pas de
+		repli contenant, la commande échoue.
+		Si un quantificateur est utilisé, cette commande est répétée N
+		fois.
+
+							*]z*
+]z		Amène à la fin du repli ouvert courant. Si déjà à la fin,
+		amène à la fin du repli qui le contient. S'il n'y a pas de
+		repli contenant, la commande échoue.
+		Si un quantificateur est utilisé, cette commande est répétée N
+		fois.
+
+							*zj*
+zj		Déplace vers le bas, au début du repli suivant. Un repli fermé
+		est compté comme un repli.
+		Si un quantificateur est utilisé, cette commande est répétée N
+		fois.
+		Cette commande peut être utilisée après un opérateur
+		|operator|.
+
+							*zk*
+zk		Déplace vers le haut, à la fin du repli précédent. Un repli
+		fermé est compté comme un repli.
+		Si un quantificateur est utilisé, cette commande est répétée N
+		fois.
+		Cette commande peut être utilisée après un opérateur
+		|operator|.
+
+
+EXÉCUTER DES COMMANDES SUR DES REPLIS
+						*:foldd* *:folddoopen*
+:[plage]foldd[oopen] {cmd}
+		Exécute {cmd} sur toutes les lignes qui ne sont pas dans un
+		repli fermé.
+		Lorsque [plage] est donné, seules ces lignes sont utilisées.
+		À chaque fois que {cmd} est exécuté, le curseur est positionné
+		sur la ligne pour laquelle il est exécuté.
+		Cela fonctionne comme la commande ":global" : d'abord, toutes
+		les lignes qui ne sont pas dans un repli fermé sont marquées ;
+		ensuite, la {cmd} est exécutée pour toutes les lignes
+		marquées. Ainsi, si {cmd} modifie les replis, cela ne
+		modifiera pas les endroits où il est exécuté (sauf si des
+		lignes sont effacées, bien sûr).
+		Exemple : >
+			:folddoopen s/fin/fin_boucle/ge
+<		Remarquez l'utilisation du drapeau 'e' pour éviter qu'un
+		message d'erreur ne soit donné si "fin" ne peut pas être
+		trouvé.
+
+						*:folddoc* *:folddoclosed*
+:[plage]folddoc[losed] {cmd}
+		Exécute {cmd} sur toutes les lignes qui sont dans un repli
+		fermé.
+		Sinon, comme ":folddoopen".
+
+==============================================================================
+3. Options de repliage					*fold-options*
+
+SURBRILLANCE						*fold-colors*
+
+La surbrillance pour un repli fermé est définie avec le groupe Folded
+|hl-Folded|. La surbrillance pour la colonne de repli est définie avec le
+groupe FoldColumn |hl-FoldColumn|.
+   Exemple pour fixer ces surbrillances : >
+
+	:highlight Folded guibg=grey guifg=blue
+	:highlight FoldColumn guibg=darkgrey guifg=white
+
+
+FOLDLEVEL						*fold-foldlevel*
+
+'foldlevel' est une option numérique : plus elle est grande, plus il y aura de
+régions repliées ouvertes :
+- si 'foldlevel' vaut 0, tous les replis sont fermés ;
+- si 'foldlevel' est positif, certains replis sont fermés ;
+- si 'foldlevel' est très grand, tous les replis sont ouverts.
+'foldlevel' est appliqué quand il est modifié. Après cela, les replis peuvent
+être ouverts ou fermés à la main.
+   Quand il est incrémenté, les replis supérieurs au nouveau niveau sont
+ouverts. Aucun repli ouvert manuellement ne sera fermé.
+   Quand il est décrémenté, les replis inférieurs au nouveau niveau sont
+fermés. Aucun repli fermé manuellement ne sera ouvert.
+
+
+FOLDTEXT						*fold-foldtext*
+
+'foldtext' est une option de type chaîne qui spécifie une expression. Cette
+expression est évaluée pour obtenir le texte affiché pour un repli fermé.
+Exemple : >
+
+	:set foldtext=v:folddashes.substitute(getline(v:foldstart),'/\\*\\\|\\*/\\\|{{{\\d\\=','','g')
+
+Ceci affiche la première ligne du repli, avec "/*", "*/" et "{{{" effacés.
+   NOTE : Des contre-obliques sont utilisées afin d'éviter que certains
+caractères soient interprétés par la commande ":set". Il est plus simple de
+définir une fonction et de l'appeler : >
+
+	:set foldtext=MonFoldText()
+	:function MonFoldText()
+	:  let line = getline(v:foldstart)
+	:  let sub = substitute(line, '/\*\|\*/\|{{{\d\=', '', 'g')
+	:  return v:folddashes . sub
+	:endfunction
+
+'foldtext' est évalué dans le bac à sable |sandbox|. La fenêtre courante est
+fixée à la fenêtre qui affiche la ligne. Les erreurs sont ignorées.
+
+Par défaut, cette option appelle |foldtext()|, qui retourne un texte
+convenable pour la plupart des situations de repliage. Si vous ne l'aimez pas,
+vous pouvez spécifier votre propre expression 'foldtext'. Elle peut utiliser
+ces variables Vim spéciales :
+	v:foldstart	numéro de ligne de la première ligne du repli
+	v:foldend	numéro de ligne de la dernière ligne du repli
+	v:folddashes	une chaîne qui contient des tirets pour représenter le
+			   niveau de repli
+	v:foldlevel	le niveau de repli du repli
+
+Dans la valeur de retour, une tabulation est remplacée par un espace et des
+caractères non-imprimables sont transformés en caractères imprimables.
+
+La ligne retournée est tronquée pour rentrer dans la fenêtre, elle n'est
+jamais enroulée. Quand il reste de la place après le texte, elle est remplie
+par le caractère spécifié par 'fillchars'.
+
+NOTE : Des contre-obliques doivent être utilisées pour protéger les caractères
+que la commande ":set" interprète comme spéciaux : espace, contre-oblique et
+double-apostrophe. |option-backslash|
+
+
+FOLDCOLUMN						*fold-foldcolumn*
+
+'foldcolumn' est une option numérique, qui fixe la largeur de la colonne
+affichée sur le côté de la fenêtre pour indiquer les replis. Quand elle est
+nulle, il n'y a pas de colonne de repli. 4 ou 5 sont des valeurs normales. La
+plus petite valeur utile est 2. Le maximum vaut 12.
+
+Un repli ouvert est indiqué par une colonne qui affiche un '-' au sommet et
+des caractères '|' en dessous. Cette colonne se termine à l'endroit où le
+repli ouvert se termine. Quand des replis sont imbriqués, la colonne du repli
+imbriqué est située un caractère à droite du repli qui le contient.
+
+Un repli fermé est indiqué par un '+'.
+
+Là où la colonne de repli est trop étroite pour afficher tous les replis
+imbriqués, des chiffres sont affichés pour indiquer le niveau de
+l'imbrication.
+
+La souris peut également être utilisée pour ouvrir et fermer des replis en
+cliquant dans la colonne de repli :
+- cliquez sur un '+' pour ouvrir le repli fermé dans cette colonne ;
+- cliquez sur n'importe quel autre caractère non-blanc pour fermer le repli
+  ouvert dans cette colonne.
+
+
+AUTRES OPTIONS
+
+'foldenable'   'fen'	Ouvre tous les replis si non activé.
+'foldexpr'     'fde'	Expression utilisée pour le repliage "expr".
+'foldignore'   'fdi'	Caractères utilisés pour le repliage "indent".
+'foldmarker'   'fmr'	Balises utilisées pour le repliage "marker".
+'foldmethod'   'fdm'	Nom de la méthode de repliage courante.
+'foldminlines' 'fml'	Nombre minimum de lignes d'écran pour qu'un repli
+			soit affiché fermé.
+'foldnestmax'  'fdn'	Imbrication maximum pour les repliages "indent" et
+			"syntax".
+'foldopen'     'fdo'	Types de commandes qui ouvrent un repli fermé.
+'foldclose'    'fcl'	Quand les replis non situés sous le curseur sont
+			fermés.
+
+==============================================================================
+4. Comportement des replis				*fold-behavior*
+
+Lors du déplacement du curseur vers le haut ou vers le bas et lors du
+défilement, le curseur sera amené sur la première ligne d'une séquence de
+lignes repliées. Lorsque le curseur est déjà sur une ligne repliée, il est
+amené à la prochaine ligne non repliée ou au prochain repli fermé.
+
+Tant que le curseur est sur des lignes repliées, il est toujours affiché dans
+la première colonne. La règle donne la position courante du curseur, mais si
+la ligne est repliée, elle ne peut pas être affichée à cet endroit.
+
+Les commandes de mouvement traitent une suite de lignes repliées comme une
+ligne vide. Par exemple, la commande "w" s'arrête quand elle parvenue dans la
+première colonne.
+
+En mode Insertion, la ligne du curseur n'est jamais repliée. Cela vous permet
+de voir ce que vous tapez !
+
+Lors de l'utilisation d'un opérateur, un repli fermé est considéré comme un
+tout. Par exemple, "dl" coupe le repli fermé sous le curseur en entier.
+
+Pour les commandes Ex, la plage est ajustée pour commencer toujours à la
+première ligne d'un repli et se terminer à la dernière ligne du repli. Par
+exemple, la commande >
+	:s/toto/titi/g
+quand elle est exécutée avec le curseur sur un repli fermé, remplacera "toto"
+par "titi" dans toutes les lignes de ce repli.
+   Cela ne se produit pas pour |:folddoopen| et |:folddoclosed|.
+
+Lors de l'édition d'un tampon déjà édité précédemment, les derniers paramètres
+de repliage sont utilisés à nouveau. Pour le repliage manuel, les replis
+définis sont restaurés. Pour toutes les méthodes de repliage, les replis
+ouverts ou fermés à la main sont restaurés. Si ce tampon avait été édité dans
+cette fenêtre, les valeurs d'alors sont utilisées. Sinon, les valeurs de la
+dernière fenêtre où le tampon avait été édité sont utilisées.
+
+ vim:tw=78:ts=8:ft=help:norl:

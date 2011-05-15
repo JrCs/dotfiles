@@ -1,0 +1,296 @@
+*usr_31.txt*	Pour Vim version 6.2.
+
+	       MANUEL de l'UTILISATEUR VIM - par Bram Moolenaar
+
+		       Exploiter l'interface graphique
+
+
+Vim fonctionne bien dans un terminal, mais l'interface (ou IHM) graphique
+apporte quelques fonctionnalités supplémentaires. Un sélecteur de fichier peut
+être utilisé pour les commandes qui requièrent un fichier, une boîte de
+dialogue pour faire un choix entre plusieurs propositions. Des raccourcis
+clavier permettent d'accéder rapidement aux éléments des menus.
+
+|31.1|	Le sélecteur de fichier
+|31.2|	Confirmation
+|31.3|	Raccourcis pour les menus
+|31.4|	Taille et position de la fenêtre Vim
+|31.5|	Divers
+
+  Chapitre suivant : |usr_40.txt|  Créer de nouvelles commandes
+Chapitre précédent : |usr_30.txt|  Éditer des programmes
+Table des matières : |usr_toc.txt|
+
+==============================================================================
+*31.1*	Le sélecteur de fichier
+
+Quand vous utilisez le menu Fichier->Ouvrir, vous obtenez un sélecteur de
+fichier. Cela facilite la recherche du fichier que vous souhaitez éditer. Mais
+comment faire si vous voulez partager une fenêtre pour éditer un autre
+fichier ? Il n'y a pas d'entrée de menu pour cela. Vous pourriez essayer de
+d'utiliser d'abord Window/Split XXX, puis Fichier->Ouvrir... mais c'est autant
+à faire en plus.
+   Comme la plupart des commandes sont données à Vim par le clavier, il est
+possible d'ouvrir le sélecteur de fichier grâce à une commande entrée au
+clavier. Pour que la commande de partage utilise le sélecteur de fichier,
+faites-la précéder par ":browse" : >
+
+	:browse split
+
+Choisissez un fichier et ensuite, la commande ":split" sera exécutée avec cet
+argument. Si vous annulez le dialogue de fichier rien ne se produit, la
+fenêtre n'est pas partagée.
+   Vous pouvez également spécifier un nom de fichier en argument. C'est utile
+pour indiquer où le sélecteur de fichier doit démarrer. Exemple : >
+
+	:browse split /etc
+
+Le sélecteur de fichier s'ouvrira, démarrant dans le répertoire "/etc".
+
+La commande ":browse" peut être placée avant n'importe quelle commande qui
+ouvre un fichier.
+   Si aucun répertoire n'est spécifié, Vim décidera où démarrer le sélecteur
+de fichier. Par défaut, il utilise le même répertoire que la dernière fois.
+Ainsi, si vous aviez utilisé ":browse split" et choisi un fichier dans
+"/usr/local/share", la prochaine fois que vous utiliserez ":browse", le
+sélecteur démarrera à nouveau dans "/usr/local/share".
+   Cela peut être modifié avec l'option 'browsedir'. Elle peut prendre une de
+ces trois valeurs :
+
+	last		utilise le dernier répertoire visité (défaut) ;
+	buffer		utilise le répertoire du tampon courant ;
+	current		utilise le répertoire courant.
+
+Par exemple, si vous êtes dans le répertoire "/usr", en train d'éditer
+"/usr/local/share/lisezmoi", alors la commande >
+
+	:set browsedir=buffer
+	:browse edit
+
+lancera le sélecteur dans "/usr/local/share". Tandis que >
+
+	:set browsedir=current
+	:browse edit
+
+lancera le sélecteur dans "/usr".
+
+	NOTE :
+	Pour éviter d'utiliser la souris, la plupart des sélecteurs de
+	fichiers permettent l'utilisation du clavier pour la sélection. Cela
+	dépend de chaque système, c'est pourquoi on n'en parlera pas ici. Vim
+	utilise un sélecteur standard si possible, la documentation de votre
+	système devrait contenir quelque part une explication sur les
+	raccourcis clavier.
+
+Si vous n'utilisez pas la version IHM graphique, vous pouvez utiliser la
+fenêtre de l'explorateur de fichiers pour choisir des fichiers comme dans le
+sélecteur de fichier. Néanmoins, cela ne fonctionne pas pour la commande
+":browse". Voir |file-explorer|.
+
+==============================================================================
+*31.2*	Confirmation
+
+Vim vous protège contre l'écrasement accidentel d'un fichier, et autres moyens
+de perdre vos modifications. Si vous faites quelque chose qui peut être
+risqué, Vim émet un message d'erreur et suggère d'ajouter '!' si c'est
+vraiment ce que vous voulez faire.
+   Pour éviter d'avoir à retaper la commande avec le '!', vous pouvez faire en
+sorte que Vim vous donne un dialogue. Vous pourrez alors choisir "OK" ou
+"Annuler" pour indiquer votre choix.
+   Par exemple, vous êtes en train d'éditer un fichier que vous avez modifié.
+Vous commencez l'édition d'un autre fichier avec : >
+
+	:confirm edit toto.txt
+
+Vim fera apparaître une boîte de dialogue qui devrait ressembler à cela :
+
+	+-----------------------------------------------------+
+	|						      |
+	|  ?   Enregistrer les changements dans "titi.txt" ?  |
+	|						      |
+	|		OUI	NON	ANNULER		      |
+	+-----------------------------------------------------+
+
+Vous n'avez plus qu'à faire votre choix. Si vous souhaitez enregistrer les
+changements, sélectionnez "OUI". Si vous pressez "NON", vos changements seront
+irrémédiablement perdus. Si vous êtes incertain et préférez d'abord vérifier
+les changements effectués, pressez "ANNULER". Vous reviendrez dans le même
+fichier, avec tous vos changements.
+
+Tout comme ":browse", la commande ":confirm" peut être utilisée avant la
+plupart des commandes qui éditent un autre fichier. Elles peuvent aussi être
+combinées : >
+
+	:confirm browse edit
+
+Ceci fera apparaître un dialogue lorsque le tampon courant a été modifié.
+Ensuite, un sélecteur de fichier sera utilisé pour choisir le fichier à
+éditer.
+
+	NOTE :
+	Dans la boîte de dialogue, vous pouvez utiliser le clavier pour faire
+	votre choix. Comme à l'accoutumée, <Tab> et les touches fléchées
+	permettent de modifier le choix. <Entree> permet de sélectionner un
+	choix. Cela dépend cependant du système.
+
+Si vous n'utilisez pas l'IHM graphique, la commande ":confirm" fonctionne
+malgré tout. Mais au lieu de faire apparaître une boîte de dialogue, elle
+affichera le message au bas de la fenêtre Vim et vous demandera de presser une
+touche pour faire votre choix. >
+
+	:confirm edit main.c
+<	Enregistrer les changements dans "Sans titre" ? ~
+	[O]ui, (N)on, (A)nnuler: ~
+
+Vous pouvez maintenant presser la touche simple correspondant à votre choix.
+Vous n'avez pas à presser <Entree>, contrairement aux autres saisies sur la
+ligne de commande.
+
+==============================================================================
+*31.3*	Raccourcis pour les menus
+
+Le clavier est utilisé pour toutes les commandes Vim. Les menus offrent un
+moyen simple pour exécuter des commandes sans connaître nécessairement leurs
+noms. Mais vous devez alors ôter vos mains du clavier et utiliser la souris.
+   Les menus peuvent souvent être sélectionnés via le clavier. Cela dépend de
+votre système, mais le plus souvent cela fonctionne. Utilisez la touche <Alt>
+en combinaison avec la lettre soulignée d'un menu. Par exemple, <A-n> (Alt +
+'n') déroule le menu Fenêtre.
+   Dans le menu Fenêtre, the "split" item has the p underlined.  To select it,
+let go of the <Alt> key and press p. XXX
+
+Après la première sélection d'un menu avec la touche <Alt>, vous pouvez
+utiliser les touches fléchées pour vous déplacer dans les menus. <Droite>
+sélectionne un sous-menu et <Gauche> le ferme. <Echap> ferme également un
+menu. <Entree> sélectionne un élément de menu.
+
+Les combinaisons de touches <Alt> utilisées pour sélectionner des éléments de
+menus peuvent entrer en conflit avec celles utilisées dans des mappages.
+L'option 'winaltkeys' indique à Vim comment traiter ce problème.
+   La valeur par défaut, "menu", est le choix le plus souple : si la
+combinaison est un raccourci de menu, elle ne peut être mappée. Toutes les
+autres combinaisons sont disponibles pour mappage.
+   La valeur "no" n'utilise aucune touche <Alt> pour les menus. Vous devrez
+donc utiliser la souris pour les menus, et toutes les combinaisons <Alt>
+pourront être mappées.
+   La valeur "yes" signifie que Vim utilisera les touches <Alt> pour les
+menus. Certaines combinaisons <Alt> pourront également être utilisées en
+dehors des menus.
+
+==============================================================================
+*31.4*	Taille et position de la fenêtre Vim
+
+Pour afficher la position actuelle de Vim à l'écran, utilisez : >
+
+	:winpos
+
+Cela ne fonctionnera que dans l'IHM graphique. La sortie devrait ressembler à
+ceci :
+
+	Window position: X 272, Y 103 ~
+
+La position est donnée en pixels d'écran. Vous pouvez utiliser ces nombres
+pour déplacer Vim quelque part. Par exemple, pour le déplacer de cent pixels à
+gauche : >
+
+	:winpos 172 103
+<
+	NOTE :
+	Il peut y avoir un léger décalage entre la position rapportée et
+	l'endroit où la fenêtre est placée. Cela provient du cadre de la
+	fenêtre. Il est ajouté par le gestionnaire de fenêtres.
+
+Vous pouvez utiliser cette commande dans votre script de démarrage pour
+positionner la fenêtre à un endroit particulier.
+
+La taille de la fenêtre Vim est calculée en caractères. Elle dépend donc de la
+taille de la police que vous utilisez. Vous pouvez afficher la taille courante
+grâce à cette commande : >
+
+	:set lines columns
+
+Pour modifier la taille, fixez les options 'lines' et/ou 'columns' à une
+nouvelle valeur : >
+
+	:set lines=50
+	:set columns=80
+
+Il est possible d'obtenir la taille dans un terminal comme dans l'IHM
+graphique. Mais la plupart des terminaux ne permettent pas de la modifier.
+
+Vous pouvez lancer la version X Window de gvim avec un argument pour spécifier
+la taille et la position de la fenêtre : >
+
+	gvim -geometry {largeur}x{hauteur}+{pos-X}+{pos-Y}
+
+{largeur} et {hauteur} sont donnés en caractères, {pos-X} et {pos-Y} en
+pixels. Exemple : >
+
+	gvim -geometry 80x25+100+300
+
+==============================================================================
+*31.5*	Divers
+
+Vous pouvez utiliser gvim  pour éditer un courriel. Dans votre client de
+messagerie, vous devez sélectionner gvim comme éditeur pour les messages. Mais
+si vous essayez, vous vous apercevrez que cela ne marche pas : le client de
+messagerie croit que l'édition est terminée, alors que gvim fonctionne
+toujours !
+   En fait, gvim se déconnecte du shell qui l'a invoqué. C'est pratique quand
+vous lancez gvim dans un terminal, car vous pouvez continuer à travailler sur
+ce terminal. Mais si vous voulez effectivement attendre que gvim se termine,
+vous devez empêcher sa déconnexion. Utilisez pour cela l'argument "-f" : >
+
+	gvim -f fichier.txt
+
+"-f" est mis pour "foreground" [« premier plan »]. À présent, Vim bloquera le
+shell qui l'a invoqué jusqu'à ce vous terminiez l'édition et le quittiez.
+
+
+LANCEMENT INDIRECT DE L'IHM GRAPHIQUE
+
+Sur Unix, il est possible de démarrer d'abord Vim dans un terminal. C'est
+utile si vous devez effectuer diverses tâches dans le même shell. Si vous
+éditez un fichier et décidez ensuite d'utiliser l'IHM graphique, vous pouvez
+la lancer avec : >
+
+	:gui
+
+Vim ouvrira la fenêtre d'IHM graphique et n'utilisera plus dès lors le
+terminal. Vous pourrez continuer d'utiliser ce dernier pour autre chose.
+L'argument "-f" est utilisé pour faire fonctionner l'IHM graphique au premier
+plan. Vous pouvez aussi utiliser ":gui -f".
+
+
+LE FICHIER DE DÉMARRAGE DE GVIM
+
+Lorsque gvim est lancé, il lit le fichier gvimrc. Ce fichier est similaire au
+fichier vimrc utilisé au démarrage de Vim. Le fichier gvimrc peut être utilisé
+pour les paramètres et commandes qui ne doivent être utilisés que lorsque
+l'IHM graphique est lancée. Par exemple, vous pouvez fixer l'option 'lines'
+pour utiliser une taille de fenêtre différente : >
+
+	:set lines=55
+
+Ceci est sans intérêt dans un terminal, car sa taille est fixe (excepté pour
+un xterm qui supporte le redimensionnement).
+   Le fichier gvimrc est recherché aux mêmes emplacements que le fichier
+vimrc. Normalement, il est nommé "~/.gvimrc" pour Unix et "$VIM/_gvimrc" pour
+MS-Windows.
+   Si pour une raison ou pour une autre vous ne souhaitez pas utiliser le
+fichier gvimrc normal, vous pouvez en spécifier un autre avec l'argument
+"-U" : >
+
+	gvim -U nomfichrc ...
+
+Cela permet le démarrage de gvim pour différents types d'édition. Vous
+pourriez fixer une police différente, par exemple.
+   Pour ignorer complètement la lecture du fichier gvimrc : >
+
+	gvim -U NONE ...
+
+==============================================================================
+
+Chapitre suivant : |usr_40.txt|  Créer de nouvelles commandes
+
+Copyright : voir |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:

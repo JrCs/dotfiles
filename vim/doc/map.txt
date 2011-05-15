@@ -1,0 +1,1139 @@
+*map.txt*       Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+Mappages de touches, abréviations et commandes utilisateur
+
+Ces sujets sont abordés dans les sections |05.3|, |24.7| et |40.1| du Manuel
+de l'utilisateur.
+
+1. Mappages de touches		    |key-mapping|
+2. Abréviations			    |abbreviations|
+3. Fonctions et mappages locaux	    |script-local|
+4. Commandes utilisateur	    |user-commands|
+
+==============================================================================
+1. Mappages de touches			    *key-mapping* *mapping* *macro*
+
+Le mappage de touches est utilisé pour modifier la signification des touches
+saisies. L'utilisation la plus commune est la définition d'une séquence de
+commandes pour une touche de fonction. Exemple : >
+
+	:map <F2> a<C-R>=strftime("%c")<CR><Esc>
+
+Ceci ajoute la date et l'heure courante après le curseur. (Sur la notation <>,
+voir |<>|.)
+
+Il existe des commandes pour entrer de nouveaux mappages, les supprimer et les
+lister. Voir |map-overview| pour un récapitulatif de ces différentes commandes
+et de leurs relations avec les modes d'édition.
+
+{ctg}  est mis pour « côté gauche »	    *{lhs}* *{ctg}*
+{ctd}  est mis pour « côté droit »	    *{rhs}* *{ctd}*
+
+:map	{ctg} {ctd}					*:map*
+:nm[ap]	{ctg} {ctd}					*:nm* *:nmap*
+:vm[ap]	{ctg} {ctd}					*:vm* *:vmap*
+:om[ap]	{ctg} {ctd}					*:om* *:omap*
+:map!	{ctg} {ctd}					*:map!*
+:im[ap]	{ctg} {ctd}					*:im* *:imap*
+:lm[ap]	{ctg} {ctd}					*:lm* *:lmap*
+:cm[ap]	{ctg} {ctd}					*:cm* *:cmap*
+			Mappe la séquence clavier {ctg} à {ctd} pour les modes
+			où la commande s'applique. On teste ensuite si
+			d'autres mappages s'appliquent au résultat, comprenant
+			{ctd}. Cela autorise l'utilisation de mappages
+			imbriqués et récursifs.
+
+:no[remap]  {ctg} {ctd}					*:no*  *:noremap*
+:nn[oremap] {ctg} {ctd}					*:nn*  *:nnoremap*
+:vn[oremap] {ctg} {ctd}					*:vn*  *:vnoremap*
+:ono[remap] {ctg} {ctd}					*:ono* *:onoremap*
+:no[remap]! {ctg} {ctd}					*:no!* *:noremap!*
+:ino[remap] {ctg} {ctd}					*:ino* *:inoremap*
+:lno[remap] {ctg} {ctd}					*:ln*  *:lnoremap*
+:cno[remap] {ctg} {ctd}					*:cno* *:cnoremap*
+			Mappe la séquence clavier {ctg} à {ctd} pour les modes
+			où la commande s'applique. Interdit le mappage de
+			{ctd}, afin d'éviter des mappages imbriqués et
+			récursifs. Souvent utilisé pour redéfinir une
+			commande. {absent de Vi}
+
+:unm[ap]  {ctg}						*:unm*  *:unmap*
+:nun[map] {ctg}						*:nun*  *:nunmap*
+:vu[nmap] {ctg}						*:vu*   *:vunmap*
+:ou[nmap] {ctg}						*:ou*   *:ounmap*
+:unm[ap]! {ctg}						*:unm!* *:unmap!*
+:iu[nmap] {ctg}						*:iu*   *:iunmap*
+:lu[nmap] {ctg}						*:lu*   *:lunmap*
+:cu[nmap] {ctg}						*:cu*   *:cunmap*
+			Supprime le mappage de {ctg} pour les modes où la
+			commande s'applique. Le mappage pourra rester défini
+			pour les autres modes où il s'applique.
+			NOTE : Les espaces finaux sont inclus dans {ctg}.
+			Ainsi, ce démappage ne fonctionne PAS : >
+				:map @@ toto
+				:unmap @@ | print
+
+:mapc[lear]						*:mapc*   *:mapclear*
+:nmapc[lear]						*:nmapc*  *:nmapclear*
+:vmapc[lear]						*:vmapc*  *:vmapclear*
+:omapc[lear]						*:omapc*  *:omapclear*
+:mapc[lear]!						*:mapc!*  *:mapclear!*
+:imapc[lear]						*:imapc*  *:imapclear*
+:lmapc[lear]						*:lmapc*  *:lmapclear*
+:cmapc[lear]						*:cmapc*  *:cmapclear*
+			Supprime TOUS les mappages pour les modes où la
+			commande s'applique. {absent de Vi}
+			ATTENTION : Cela supprime également les mappages de
+			défaut.
+
+:map
+:nm[ap]
+:vm[ap]
+:om[ap]
+:map!
+:im[ap]
+:lm[ap]
+:cm[ap]
+			Liste tous les mappages de touches pour les modes où
+			la commande s'applique.
+			NOTE : ":map" et ":map!" sont les plus souvent
+			utilisés, car ils incluent les autres modes.
+
+:map    {ctg}						*:map_l*
+:nm[ap] {ctg}						*:nmap_l*
+:vm[ap] {ctg}						*:vmap_l*
+:om[ap] {ctg}						*:omap_l*
+:map!   {ctg}						*:map_l!*
+:im[ap] {ctg}						*:imap_l*
+:lm[ap] {ctg}						*:lmap_l*
+:cm[ap] {ctg}						*:cmap_l*
+			Liste les mappages pour les séquences clavier débutant
+			par {ctg} dans les modes où la commande s'applique.
+			{absent de Vi}
+
+Ces commandes sont utilisées pour mapper une touche ou une séquence clavier à
+une chaîne de caractères. Vous pouvez vous en servir pour associer des
+séquences de commandes aux touches de fonction, redéfinir une touche, etc.
+Voir |:mkexrc| pour sauvegarder et restaurer les mappages en cours.
+
+				    *:map-local* *:map-<buffer>* *E224* *E225*
+Si le premier argument d'une de ces commandes est "<buffer>", elle ne
+s'appliquera qu'aux seuls mappages locaux du tampon courant. Exemple : >
+	:map <buffer>  ,p  /[.,;]<CR>
+Vous pouvez alors mapper ",p" à une autre commande dans un autre tampon : >
+	:map <buffer>  ,p  /[#&!]<CR>
+Les mappages locaux de tampon sont utilisés avant les globaux.
+   L'argument "<buffer>" peut aussi être utilisé pour effacer les mappages : >
+	:unmap <buffer> ,p
+	:mapclear <buffer>
+Les mappages locaux sont également effacés lorsqu'un tampon est supprimé, mais
+pas quand il est déchargé. Comme les valeurs des options locales.
+
+						*:map-<silent>* *:map-silent*
+Pour définir un mappage qui n'aura pas d'écho sur la ligne de commande,
+ajoutez "<silent>" en premier argument. Exemple : >
+	:map <silent> ,z /Zorglub<CR>
+Le motif de recherche ne sera pas retourné en écho si vous utilisez ce
+mappage. Les messages de la commande exécutée seront toujours donnés
+normalement. Pour les faire taire aussi, ajoutez ":silent" à la commande
+exécutée : >
+	:map <silent> ,z :exe ":silent normal /Zorglub\r"<CR>
+Les invites seront toujours données, p. ex., pour inputdialog().
+   L'utilisation de "<silent>" pour une abréviation est possible, mais
+entraînera l'échec du rafraîchissement de la ligne de commande.
+
+						*:map-<script>* *:map-script*
+Si le premier argument d'une de ces commandes est "<script>" et qu'elle est
+utilisée pour définir un nouveau mappage ou abréviation, le mappage remappera
+exclusivement les caractères dans le {ctd} en utilisant les mappages définis
+localement à un script, qui débutent par "<SID>". Ceci peut être utilisé afin
+d'éviter que des mappages extérieurs au script n'interfèrent avec lui (p. ex.,
+quand CTRL-V est remappé dans "mswin.vim"), pour permettre ainsi l'utilisation
+des seuls mappages définis dans le script.
+   NOTE : ":map <script>" et ":noremap <script>" sont identiques. L'argument
+"<script>" recouvre le nom de la commande. On préfère généralement ":noremap
+<script>", il est ainsi plus clair que le remappage est (le plus souvent)
+désactivé.
+
+						*:map-<unique>* *E226* *E227*
+Si le premier argument d'une de ces commandes est "<unique>" et qu'elle est
+utilisée pour définir un nouveau mappage ou abréviation, la commande échouera
+si le mappage ou l'abréviation existe déjà. Exemple : >
+	:map <unique> ,p  /[#&!]<CR>
+Lors de la définition d'un mappage local, il y aura également un test pour
+savoir si un mappage global identique existe déjà. Par exemple (la deuxième
+commande échouera) : >
+	:map ,p  /[#&!]<CR>
+	:map <buffer> <unique> ,p  /[.,;]<CR>
+
+"<buffer>", "<silent>", "<script>" et "<unique>" peuvent être utilisés dans
+n'importe quel ordre. Ils doivent apparaître juste après la commande, avant
+tout argument.
+
+
+MAPPAGES ET MODES
+
+Il existe cinq familles de mappages :
+- Pour le mode Normal : quand vous tapez des commandes.
+- Pour le mode Visuel : quand vous tapez des commandes et que la zone Visuel
+  est en surbrillance.
+- Pour le mode Opérateur-en-cours : quand un opérateur est en attente (après
+  "d", "y", "c", etc.). Exemple : ":omap { w" fait fonctionner "y{" comme
+  "yw", et "d{" comme "dw".
+- Pour le mode Insertion. Ces mappages sont également utilisés pour le mode
+  Remplacement.
+- Pour le mode Ligne-de-commande : quand une commande ":" ou "/" est entrée.
+
+Il n'y a pas de mappages distincts pour le mode Sélection. Ce sont les mêmes
+que pour le mode Visuel qui sont utilisés |Select-mode-mapping|.
+
+						*map-overview* *map-modes*
+Modes dans lesquels fonctionnent chaque famille de mappages :
+
+COMMANDES			       MODES :   			     ~
+				       Normal   Visuel   Opérateur-en-cours  ~
+:map   :noremap   :unmap   :mapclear	 oui	  oui		oui
+:nmap  :nnoremap  :nunmap  :nmapclear	 oui	   -		 -
+:vmap  :vnoremap  :vunmap  :vmapclear	  -	  oui		 -
+:omap  :onoremap  :ounmap  :omapclear	  -	   -		oui
+				       Insertion   Lignecmd   Arg-lang	     ~
+:map!  :noremap!  :unmap!  :mapclear!	  oui	      oui	 -
+:imap  :inoremap  :iunmap  :imapclear	  oui	       -	 -
+:cmap  :cnoremap  :cunmap  :cmapclear	   -	      oui	 -
+:lmap  :lnoremap  :lunmap  :lmapclear	  oui*        oui*	oui*
+
+La version originale de Vi n'a pas de mappages séparés pour les modes
+Normal/Visuel/Opérateur-en-cours, ni pour les modes Insertion/Lignecmd. Ainsi,
+les commandes ":map" et ":map!" entrent et affichent des mappages pour
+plusieurs modes. Dans Vim, vous pouvez utiliser les commandes ":nmap",
+":vmap", ":omap", ":cmap" et ":imap" pour entrer des mappages pour chaque mode
+séparément.
+
+Pour entrer un mappage pour les modes Normal et Visuel, mais pas pour le mode
+Opérateur-en-cours, définissez-le d'abord pour les trois modes, puis
+supprimez-le pour le mode Opérateur-en-cours : >
+	:map    xx quelque-chose
+	:ounmap xx
+Même chose pour obtenir un mappage pour les modes Visuel et Opérateur-en-cours,
+ou Normal et Opérateur-en-cours.
+
+							*language-mapping*
+":lmap" définit un mappage qui s'applique :
+- au mode Insertion ;
+- au mode Ligne-de-commande ;
+- quand un motif de recherche est entré ;
+- à l'argument des commandes qui acceptent un caractère de texte, comme "r" et
+  "f" ;
+- à la ligne d'entrée ("input()").
+En règle générale : partout où un caractère faisant partie du texte dans le
+tampon, pas d'une commande Vim, doit être saisi. « Arg-lang » n'est donc
+pas vraiment un nouveau mode, il est simplement utilisé pour désigner cette
+situation.
+   Le plus simple moyen de charger un ensemble de mappages relativement à une
+langue est d'utiliser l'option 'keymap'. Voir |45.5|.
+   En mode Insertion et Ligne-de-commande, les mappages peuvent être
+désactivés avec la commande CTRL-^ |i_CTRL-^| |c_CTRL-^|. En débutant la
+saisie d'une ligne de commande normale (pas un motif de recherche), les
+mappages sont désactivés jusqu'à ce qu'un CTRL-^ soit tapé. Le dernier état
+utilisé est mémorisé séparément pour le mode Insertion et les motifs de
+recherche. L'état du mode Insertion est également utilisé quand un caractère
+est entré comme argument à des commandes comme "f" ou "t".
+   Quand un mappage ":lmap" est ajouté, l'utilisation de ce mappage en mode
+Insertion et pour les motifs de recherche sera effective.
+   Les mappages de langue ne s'appliqueront jamais à des caractères déjà
+mappés. Ils sont uniquement utilisés pour les caractères tapés. Ceci suppose
+que le mappage de langue a déjà été fait lorsque le mappage est saisi.
+
+							*map-multibyte*
+Il est possible de mapper des caractères multi-octets, mais uniquement des
+caractères entiers. Vous ne pouvez pas mapper le premier octet séparément.
+Cela permet d'éviter des problèmes dans des cas comme celui-ci : >
+	:set encoding=latin1
+	:imap <M-C> foo
+	:set encoding=utf-8
+Le mappage pour <M-C> est défini dans l'encodage Latin-1 et produit l'octet
+0xc3. Si vous tapez le caractère 'á' (0xea <M-a>) dans l'encodage UTF-8, cela
+correspond aux deux octets 0xc3 0xa1. Vous n'aurez alors pas intérêt à ce que
+l'octet 0x3c soit mappé, sinon il sera impossible de taper le caractère 'á'.
+
+							*map-listing*
+Dans un listage de mappages, les caractères apparaissant dans le deux
+premières colonnes désignent :
+
+	CAR	MODE	    ~
+      <Espace>	Normal, Visuel et Opérateur-en-cours
+	 n	Normal
+	 v	Visuel
+	 o	Opérateur-en-cours
+	 !	Insertion et Lignecmd
+	 i	Insertion
+	 l	mappages ":lmap" pour modes Insertion, Lignecmd et Arg-lang
+	 c	Lignecmd
+
+Juste avant le {ctd}, un caractère spécial peut apparaître :
+	 *	indique que le mappage n'est pas remappable
+	 &	indique que seuls les mappages locaux de scripts sont
+		   remappables
+	 @	indique un mappage local de tampon
+
+Tout ce qui suit le premier caractère non-blanc de {ctg} jusqu'à la fin de la
+ligne (ou à '|') est considéré comme faisant partie de {ctd}. Ceci permet à
+{ctd} de se terminer par un espace.
+
+NOTE : Quand vous utilisez des mappages pour le mode Visuel, vous pouvez
+utiliser la marque "'<", qui indique le début de la dernière zone Visuel
+sélectionnée dans le tampon courant |'<|.
+
+							*map_backslash*
+NOTE : Seul CTRL-V est ici considéré comme un caractère spécial pour les
+mappages et abréviations. Si 'cpoptions' ne contient pas 'B', une
+contre-oblique pourra également être utilisée comme un CTRL-V. La notation <>
+pourra alors être pleinement utilisée |<>|. Mais vous ne pouvez pas utiliser
+"<C-V>" comme un CTRL-V pour déspécialiser la signification spéciale de ce qui
+suit.
+
+Pour mapper une contre-oblique, ou l'utiliser littéralement dans {ctd}, la
+séquence spéciale "<Bslash>" peut être employée. Cela évite d'avoir à doubler
+les contre-obliques quand des mappages imbriqués sont utilisés.
+
+							*map-ambiguous*
+Quand deux mappages débutent par la même séquence de caractères, ils sont dits
+ambigus. Exemple : >
+	:imap aa toto
+	:imap aaa titi
+Quand Vim aura lu "aa", il aura besoin d'un caractère supplémentaire pour
+décider du mappage de "aa" ou de "aaa". Cela signifie qu'après avoir tapé
+"aa", ce mappage ne sera pas étendu immédiatement, Vim attendant la saisie
+d'un autre caractère. Si vous tapez un espace, alors "toto" sera inséré avec
+l'espace. Si vous tapez 'a', c'est "titi" qui sera inséré.
+{Vi n'autorise pas les mappages ambigus}
+
+							*map_CTRL_C*
+Il n'est pas possible d'utiliser un CTRL-C dans {ctg}. CTRL-C n'est tout
+simplement pas mappable, car cette séquence doit toujours rester disponible
+pour pouvoir interrompre une commande.
+Exception : si vous utilisez la version IHM graphique sur MS-Windows, CTRL-C
+peut être mappé pour permettre une copie dans le presse-papiers. Utilisez
+CTRL-Attn pour interrompre Vim.
+
+							*map_space_in_lhs*
+Pour inclure un espace dans {ctg}, faites-le précéder par un CTRL-V (tapez
+deux CTRL-V pour chaque espace).
+							*map_space_in_rhs*
+Pour inclure un espace au début d'un {ctd}, utilisez "<Space>". Pour être
+pleinement compatible Vi (mais illisible), n'utilisez pas la notation |<>|,
+faites précéder {ctd} par un CTRL-V simple (vous devez saisir CTRL-V deux
+fois).
+							*map_empty_rhs*
+Vous pouvez créer un {ctd} vide si vous ne saisissez rien après un CTRL-V
+simple (vous devez saisir CTRL-V deux fois). Malheureusement, vous ne pouvez
+pas faire ceci dans un fichier vimrc.
+							*<Nop>*
+Si vous désirez obtenir un mappage qui n'effectue rien, il est plus facile
+d'utiliser "<Nop>" dans {ctd}. Cela fonctionne uniquement si la notation |<>|
+est activée. Par exemple, pour être certain que la touche de fonction 8 ne
+fera rien : >
+	:map  <F8>  <Nop>
+	:map! <F8>  <Nop>
+<
+					    *<Leader>* *mapleader*
+Pour définir un mappage qui utilise la variable "mapleader", la chaîne
+spéciale "<Leader>" peut être utilisée. Elle est remplacée par la valeur de
+chaîne de "mapleader". Si "mapleader" n'est pas fixé ou est vide, une
+contre-oblique est utilisée à la place. Par exemple >
+	:map <Leader>A  oNouvelle ligne<Esc>
+fonctionne comme : >
+	:map \A  oNouvelle ligne<Esc>
+Mais après >
+	:let mapleader = ","
+il fonctionne comme : >
+	:map ,A  oNouvelle ligne<Esc>
+
+NOTE : La valeur de "mapleader" est utilisée au moment où le mappage est
+défini. Sa modification ultérieure n'aura pas d'effet sur les mappages déjà
+définis.
+
+					    *<LocalLeader>* *maplocalleader*
+<LocalLeader> est semblable à <Leader>, sauf qu'il utilise "maplocalleader" au
+lieu de "mapleader". <LocalLeader> est destiné aux mappages mappages locaux de
+tampon. Exemple : >
+	:map <LocalLeader>q  \ChosesÀFaire
+
+Dans un greffon global, <Leader> doit être utilisé, et dans un greffon de type
+de fichier, <LocalLeader>. "mapleader" et "maplocalleader" peuvent être
+identiques. Cependant, en les différenciant, vous minimisez le risque de
+collision entre les mappages globaux et ceux de type de fichier. Par exemple,
+vous pouvez garder "mapleader" à sa valeur par défaut (contre-oblique, '\'),
+et fixer "maplocalleader" à un souligné ('_').
+
+							*map-<SID>*
+Dans un script, vous pouvez utiliser la chaîne spéciale "<SID>" pour définir
+un mappage local au script. Voir |<SID>| pour plus de détails.
+
+							*<Plug>*
+La chaîne spéciale "<Plug>" peut être utilisée pour un mappage interne, qui ne
+doit correspondre à aucune autre séquence clavier. C'est utile dans les
+greffons |using-<Plug>|.
+
+							*<Char>* *<Char->*
+Pour mapper un caractère selon sa valeur décimale, octale ou hexadécimale, la
+construction <Char> peut être utilisé :
+	<Char-123>	caractère 123
+	<Char-033>	caractère 27
+	<Char-0x7f>	caractère 127
+C'est utile pour spécifier un caractère (multi-octets) dans un fichier de
+codage clavier. Les différences de casse sont ignorées.
+
+							*map-comments*
+Il est impossible de placer un commentaire après ces commandes, car le
+caractère '"' est considéré comme faisant partie de {ctg} ou {ctd}.
+
+							*map_bar*
+Comme le caractère '|' sert à séparer une commande de mappage de la commande
+suivante, vous devrez utiliser une méthode spéciale si vous souhaitez en
+inclure un dans {ctd}. Il y a trois façons de procéder :
+	MÉTHODE	  FONCTIONNE SI			 EXEMPLE	    ~
+	<Bar>	  '<' est exclu de 'cpoptions'	 :map _l :!ls <Bar> more^M
+	\|	  'b' est exclu de 'cpoptions'	 :map _l :!ls \| more^M
+	^V|	  toujours, dans Vi et Vim	 :map _l :!ls ^V| more^M
+
+(Ici, ^V signifie CTRL-V ; pour obtenir un CTRL-V vous devrez le saisir deux
+fois ; vous ne pouvez pas utiliser la notation <> "<C-V>".)
+
+Les trois méthodes fonctionnent avec la valeur par défaut de 'cpoptions'.
+
+Si 'b' est exclu de 'cpoptions', "\|" sera interprété comme un mappage se
+terminant par '\' et suivi par une autre commande. Ce comportement est
+compatible Vi, mais est illogique rapporté aux autres commandes.
+
+							*map_return*
+Si un mappage contient une commande Ex, il sera nécessaire de la faire suivre
+par un ordre terminant la ligne pour qu'elle soit exécutée. L'utilisation de
+<CR> est ici recommandée (voir |<>|). Exemple : >
+	:map  _ls  :!ls -l %<CR>:echo "FIN"<CR>
+
+Pour éviter le mappage des caractères que vous entrez en mode Insertion ou
+Ligne-de-commande, tapez un CTRL-V d'abord. Le mappage en mode Insertion est
+désactivé si l'option 'paste' est activée.
+
+NOTE : Quand une erreur est détectée (qui provoque un message d'erreur ou un
+bip), le reste du mappage n'est pas exécuté. Ce comportement est compatible
+Vi.
+
+NOTE : Le caractère d'argument des commandes @zZtTfF[]rm'`"v et CTRL-X n'est
+pas mappé. Ceci permet d'utiliser directement tous les registres nommés et
+marques, même si la commande du même nom a été mappée.
+
+							*map-which-keys*
+Quand vous voudrez effectuer un mappage, vous devrez choisir la (ou les)
+touche(s) à utiliser pour {ctg}. Vous devrez éviter celles qui sont déjà
+utilisées pour des commandes Vim, sinon vous ne pourrez plus appeler lesdites
+commandes. Voici quelques suggestions :
+- Les touches de fonction <F2>, <F3>, etc. Également leurs combinaisons avec
+  Maj : <S-F1>, <S-F2>, etc. NOTE : <F1> est déjà utilisé pour l'aide.
+- Les combinaisons ALT-touche (avec la touche ALT enfoncée).
+- Les caractères '_' ou ',' suivis d'un caractère quelconque. Les commandes
+  "_" et "," existent dans Vim (voir |_| et |,|), mais vous ne les utiliserez
+  probablement jamais.
+- Les touches qui sont des synonymes d'autres commandes. Par exemple, CTRL-P
+  et CTRL-N. Utilisez un caractère supplémentaire pour permettre plus de
+  mappages.
+
+Voir le fichier |index.txt| pour les touches qui ne sont pas définies et
+peuvent ainsi être mappées sans recouvrir une fonction interne. Vous pouvez
+aussi utiliser ":help {sequence}^D" pour tester si une séquence de touches est
+utilisée dans une commande ({sequence} désigne la séquence recherchée, ^D est
+mis pour CTRL-D).
+
+							*map-examples*
+Quelques exemples de mappages (donnés tels qu'ils doivent être saisis : pour
+"<CR>", tapez quatre caractères ; le drapeau '<' doit être exclu de
+'cpoptions' pour que cela fonctionne) : >
+
+	:map  <F3>  o#include
+	:map  <M-g> /Ducasse<CR>cwLautréamont<Esc>
+	:map  _x    d/FIN/e<CR>
+	:map! qq    pas très malin
+<
+							*map-typing*
+Vim compare ce que vous tapez avec le début d'une séquence mappée. S'il existe
+une correspondance partielle, il testera plus de caractères jusqu'à ce qu'il
+trouve une correspondance complète ou aucune correspondance du tout.
+   Exemple : avec ":map! qq etc.", le premier 'q' n'apparaîtra pas à l'écran
+jusqu'à ce que vous entriez une autre caractère. En effet, Vim ne sait pas
+alors si le caractère qui suivra sera ou non un 'q'. Si l'option 'timeout' est
+activée (c'est le cas par défaut), Vim attendra une simple seconde (ou le
+délai spécifié par l'option 'timeoutlen'). Après cela, il considérera que le
+'q' doit être interprété tel quel. Si vous tapez lentement, désactivez
+l'option 'timeout'. Vous voudrez alors peut-être fixer l'option 'ttimeout'.
+
+							*map-keys-fails*
+Il existe certaines situations où les codes clavier risquent de ne pas être
+reconnus :
+- Vim ne peut lire qu'une partie du code clavier. Souvent, il s'agit
+  uniquement du premier caractère. Cela peut arriver sur certains Unix dans un
+  xterm.
+- Le code clavier suit un (des) caractère(s) mappé(s). P. ex., "<F1><F1>" ou
+  "g<F1>".
+Dans ces situations, le code clavier n'est pas reconnu et le mappage échoue.
+
+Deux choses sont nécessaires pour résoudre ce problème :
+- Supprimer le drapeau 'K' de 'cpoptions'. Cela obligera Vim à attendre le
+  reste des caractères de la touche de fonction.
+- Quand <F1> ... <F4> sont utilisés, le code clavier actuellement produit peut
+  correspondre à <xF1> ... <xF4>. Il y a des mappages de <xF1> à <F1>, <xF2> à
+  <F2>, etc., mais ils ne sont pas reconnus après une autre moitié de mappage.
+  Assurez-vous que les codes clavier pour <F1> ... <F4> sont corrects : >
+	:set <F1>=<tapez CTRL-V><tapez F1>
+< Entrez le <F1> comme quatre caractères. La partie après le "=" doit être
+  saisie avec les touches actuelles, pas du texte littéral.
+
+Une autre solution consiste à utiliser le code clavier actuel dans le mappage
+pour la deuxième touche spéciale : >
+	:map <F1><Esc>OP :echo "oui"<CR>
+Ne tapez pas un véritable <Echap> : Vim reconnaîtrait le code clavier et le
+remplacerait malgré tout par <F1>.
+
+							*recursive_mapping*
+Si vous incluez {ctg} dans {ctd}, vous obtenez un mappage récursif. Quand
+{ctg} est tapé, il sera remplacé par {ctd}. Quand le {ctg} qui est inclus dans
+{ctd} est rencontré, il est remplacé par {ctd}, et ainsi de suite. Il est
+ainsi possible de répéter une commande un nombre infini de fois. Le seul
+problème est qu'on ne peut arrêter cela qu'en provoquant une erreur. Les
+macros pour résoudre un labyrinthe utilisent cette technique, étudiez-les si
+vous voulez un exemple.
+   Exception : si {ctd} débute par {ctg}, le premier caractère n'est pas mappé
+à nouveau (ce comportement est compatible).
+   Par exemple >
+	:map ab abcd
+exécutera la commande "a" et insérera "bcd" dans le texte. Le "ab" dans {ctd}
+ne sera pas mappé à nouveau.
+
+Si vous voulez échanger la signification de deux touches, vous devrez utiliser
+la commande ":noremap". Par exemple : >
+	:noremap k j
+	:noremap j k
+Ceci échangera les touches déplaçant le curseur en haut/bas.
+
+Avec une commande ":map" normale, quand l'option 'remap' est activée, le
+mappage se poursuivra jusqu'à ce que le texte ne soit plus considéré comme une
+partie d'un {ctg}. Par exemple, si vous faites >
+	:map x y
+	:map y x
+Vim remplacera "x" par "y", puis "y" par "x", etc. Au bout de 'maxmapdepth'
+fois (défaut : 1000), Vim donnera le message d'erreur "recursive mapping".
+
+							*:map-undo*
+Si vous incluez une commande d'annulation dans une séquence mappée, cela
+ramènera le texte dans l'état d'avant l'exécution de la macro. Ceci est
+compatible avec le Vi original, tant qu'il n'y a qu'une seule commande
+d'annulation dans la séquence mappée (avoir deux commandes d'annulation dans
+une séquence mappée n'a pas de sens dans le Vi original, on reviendrait alors
+au texte d'avant la première annulation).
+
+							*:map-special-keys*
+Il y a trois façons de mapper une touche spéciale :
+1. La méthode compatible Vi : mapper le code clavier. Il s'agit souvent d'une
+   séquence qui débute par <Echap>. Pour entrer un tel mappage, tapez la
+   commande ":map ", puis CTRL-V, avant de taper la touche spéciale.
+   NOTE : Si le code clavier de la touche est dans le termcap (les options
+   't_'), il sera automatiquement traduit en code interne et rejoindra la
+   deuxième méthode de mappage (à moins que le drapeau 'k' ne soit inclus dans
+   'cpoptions').
+2. La seconde méthode consiste à utiliser le code interne de la touche
+   spéciale. Pour entrer un tel mappage, tapez CTRL-K puis la touche spéciale,
+   ou utilisez la forme "#1", "#2", .. "#9", "#0", "<Up>", "<S-Down>",
+   "<S-F7>", etc. (voir le tableau des touches |key-notation|, toutes les
+   touches après <Up> peuvent être utilisées). Les dix premières touches de
+   fonction peuvent être définies de deux manières : juste avec le nombre,
+   comme "#3", ou avec "<F>", comme "<F3>". Tous deux font référence à la
+   touche de fonction 3. "#0" fait référence à la touche de fonction 10,
+   définie par l'option 't_f10', qui peut aussi être la touche de fonction
+   zéro sur certains claviers. La forme <> ne peut pas être utilisée si
+   'cpoptions' contient le drapeau '<'.
+3. Utiliser l'entrée termcap, avec la forme form <t_xx>, où "xx" est le nom de
+   l'entrée termcap. N'importe quelle chaîne peut être utilisée. Par exemple >
+	:map <t_F3> G
+<  mappe la touche de fonction 13 à "G". Ceci ne fonctionne pas si 'cpoptions'
+   contient le drapeau '<'.
+
+L'avantage des deuxième et troisième méthodes est que le mappage fonctionnera
+sans modification sur différents terminaux (la touche spéciale sera traduite
+dans le même code interne ou code clavier actuel, indépendamment du terminal
+que vous utilisez. Le termcap doit être correct pour que cela fonctionne, et
+vous devez utilisez les même mappages).
+
+DÉTAILS : Vim teste d'abord si une séquence du clavier est mappée. Si ce n'est
+pas le cas, les codes clavier du terminal sont essayés (voir
+|terminal-options|). Si un code du terminal est trouvé, il est remplacé par le
+code interne. Puis le test de mappage est effectué à nouveau (afin que vous
+puissiez mapper un code interne à quelque chose d'autre). Ce qui est écrit
+dans le fichier de script dépend de ce qui est reconnu. Si le code clavier du
+terminal a été reconnu comme un mappage, le code clavier lui-même est écrit
+dans le fichier de script. S'il a été reconnu comme un code de terminal, le
+code interne est écrit dans le fichier de script.
+
+==============================================================================
+2. Abréviations				    *abbreviations* *Abbreviations*
+
+Les abréviations sont utilisées en mode Insertion, Remplacement et
+Ligne-de-commande. Si vous entrez un mot qui est une abréviation, il est
+remplacé par le mot pour lequel il est mis. Cela peut être utilisé pour
+faciliter la saisie de mots longs ou difficiles revenant fréquemment. Ou bien
+pour corriger automatiquement des fautes de frappe ou d'orthographe communes.
+   Exemples : >
+
+	:iab cad c.-à-d.
+	:iab zorglib zorglub
+
+Il y a trois types d'abréviations :
+
+plein-id  Le type « plein-id » consiste entièrement en caractères de mot-clé
+	  (lettres et caractères de l'option 'iskeyword'). C'est l'abréviation
+	  la plus commune.
+	  Exemples : "toto", "g3", "-1".
+
+fin-id	  Le type « fin-id » se termine par un caractère de mot-clé, mais tous
+	  les autres caractères ne sont pas des caractères de mot-clé.
+	  Exemples : "#i", "..f", "$/7".
+
+non-id	  Le type « non-id » se termine par un caractère de non-mot-clé, les
+	  autres caractères pouvant être de n'importe quel type, excepté
+	  espace et tabulation. {Vi ne supporte pas ce type-là}
+	  Exemples : "def#", "4/7$".
+
+Exemples de chaînes qui ne peuvent pas être abrégées : "a.b", "#def", "a b" et
+"_$r".
+
+Une abréviation est reconnue uniquement quand vous tapez un caractère de
+non-mot-clé. Cela peut aussi être le <Echap> qui termine le mode Insertion, ou
+le <CR> qui termine une commande. Le caractère de non-mot-clé qui termine
+l'abréviation est inséré après le développement de l'abréviation. Le caractère
+<C-]> fait exception, il peut être utilisé pour développer une abréviation
+sans insérer de caractères supplémentaire.
+
+Exemple : >
+	:ab bj bonjour
+<		"bj<Espace>" est développé en "bonjour<Espace>"
+		"bj<C-]>"    est développé en "bonjour"
+
+Les caractères devant le curseur doivent correspondre à l'abréviation. Chaque
+type possède une contrainte supplémentaire :
+
+plein-id  Devant la correspondance, il doit y avoir un caractère de
+	  non-mot-clé, ou cela doit être l'endroit où commence la ligne ou
+	  l'insertion. Exception : quand l'abréviation fait un seul caractère,
+	  elle n'est pas reconnue s'il y a un caractère de non-mot-clé devant,
+	  autre qu'un espace ou une tabulation.
+
+fin-id	  Devant la correspondance, il doit y avoir un caractère de mot-clé,
+	  un espace ou une tabulation, ou cela doit être l'endroit où commence
+	  la ligne ou l'insertion.
+
+non-id	  Devant la correspondance, il doit y avoir un espace ou une
+	  tabulation, ou cela doit être l'endroit où commence la ligne ou
+	  l'insertion.
+
+Exemples ({CURSEUR} indique l'endroit où vous tapez un caractère de
+non-mot-clé) : >
+	:ab chap chapitre
+<		" chap{CURSEUR}"      est développé en "chapitre"
+		" chapiteau{CURSEUR}" n'est pas développé
+		"Échap{CURSEUR}"      n'est pas développé >
+	:ab #i #include
+<		"#i{CURSEUR}"	      est développé en "#include"
+		">#i{CURSEUR}"        n'est pas développé >
+	:ab ;; <endofline>"
+<		"test;;"	      n'est pas développé
+		"test ;;"	      est développé en "test <endofline>"
+
+Pour éviter le développement d'une abréviation en mode Insertion : tapez une
+partie de l'abréviation, quittez le mode Insertion avec <Echap>, revenez en
+mode Insertion avec "a", puis tapez le restant. Ou tapez CTRL-V avant le
+caractère suivant l'abréviation.
+   Pour éviter le développement d'une abréviation en mode Ligne-de-commande :
+tapez CTRL-V deux fois à un endroit quelconque de l'abréviation. Un CTRL-V
+devant un caractère normal est ignoré la plupart du temps.
+
+Il est possible de faire déplacer le curseur après une abréviation : >
+	:iab if if ()<Left>
+Ceci ne fonctionne pas si 'cpoptions' contient le drapeau '<'. |<>|
+
+On peut même faire des choses plus complexes. Par exemple, pour « ravaler »
+l'espace tapé après une abréviation : >
+	func RavalerCaractere(mtf)
+	  let c = nr2char(getchar())
+	  return (c =~ a:mtf) ? '' : c
+	endfunc
+	iabbr <silent> if if ()<Left><C-R>=RavalerCaractere('\s')<CR>
+
+Il n'y a pas d'abréviation par défaut.
+
+Les abréviations ne sont jamais récursives. Vous pouvez utiliser
+":ab t t-o-t-o" sans aucun problème. Mais les abréviations peuvent être
+mappées. {Vi : certaines versions supportent des abréviations récursives, sans
+utilité apparente}
+
+Les abréviations sont désactivées si l'option 'paste' est activée.
+
+				    *:abbreviate-local* *:abbreviate-<buffer>*
+Comme les mappages, les abréviations peuvent être locales à un tampon. C'est
+essentiellement utile dans un greffon de type de fichier |filetype-plugin|.
+Exemple pour un greffon C : >
+	:abb <buffer> FF  for (i = 0; i < ; ++i)
+<
+						*:ab* *:abbreviate*
+:ab[breviate]		Liste toutes les abréviations. Le caractère dans la
+			première colonne indique le mode dans lequel
+			l'abréviation est utilisée : 'i' pour Insertion, 'c'
+			pour Lignecmd, '!' pour les deux.
+
+:ab[breviate] {ctg}	Liste les abréviations qui débutent par {ctg}.
+
+:ab[breviate] {ctg} {ctd}
+			Ajoute une abréviation de {ctg} à {ctd}. Si {ctg}
+			existe déjà, il est remplacé par le nouveau {ctd}.
+			{ctd} peut contenir des espaces.
+
+						*:una* *:unabbreviate*
+:una[bbreviate] {ctg}	Supprime l'abréviation de {ctg} de la liste.
+
+						*:norea* *:noreabbrev*
+:norea[bbrev] [ctg] [ctd]
+			Comme ":ab", mais interdit le remappage de {ctd}.
+			{absent de Vi}
+
+						*:ca* *:cabbrev*
+:ca[bbrev] [ctg] [ctd]	Comme ":ab", mais uniquement pour le mode Lignecmd.
+			{absent de Vi}
+
+						*:cuna* *:cunabbrev*
+:cuna[bbrev] {ctg}	Comme ":una", mais uniquement pour le mode Lignecmd.
+			{absent de Vi}
+
+						*:cnorea* *:cnoreabbrev*
+:cnorea[bbrev] [ctg] [ctd]
+			Comme ":ab", mais uniquement pour le mode Lignecmd, et
+			interdit le remappage de {ctd}. {absent de Vi}
+
+						*:ia* *:iabbrev*
+:ia[bbrev] [ctg] [ctd]	Comme ":ab", mais uniquement pour le mode Insertion
+			{absent de Vi}
+
+						*:iuna* *:iunabbrev*
+:iuna[bbrev] {ctg}	Comme ":una", mais uniquement pour le mode Insertion.
+			{absent de Vi}
+
+						*:inorea* *:inoreabbrev*
+:inorea[bbrev] [ctg] [ctd]
+			Comme ":ab", mais uniquement pour le mode Insertion,
+			et interdit le remappage de {ctd}. {absent de Vi}
+
+						*:abc* *:abclear*
+:abc[lear]		Supprime toutes les abréviations. {absent de Vi}
+
+						*:iabc* *:iabclear*
+:iabc[lear]		Supprime toutes les abréviations pour le mode
+			Insertion. {absent de Vi}
+
+						*:cabc* *:cabclear*
+:cabc[lear]		Supprime toutes les abréviations pour le mode
+			Lignecmd. {absent de Vi}
+
+						*using_CTRL-V*
+Il est possible d'utiliser des caractères spéciaux dans le {ctd} d'une
+abréviation. CTRL-V doit être utilisé pour désactiver la signification
+spéciale de la plupart des caractères non-imprimables. Le nombre de CTRL-V
+nécessaires dépend de la façon dont vous avez entré l'abréviation. Cela vaut
+aussi pour les mappages. Prenons un exemple pour illustrer notre propos.
+
+Supposons que vous vouliez utiliser l'abréviation "ech" pour entrer un
+caractère d'échappement. Quand vous tapez la commande ":ab" dans Vim, vous
+devez entrer ceci (ici, ^V désigne un CTRL-V, et ^[ un <Echap>) :
+
+Vous tapez :		    ab ech ^V^V^V^V^V^[
+
+	Toute entrée clavier est soumise à l'interprétation de la protection
+	par ^V, de telle sorte que les premier, troisième et cinquième
+	caractères ^V permettent simplement aux deuxième et quatrième ^V,
+	ainsi qu'à ^[, d'être entrés à la ligne de commande.
+
+Vous voyez :		    ab ech ^V^V^[
+
+	La ligne de commande contient en réalité deux ^V avant ^[. C'est ainsi
+	que cela devrait apparaître dans votre fichier exrc, si vous suivez
+	cette méthode. Le premier ^V sert à protéger le second ; la commande
+	":ab" utilise ^V comme caractère de protection, vous pouvez ainsi
+	inclure un espace blanc protégé ou le caractère '|' dans
+	l'abréviation. La commande ":ab" ne considère pas le caractère ^[
+	comme spécial, il n'a donc pas besoin d'être protégé. (Mais vous
+	pouvez « surprotéger » des caractères sans crainte : la saisie de 7
+	(mais pas 8 !) caractères ^V fonctionnera.)
+
+Ce qui est enregistré :	    ech     ^V^[
+
+	Après analyse syntaxique, la forme courte de l'abréviation ("ech") et
+	la forme longue (les deux caractères "^V^[") sont enregistrés dans la
+	table des abréviations. Si vous donnez la commande ":ab" sans
+	argument, c'est ainsi que l'abréviation sera affichée.
+
+	Ensuite, quand l'abréviation est développée parce que l'utilisateur a
+	tapé le mot "ech", la forme longue est soumise au même type
+	d'interprétation pour ^V qu'avec l'entrée clavier. Alors, ^V protège
+	le caractère ^[ et l'empêche d'être interprété comme caractère de
+	sortie du mode courant. Au lieu de cela, ^[ est inséré dans le texte.
+
+Ce qui est développé :	    ^[
+
+(Exemple fourni par Steve Kirkendall.)
+
+==============================================================================
+3. Fonctions et mappages locaux				*script-local*
+
+Lorsque vous utilisez plusieurs fichiers de script Vim, il y a toujours le
+danger que les mappages et fonctions utilisés dans un script n'aient le même
+nom que ceux d'un autre script. Pour éviter cela, vous pouvez les rendre
+locaux à un seul script.
+
+{absent de Vi}
+{uniquement si compilé avec la fonctionnalité |+eval|}
+
+							*<SID>* *<SNR>* *E81*
+La chaîne "<SID>" peut être utilisée dans un mappage ou un menu. Cela
+nécessite que le drapeau '<' soit exclu de 'cpoptions'.
+   Lors de l'exécution de la commande de mappage, Vim remplacera "<SID>" par
+le code clavier spécial <SNR>, suivi par un nombre unique pour le script et un
+souligné ('_'). Par exemple >
+	:map <SID>Add
+pourrait définir un mappage "<SNR>23_Add".
+
+Lors de la définition d'un fonction dans un script, "s:" peut être préfixé au
+nom pour la rendre locale au script. Mais quand un mappage est exécuté à
+l'extérieur du script, il ne sait pas dans quel script la fonction a été
+définie. Pour éviter ce problème, utilisez "<SID>" plutôt que "s:". La même
+traduction que pour les mappages est effectuée. Cela permet de définir un
+appel à la fonction dans un mappage.
+
+Quand une fonction locale est exécutée, elle tourne dans le contexte du script
+à l'intérieur duquel elle a été définie. Cela signifie que les nouvelles
+fonctions et mappages qu'elle définit peuvent également utiliser "s:" ou
+"<SID>", et que ce sera le même nombre unique que celui de la fonction mère
+qui sera utilisé. Les variables locales de script |s:var| peuvent aussi
+être utilisées.
+
+Quand une autocommande ou une commande utilisateur est exécutée, elle tourne
+dans le contexte du script à l'intérieur duquel elle a été définie. Il est
+alors possible à la commande d'appeler une fonction locale ou d'utiliser un
+mappage local.
+
+Dans les autres cas, l'utilisation de "<SID>" en dehors d'un contexte de
+script produira une erreur.
+
+Si vous souhaitez connaître le numéro de script pour l'utiliser dans un script
+complexe, utilisez cette astuce : >
+	:map <SID>xx <SID>xx
+	:let s:sid = maparg("<SID>xx")
+	:unmap <SID>xx
+Et supprimez le "xx" final.
+
+Les "<SNR>" seront donnés lors du listage des fonctions ou mappages. C'est
+utile si vous désirez savoir à quoi ils ont été définis.
+
+La commande |:scriptnames| peut être utilisée pour voir quels scripts ont été
+sourcés et connaître leur numéro <SNR>.
+
+==============================================================================
+4. Commandes utilisateur				*user-commands*
+
+Il vous est possible de définir vos propres commandes Ex. Une commande définie
+par l'utilisateur se comporte exactement comme une commande interne (elle peut
+avoir une plage ou des arguments, ces arguments peuvent être complétés en noms
+de fichiers ou noms de tampons), sauf que lors de l'exécution, elle est
+transformée en une commande Ex normale puis exécutée.
+
+Pour les débutants, lire la section |40.2| du Manuel de l'utilisateur.
+
+						*E183* *user-cmd-abmiguous* XXX Coquille
+Toutes les commandes définies par l'utilisateur doivent débuter par une lettre
+majuscule, afin d'éviter toute confusion avec les commandes internes. (Il
+existe un petit nombre de commandes internes, particulièrement ":Next",
+":Print" et ":X", qui débutent par une majuscule. La commande interne sera
+toujours prioritaire en cas de conflit.) Les autres caractères du nom de la
+commande utilisateur peuvent être indépendamment des lettres majuscules,
+minuscules, ou des chiffres.
+   NOTE : Si vous utilisez des chiffres, des commandes acceptant un argument
+numérique peuvent devenir ambiguës. Par exemple, ":Cc2" peut faire référence à
+la commande utilisateur ":Cc2" sans argument, ou à la commande ":Cc" avec
+l'argument "2". Il est conseillé de placer un espace entre le nom de la
+commande et l'argument pour éviter ces problèmes.
+
+Lors de l'utilisation d'une commande utilisateur, celle-ci peut être abrégée.
+Si une abréviation n'est pas unique, une erreur sera émise. De plus, une
+commande interne sera toujours prioritaire sur une commande utilisateur.
+
+Exemples : >
+	:command Renommer ...
+	:command Renumeroter ...
+	:Reno				" développé en ":Renommer"
+	:Renu				" développé en ":Renumeroter"
+	:Ren				" erreur : nom ambigu
+	:command Page ...
+	:P				" la fonction interne ":Print"
+
+Il est recommandé d'utiliser le nom complet des commandes utilisateur dans les
+scripts.
+
+							*:com* *:command*
+:com[mand]		Liste toutes les commandes utilisateur. Lors du
+			listage des commandes, les caractères des deux
+			premières colonnes désignent :
+			    !	Commande avec l'attribut -bang
+			    "	Commande avec l'attribut -register
+			    b	Commande locale au tampon courant    ["Buffer"]
+			(Voir ci-dessous pour plus de détails sur les
+			attributs.)
+
+:com[mand] {cmd}	Liste les commandes utilisateur débutant par {cmd}.
+
+							*E174* *E182*
+:com[mand][!] [{attr}...] {cmd} {rempl}
+			Définit une commande utilisateur. La commande a pour
+			nom {cmd}, pour texte de remplacement {rempl} et pour
+			attributs {attr} (voir ci-dessous). Si la commande
+			existe déjà, une erreur est émise, à moins que [!] ne
+			soit spécifié, auquel cas la commande est redéfinie.
+
+						*:delc* *:delcommand* *E184*
+:delc[ommand] {cmd} 	Supprime la commande utilisateur {cmd}.
+
+							*:comc* *:comclear*
+:comc[lear] 		Supprime toutes les commandes utilisateur.
+
+
+ATTRIBUTS DES COMMANDES UTILISATEUR
+
+Les commandes utilisateur sont traitées par Vim de la même manière que les
+autres commande Ex. Elles peuvent accepter des arguments ou une plage. Les
+arguments peuvent être compléter comme noms de fichiers, de tampons, etc. La
+façon exacte dont elles fonctionnent dépend des attributs qui sont spécifiés
+à la définition de la commande.
+
+Il existe de nombreux attributs, regroupés en quatre catégories : gestion
+d'arguments, comportement du complètement, gestion de plages et attributs
+spéciaux. Ils sont décrits ci-dessous, par catégorie.
+
+Gestion d'arguments					*E175* *E176*
+-------------------
+Par défaut, une commande utilisateur n'accepte aucun argument (et une erreur
+est émise si on lui en fournit). Cependant, il est possible de spécifier que
+la commande peut accepter des arguments en utilisant l'attribut -nargs. Les
+formes valides sont :
+
+	-nargs=0    aucun argument autorisé (défaut)
+	-nargs=1    exactement un argument requis
+	-nargs=*    n'importe quel nombre d'arguments autorisé (0, 1, ou plus)
+	-nargs=?    0 ou 1 argument autorisé
+	-nargs=+    arguments requis, mais n'importe quel nombre
+
+Dans ce contexte, les arguments peuvent être séparés par des espaces ou des
+tabulations (non protégés).
+
+Comportement du complètement	    *:command-completion* *E179* *E180* *E181*
+----------------------------
+Par défaut, les arguments des commandes utilisateur ne sont pas sujets au
+complètement. Cependant, en spécifiant un des attributs suivants, un
+complètement peut être activé pour les arguments :
+
+	-complete=augroup	  groupes d'autocommandes
+	-complete=buffer	  noms de tampons
+	-complete=command	  commandes Ex (et arguments)
+	-complete=dir		  noms de répertoires
+	-complete=environment	  noms de variables d'environnement
+	-complete=event		  événements d'autocommande
+	-complete=expression	  expressions Vim
+	-complete=file		  noms de fichiers et de répertoires
+	-complete=function	  noms de fonctions
+	-complete=help		  sujets d'aide
+	-complete=highlight	  groupes de surbrillance
+	-complete=mapping	  noms de mappages
+	-complete=menu		  menus
+	-complete=option	  options
+	-complete=tag		  marqueurs
+	-complete=tag_listfiles	  marqueurs, avec les noms de fichiers quand
+				     CTRL-D est saisi
+	-complete=var		  variables utilisateur
+	-complete=custom,{fonc}   complètement personnalisé, défini via {fonc}
+
+Complètement personnalisé	    *:command-completion-custom* *E467* *E468*
+-------------------------
+Il est possible de définir des mécanismes de complètement personnalisés via
+l'argument de complètement "custom,{fonc}". La partie {fonc} devrait
+correspondre à une fonction de prototype suivant : >
+
+	:function {fonc}(DébutArg, LigneCmd, PosCurs)
+
+Les trois arguments ne sont pas obligatoires, mais la fonction doit fournir
+les candidats pour le complètement dans sa valeur de retour, un par ligne
+(avec des sauts-de-lignes comme séparateurs). Les arguments de la fonction
+sont :
+
+	DébutArg	la partie initiale de l'argument sur lequel porte le
+			   complètement XXX
+	LigneCmd	la ligne de commande entière
+	PosCurs		la position respective du curseur
+
+Ces arguments peuvent être utilisés pour déterminer le contexte. It is not
+necessary to filter candidates against the (implicit pattern in) DébutArg.
+Vim will do filter the candidates with its regexp engine after function
+return, and this is probably more efficient in most cases. XXX
+
+L'exemple suivant permet de lister les noms d'utilisateurs pour une commande
+":Finger" >
+
+	:com -complete=custom,ListerUtilisateurs -nargs=1 Finger !finger <args>
+    	:fun ListerUtilisateurs(A,L,P)
+    	:  return system("cut -d: -f1 /etc/passwd")
+    	:endfun
+
+Gestion de plages   					*E177* *E178*
+-----------------
+Par défaut, une commande utilisateur n'accepte pas de plage de numéros de
+lignes. Cependant, il est possible de spécifier que la commande accepte une
+plage (avec l'attribut -range), ou qu'elle accepte un nombre arbitraire, soit
+soit à la position des numéros de lignes (avec -range=N, comme pour la
+commande |:split|), soit comme un argument de type « quantificateur » (avec
+-count=N, comme pour la commande |:Next|). Les attributs possibles sont :
+
+	-range	    Plage autorisée, défaut : ligne courante.
+	-range=%    Plage autorisée, défaut : fichier entier (1,$).
+	-range=N    Un quantificateur (défaut : N) spécifié à la position des
+		    numéros de lignes (comme pour |:split|).
+	-count=N    Un quantificateur (défaut : N) spécifié soit à la position
+		    des numéros de lignes, soit comme argument initial (comme
+		    pour |:Next|). L'utilisation de -count (sans défaut) est
+		    similaire à -count=0.
+
+NOTE : -range=N et -count=N s'annulent l'un l'autre -- seul un des deux doit
+être spécifié.
+
+Attributs spéciaux
+------------------
+Il existe plusieurs attributs spéciaux :
+
+	-bang	    La commande peut accepter un modificateur [!] (comme ":q"
+		    ou ":w").
+	-bar	    La commande peut être suivie par un '|' puis une autre
+		    commande. Un '|' à l'intérieur de l'argument n'est alors
+		    plus permis. Supporte également les débuts de commentaires
+		    en '"'.
+	-register   Le premier argument de la commande peut être un nom de
+		    registre option (comme pour ":del", ":put" ou ":yank").
+	-buffer	    La commande sera uniquement disponible dans le tampon
+		    courant.
+
+Dans le cas des attributs -count et -register, si l'argument optionnel est
+fourni, il est supprimé de la liste des arguments et est disponible pour le
+texte de remplacement séparément.
+
+
+TEXTE DE REMPLACEMENT
+
+Dans une commande utilisateur, le texte de remplacement est examiné à la
+recherche de séquences d'échappement spéciales, utilisant une notation <>. Les
+séquences d'échappement sont remplacées par des valeurs prises sur la ligne de
+commande entrée, tout le texte restant est copié sans changement. La chaîne
+résultante est exécutée comme une commande Ex. Si le '<' initial d'une
+séquence d'échappement est précédé par une contre-oblique ('\'), cette
+séquence est copiée sans changement.
+
+Les séquences d'échappement valides sont :
+							*<line1>*
+	<line1>	    La première ligne de la plage de la commande.
+							*<line2>*
+	<line2>	    La dernière ligne de la plage de la commande.
+							*<count>*
+	<count>	    N'importe quel quantificateur fourni (comme décrit pour
+		    les attributs -range et -count).
+							*<bang>*
+	<bang>	    (Voir l'attribut -bang.) S'étend en '!' si la commande a
+		    été exécutée avec un modificateur [!] ; sinon, n'est pas
+		    étendu.
+							*<reg>* *<register>*
+	<reg>	    (Voir l'attribut -register.) Le registre optionnel est
+		    spécifié ; sinon, il n'y a pas d'expansion. <register> est
+		    un synonyme.
+							*<args>*
+	<args>	    Les arguments de la commande, exactement tels qu'ils sont
+		    donnés (mais comme remarqué plus haut, n'importe quel
+		    quantificateur ou registre peut être placé en position
+		    d'argument, et ne sera pourtant pas compté comme tel).
+
+	<lt>	    Un caractère '<' simple (inférieur-à). Cela est nécessaire
+		    si vous voulez obtenir une copie littérale d'une de ces
+		    séquences d'échappement après l'expansion (par exemple,
+		    pour obtenir <bang>, utilisez "<lt>bang>").	  ["Less-Than"]
+
+							*<q-args>*
+Si les deux premiers caractères d'une séquence d'échappement sont "q-" (par
+exemple, <q-args>), alors la valeur est protégée de façon à rendre son
+utilisation valide dans une expression ["Quote"]. Ceci traite l'argument comme
+une valeur unique.
+
+Pour autoriser des commandes à passer leurs arguments à des fonctions
+utilisateur, il existe la séquence spéciale <f-args>. Ceci sépare les
+arguments de la commande aux espaces et tabulations, protège chaque argument
+individuellement, puis remplace la séquence <f-args> par la liste d'arguments
+protégés séparés par des virgules. Voir l'exemple avec Macmd ci-dessous. Quand
+il n'y a pas d'arguments, <f-args> n'en a pas non plus.
+
+
+Quelques exemples de commandes utilisateur : >
+	:com Ddel +,$d
+<		Coupe de la ligne suivante jusqu'à la fin du fichier. >
+	:com -nargs=1 -bang -complete=file Ren f <args>|w<bang>
+<		Renomme le tampon courant. >
+	:com! -range -nargs=0 Lignes :echo <line2> - <line1> + 1 "lignes"
+<		Compte le nombre de lignes de la plage. >
+	:com -range -nargs=1 -complete=file						    Remplacer <line1>-pu_|<line1>,<line2>d|r <args>|<line1>d
+<		Remplace une plage par le contenu d'un fichier (cet exemple
+		est en une seule ligne). >
+	:com -nargs=* Macmd call Mafonc(<f-args>)
+<		Appelle une fonction utilisateur (exemple avec <f-args>). Lors
+		de l'exécution de >
+			:Macmd arg1 arg2
+<		la commande suivante sera invoquée : >
+			:call Mafonc("arg1","arg2")
+
+	:" Quelque chose d'un peu plus consistant :
+	:function Touslesargs(commande)
+	:  let i = 0
+	:  while i < argc()
+	:    if filereadable(argv(i))
+	:      execute "e " . argv(i)
+	:      execute a:commande
+	:    endif
+	:    let i = i + 1
+	:  endwhile
+	:endfunction
+	:com -nargs=+ -complete=command Touslesargs call Touslesargs(<q-args>)
+<		La commande ":Touslesargs" prend n'importe quelle(s)
+		commande(s) Vim en argument et l'exécute sur tous les fichiers
+		de la liste d'arguments.
+		Exemple d'utilisation (notez l'emploi du drapeau 'e' pour
+		ignorer les erreurs, et de la commande ":update" pour écrire
+		les tampon modifiés) : >
+			:Touslesargs %s/toto/titi/ge|update
+<		Ceci invoquera : >
+			:call Touslesargs("%s/toto/titi/ge|update")
+
+Si vous définissez une commande utilisateur dans un script, elle sera capable
+d'appeler des fonctions locales au script et d'utiliser des mappages locaux
+au script. Quand un utilisateur appellera la commande utilisateur, elle
+tournera dans le contexte du script dans lequel elle a été définie. Ceci est
+important si |<SID>| est utilisé dans une commande.
+
+ vim:tw=78:ts=8:ft=help:norl:

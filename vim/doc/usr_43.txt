@@ -1,0 +1,187 @@
+*usr_43.txt*    Pour Vim version 6.2c.
+
+               MANUEL de l'UTILISATEUR VIM - par Bram Moolenaar
+
+                        Utiliser les types de fichier
+
+
+Quand vous éditez un fichier d'un certain type, un programme en C ou un script
+shell par exemple, vous utilisez souvent les mêmes paramètres et mappages. Il 
+est lassant de devoir les fixer manuellement à chaque fois. Ce chapitre
+explique comment le faire automatiquement.
+
+|43.1|  Greffons pour un type de fichiers
+|43.2|  Ajouter un type de fichier
+
+  Chapitre suivant : |usr_44.txt|  Créer ses propres colorations syntaxiques
+Chapitre précédent : |usr_42.txt|  Ajouter de nouveaux menus
+Table des matières : |usr_toc.txt|
+
+==============================================================================
+*43.1*  Greffons pour un type de fichier                *filetype-plugin*
+
+L'utilisation des greffons de types de fichiers a déjà été abordée ici : 
+|add-filetype-plugin|. Mais vous n'êtes probablement pas satisfaits par les 
+réglages par défaut, parce qu'ils ont été réduits au minimum. Supposez que
+pour les fichiers C vous vouliez fixer l'option 'softtabstop' à 4 et définir 
+un mappage pour insérer un commentaire de trois lignes. Vous pouvez le faire 
+en seulement deux étapes :
+
+                                                        *your-runtime-dir*
+1. Créez votre propre répertoire de support. Sur Unix, il s'agit
+   habituellement de "~/.vim". Dans ce répertoire, créez le répertoire
+   "ftplugin" : >
+
+        mkdir ~/.vim
+        mkdir ~/.vim/ftplugin
+<
+   Si vous n'êtes pas sur Unix, vérifiez la valeur de l'option 'runtimepath' 
+   pour voir où Vim cherchera le répertoire "ftplugin" : >
+
+        set runtimepath
+<
+   Vous devriez normalement utiliser le premier nom de répertoire (avant la 
+   première virgule). Il vous est possible de préfixer un nom de répertoire à
+   l'option 'runtimepath' dans votre fichier |vimrc| si la valeur par défaut 
+   ne vous convient pas.
+
+2. Créez le fichier "~/.vim/ftplugin/c.vim", avec le contenu suivant : >
+
+        setlocal softtabstop=4
+        noremap <buffer> <LocalLeader>c o/**************<CR><CR>/<Esc>
+
+Essayez d'éditer un fichier C. Vous devriez remarquer que l'option 
+'softtabstop' est fixée à 4. Mais quand vous éditez un autre fichier elle 
+est réinitialisée à la valeur par défaut, zéro. C'est parce que la commande
+":setlocal" a été utilisée. Cela fixe l'option 'softtabstop' seulement 
+localement pour le tampon. Dès que vous éditez un autre tampon, elle prend 
+la valeur fixée pour ce tampon. Pour un nouveau tampon, elle prendra la 
+valeur par défaut ou la valeur donnée lors de la dernière utilisation de la 
+commande ":set".
+
+De même, le mappage pour "\c" disparaîtra lors de l'édition d'un autre tampon. 
+La commande ":map <buffer>" crée un mappage local au tampon courant.
+Cela fonctionne avec n'importe quelle commande de mappage : ":map!", ":vmap",
+etc. Le |<LocalLeader>| dans le mappage est remplacé par la valeur de 
+"maplocalleader".
+
+Vous pouvez trouver des exemples de greffons de types de fichiers dans ce
+répertoire : >
+
+        $VIMRUNTIME/ftplugin/
+
+Vous trouverez de plus amples détails pour écrire un greffon de type de
+fichier ici : |write-plugin|.
+
+==============================================================================
+*43.2*  Ajouter un type de fichier
+
+Si vous utilisez un type de fichier qui n'est pas reconnu par Vim, voici
+comment faire pour qu'il soit reconnu. Vous avez besoin de votre propre
+répertoire de support. Voir |your-runtime-dir| plus haut.
+
+Créez un fichier "filetype.vim" qui contient une autocommande pour votre type
+de fichier. (Les autocommandes sont expliquées dans la section |40.3|.)
+Exemple : >
+
+        augroup filetypedetect
+        au BufNewFile,BufRead *.xyz     setf xyz
+        augroup END
+
+Ceci reconnaîtra tous les fichiers se terminant par ".xyz" comme des fichiers
+de type "xyz". Les commandes ":augroup" placent cette autocommande dans le
+groupe "filetypedetect". Ceci permet la suppression de toutes les
+autocommandes de détection de type de fichier quand vous ferez ":filetype
+off". La commande "setf" fixera l'option 'filetype' à la valeur de son
+argument, à moins qu'elle n'ait déjà été fixée. Ceci assurera que 'filetype'
+n'aura pas été fixé deux fois.
+
+Vous pouvez utiliser plusieurs motifs de correspondance différents pour le
+fichier. Des noms de répertoire peuvent également être inclus. Voir
+|autocmd-patterns|. Par exemple, les fichiers de "/usr/share/scripts/" sont
+tous des fichiers ruby, mais les noms des fichiers n'ont pas l'extension
+attendue. Ajoutons ceci à l'exemple ci-dessus : >
+
+        augroup filetypedetect
+        au BufNewFile,BufRead *.xyz                     setf xyz
+        au BufNewFile,BufRead /usr/share/scripts/*      setf ruby
+        augroup END
+
+Cependant, si vous éditez à présent un fichier /usr/share/scripts/README.txt,
+il ne s'agit pas d'un fichier ruby. Le danger d'un motif se terminant par "*" 
+est qu'il correspond vite à trop de fichiers. Pour éviter ce type de problème, 
+placez le fichier "filetype.vim" dans un autre répertoire, un qui se trouve à la 
+fin de 'runtimepath'. Pour Unix par exemple, vous pouvez utiliser 
+"~/.vim/after/filetype.vim".
+   Introduisez maintenant la détection des fichiers texte dans 
+"~/.vim/filetype.vim" : >
+
+        augroup filetypedetect
+        au BufNewFile,BufRead *.txt                     setf text
+        augroup END
+
+Ce fichier est trouvé en premier selon l'ordre de 'runtimepath'. Utilisez
+ceci dans ~/.vim/after/filetype.vim, qui se trouve en dernier : >
+
+        augroup filetypedetect
+        au BufNewFile,BufRead /usr/share/scripts/*      setf ruby
+        augroup END
+
+À présent, Vim cherchera les fichiers "filetype.vim" dans chaque répertoire
+de 'runtimepath'. "~/.vim/filetype.vim" est trouvé en premier. L'autocommande 
+détecter les fichiers *.txt est définie ici. Ensuite, Vim trouve le fichier
+"filetype.vim" dans $VIMRUNTIME, qui est au milieu de 'runtimepath'. Enfin, 
+"~/.vim/after/filetype.vim" est trouvé et l'autocommande pour la détection 
+des fichiers ruby dans "/usr/share/scripts" est ajoutée.
+   À présent, quand vous éditez "/usr/share/scripts/README.txt", les
+autocommandes sont testées dans l'ordre dans lequel elles ont été définies.
+Le motif *.txt correspondant, "setf text" est exécuté pour indiquer qu'il 
+s'agit d'un fichier de type "text". Le motif pour les fichiers ruby 
+correspond également et la commande "setf ruby" est exécutée. Mais comme 
+'filetype' a déjà été fixé à "text", cela reste sans effet.
+   Quand vous éditez le fichier "/usr/share/scripts/bidule" les mêmes
+autocommandes sont testées. Seule celle pour ruby correspond et "setf ruby" 
+fixe 'filetype' à "ruby".
+
+
+RECONNAISSANCE PAR CONTENU
+
+Si votre fichier ne peut être reconnu grâce à son nom, vous pourriez être
+capable de le reconnaître grâce à son contenu. Par exemple, de nombreux
+fichiers de scripts commencent par une ligne du genre :
+
+        #!/bin/xyz ~
+
+Pour reconnaître ce script, créez un fichier "scripts.vim" dans votre
+répertoire de support (au même endroit que "filetype.vim"). Il pourrait
+ressembler à ceci : >
+
+        if did_filetype()
+          finish
+        endif
+        if getline(1) =~ '^#!.*[/\\]xyz\>'
+          setf xyz
+        endif
+
+Le premier test avec did_filetype() permet d'éviter d'avoir à inspecter le
+contenu des fichiers dont le type a déjà été trouvé grâce à leur nom. Cela
+permet d'éviter de perdre du temps en examinant le fichier alors que la
+commande "setf" ne fera rien du tout.
+   Le fichier "scripts.vim" est sourcé par une autocommande dans le fichier 
+filetype.vim par défaut. Par conséquent, l'ordre des vérifications est :
+
+        1° Les fichiers "filetype.vim" avant $VIMRUNTIME dans 'runtimepath' ;
+        2° La première partie de "$VIMRUNTIME/filetype.vim" ;
+	3° Tous les fichiers "scripts.vim" dans 'runtimepath' ;
+        4° Le reste de "$VIMRUNTIME/filetype.vim" ;
+        5° Les fichiers "filetype.vim" après $VIMRUNTIME dans 'runtimepath' ;
+
+Si ceci ne vous suffit pas, ajoutez une autocommande qui correspond à tous les 
+fichiers et qui source un script ou exécute une fonction pour inspecter le
+contenu du fichier.
+
+==============================================================================
+
+Chapitre suivant : |usr_44.txt|  Créer ses propres colorations syntaxiques
+
+Copyright : voir |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:

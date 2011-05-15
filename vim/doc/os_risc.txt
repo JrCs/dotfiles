@@ -1,0 +1,347 @@
+*os_risc.txt*   Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Thomas Leonard
+
+
+						*riscos* *RISCOS* *RISC-OS*
+Ce fichier contient les particularités de la version RISC OS de Vim.
+
+Le portage RISC OS est entièrement nouveau et n'est pas basé sur l'ancien
+portage "archi".
+
+ 1. Emplacement des fichiers			|riscos-locations|
+ 2. Conversion des noms de fichiers		|riscos-munging|
+ 3. Utilisation de ligne de commande		|riscos-commandline|
+ 4. Utilisation du Desktop (IHM graphique)	|riscos-gui|
+ 5. Utilisation à distance (telnet)		|riscos-remote|
+ 6. Fichiers temporaires			|riscos-temp-files|
+ 7. Interruption				|riscos-interrupt|
+ 8. Utilisation de la mémoire			|riscos-memory|
+ 9. Types de fichiers				|riscos-filetypes|
+10. Le shell					|riscos-shell|
+11. Portage de nouvelles versions		|riscos-porting|
+
+Si j'ai oublié quelque chose, envoyez-moi un courriel et je tâcherai de le
+corriger. En fait, même si je n'ai rien oublié, envoyez-moi quand même un
+courriel pour me donner un peu d'assurance sur le fait que ça marche 
+vraiment !
+
+Thomas Leonard <tal197@ecs.soton.ac.uk>
+
+ Site du portage :	http://www.ecs.soton.ac.uk/~tal197/
+	ou alors :	http://www.soton.ac.uk/~tal197/
+
+==============================================================================
+1. Emplacement des fichiers				*riscos-locations*
+
+L'exécutable et les fichiers de ressources partagés de Vim sont tous stockés
+dans le répertoire de l'application !Vim.
+
+Quand !Vim est vu pour la première fois par le Filer, il crée les alias des
+commandes *vi et *ex pour qu'elles exécutent les versions en ligne de commande
+de Vim (voir |riscos-commandline|).
+
+!Vim.Resources et !Vim.Resources2 contiennent les fichiers de la distribution
+standard de Vim, légèrement modifiés pour fonctionner avec les limites de
+ADFS, ainsi que des fichiers supplémentaires tels que les window templates.
+
+Les choix de l'utilisateur sont lus depuis "Choices:*" et enregistrés dans
+`<Choices$Write>.*'. Si vous disposez de la nouvelle structure !Boot, tout
+cela devrait être déjà installé. Si ce n'est pas le cas, fixez Choices$Path à
+une liste de répertoires dans lesquels Vim doit chercher les fichiers de
+configuration de l'utilisateur. Fixez Choices$Write au répertoire dans lequel
+vous souhaitez que les fichiers soient écrits (de façon à ce que vos motifs de
+recherche et vos marques soient mémorisés d'une session à une autre.).
+
+==============================================================================
+2. Conversion des noms de fichiers			*riscos-munging*
+
+Aucune conversion de chemin n'est activée par défaut, donc Vim devrait à
+présent se comporter comme une application RISC OS normale. Ainsi, si vous
+souhaitez éditer "doc/html", vous devrez taper "*vi doc/html"
+
+Les seuls cas dans lesquels une conversion est réalisée sont :
+
+- La recherche de fichiers inclus dans les programmes C, puisqu'ils sont
+  toujours convertis. Voir |[I|.
+  NOTE : Assurez-vous que vous vous trouvez dans le répertoire approprié quand
+  vous utilisez cette commande (c'est-à-dire dans celui contenant les
+  sous-répertoires "c" et "h").
+
+- Le sourcement de fichiers avec la commande |:so|.
+  Les chemins débutant par "$VIM/" sont convertis de cette manière :
+
+      $VIM/syntax/help.vim  ->  Vim:syntax.help
+
+  De même, les fichiers se terminant par ".vim" voient leur extension
+  supprimée, et les obliques remplacées par des points.
+
+Certains fichiers de marqueurs et de script peuvent nécessiter une édition
+pour fonctionner avec cette version portée.
+
+==============================================================================
+3. Utilisation de ligne de commande			*riscos-commandline*
+
+Pour utiliser Vim depuis la ligne de commande, saisissez la commande "*vi" (ou
+"*ex" pour le mode Ex |Ex-mode|).
+
+Tapez "*vi -h" pour obtenir la liste des options.
+
+L'utilisation de la version ligne de commande de Vim avec un mode disposant
+d'une large palette de couleurs peut ralentir considérablement le défilement.
+Vous pouvez soit passer dans un mode avec moins de couleurs, soit utiliser la
+version graphique.
+
+De même, maintenir la touche Ctrl enfoncée va le ralentir davantage encore, et
+Ctrl-Maj va le stopper, comme habituellement avec les programmes en mode
+texte.
+
+==============================================================================
+4. Utilisation du Desktop				*riscos-gui*
+
+Limitations :
+
+- Les barres de défilement situées à gauche ne fonctionnent pas correctement.
+  (celles de droite et d'en bas marchent normalement).
+- Le défilement n'est pas accéléré pas quand l'affichage est masqué.
+
+Vous pouvez redimmensionner la fenêtre en tirant le coin inférieur-droit, même
+si aucune icône ne l'indique.
+
+Vous pouvez utiliser les arguments "--rows" et "--columns" pour préciser la
+taille de la fenêtre de Vim au lancement, de cette manière : >
+
+      *Vi -g --rows 20 --columns 80
+
+Le presse-papiers général est supporté, donc vous pouvez sélectionner du texte
+puis le coller directement dans une autre application (à condition qu'elle
+supporte également le presse-papiers).
+
+Cliquer le Menu ouvre maintenant un menu traditionnel de programme RISC OS.
+Maintenez la touche Maj enfoncée quand vous cliquez le Menu pour coller (le
+contenu du presse-papiers général).
+
+Déposer un fichier sur la fenêtre remplace le tampon COURANT (celui sur lequel
+se trouve le curseur, PAS celui sur lequel le fichier est déposé) par ce
+fichier.
+
+Déposer un fichier avec Ctrl maintenu enfoncé provoque l'ouverture d'une
+nouvelle fenêtre Vim pour ce fichier (voir |:sp|).
+
+Déposer un fichier avec Maj maintenu enfoncé en mode Insertion insère le
+chemin du fichier.
+
+:browse :w ouvre la boîte d'enregistrement standard de RISC OS.
+:browse :e ouvre un explorateur de répertoires.
+
+Pour les polices, vous avez le choix entre la police du système, une police
+outline, la police systéme via ZapRedraw ou l'une des polices Zap via 
+ZapRedraw : >
+
+      :set guifont=
+<			Pour utiliser la police systéme avec les pilotes VDU.
+			Elle supporte le gras et le souligné.
+>
+      :set guifont=Corpus.Medium
+<			Utilise la police outline spécifiée. Vous pouvez
+			utiliser n'importe quelle police, mais seules celles
+			ayant une chasse fixe, telle que Corpus, seront
+			adaptées.
+>
+      :set guifont=Corpus.Medium:w8:h12:b:i
+<			Comme précédemment, mais avec une taille de 8x12
+			points, en gras italique.
+			Si seule la hauteur ou la largeur est spécifiée, alors
+			cette valeur est utilisée pour les deux. À défaut, une
+			valeur de 10 points est utilisée.
+
+Grace à John Kortink, Vim peut utiliser le module ZapRedraw. Faites débuter le
+nom de la police par "!" (ou "!!" pour une hauteur double), de cette manière : >
+
+      :set guifont=!!
+<			Utilise la police système, mais avec ZapRedraw. Cela
+			accélère le rafraîchissement sur les processeurs
+			StrongARM, mais ni l'italique ni le gras ne sont
+			disponibles. Hauteur double.
+>
+      :set guifont=!script
+<			Utilise la police Zap spécifiée (un répertoire dans
+			VimFont$Path). Le rafraîchissement est aussi rapide
+			qu'avec "!!", mais le rendu est bien plus agréable.
+			Seules les polices "man+" et "script" sont fournies
+			pour le moment, mais vous pouvez utiliser n'importe
+			quelle police Zap si vous la placez dans le répertoire
+			VimFont$Path.
+			Vim tentera de charger les fichiers de polices "0",
+			"B", "I" et "IB" depuis le répertoire dont le nom est
+			spécifié. Seul "0" (style normal) DOIT exister. Les
+			liens ne sont pas supportés pour le moment.
+
+NOTE : quand vous utilisez ZapRedraw, la barre d'édition (le curseur) est
+dessinée devant le caractère sur lequel vous vous trouvez plutôt que derrière.
+De même, le rafraîchissement est incorrect pour les modes d'écran avec des
+valeurs proches XXX de 0. Si la police inclut des caractères de contrôle, alors
+vous pouvez demander à Vim de les afficher en modifiant l'option 'isprint'.
+
+Si vous trouvez que le défilement est vraiment trop lent sur votre machine,
+faites des essais avec les options 'scrolljump' et 'ttyscroll'.
+
+En particulier, les utilisateurs de StrongARM trouveront sans doute que >
+
+      :set ttyscroll=0
+
+accélère le défilement dans les modes avec de nombreuses couleurs.
+
+=============================================================================
+5. Utilisation à distance (telnet)			*riscos-remote*
+
+J'ai inclus une entrée termcap intégrée, mais vous pouvez éditer le fichier
+termcap pour autoriser l'utilisation d'autres codes si vous souhaitez utiliser
+Vim depuis un terminal distant.
+
+Bien que je ne dispose pas de connexion Internet sur mon Acorn, je suis
+parvenu à faire fonctionner Vim dans une fenêtre FreeTerm en utilisant la
+connexion en loopback.
+
+Il semble que cela ne fonctionne pas mal du tout à présent, en utilisant 
+"*vi -T ansi".
+
+==============================================================================
+6. Fichiers temporaires					*riscos-temp-files*
+
+Si vim plante, les fichiers d'échanges et de sauvegarde (s'il y en a) se
+trouveront dans les répertoires spécifiés dans les options 'directory' et
+'bdir'. Par défaut, le fichier d'échange se situe dans le répertoire
+<Wimp$ScrapDir> (c'est-à-dire dans !Scrap) et les sauvegardes dans le
+répertoire dans lequel le fichier édité est enregistré. Vim vous permettra de
+recouvrir votre fichier lors de votre prochaine tentative pour l'éditer.
+
+Pour visualiser une liste de fichiers d'échanges, pressez <F12> puis tapez
+"*vi -r"
+
+Vim n'affiche plus de messages ATTENTION quand vous tentez d'éditer deux
+fichiers avec le même nom dans deux répertoires différents.
+
+Toutefois, il n'avertit plus non plus quand vous tentez d'éditer deux fois le
+même fichier (avec deux copies de Vim), bien que vous soyez tout de même
+prévenu que l'horodatage du fichier a été modifié lors de son écriture.
+
+==============================================================================
+7. Interruption						*riscos-interrupt*
+
+Pour interrompre un mappage parti en boucle, ou quelque chose de similaire,
+maintenez la touche Escape <Echap> enfoncée dans la version ligne de commande,
+ou pressez CTRL-C dans la version graphique.
+
+==============================================================================
+8. Utilisation de la mémoire				*riscos-memory*
+
+Vim utilisera des zones dynamiques avec RISC OS 3.5 ou ultérieur. Si vous
+pouvez les utiliser sur des machines plus anciennes, éditez les fichiers
+!RunTxt et GVim. Je ne sais pas ce que fait UnixLib par défaut sur ces
+machines, alors je préfère jouer la prudence.
+
+Tout ne fonctionne pas très bien sans les zones dynamiques, puisque que Vim
+est incapable de modifier l'allocation de la mémoire une fois démarré. Vous
+devriez donc éditer "!Vim.GVim" et "!VIM.!RunTxt" pour choisir la taille qui
+lui convient le mieux. Vous aurez sans doute besoin d'au moins 1400 Ko.
+
+==============================================================================
+9. Types de fichiers					*riscos-filetypes*
+
+Vous pouvez maintenant spécifier des autocommandes qui doivent être exécutées
+pour certains types de fichiers. Le type de fichier est donné sous la forme
+&xxx, où xxx désigne le type de fichier.
+
+Les types de fichiers doivent être spécifiés sous la forme de nombres (par
+exemple &fff pour du Text).
+
+Le système est changé depuis la version 5.3. La nouvelle séquence des
+événements est la suivante :
+
+- un fichier est chargé. |'osfiletype'| est fixé selon le type de fichier RISC
+  OS.
+- Sur la base du type de fichier et du chemin, Vim tente de fixer |'filetype'|
+  au type de fichier Vim.
+- Fixer cette option peut provoquer le chargement de fichiers de syntaxe et
+  également accomplir d'autres actions.
+- Enregistrer le fichier lui donnera le type de fichier contenu dans
+  |'osfiletype'|.
+
+Quelques exemple pour clarifier le propos :
+
+      TYOE DE FICHIER CHARGÉ	'osfiletype'	    TYPE DE FICHIER ~
+      Code C "c.hellow"		Text (&fff)	    C
+      Document LaTeX		LaTeX (&2a8)	    TeX
+      Document Draw		DrawFile (&aff)	    (inchangé)
+
+==============================================================================
+10. Le shell						*riscos-shell*
+
+- Les "!" ne sont remplacés que s'ils sont suivis par un espace ou une
+  fin-de-ligne, car de nombreux chemins peuvent en contenir.
+
+- Vous pouvez préfixer les commandes avec "~", cela évite l'affichage de la
+  sortie qu'elles produisent. Cela signifie aussi qu'il n'est pas nécessaire
+  d'appuyer sur <Entree> après, et que l'écran n'est plus rafraîchi.
+  {uniquement dans la version graphique}
+
+==============================================================================
+11. Portage de nouvelles versions			*riscos-porting*
+
+Télécharger tout ce dont vous aurez besoin :
+
+- Récupérez les sources de la dernière distribution (consultez www.vim.org).
+- Récupérez les fichiers de support (par exemple ce fichier d'aide).
+- Récupérez l'archive « supplémentaire » contenant les parties spécifiques à
+  RISC OS.
+- Récupérez la distribution binaire de RISC OS (si possible).
+
+
+Désarchivez :
+
+- Créez un disk raFS et mettez-y les archives.
+- Dégzippez-les.
+- Détarrez-les ("*tar xELF 50 archive/tar").
+
+
+Recompilez les sources :
+
+- Créez les répertoires "c", "s" et "h".
+- Mettez tous les fichiers d'entêtes dans "h",            \
+- Mettez tous les fichiers C dans "c",                    |  et supprimez les
+- Mettez le fichier en assembleur ("swis/s") dans "s",    /     extensions.
+- Renommez tous les fichiers "proto" en "h", de cette manière :
+	raFS::VimSrc.source.proto.file/pro
+  devient
+	raFS::VimSrc.source.h.file_pro
+- Dans les fichiers "h.proto" et "c.termlib", recherchez et remplacez
+	.pro"
+  par
+	_pro.h"
+- Créez un Makefile simple si vous le souhaitez et exécutez `*make -k`.
+  Utilisez "CC = gcc -DRISCOS -DUSE_GUI -O2 -x c" dans le Makefile.
+- Enregistrez le binaire en tant que !Vim.Vim dans la distribution binaire.
+
+
+Mettez l'environement d'exécution à jour :
+
+- Remplacez les fichiers anciens ou manquants dans !Vim.Resources par les
+  nouveaux.
+- Supprimez les fichiers ne se terminant pas par "/txt" dans "doc", à
+  l'exception de "tags".
+- Supprimez les extensions des fichiers dans "doc".
+- Éditez le fichier "doc.tags". Supprimez les extensions dans la deuxième
+  colonne : >
+	:%s/^\(.[^\t]*\t.*\)\.txt\t/\1\t/
+- Supprimez les extensions des fichiers de syntaxe. Séparez-les en deux
+  répertoires pour éviter la limite des 77 entrées sur les vieux systèmes de
+  fichiers ADFS.
+- Éditez "Vim:FileType" pour correspondre avec "*.c.*", ainsi qu'avec "*/c" et
+  ainsi de suite. Ajoutez aussi la vérification du type de fichier.
+- Éditez "Vim:Menu" et supprimez tous les touches des menus : >
+	:%s/<Tab>[^ \t]*//
+<
+ vim:tw=78:ts=8:ft=help:norl:
+

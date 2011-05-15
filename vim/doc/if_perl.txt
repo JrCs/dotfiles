@@ -1,0 +1,264 @@
+*if_perl.txt*   Pour Vim version 6.2.  Dernière modification : 25 oct 2001
+
+
+		MANUEL de RÉFÉRENCE VIM - par Sven Verdoolaege
+					  et Matt Gerassimof
+
+Perl et Vim				*perl* *Perl*
+
+1. Éditer des fichiers Perl		|perl-editing|
+2. Compiler Vim avec l'interface Perl	|perl-compiling|
+3. Utiliser l'interface Perl		|perl-using|
+
+{absent de Vi}
+
+{uniquement si compilé avec la fonctionnalité |+perl|}
+
+==============================================================================
+1. Éditer des fichiers Perl				*perl-editing*
+
+La coloration syntaxique de Vim reconnaît les fichiers Perl et POD. Vim
+considère qu'un nom de fichier ayant pour suffixe ".pl" ou ".pm" contient du
+code Perl. Vim examine également la première ligne du fichier, indépendamment
+de son suffixe, pour déterminer s'il s'agit d'un script Perl (voir
+"scripts.vim" dans le répertoire de syntaxe de Vim). Vim considère qu'un
+fichier qui a pour suffixe ".POD" est un fichier POD.
+
+Si vous utilisez les marqueurs avec Perl, vous avez besoin d'une version
+récente de Exuberant ctags. Regardez ici :
+
+	http://ctags.sourceforge.net ~
+
+Autrement vous pouvez utiliser le script Perl "pltags.pl", distribué avec Vim
+dans le répertoire "$VIMRUNTIME/tools". Ce script fournit davantage de
+fonctionnalités que le support de Perl offert par Exuberant ctags.
+
+==============================================================================
+2. Compiler Vim avec l'interface Perl			*perl-compiling*
+
+Pour compiler Vim avec l'interface Perl, vous devez avoir Perl 5.004 (ou une
+version ultérieure). Perl doit être installé avant la compilation de Vim.
+L'interface Perl de Vim ne fonctionne PAS avec la mouture officielle 5.003 !
+Cela fonctionnera probablement avec la version 5.003_05 et suivantes.
+
+Les rustines Perl pour Vim ont été développées par :
+	Sven Verdoolaege <skimo@breughel.ufsia.ac.be>
+	Matt Gerassimof
+
+Perl pour MS-Windows est disponible à l'emplacement suivant :
+
+	http://www.perl.com/CPAN-local/ports/nt/Standard/x86/ ~
+
+==============================================================================
+3. Utiliser l'interface Perl				*perl-using*
+
+							*:perl* *:pe*
+:pe[rl] {cmd}		Exécute la commande Perl {cmd}. Le paquetage courant
+			est "main".
+
+:pe[rl] << {balisefin}
+{script}
+{balisefin}
+			Exécute le script Perl {script}.
+			{balisefin} ne doit PAS être précédé d'un espace. Si
+			{balisefin} est omis, la valeur par défaut est '.',
+			comme pour les commandes |:append| et |:insert|. Cette
+			manière d'appeler la commande |:perl| est surtout
+			utile pour inclure du code Perl dans les scripts Vim.
+			NOTE : Cette commande ne fonctionne pas si la
+			fonctionnalité Perl n'a pas été compilée. Voir
+			|script-here| pour éviter des erreurs.
+
+
+Exemple de script vim : >
+
+	function! PerleBlanche()
+	perl << EOF
+		VIM::Msg("les perles sont jolies pour les colliers");
+		VIM::Msg("les rubis pour les bagues");
+		VIM::Msg("les pythons pour les sacs");
+		VIM::Msg("tcls????");
+	EOF
+	endfunction
+<
+
+							*:perldo* *:perld*
+:[plage]perld[o] {cmd}	Exécute la commande Perl {cmd} pour chaque ligne de la
+			[plage], $_ recevant la valeur de chaque ligne à tour
+			de rôle, sans le <fin-de-ligne> final. Modifier $_
+			change le texte, mais notez qu'il est impossible
+			d'ajouter ou de supprimer des lignes avec cette
+			commande.
+			La valeur par défaut pour [plage] est la totalité du
+			fichier : "1,$".
+
+Voilà quelques commandes que vous pouvez essayer : >
+
+  :perl $a=1
+  :perldo $_ = reverse($_);1
+  :perl VIM::Msg("bonjour")
+  :perl $ligne = $curbuf->Get(42)
+<
+							*E299*
+L'exécution de commandes Perl dans le bac à sable (voir |sandbox|) est
+limitée. ":perldo" est absolument impossible. ":perl" est évalué dans
+l'environnement protégé lorsque cela est possible.
+
+
+							*perl-overview*
+Voilà un panorama des fonctions disponibles avec Perl : >
+
+  :perl VIM::Msg("Texte")		# affiche un message
+  :perl VIM::Msg("Erreur", "MsgErr")	# affiche un message d'erreur
+  :perl VIM::Msg("remarque", "Comment")	# affiche un message en surbrillance
+  :perl VIM::SetOption("ai")		# fixe une option vim
+  :perl $ntamp = VIM::Buffers()		# renvoie le nombre de tampons
+  :perl @listetamp = VIM::Buffers()	# renvoie une liste de tous les
+					# tampons
+  :perl $montamp = (VIM::Buffers('qq.c'))[0] # renvoie un objet tampon
+					     # correspondant à 'qq.c'
+  :perl @listefen = VIM::Windows()	# renvoie une liste de toutes les
+					# fenêtres
+  :perl $nfen = VIM::Windows()		# renvoie le nombre de fenêtres
+  :perl ($succes, $v) = VIM::Eval('&path')  # $v : option 'path', $succes : 1
+  :perl ($succes, $v) = VIM::Eval('&xyz')   # $v : '' et $succes : 0
+  :perl $v = VIM::Eval('expand("<cfile>")') # développe <cfile>
+  :perl $curwin->SetHeight(10)		# fixe la hauteur de la fenêtre
+  :perl @pos = $curwin->Cursor()	# renvoie une liste (ligne, colonne)
+  :perl @pos = (10, 10)
+  :perl $curwin->Cursor(@pos)		# positionne le curseur en @pos
+  :perl $curwin->Cursor(10, 10)		# positionne le curseur en l 10 col 10
+  :perl $montamp = $curwin->Buffer()	# renvoie l'objet tampon pour la
+                                     	# fenêtre
+  :perl $curbuf->Name()			# renvoie le nom du tampon
+  :perl $curbuf->Number()		# renvoie le numéro du tampon
+  :perl $curbuf->Count()		# renvoie le nombre de lignes
+  :perl $l = $curbuf->Get(10)		# renvoie la ligne 10
+  :perl @l = $curbuf->Get(1 .. 5)	# renvoie les lignes 1 à 5
+  :perl $curbuf->Delete(10)		# supprime la ligne 10
+  :perl $curbuf->Delete(10, 20)		# supprime les lignes 10 à 20
+  :perl $curbuf->Append(10, "Ligne")	# ajoute une ligne
+  :perl $curbuf->Append(10, "Ligne1", "Ligne2", "Ligne3")   # ajoute 3 lignes
+  :perl @l = ("L1", "L2", "L3")
+  :perl $curbuf->Append(10, @l)		# ajoute L1, L2 et L3
+  :perl $curbuf->Set(10, "Ligne")	# remplace la ligne 10
+  :perl $curbuf->Set(10, "Ligne1", "Ligne2")	# remplace les lignes 10 et 11
+  :perl $curbuf->Set(10, @l)		# remplace 3 lignes
+<
+							*perl-Msg*
+VIM::Msg({msg}, {groupe}?)
+			Affiche le message {msg}. L'argument facultatif
+			{groupe} indique le groupe de surbrillance que Vim
+			doit utiliser pour le message.
+
+							*perl-SetOption*
+VIM::SetOption({arg})	Fixe une option vim. {arg} peut être tout argument
+			accepté par la commande ":set". NOTE : cela signifie
+			que l'argument ne doit contenir aucun espace ! Voir
+			|:set|.
+
+							*perl-Buffers*
+VIM::Buffers([{nt}...])	Sans argument, renvoie la liste de tous les tampons
+			dans un contexte de liste ou renvoie le nombre de
+			tampons dans un contexte scalaire. Pour une liste de
+			noms ou de numéros de tampons {nt}, renvoie la liste
+			des tampons correspondant à {nt} en utilisant les
+			mêmes règles que la fonction Vim interne |bufname()|.
+
+							*perl-Windows*
+VIM::Windows([{nf}...])	Sans argument, renvoie la liste de toutes les fenêtres
+			dans un contexte de liste ou renvoie le nombre de
+			fenêtres dans un contexte scalaire. Pour une liste de
+			numéros de fenêtres {nf}, renvoie la liste des
+			fenêtres correspondantes.
+
+							*perl-DoCommand*
+VIM::DoCommand({cmd})	Exécute la commande Ex {cmd}.
+
+							*perl-Eval*
+VIM::Eval({expr})	Évalue {expr} et renvoie (succes, val). succes = 1
+			indique que val contient la valeur de {expr} ;
+			succes = 0 indique une erreur dans l'évaluation de
+			l'expression. '@x' renvoie le contenu du registre x,
+			'&x' renvoie la valeur de l'option x, 'x' renvoie la
+			valeur des |variables| x et '$x' est équivalent à
+			l'instruction Perl $ENV{x}. Toutes les fonctions (voir
+			|functions|) accessibles depuis la ligne de commande
+			sont utilisables comme {expr}ession.
+
+							*perl-SetHeight*
+Fenetre->SetHeight({hauteur})
+			Définit la hauteur de la Fenetre à {hauteur}, dans les
+			limites de l'écran.
+
+							*perl-GetCursor*
+Fenetre->Cursor({ligne}?, {col}?)
+			Sans argument, renvoie la liste (ligne, col)
+			correspondant à la position courante du curseur dans
+			la Fenetre. Avec les arguments {ligne} et {col},
+			positionne le curseur de la Fenetre en {ligne} et
+			{col}. NOTE : {col} démarre à 0, dans le style Perl,
+			il est donc inférieur d'une unité à la valeur définie
+			selon le style Vim.
+
+							*perl-Buffer*
+Fenetre->Buffer()	Renvoie l'objet tampon correspondant à la Fenetre.
+
+							*perl-Name*
+Tampon->Name()		Renvoie le nom de fichier du Tampon.
+
+							*perl-Number*
+Tampon->Number()	Renvoie le numéro du Tampon.
+
+							*perl-Count*
+Tampon->Count()		Renvoie le nombre de lignes dans le Tampon.
+
+							*perl-Get*
+Tampon->Get({nol}, {nol}?, ...)
+			Renvoie la chaine de caractères de la ligne {nol} du
+			Tampon, pour chaque {nol} donné. Une liste contenant
+			les {nol} peut être passée en paramètre.
+
+							*perl-Delete*
+Tampon->Delete({nol}, {nol}?)
+			Supprime la ligne {nol} du Tampon. Avec un deuxième
+			{nol}, supprime les lignes du premier au second {nol}.
+
+							*perl-Append*
+Tampon->Append({nol}, {ligne}, {ligne}?, ...)
+			Ajoute chaque {ligne} après la ligne {nol} du Tampon.
+			Les {ligne}s peuvent être une liste.
+
+							*perl-Set*
+Tampon->Set({nol}, {ligne}, {ligne}?, ...)
+			Remplace une ou plusieurs lignes du Tampon avec les
+			{ligne}s données, en démarrant à la ligne {nol}. Les
+			{ligne}s peuvent être une liste. Si les arguments sont
+			incorrects, le remplacement n'est pas effectué.
+
+$main::curwin		L'objet fenêtre courant.
+
+$main::curbuf		L'objet tampon courant.
+
+
+							*script-here*
+Lorsque vous utilisez un langage de script en-ligne, il peut être pratique de
+l'ignorer s'il n'est pas supporté. Mais ce mécanisme ne fonctionne pas : >
+   if has('perl')
+     perl << EOF
+       cela ne fonctionne PAS !
+   EOF
+   endif
+Au lieu de cela, placez les commandes Perl/Python/Ruby/etc. dans une fonction
+et invoquez-la : >
+    if has('perl')
+      function DefPerl()
+	perl << EOF
+	  cela fonctionne
+    EOF
+      endfunction
+      call DefPerl()
+    endif
+NOTE : "EOF" doit être en début de ligne.
+
+ vim:tw=78:ts=8:ft=help:norl:

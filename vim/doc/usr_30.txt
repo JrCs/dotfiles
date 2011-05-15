@@ -1,0 +1,697 @@
+*usr_30.txt*	Pour Vim version 6.2c.
+
+	       MANUEL de l'UTILISATEUR VIM - par Bram Moolenaar
+
+			    Éditer des programmes
+
+
+Vim dispose de diverses commandes qui facilitent l'écriture de programmes ;
+compilent un programme et sautent directement aux erreurs reportées ; fixent
+automatiquement l'indentation pour de nombreux langages et mettent en forme
+les commentaires.
+
+|30.1|	Compilation
+|30.2|	Indentation des fichiers C 
+|30.3|	Indentation automatique
+|30.4|	Autres indentations 
+|30.5|	Tabulations et espaces
+|30.6|	Mise en forme des commentaires
+
+  Chapitre suivant : |usr_31.txt|  Exploiter l'interface graphique
+Chapitre précédent : |usr_29.txt|  Se déplacer dans des programmes. 
+Table des matières : |usr_toc.txt|
+
+==============================================================================
+*30.1*	Compilation
+
+Vim définit un ensemble de commandes dites de "mise-au-point". Elles vous
+permettent de compiler un programme depuis Vim puis de parcourir les erreurs
+générées et, espérons-le, de les corriger. Vous pouvez alors ensuite
+recompiler et corriger toute nouvelle erreur détectée, jusqu'à ce que
+finalement votre programme compile sans erreur.
+
+La commande suivante exécute le programme "make" (en lui transmettant tous les
+arguments que vous lui passez) et intercepte les résultats : >
+
+	:make {arguments}
+
+Si des erreurs ont été générées, elles sont interceptées et l'éditeur vous
+amène à l'emplacement de la première erreur.
+   
+Examinons un exemple de session ":make". (Les sessions ":make" habituelles
+génèrent bien plus d'erreurs et de bien moins stupides.)  Après avoir tapé
+":make", l'écran ressemble à ceci : 
+
+	:!make | &tee /tmp/vim215953.err ~
+	gcc -g -Wall -o prog main.c qqc.c ~
+	main.c: In function 'main': ~
+	main.c:6: too many arguments to function 'faire_qqc' ~
+	main.c: At top level: ~
+	main.c:10: parse error before '}' ~
+	make: *** [prog] Error 1 ~
+
+	2 returned ~
+	"main.c" 11L, 111C ~
+	(3 of 6): too many arguments to function 'faire_qqc' ~
+	Hit ENTER or type command to continue ~
+
+À partir de là, vous pouvez constater qu'il y a des erreurs dans le fichier
+"main.c". Lorsque vous pressez <Entree>, Vim affiche le fichier "main.c", avec
+le curseur positionné sur la ligne 6, la première contenant une erreur. Vous
+n'avez pas eu besoin de spécifier le fichier ou le numéro de ligne, Vim a su
+où aller en inspectant les messages d'erreur.
+
+		+------------------------------------------------------+
+		|int main()					       |
+		|{						       |
+		|	int i=3;				       |
+     curseur -> |	faire_qqc("toto");			       |
+		|	++i;					       |
+		|	return (0);				       |
+		|}						       |
+		|}						       |
+		| ~						       |
+		|(3 of 12): too many arguments to function 'faire_qqc' |
+		+------------------------------------------------------+
+
+La commande ci-dessous va à l'endroit où s'est produite l'erreur suivante : >
+
+	:cnext
+
+Vim saute à la ligne 10, la dernière ligne du fichier, qui contient un '}'
+superflu.
+   Si la place manque, Vim raccourcira les messages d'erreurs. Pour voir le
+message dans son intégralité, utilisez : >
+
+	:cc
+
+Vous pouvez obtenir un index de tous les messages d'erreurs à l'aide de la
+commande ":clist". Le résultat se présente sous la forme : >
+
+	:clist
+<	3 main.c: 6:too many arguments to function 'faire_qqc' ~
+	5 main.c: 10:parse error before '}' ~
+
+Seules les lignes où Vim a reconnu un nom de fichier et un numéro de ligne
+sont listées ici. Cela suppose que ces lignes seules sont intéressantes et que
+le reste n'est composé que de messages ennuyeux. Toutefois, des lignes non
+reconnues peuvent contenir certaines informations que vous souhaiterez
+regarder. Un message de l'éditeur de liens, par exemple, concernant une
+fonction non définie. Pour voir tous les messages, ajoutez un '!' à la
+commande : >
+
+	:clist!
+<	1 gcc -g -Wall -o prog main.c qqc.c ~
+	2 main.c: In function 'main': ~
+	3 main.c:6: too many arguments to function 'faire_qqc' ~
+	4 main.c: At top level: ~
+	5 main.c:10: parse error before '}' ~
+	6 make: *** [prog] Error 1 ~
+
+Vim mettra en surbrillance l'erreur courante. Pour revenir à l'erreur
+précédente, utilisez : >
+
+	:cprevious
+
+Autres commandes pour naviguer dans la liste d'erreurs :
+
+	:cfirst		va à la première erreur
+	:clast		va à la dernière erreur
+	:cc 3		va à l'erreur n° 3
+
+
+UTILISER DIFFÉRENTS COMPILATEURS
+
+Le nom du programme à lancer lorsque la commande ":make" est exécutée est
+défini par l'option 'makeprg'. En général, elle est fixée à "make" , mais les
+utilisateurs de C++ devraient la fixer à "nmake" en exécutant la commande
+suivante : >
+
+	:set makeprg=nmake
+
+Il est également possible d'inclure des arguments dans cette option. Les
+caractères spéciaux doivent être protégés par une contre-oblique. Exemple : >
+
+	:set makeprg=nmake\ -f\ project.mak
+
+Vous pouvez inclure des mots-clés spéciaux de Vim dans la spécification de la
+commande. Le caractère '%' est étendu en nom du fichier courant. Donc, si vous
+exécutez la commande : >
+
+	:set makeprg=make\ %
+
+Lorsque vous êtes en train d'éditer "main.c", ":make" exécute la commande
+suivante : >
+
+	make main.c
+
+Comme ça n'est pas vraiment utile, vous pouvez améliorer un peu la commande en
+utilisant le modificateur :r ["Root"] : >
+
+	:set makeprg=make\ %:r.o
+
+À présent, la commande executée est la suivante : >
+
+	make main.o
+
+Pour plus d'informations sur ces modificateurs : |filename-modifiers|.
+
+
+ANCIENNES LISTES D'ERREURS
+
+Supposons que vous compiliez un programme avec ":make". Il y a un message
+d'avertissement dans un fichier et un message d'erreur dans un autre. Vous
+corrigez l'erreur et relancez ":make" pour vérifier qu'elle a bien été prise
+en compte. Maintenant, vous souhaitez examiner le message d'avertissement. Il
+n'apparaît plus dans la dernière liste d'erreurs, puisque le fichier concerné
+par l'avertissement n'a pas été recompilé. Vous pouvez revenir à la liste
+d'erreurs précédente avec : >
+
+	:colder
+
+Utilisez ensuite ":clist" et ":cc {no}" pour sauter à l'emplacement de
+l'avertissement.
+   Pour passer à la liste d'erreurs suivante : >
+
+	:cnewer
+
+Vim garde en mémoire dix listes d'erreurs.
+
+
+CHANGER DE COMPILATEUR
+
+Vous devez indiquer à Vim de quel format sont les erreurs produites par votre
+compilateur. Ceci est réalisé à l'aide de l'option 'errorformat'. La syntaxe
+de cette option est assez complexe et on peut l'adapter à la plupart des
+compilateurs. Vous trouverez les explications nécessaires ici : |errorformat|.
+
+Il se peut que vous utilisiez plusieurs compilateurs différents. Configurer
+les options 'makeprg' et surtout 'errorformat' à chaque fois n'est pas
+évident.  Vim fournit une méthode simple pour cela. Par exemple, pour basculer
+vers l'utilisation du compilateur Microsoft Visual C++ : >
+
+	:compiler msvc
+
+Ceci permet de trouver le script Vim associé au compilateur "msvc" et de fixer
+les options adéquates.
+   Vous pouvez écrire vos propres fichiers de compilateur. Voir 
+|write-compiler-plugin|.
+
+
+REDIRECTION DE LA SORTIE
+
+La commande ":make" redirige la sortie du programme exécuté vers un fichier
+d'erreurs. La manière dont cela fonctionne dépend de divers facteurs, comme
+l'option 'shell'. Si votre commande ":make" n'intercepte  pas la sortie,
+vérifiez les options 'makeef' et 'shellpipe'. Les options 'shellquote' et
+'shellxquote' sont également prises en compte.
+
+Si vous ne parvenez pas à faire rediriger le fichier par ":make", vous pouvez
+aussi compiler le programme dans une autre fenêtre et rediriger la sortie vers
+un fichier. Ensuite, faites lire ce fichier par Vim avec : >
+
+	:cfile {nomfichier}
+
+Le saut vers les erreurs fonctionnera comme pour la commande ":make".
+
+==============================================================================
+*30.2*	Indentation des fichiers C 
+
+Un programme est bien plus facile à comprendre lorsque les lignes ont été
+correctement indentées. Vim propose plusieurs moyens d'y parvenir.
+   Pour les programmes en C, activez l'option 'cindent'. Vim en connaît un
+rayon sur les programmes C, et va faire tout son possible pour réaliser
+automatiquement l'indentation à votre place. Fixez l'option 'shiftwidth' au
+nombre d'espaces souhaité pour un niveau plus profond. Quatre espaces feront
+bien l'affaire. Une commande ":set" permet de réaliser cela : >
+
+	:set cindent shiftwidth=4
+
+Avec cette option activée, lorsque vous tapez quelque chose comme "if (x)", la
+ligne suivante sera automatiquement indentée d'un niveau supplémentaire.
+
+				           if (drapeau)
+   Indentation automatique --->		       faire ceci();
+Désindentation automatique <--	           if (autre_drapeau) {
+   Indentation automatique --->		       traiter_fichier();
+    Indentation inchangée		       faire_cela();
+Désindentation automatique <--	           }
+
+Lorsque vous saisissez du texte entre accolades ({}), le texte sera indenté au
+début et désindenté à la fin. La désindentation se produira après avoir tapé
+'}', car Vim ne peut deviner ce que vous allez saisir au clavier.
+
+L'indentation automatique a également ceci d'utile qu'elle vous aide à
+détecter très tôt les erreurs dans votre code. Lorsque vous tapez un '}' pour
+terminer une fonction, pour finalement vous apercevoir que l'indentation
+automatique lui attribue une indentation supérieure à ce que vous attendiez,
+il y a probablement un '}' manquant. Utilisez la commande "%" pour déterminer
+quel '{' correspond au '}' que vous avez tapé.
+   L'omission de ')' et de ';' entraîne également une surindentation. Ainsi,
+dès lors que vous obtenez plus d'espace blanc que prévu, vérifiez les lignes
+qui précèdent.
+
+Lorsque vous avez du code dont la mise en forme laisse à désirer, ou que vous
+avez inséré et effacé des lignes, vous devez réindenter les lignes.
+L'opérateur "=" sert à ça. La forme la plus simple est : >
+
+	==
+
+Ceci indente la ligne courante. Comme pour tous les opérateurs, on peut
+l'utiliser de trois façons. En mode Visuel, "=" indente les lignes
+sélectionnées. L'objet textuel "a{" se révèle utile : il sélectionne le bloc
+{} courant. Ainsi, pour réindenter le bloc de code dans lequel se trouve le
+curseur : >
+
+	=a{
+
+Si votre code est vraiment mal indenté, vous pouvez réindenter l'intégralité
+du fichier avec : >
+
+	gg=G
+
+Toutefois, ne faites pas cela dans des fichiers qui ont soigneusement été
+indentés à la main. L'indentation automatique fait du bon travail, mais, dans
+certaines situations, il peut être préférable de s'en passer. 
+
+
+DÉFINIR LE STYLE DE L'INDENTATION
+
+Des personnes différentes auront des styles d'indentation différents. Par
+défaut, Vim se débrouille plutôt bien et propose une indentation qui devrait
+satisfaire 90% des programmeurs. Il existe toutefois des styles différents ; 
+aussi, si vous le souhaitez, vous pouvez personnaliser le style d'indentation 
+avec l'option 'cinoptions'.
+   Par défaut, 'cinoptions' est vide et Vim utilise le style par défaut. Vous
+pouvez ajouter divers éléments lorsque vous désirez quelque chose de
+différent. Par exemple, pour que les accolades soient placées de la façon
+suivante :
+
+	if (drapeau) ~
+	  { ~
+	    i = 8; ~
+	    j = 0; ~
+	  } ~
+
+utilisez cette commande : >
+
+	:set cinoptions+={2
+
+Il y a beaucoup d'éléments de ce type. Voir |cinoptions-values|.
+
+==============================================================================
+*30.3*  Indentation automatique	
+
+Vous ne souhaitez probablement pas activer l'option 'cindent' manuellement
+chaque fois que vous éditez un fichier C. Voici comment automatiser cela : >
+
+	:filetype indent on
+
+En vérité, cela fait bien plus qu'activer 'cindent' pour les fichiers C. Tout
+d'abord, cela active la détection du type d'un fichier. C'est équivalent à ce
+qu'on utilise pour la coloration syntaxique.
+  Lorsque le type d'un fichier est connu, Vim recherchera un fichier
+d'indentation pour ce type de fichier. La distribution de Vim en inclut un
+certain nombre pour divers langages de programmation. Ce fichier d'indentation
+déploiera l'indentation automatique appropriée à ce fichier particulier.
+
+Si vous n'appréciez pas l'indentation automatique, vous pouvez la désactiver à
+nouveau : >
+
+	:filetype indent off
+
+Si vous n'aimez pas l'indentation pour un type de fichier particulier, voici
+comment l'éviter. Créez un fichier contenant cette seule ligne : >
+
+	:let b:did_indent = 1
+
+Vous devez ensuite l'enregistrer sous un nom de fichier précis :
+
+	{repertoire}/indent/{typefich}.vim
+
+{typefich} désigne le nom du type de fichier, comme "cpp" ou "java".
+Vous pouvez voir le nom exact que Vim à détecté à l'aide de cette commande : >
+
+	:set filetype
+
+Dans ce fichier, le résultat affiché est :
+
+	filetype=help ~
+
+Ici, vous utiliseriez "help" pour {typefich}.
+   Pour la partie {repertoire}, vous devez utiliser votre répertoire de
+support. Jetez un coup d'oeil à la sortie de cette commande : >
+
+	set runtimepath
+
+Utilisez maintenant le premier élément, le nom qui précède la première
+virgule. Par exemple, si le résultat se présentait sous la forme :
+
+	runtimepath=~/.vim,/usr/local/share/vim/vim60/runtime,~/.vim/after ~
+
+Vous utiliseriez "~/.vim" pour {repertoire}. Le nom de fichier résultant
+serait alors :
+
+	~/.vim/indent/help.vim ~
+
+Plutôt que de désactiver l'indentation, vous pouvez écrire votre propre
+fichier d'indentation. Les explications pour ce faire se trouvent ici :
+|indent-expressions|.
+
+==============================================================================
+*30.4*  Autres indentations	
+
+La forme la plus simple d'indentation automatique est fournie par l'option
+'autoindent'. Elle utilise l'indentation de la ligne précédente. L'option
+'smartindent' est un peu plus intelligente. Elle est utile pour les langages
+pour lesquels aucun fichier d'indentation n'est disponible. 'smartindent'
+n'est pas aussi intelligent que 'cindent', mais l'est plus que 'autoindent'.
+   Avec 'smartindent' activé, un niveau suplémentaire d'indentation est
+ajouté pour chaque '{' et supprimé pour chaque '}'. Un niveau supplémentaire
+d'indentation sera de même ajouté pour n'importe quel mot dans l'option
+'cinwords'. Les lignes qui débutent par '#' sont traitées de façon
+particulière : toute indentation est supprimée. Ceci afin que les directives
+du préprocesseur commencent toutes dans la colonne 1. L'indentation est
+rétablie à la ligne suivante.
+
+
+CORRIGER LES INDENTATIONS
+
+Lorsque vous utilisez 'autoindent' et 'smartindent' pour obtenir l'indentation
+de la ligne précédente, il arrivera souvent que vous ayez besoin de rajouter
+ou supprimer l'équivalent d'un 'shiftwidth' d'indentation. Les commandes
+CTRL-D et CTRL-T en mode Insertion offrent une façon rapide de faire cela.
+   Par exemple, vous tapez un script shell censé ressembler à celui-ci :
+
+	if test -n a; then ~
+	   echo a ~
+	   echo "-------" ~
+	fi ~
+
+Commencez par fixer ces options : >
+
+	:set autoindent shiftwidth=3
+
+Vous commencez à taper la première ligne, <Entree> et le début de la deuxième
+ligne :
+
+	if test -n a; then ~
+	echo ~
+
+Là, vous vous apercevez qu'il faut une indentation de plus. Tapez CTRL-T. 
+Cela donne :
+
+	if test -n a; then ~
+	   echo ~
+
+La commande CTRL-T, en mode Insertion, ajoute un 'shiftwidth' à l'indentation,
+indifféremment de votre position dans la ligne.
+   Vous continuez de taper la deuxième ligne, <Entree> et la troisième ligne.
+Cette fois, l'indentation est correcte. Puis <Entree> et la dernière ligne. À
+présent, vous obtenez :
+
+	if test -n a; then ~
+	   echo a ~
+	   echo "-------" ~
+	   fi ~
+
+Pour supprimer l'indentation superflue de la dernière ligne, pressez CTRL-D.
+Ceci efface l'équivalent d'un 'shiftwidth' d'indentation, où que vous vous
+trouviez dans la ligne.
+   Lorsque vous êtes en mode Normal, vous pouvez utiliser les commandes ">>"
+et "<<" pour décaler des lignes. ">" et "<" sont des opérateurs, par
+conséquent vous disposez des trois manières habituelles de spécifier les
+ligne que vous souhaitez indenter. Cette combinaison est utile : >
+
+	>i{
+
+Elle ajoute une indentation au bloc de lignes courant, à l'intérieur des {}.
+Les lignes { et } elles-mêmes restent inchangées. ">a{" permet de les inclure.
+Dans l'exemple suivant le curseur est positionné sur "printf" :
+
+	texte original		après ">i{"		après ">a{"
+
+	if (drapeau)		if (drapeau)		if (drapeau) ~
+	{			{			    { ~
+	printf("oui");		    printf("oui");	    printf("oui"); ~
+	drapeau = 0;		    drapeau = 0;	    drapeau = 0; ~
+	}			}			    } ~
+
+==============================================================================
+*30.5*	Tabulations et espaces
+
+'tabstop' est fixé à huit par défaut. Bien que vous puissiez le modifier, vous
+risquez de rencontrer des problèmes par la suite. Les autres programmes
+ignoreront la valeur de 'tabstop' que vous avez utilisée. Ils utilisent 
+probablement la valeur par défaut de huit, et votre texte aura alors un aspect
+très différent. De surcroît, la plupart des imprimantes utilisent une valeur
+fixe de 'tabstop' égale à huit. C'est pourquoi, il vaut mieux ne pas toucher à
+'tabstop'. (Si vous éditez un fichier qui a été écrit avec un 'tabstop'
+différent, voir |25.3| pour la manière de traiter ce problème.)
+   Pour l'indentation des lignes dans un programme, l'utilisation d'un multiple
+de huit espaces vous fera rapidement déborder du bord droit de la fenêtre.
+L'emploi d'un seul espace n'est pas assez significatif visuellement. Beaucoup
+de gens préfèrent utiliser quatre espaces, un bon compromis.
+   Comme un <Tab> correspond à huit espaces et que vous souhaitez utiliser une
+indentation de quatre espaces, vous ne pouvez saisir de <Tab> pour faire votre
+indentation. Il y a deux façons de traiter cela :
+
+1. Utiliser une combinaison de <Tab> et d'espaces. Un <Tab> occupant la place
+   de huit espaces, votre fichier contiendra moins de caractères. L'insertion
+   d'un <Tab> est plus rapide que celle de huit espaces. Le retour arrière
+   sera également plus rapide ;
+
+2. Utiliser uniquement des espaces. Cela évite l'inconvénient des programmes
+   qui utilisent une valeur de 'tabstop' différente.
+
+Heureusement, Vim supporte très bien ces deux méthodes.
+
+
+ESPACES ET TABULATIONS
+
+Si vous utilisez une combinaison d'espaces et de tabulations, contentez-vous
+d'éditer normalement. Les réglages par défaut de Vim gèrent bien cette
+situation.
+   Vous pouvez vous simplifier un peu la vie en fixant l'option 'softtabstop'.
+Cette option dit à Vim de traiter le résultat visuel produit par la touche
+<Tab> comme si les tabulations étaient fixées à la valeur de 'softtabstop',
+mais utilise en fait une combinaison de tabulations et d'espaces.
+   Une fois la commande suivante exécutée, chaque fois que vous presserez la
+touche <Tab>, le curseur se déplacera vers le multiple suivant de quatre
+colonnes : >
+
+	:set softtabstop=4
+
+Lorsque vous démarrez dans la première colonne et pressez <Tab>, vous obtenez
+l'insertion de quatre espaces dans votre texte. La deuxième fois, Vim supprime
+les quatre espaces et insère un <Tab> (vous positionnant ainsi sur la colonne
+8). Vim utilise donc les tabulations autant que possible, puis complète avec
+des espaces.
+   Lors d'un retour arrière, cela marche dans le sens inverse. Un <RetArr>
+effacera toujours la quantité d'espaces spécifiée avec 'softtabstop'. Des
+tabulations sont ensuite utilisés, autant que possible, ainsi que des espaces
+pour combler le manque.
+   Le tableau suivant montre ce qui se produit lorsqu'on presse <Tab>
+plusieurs fois, suivi de <RetArr>. Un '.' désigne un espace et "------->", une
+tabulation.
+
+	SAISIE			 	  RÉSULTAT ~
+	<Tab>			  	  ....
+	<Tab><Tab>		  	  ------->
+	<Tab><Tab><Tab>		  	  ------->....
+	<Tab><Tab><Tab><RetArr>	  	  ------->
+	<Tab><Tab><Tab><RetArr><RetArr>   ....
+
+Il est également possible d'utiliser l'option 'smarttab'. Lorsqu'elle est
+activée, Vim utilise 'shiftwidth' pour un <Tab> tapé dans l'indentation d'une
+ligne, et un vrai <Tab> lorsqu'il est saisi après le premier caractère non
+blanc. Cependant, <RetArr> ne fonctionne pas comme avec 'softtabstop'.
+
+
+ESPACES SEULS
+
+Si vous ne voulez vraiment aucune tabulation dans votre fichier, vous pouvez
+activer l'option 'expandtab' : >
+
+	:set expandtab
+
+Quand cette option est activée, la touche <Tab> insère une suite d'espaces.
+De cette façon, vous obtenez la même quantité d'espace blanc que si un
+caractère <Tab> avait été inséré, mais il n'y a en fait aucun caractère <Tab>
+dans votre fichier.
+   La touche de retour arrière supprimera chaque espace séparément. Ainsi,
+après avoir tapé un <Tab>, il faut presser huit fois la touche <RetArr> pour
+l'annuler. Si vous êtes sur l'indentation, Il sera beaucoup plus rapide de
+presser CTRL-D.
+
+
+TRANSFORMER DES TABULATIONS EN ESPACES (ET RÉCIPROQUEMENT)
+
+L'activation de 'expandtab' est sans effet sur les tabulations existantes. En
+d'autres termes, toutes les tabulations du document restent des tabulations.
+Si vous voulez convertir des tabulations en espaces, utilisez la commande
+":retab".
+Utilisez ces commandes : >
+
+	:set expandtab
+	:%retab
+
+À présent, Vim a modifié toutes les indentations afin d'utiliser des espaces
+au lieu de tabulations. Toutefois, toutes les tabulations qui se trouvent
+après un caractère non-blanc sont conservées. Si vous souhaitez qu'elles
+soient également converties, ajoutez un '!' : >
+
+	:%retab!
+
+C'est assez dangereux, car cela peut aussi affecter les tabulations contenues
+dans des chaînes de caractères. Pour vérifier s'il y en a, vous pouvez
+utiliser : >
+
+	/"[^"\t]*\t[^"]*"
+
+Il est recommandé de ne pas utiliser de véritables tabulations à l'intérieur
+d'une chaîne. Remplacez les par "\t" pour éviter tout problème.
+
+Cela marche aussi bien en sens inverse : >
+
+	:set noexpandtab
+	:%retab!
+
+==============================================================================
+*30.6*	Mise en forme des commentaires
+
+Un des grands avantages de Vim est qu'il comprend les commentaires. Vous
+pouvez demander à Vim de mettre en forme un commentaire et il fera le 
+nécessaire. 
+   Supposons, par exemple, que vous ayez le commentaire suivant :
+
+	/* ~
+	 * Voici un test ~
+	 * de mise en forme du texte. ~
+	 */ ~
+
+Vous pouvez demander à Vim de le mettre en forme en plaçant le curseur au
+début du commentaire et en tapant : >
+
+	gq]/
+
+"gq" est l'opérateur de mise en forme de texte. "]/" est le mouvement qui
+vous amène à la fin d'un commentaire. Voici le résultat obtenu :
+
+	/* ~
+	 * Voici un test de mise en forme du texte. ~
+	 */ ~
+
+Remarquez que Vim a traité correctement le début de chaque ligne.
+  Il est également possible de sélectionner le texte à mettre en forme en mode
+Visuel et de taper "gq".
+
+Pour ajouter une nouvelle ligne au commentaire, placez le curseur sur la ligne
+du milieu et pressez "o". Le résultat se présente ainsi :
+
+	/* ~
+	 * Voici un test de mise en forme du texte. ~
+	 * ~
+	 */ ~
+
+Vim a inséré automatiquement un espace et une astérisque pour vous. Vous
+pouvez maintenant taper le texte de commentaire. S'il dépasse la longueur
+fixée par 'textwidth', Vim coupera la ligne. À nouveau, l'astérisque est
+insérée automatiquement : 
+
+	/* ~
+	 * Voici un test de mise en forme du texte. ~
+	 * Si vous tapez beaucoup de texte ici, Vim ~
+	 * coupera la ligne ~
+	 */ ~
+
+Pour que cela fonctionne, certains drapeaux doivent être présents dans
+'formatoptions' :
+
+	r	insère l'astérisque lorsqu'on tape <Entree> en mode Insertion
+	o	insère l'astérisque lorsqu'on utilise "o" ou "O" en mode Normal
+	c	coupe le texte de commentaire en accord avec 'textwidth'
+
+Voir |fo-table| pour plus de drapeaux.
+
+
+DÉFINIR UN COMMENTAIRE
+
+L'option 'comments' définit l'aspect général d'un commentaire. Vim opère la
+distinction entre un commentaire sur une seule ligne et un commentaire
+comportant des parties différentes pour le début, le milieu et la fin. 
+   De nombreux commentaires mono-lignes commencent par un caractère bien
+précis. En C++, on utilise //, dans les Makefiles, #, dans les scripts Vim,
+". Par exemple, pour faire comprendre les commentaires C++ à Vim : >
+
+	:set comments=://
+
+Le deux-point sépare les drapeaux d'un élément du texte permettant de
+reconnaître le commentaire. La forme générale d'un élément dans 'comments'
+est : 
+
+	{drapeaux}:{texte}
+
+La partie {drapeaux} peut être vide, comme dans le cas présent.
+   Plusieurs de ces éléments peuvent être concaténés, séparés par des
+virgules. Cela permet la reconnaissance de plusieurs types de commentaires à
+la fois. Éditons par exemple un courriel. Lorsqu'on répond, le texte écrit
+par un tiers est précédé par les caractères '>' et '!'. La commande suivante
+fonctionne : >
+
+	:set comments=n:>,n:!
+
+Il y a là deux éléments, un pour les commentaires commençant par '>' et un
+autre pour les commentaires qui commencent par '!'. Tous deux utilisent le
+drapeau "n". Cela signifie que ces commentaires sont imbriqués. Ainsi, une
+ligne commençant par ">" peut inclure un autre commentaire après le '>'. Cela
+permet de mettre en forme un message comme suit :
+
+	> ! Vous avez vu ce site ? ~
+	> ! Il a l'air vraiment génial. ~
+	> Je n'aime pas. Les ~
+	> couleurs sont affreuses. ~
+	Quelle est l'adresse de ce ~
+	site ? ~
+
+Essayez de fixer 'textwidth' à une valeur différente, par exemple, 80, et
+mettez en forme le texte en le selectionnant visuellement et en tapant "gq".
+Vous obtiendrez :
+
+	> ! Vous avez vu ce site ? Il a l'air vraiment génial. ~
+	> Je n'aime pas. Les couleurs sont affreuses. ~
+	Quel est l'adresse de ce site ? ~
+
+Vous noterez que Vim n'a pas déplacé de texte d'un format de commentaire vers
+un autre. Le début de la deuxième ligne aurait été collé à la fin de la
+première ligne, mais comme cette ligne commence par "> !" et la deuxième ligne
+par ">", Vim sait qu'il s'agit d'un type différent de commentaire.
+
+
+UN COMMENTAIRE EN TROIS PARTIES
+
+Un commentaire en C commence par "/*", comporte des "*" au milieu et finit par
+"*/". L'entrée correspondante de 'comments' se présente ainsi : >
+
+	:set comments=s1:/*,mb:*,ex:*/
+
+Le début est défini par "s1:/*". Le 's' indique le début d'une commande en
+trois parties. Le deux-point sépare les drapeaux du texte qui définit le
+commentaire : "/*". Il y a un drapeau : '1'. Il indique à Vim que la partie
+du milieu a un décalage d'un espace.
+   La partie du milieu "mb:*" commence par 'm', qui indique que c'est une
+partie centrale. Le drapeau 'b' signifie qu'un blanc doit suivre le texte.
+Autrement, Vim considèrerait du texte comme "*pointeur" également comme le
+milieu d'un commentaire.
+   La partie de fin "ex:*/" est identifiée par le 'e'. Le drapeau 'x' possède
+une signification particulière. Il signifie qu'après que Vim aura inséré
+automatiquement une astérisque, la saisie de "/" supprimera l'espace
+supplémentaire.
+
+Pour plus de détails, voir |format-comments|.
+
+==============================================================================
+
+Chapitre suivant : |usr_31.txt|  Exploiter l'interface graphique
+
+Copyright : voir |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:

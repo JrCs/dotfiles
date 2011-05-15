@@ -1,0 +1,224 @@
+*mlang.txt*     Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+Fonctionnalités multilingues			*multilang* *multi-lang*
+
+Ce document décrit l'utilisation des messages et menus dans différentes
+langues. Pour éditer du texte multi-octets, voir |multibyte|.
+
+Les bases sont expliquées dans le Manuel de l'utilisateur : |usr_45.txt|.
+
+1. Messages			|multilang-messages|
+2. Menus			|multilang-menus|
+3. Scripts			|multilang-scripts|
+
+{absent de Vi}
+{uniquement si compilé avec la fonctionnalité |+multi_lang|}
+
+==============================================================================
+1. Messages						*multilang-messages*
+
+Vim utilise la région linguistique de votre environnement. Dans la plupart des
+cas, cela signifie que Vim utilisera la langue que vous préférez, sauf si elle
+n'est pas disponible.
+
+Pour avoir une liste des noms de régions linguistiques supportées par votre
+système, regardez dans l'un de ces répertoires (pour Unix) :
+
+	/usr/lib/locale ~
+	/usr/share/locale ~
+
+Attention, car malheureusement la différence entre les majuscules/minuscules
+est prise en compte. Surveillez aussi l'utilisation de '-' et '_'.
+
+					    *:lan* *:lang* *:language* *E197*
+:lan[guage]
+:lan[guage] mes[sages]
+:lan[guage] cty[pe]
+:lan[guage] tim[e]
+			Affiche la langue courante (plus précisément, la
+			région linguistique |locale|).
+			Avec l'argument "messages", la langue utilisée pour
+			les messages est affichée. Détail technique :
+			correspond à LC_MESSAGES.
+			Avec l'argument "ctype", la langue utilisée pour
+			l'encodage de caractères est affichée. Détail
+			technique : correspond LC_CTYPE.
+			Avec l'argument "time", la langue utilisée pour
+			strftime() est affichée. Détail technique : correspond
+			à LC_TIME.
+			Sans argument, toutes les parties de la région
+			linguistique sont affichées (c'est dépendant du
+			système).
+			La langue courante peut aussi être obtenue avec les
+			variables |v:lang|, |v:ctype| et |v:lc_time|.
+
+:lan[guage] {nom}
+:lan[guage] mes[sages] {nom}
+:lan[guage] cty[pe] {nom}
+:lan[guage] tim[e] {nom}
+			Fixe la langue courante (plus précisément, la région
+			linguistique |locale|) à {nom}.
+			{nom} doit correspondre à un nom de région
+			linguistique valide sur votre système. Certains
+			systèmes acceptent des alias comme "fr" ou "fr_FR",
+			mais certains n'admettent que la spécification
+			entière, comme "fr_FR.ISO_8859-1".
+			Avec l'argument "messages", la langue utilisée pour
+			les messages est fixée. Elle peut être différente
+			quand, par exemple, vous voulez les messages en
+			français alors que vous éditez du texte en japonais.
+			$LC_MESSAGES est fixé.
+			Avec l'argument "ctype", la langue utilisée pour
+			l'encodage de caractères est fixée. Cela affecte les
+			bibliothèques auxquelles Vim a été lié. Il est
+			inhabituel d'utiliser une valeur différente de
+			'encoding'. $LC_CTYPE est fixé.
+			Avec l'argument "time", la langue utilisée pour la
+			date et les messages de date est fixée. Cela affecte
+			strftime(). $LC_TIME est fixé.
+			S'il n'y a pas d'arguments, tous sont fixés, et $LANG
+			est fixé en plus.
+			Cette commande ne fait de différence que pour les
+			éléments qui dépendent de la langue (certains
+			messages, le format de la date et de l'heure). Elle
+			n'est pas pleinement supportée sur tous les systèmes.
+			En cas d'échec, il y aura un message d'erreur. Sinon,
+			il n'y a pas de message.
+
+Exemples : >
+	:language
+<	Current language: C ~
+>
+	:language de_DE.ISO_8859-1
+	:language mes
+<	Current messages language: de_DE.ISO_8859-1 ~
+>
+	:lang mes fr
+
+
+TRADUCTION DES MESSAGES SUR MS-WINDOWS			*win32-gettext*
+
+Si vous avez utilisé le fichier ".exe" à installation automatique, les
+traductions des messages devraient déjà fonctionner. Sinon, récupérez le
+fichier "libintl.dll" si vous ne l'avez pas encore :
+
+	http://sourceforge.net/projects/gettext/ ~
+
+Vous trouverez aussi les outils `xgettext`, `msgformat` et d'autres.
+
+"libintl.dll" devrait être placé dans le même répertoire que (g)vim.exe, ou à
+un autre endroit recensé par la variable d'environnement PATH. Les fichiers de
+messages ("vim.mo") doivent être placés dans "$VIMRUNTIME/lang/xx/LC_MESSAGES",
+où "xx" désigne l'abréviation de la langue (sur deux lettres le plus souvent).
+
+Si vous écrivez vos propres traductions, vous devrez générer le fichier ".po"
+et le convertir en fichier ".mo". Pour cela, procurez-vous la distribution
+source et lisez le fichier "src/po/README.txt".
+
+Pour recouvrir le choix automatique de la langue, fixez la variable $LANG à la
+langue de votre choix. Utilisez "en" pour désactiver les traductions. >
+
+	:let $LANG = 'ja'
+
+(Texte pour Windows par Muraoka Taro.)
+
+==============================================================================
+2. Menus						*multilang-menus*
+
+Voir |45.2| pour les bases.
+
+NOTE : Si des changements ont été apportés aux menus depuis la rédaction de la
+traduction, certains des menus pourront apparaître en anglais. Essayez s'il
+vous plaît de contacter le responsable de la traduction et demandez-lui de la
+mettre à jour. Vous trouverez le nom et l'adresse électronique du traducteur
+dans "$VIMRUNTIME/lang/menu_<langue>.vim".
+
+Pour fixer la police (ou le jeu de polices) à utiliser pour les menus,
+utilisez la commande |:highlight|. Exemple : >
+
+	:highlight Menu font=k12,r12
+
+
+ALIAS DES NOMS DE RÉGIONS LINGUISTIQUES
+
+Malheureusement, les noms des régions linguistiques varient selon les
+systèmes, même lorsqu'ils désignent les mêmes langue et encodage. Si vos menus
+ne sont pas traduits comme vous l'espériez, examinez la sortie de cette
+commande : >
+
+	:echo v:lang
+
+Recherchez ensuite dans le répertoire "$VIMRUNTIME/lang" les fichiers de
+traduction qui utilisent une langue similaire. Une différence entre un '-' et
+un '_' peut empêcher de trouver le bon fichier ! À surveiller également, la
+différence entre "iso8859-1" et "iso_8859-1". Heureusement, Vim convertit tous
+les noms en minuscules, vous n'avez ainsi pas à vous soucier des différences
+de casse. Les espaces sont changés en soulignés, pour éviter d'avoir à les
+protéger.
+
+Si vous trouvez un fichier de traduction de menus pour votre langue avec un
+nom différent, créez un fichier dans votre propre répertoire de support pour
+charger celui-là. Le nom de ce fichier pourrait être :
+
+	~/.vim/lang/menu_<v:lang>.vim ~
+
+Reportez-vous à l'option 'runtimepath' pour les répertoires dans lesquels les
+fichiers de support sont recherchés. Dans ce fichier, utilisez une commande
+pour charger le fichier de traduction de menus avec le nom différent : >
+
+	runtime lang/menu_<autre_langue>.vim
+
+
+TRADUIRE DES MENUS
+
+Si vous voulez effectuer vos propres traductions, vous pouvez utiliser la
+commande |:menutrans|, explicitée ci-dessous. Il est recommandé de placer les
+traductions pour une langue dans un script Vim. Pour une langue ne possédant
+pas encore de traduction, merci de bien vouloir en devenir le responsable et
+de rendre vos traductions disponibles à tous les utilisateurs de Vim. Envoyez
+un courriel au responsable de Vim <maintainer@vim.org>.
+
+					*:menut* *:menutrans* *:menutranslate*
+:menut[ranslate] clear	Efface toutes les traductions de menus.
+
+:menut[ranslate] {anglais} {malangue}
+			Traduit le nom de menu {anglais} en {malangue}. Tous
+			les caractères spéciaux, tels que '&' et "<Tab>",
+			doivent être inclus. Les espaces et les points doivent
+			être protégés par une contre-oblique, exactement comme
+			dans les autres commandes |:menu|.
+
+Voir le répertoire $VIMRUNTIME/lang pour des exemples.
+
+Pour essayez vos traductions, vous devez d'abord supprimer tous les menus
+définis. Voici comment faire sans relancer Vim : >
+
+	:source $VIMRUNTIME/delmenu.vim
+	:source <votre-fichier-de-menus>
+	:source $VIMRUNTIME/menu.vim
+
+Chaque partie d'un chemin de menu est traduite séparément. Ainsi, si vous
+traduisez "Help" par "Aide" et "Overview" par "Sommaire", le menu
+"Help.Overview" deviendra automatiquement "Aide.Sommaire".
+
+==============================================================================
+3. Scripts						*multilang-scripts*
+
+Dans les scripts Vim, vous pouvez utiliser la variable |v:lang| pour obtenir
+la langue (région linguistique) courante. La valeur par défaut est "C" ou
+provient de la variable d'environnement $LANG.
+
+L'exemple suivant montre comment utiliser cette variable de façon simple, en
+adaptant la langue aux préférences de l'utilisateur. >
+
+	:if v:lang =~ "fr_FR"
+	:  echo "Bonjour"
+	:else
+	:  echo "Hello"
+	:endif
+<
+ vim:tw=78:ts=8:ft=help:norl:

@@ -1,0 +1,602 @@
+*usr_24.txt*   pour Vim version 6.2.  Dernière modification : 30 jui 2002
+
+	       MANUEL de l'UTILISATEUR VIM - par Bram Moolenaar
+
+                         Insérer rapidement du texte
+
+
+Lorsque vous saisissez du texte, Vim vous offre différents moyens avoir un
+minimum de touches à frapper et pour éviter les fautes de frappe. Vous pouvez
+utiliser le complètement en mode Insertion pour répéter des mots saisis
+précédemment. Utiliser des abréviations pour les mots longs. Saisir des
+caractères qui ne sont pas sur votre clavier.
+
+|24.1|  Effectuer des corrections
+|24.2|  Montrer les parenthèses correspondantes
+|24.3|  Complètement
+|24.4|  Répéter une insertion
+|24.5|  Copier une autre ligne
+|24.6|  Insérer un registre
+|24.7|  Abréviations
+|24.8|  Saisir des caractères spéciaux
+|24.9|  Digrammes
+|24.10| Commandes du mode Normal
+
+  Chapitre suivant : |usr_25.txt|  Editer du texte formaté
+Chapitre précédent : |usr_23.txt|  Editer d'autres fichiers
+Table des matières : |usr_toc.txt|
+
+==============================================================================
+*24.1*  Effectuer des corrections
+
+La touche <RetArr> a déjà été mentionnée. Elle efface le caractère situé 
+juste avant le curseur. La touche <Suppr> fait de même avec le caractère sous
+(après) le curseur.
+   Quand vous voulez effacer tout un mot, utilisez CTRL-W :
+
+        Le cheval est tombé dans le ciel ~
+                                        CTRL-W
+        Le cheval est tombé dans le ~
+
+Si vous avez complètement raté une ligne et que vous voulez la recommencer,
+utilisez CTRL-U. Cela conserve le texte situé après le curseur ainsi que
+l'indentation. Seul le texte compris entre le premier caractère non-blanc et
+le dernier caractère avant le curseur (inclus) sera effacé. Si votre curseur
+se trouve sur le "t" de "tombé" dans la ligne suivante, CTRL-U donnera ceci :
+
+        Le cheval est tombé dans le ~
+                      CTRL-U
+        tombé dans le ~
+
+Quand vous vous rendez compte que vous avez fait une erreur, vous devez
+déplacer le curseur jusqu'au bon endroit pour la corriger. Par exemple,
+imaginons que vous ayez saisi ceci :
+
+        Le cheval est tonbé dans le fossé ~
+
+Vous devez remplacer "tonbé" par "tombé". Avec le curseur en fin de ligne,
+vous taperiez ceci pour corriger votre erreur : >
+
+                                        <Esc>4bllrmA
+
+<       Quitter le mode Insertion       <Esc>
+        Quatre mots en arrière               4b
+        Deux caractères à droite               ll
+	Remplacer le "n" par un "m"              rm
+        Relancer le mode Insertion                 A
+
+Une autre façon de faire : >
+
+        <C-Gauche><C-Gauche><C-Gauche><C-Gauche><Droite><Droite><Suppr>m<Fin>
+
+<       Quatre mots en arrière       <C-Gauche><C-Gauche><C-Gauche><C-Gauche>
+        Deux caractères à droite                <Droite><Droite>
+        Effacer le "n"                                          <Suppr>
+        Insérer un "m"                                                 m
+        Aller à la fin de la ligne                                      <Fin>
+
+On utilise ici les touches spéciales pour se déplacer tout en restant en mode
+Insertion. Ceci ressemble à ce que vous feriez avec un éditeur classique
+(sans modes). Il est plus facile de s'en rappeler, mais cela prend plus de
+temps (vous devez déplacer vos mains des lettres aux touches fléchées, et la
+touche <Fin> est difficile à presser sans regarder le clavier).
+   Ces touches spéciales sont les plus utiles quand on écrit un mappage pour
+le mode Insertion. Le fait de taper davantage n'est alors plus un problème.
+   Un bref aperçu des touches que vous pouvez utiliser en mode Insertion :
+
+        <C-Orig>        Aller au début du fichier
+        <PgPrec>        Monter d'un écran
+        <Orig>          Aller en début de ligne
+        <S-Gauche>      Se déplacer d'un mot vers la gauche
+        <C-Gauche>      Se déplacer d'un mot vers la gauche
+        <S-Droite>      Se déplacer d'un mot vers la droite
+        <C-Droite>      Se déplacer d'un mot vers la droite
+        <Fin>           Aller en fin de ligne
+        <PgSuiv>        Descendre d'un écran
+        <C-Fin>         Aller en fin de fichier
+
+Il y en a quelques autres, voir |ins-special-special|.
+
+==============================================================================
+*24.2*  Montrer les parenthèses correspondantes
+
+Lorsque que vous saisissez une ) il serait pratique de voir à quelle (
+celle-ci correspond. Pour que Vim le fasse, utilisez cette commande : >
+
+        :set showmatch
+
+À présent, lorsque vous saisissez un texte comme "(exemple)", dès que vous
+tapez ) Vim déplacera brièvement le curseur sur la ( correspondante, l'y
+maintiendra pendant une demi-seconde, puis le repositionnera là où vous étiez
+en train de saisir votre texte.
+   Dans le cas où il n'y aurait pas de ( correspondante, Vim vous le signalera
+par un bip sonore. Ainsi, vous saurez que vous avez oublié une ( ou saisi une
+) de trop.
+   La correspondance sera également mise en évidence pour les paires de [] et
+de {}. Il n'est pas nécessaire d'attendre avant de saisir le caractère
+suivant ; dès que Vim le verra, le curseur reviendra à sa position initiale et
+l'insertion continuera comme avant.
+   Vous pouvez préciser le délai d'attente de Vim grâce à l'option
+'matchtime'. Par exemple, pour que Vim attende une seconde et demie tapez : >
+
+        :set matchtime=15
+
+La durée est spécifiée en dixièmes de seconde.
+
+==============================================================================
+*24.3*  Complètement
+
+Vim peut compléter automatiquement les mots en mode Insertion. Vous tapez le
+début du mot, vous appuyez sur CTRL-P, et Vim devine la fin du mot.
+   Imaginez, par exemple, que vous soyez en train d'écrire un programme en C
+et que vous vouliez saisir ce qui suit :
+
+        total = ch_array[0] + ch_array[1] + ch_array[2]; ~
+
+Vous commencez par saisir ceci :
+
+        total = ch_array[0] + ch_ ~
+
+A ce moment-là, vous demandez à Vim de compléter le mot grâce à la commande
+CTRL-P. Vim recherche alors un mot commençant par ce qui se trouve devant le
+curseur. Dans ce cas, il s'agit de "ch_", ce qui correspond au début du mot
+ch_array. Donc, en tapant CTRL-P, vous obtiendrez :
+
+        total = ch_array[0] + ch_array ~
+
+Quelques caractères plus tard, vous aurez ceci (le dernier caractère est un
+espace) :
+
+        total = ch_array[0] + ch_array[1] +  ~
+
+Si à présent vous tapez CTRL-P, Vim cherchera de nouveau un mot qui complète
+le mot situé avant le curseur. Puisqu'il n'y a rien juste avant le curseur, il
+trouvera le premier mot qui précède, c'est-à-dire "ch_array". Taper de nouveau
+CTRL-P vous donnera le mot précédent, soit "total" dans notre exemple. Une
+troisième pression sur CTRL-P cherchera encore plus loin en arrière. S'il n'y
+a rien d'autre, l'éditeur étant à court de mots, il renverra le texte
+original, c'est-à-dire rien du tout. Taper une quatrième fois CTRL-P fera
+recommencer l'éditeur avec "ch_array".
+
+Pour chercher vers l'avant, utilisez CTRL-N. Comme la recherche boucle en fin
+de fichier, CTRL-N et CTRL-P trouveront les mêmes mots, mais dans un ordre
+différent. Astuce : CTRL-P pour le mot Précédent [Previous] et CTRL-N pour le
+suivant [Next].
+
+L'éditeur Vim fait beaucoup d'efforts pour trouver les mots à compléter. Par 
+défaut, il cherche dans les endroits suivants :
+
+        1. Le fichier courant ;
+        2. Les fichiers dans les autres fenêtres ;
+        3. Les autres fichiers chargés (tampons cachés) ;
+        4. Les fichiers non chargés (tampons inactifs) ;
+        5. Les fichiers de marqueurs ;
+        6. Tous les fichiers inclus par le fichier courant (#include).
+
+
+OPTIONS
+
+Vous pouvez personnaliser l'ordre de recherche grâce à l'option 'complete'.
+
+L'option 'ignorecase' est utilisée. Lorsqu'elle est activée, les différences
+de casse sont ignorées lors des recherches de correspondances.
+
+Il existe une option spéciale pour le complètement : 'infercase'. Elle permet
+de ne pas tenir compte de la casse lors de la recherche ('ignorecase' doit 
+être activée) tout en conservant la casse utilisée pour le début du mot à
+compléter. Ainsi, si vous tapez "Heu" et que Vim trouve le mot "heureusement",
+vous obtiendrez "Heureusement".
+
+
+COMPLÈTEMENT D'ÉLÉMENTS SPÉCIFIQUES
+
+Si vous savez ce que vous chercher, vous pouvez utiliser ces commandes pour
+compléter avec un type d'éléments particulier :
+
+  CTRL-X CTRL-F   Noms de fichiers ;
+  CTRL-X CTRL-L   Lignes entières ;
+  CTRL-X CTRL-D   Définitions de macros (également dans les fichiers inclus) ;
+  CTRL-X CTRL-I   Fichiers courants et fichiers inclus ;
+  CTRL-X CTRL-K   Mots d'un dictionnaire ;
+  CTRL-X CTRL-T   Mots d'un thésaurus ;
+  CTRL-X CTRL-]   Marqueurs ;
+  CTRL-X CTRL-V   Ligne de commande Vim.
+
+Après chacune d'elles vous pouvez utiliser CTRL-N pour trouver la 
+correspondance suivante, CTRL-P pour la précédente.
+   Pour de plus amples informations sur ces commandes : |ins-completion|.
+
+
+COMPLÈTEMENT DE NOMS DE FICHIERS
+
+Prenons CTRL-X CTRL-F comme exemple. Cela permet de trouver des noms de 
+fichiers. Cette commande parcourt le répertoire courant et affiche le nom de
+chacun des fichiers correspondant au mot devant le curseur.
+   Imaginez, par exemple, que vous ayez les fichiers suivants dans le
+répertoire courant :
+
+        main.c  sub_count.c  sub_done.c  sub_exit.c
+
+Passez maintenant en mode Insertion et commencez à taper :
+
+        Le code de sortie est dans le fichier sub ~
+
+A ce moment-là, vous tapez la commande CTRL-X CTRL-F. Vim complète alors le
+mot courant "sub" en examinant les fichiers du répertoire courant. Le premier
+nom de fichier qui correspond est "sub_count.c". Comme ce n'est pas celui qui
+vous intéresse, vous affichez la correspondance suivante en tapant CTRL-N. Le
+fichier correspondant est "sub_done.c". Tapez CTRL-N encore une fois et vous
+obtenez "sub_exit.c". Voici le résultat :
+
+        Le code de sortie est dans le fichier sub_exit.c ~
+
+Si le nom du fichier commence par / (Unix) ou C:\ (MS-Windows) vous pouvez
+retrouver tous les fichiers du système de fichiers. Par exemple, tapez "/u"
+puis CTRL-X CTRL-F. Cela donnera "/usr/" (sous Unix) :
+
+        Le fichier se trouve dans /usr/ ~
+
+Si maintenant vous tapez CTRL-N, vous obtiendrez de nouveau "/u". Au lieu de
+cela, pour accepter le "/usr/" et descendre d'un niveau dans l'arborescence
+des répertoires, utiliser de nouveau CTRL-X CTRL-F :
+
+        Le fichier trouvé se trouve dans /usr/X11R6/ ~
+
+Les résultats dépendent de ce qui se trouve dans votre système de fichiers,
+bien entendu. Les correspondances sont triées alphabétiquement.
+
+==============================================================================
+*24.4*  Répéter une insertion
+
+Si vous tapez CTRL-A, l'éditeur insère le texte que vous avez saisi la
+dernière fois que vous étiez en mode Insertion.
+   Supposons, par exemple, que vous ayez un fichier commençant comme suit :
+
+        "fichier.h" ~
+        /* Début du programme principal */ ~
+
+Vous éditez ce fichier en insérant "#include " au début de la première ligne :
+
+        #include "fichier.h" ~
+        /* Début du programme principal */ ~
+
+Vous descendez au début de la ligne suivante grâce aux commandes "j^".
+Maintenant vous commencez à insérer une nouvelle ligne "#include". Pour cela
+vous tapez : >
+
+        i CTRL-A
+
+Vous obtenez le résultat suivant :
+
+        #include "fichier.h" ~
+        #include /* Début du programme principal */ ~
+
+"#include " a été inséré parce que CTRL-A insère le texte de l'insertion
+précédente. À présent vous tapez "main.h"<Entree> pour terminer la ligne :
+
+        #include "fichier.h" ~
+        #include "main.h" ~
+        /* Début du programme principal */ ~
+
+La commande CTRL-@ fait un CTRL-A puis quitte le mode Insertion. C'est un
+moyen rapide pour répéter exactement la même insertion.
+
+==============================================================================
+*24.5*  Copier une autre ligne
+
+La commande CTRL-Y insère le caractère situé au-dessus du curseur. Ceci est
+utile lorsque que vous voulez recopier une ligne précédente. Par exemple,
+imaginons que vous ayez cette ligne de code C :
+
+        b_array[i]->s_next = a_array[i]->s_next; ~
+
+À présent vous devez saisir la même ligne, mais avec "s_prev" à la place de
+"s_next". Commencez la nouvelle ligne et appuyez 14 fois sur CTRL-Y, jusqu'à
+ce que vous soyez au "n" de "next" :
+
+        b_array[i]->s_next = a_array[i]->s_next;~
+        b_array[i]->s_ ~
+
+Maintenant tapez "prev":
+
+        b_array[i]->s_next = a_array[i]->s_next; ~
+        b_array[i]->s_prev ~
+
+Continuez à appuyer sur CTRL-Y jusqu'au "next" suivant :
+
+        b_array[i]->s_next = a_array[i]->s_next;~
+        b_array[i]->s_prev = a_array[i]->s_ ~
+
+Tapez enfin "prev;" pour terminer la ligne.
+
+La commande CTRL-E fonctionne comme CTRL-Y mais avec le caractère situé
+au-dessous du curseur.
+
+==============================================================================
+*24.6*  Insérer un registre
+
+La commande CTRL-R {registre} insère le contenu du registre. Ceci est utile
+pour éviter d'avoir à taper un long mot. Par exemple, si vous devez saisir
+ceci :
+
+        r = VeryLongFunction(a) + VeryLongFunction(b) + VeryLongFunction(c) ~
+
+Le nom de cette fonction est défini dans un autre fichier. Editez ce fichier
+et déplacez le curseur sur le nom de la fonction, puis copiez-la dans le
+registre v :
+
+        "vyiw
+
+"v spécifie le registre, "yiw" copie le mot [yank-inner-word]. Maintenant,
+éditez le fichier où la nouvelle ligne doit être insérée et tapez les
+premières lettres :
+
+        r = ~
+
+Puis utilisez CTRL-R v pour insérer le nom de la fonction :
+
+        r = VeryLongFunction ~
+
+Vous continuez à tapez les caractères entre les occurrences du nom de la
+fonction et utilisez CTRL-R encore deux fois.
+   Vous auriez pu obtenir le même résultat avec le complètement. Les registres
+sont utiles quand il y a beaucoup de mots commençant par les mêmes caractères.
+
+Si le registre contient des caractères tels que <RetArr> ou tout autre
+caractère spécial, ils sont interprétés comme s'ils avaient été saisis au
+clavier.  Si vous ne voulez pas que cela se produise (vous voulez vraiment
+insérer le caractère <RetArr> dans le texte), utilisez CTRL-R CTRL-R
+{registre}.
+
+==============================================================================
+*24.7*  Abréviations
+
+Une abréviation est un mot court qui remplace un mot long. Par exemple, "pub"
+remplace "publicité". Grâce à Vim, vous pouvez saisir une abréviation et Vim
+la remplacera automatiquement par le mot idoine.
+   Pour demander à Vim de remplacer "pub" par "publicité" chaque fois que vous
+l'insérez, utilisez la commande suivante : >
+
+        :iabbrev pub publicité
+
+A présent, quand vous tapez "pub", le mot entier "publicité" sera inséré dans
+le texte. Ceci est déclenché par la saisie d'un caractère qui ne peut faire
+partie d'un mot, comme un espace par exemple :
+
+    Ce que vous saisissez       Ce que vous voyez
+    J'ai vu la pu               J'ai vu la pu~
+    J'ai vu la pub              J'ai vu la pub~
+    J'ai vu la pub<Space>       J'ai vu la publicité<Space> ~
+
+Le remplacement n'a pas lieu quand on ne tape que "pub". Ceci vous permet de
+saisir un mot comme "publier" sans que Vim n'effectue de remplacement. Seuls
+les mots complets sont testés en vue d'un éventuel remplacement d'abréviation.
+
+
+ABRÉGER PLUSIEURS MOTS
+
+Il est possible de définir une abréviation pour plusieurs mots. Par exemple,
+pour définir "JCD" comme abréviation de "Jean-Claude Duss", utilisez la
+commande suivante : >
+
+        :iabbrev JCD Jean-Claude Duss
+
+En tant que programmeur, j'utilise deux abréviations plutôt inhabituelles : >
+
+        :iabbrev #b /****************************************
+        :iabbrev #e <Space>****************************************/
+
+Je les utilise pour créer des zones de commentaires rectangulaires. Le
+commentaire commence avec #b qui trace la ligne supérieure. Je saisis
+ensuite mes commentaires, puis #e pour la ligne inférieure.
+   Notez que l'abréviation #e commence par un espace. Autrement dit, les deux
+premiers caractères sont : espace, étoile. Habituellement, Vim ignore les
+espaces entre l'abréviation et le mot complet. Pour contourner ce problème,
+j'épelle l'espace avec les sept caractères : <, s, p, a, c, e, >.
+
+        NOTE :
+        ":iabbrev" est long à taper. ":iab" fonctionne aussi bien. C'est une
+        abréviation de la commande d'abréviation!
+
+
+CORRIGER LES COQUILLES
+
+Il est courant de toujours faire la même faute de frappe. Par exemple, taper
+"styel" au lieu de "style". Vous pouvez corriger ceci grâce aux abréviations :
+>
+        :abbreviate styel style
+
+Vous pouvez en ajouter toute une liste. Ajoutez-en une chaque fois que vous
+découvrez une coquille assez courante.
+
+
+LISTER LES ABRÉVIATIONS
+
+La commande ":abbreviate" donne la liste des abréviations :
+
+        :abbreviate
+        i  #e             ****************************************/
+        i  #b            /****************************************
+        i  JCD           Jean-Claude Duss
+        i  pub           publicité
+        !  styel         style
+
+Le "i" dans la première colonne signifie mode Insertion. Ces abréviations ne
+sont actives qu'en mode Insertion. Les autres caractères possibles sont :
+
+        c       Mode Ligne-de-commande                  :cabbrev
+        !       Modes Ligne-de-commande et Insertion    :abbreviate
+
+Comme les abréviations sont rarement utiles en mode Ligne-de-commande, vous
+utiliserez essentiellement la commande ":iabbrev". Ceci évitera, par exemple,
+que "pub" ne soit remplacé par "publicité" lorsque vous tapez : >
+
+        :edit pub.txt
+
+
+SUPPRIMER DES ABRÉVIATIONS
+
+Pour supprimer une abréviation, utilisez la commande ":unabbreviate". Supposez
+que vous ayez l'abréviation suivante : >
+
+        :abbreviate @p plouf
+
+Vous pouvez la supprimer avec cette commande : >
+
+        :unabbreviate @p
+
+Pendant que vous tapez ceci, vous remarquerez que "@p" est remplacé par
+"plouf". Ne vous en souciez pas, Vim comprend quand même la commande (à moins
+que "plouf" soit l'une de vos abréviations, mais c'est très improbable).
+   Pour supprimer toutes les abréviations : >
+
+        :abclear
+
+":unabbreviate" et ":abclear" ont aussi leurs variantes pour les modes
+Insertion (":iunabbeviate et ":iabclear") et Ligne-de-commande
+(":cunabbreviate" et ":cabclear").
+
+
+REMAPPER LES ABRÉVIATIONS
+
+Il y a une chose à laquelle il faut prendre garde lors de la défintion d'une
+abréviation : la chaîne résultante ne devrait pas être mappée. Par exemple : >
+
+        :abbreviate @a addition
+        :imap dd disque dur
+
+Si maintenant vous tapez @a, vous obtiendrez "adisque durition". Ce n'est pas
+ce que vous voulez. Pour éviter ceci, utilisez la commande ":noreabbrev". Cela
+fait la même chose que ":abbreviate", mais cela évite que la chaîne résultante
+soit utilisée pour les mappages : >
+
+        :noreabbrev @a addition
+
+Heureusement, il est peu probale que le résultat d'une abréviation soit mappé.
+
+==============================================================================
+*24.8*  Saisir des caractères spéciaux
+
+La commande CTRL-V est utilisée pour insérer le prochain caractère
+littéralement. Autrement dit, quelque soit la signification spéciale du
+caractère, elle sera ignorée. Par exemple : >
+
+        CTRL-V <Esc>
+
+insère un caractère échappement. Par conséquent, vous ne quittez pas le
+mode Insertion. (Ne saisissez pas l'espace après CTRL-V, c'est juste pour
+améliorer la lisibilité).
+
+        NOTE :
+        Sous MS-Windows CTRL-V est utilisé pour coller du texte. Au lieu de
+        CTRL-V, utilisez CTRL-Q. Par ailleurs, sous Unix, CTRL-Q ne fonctionne
+	pas avec certains terminaux, parce que cela a une significaton
+	spéciale.
+
+Vous pouvez aussi utiliser la commande CTRL-V {chiffres} pour insérer un
+caractère dont la valeur décimale est {chiffres}. Par exemple, 127 correspond
+au caractère <Suppr> (mais pas forcément à la touche <Suppr> !). Pour insérer
+la caractère <Suppr> tapez : >
+
+        CTRL-V 127
+
+Vous pouvez saisir des caractères jusqu'à 255 de cette façon. Lorsque vous
+tapez moins de trois chiffres, un caractère non-numérique terminera la
+commande. Pour éviter d'avoir à taper un caractère non-numérique, préfixez la
+valeur avec un ou deux zéros pour avoir trois chiffres.
+   Les trois commandes suivantes insèrent un caractère <Tab> puis un point :
+
+        CTRL-V 9.
+        CTRL-V 09.
+        CTRL-V 009.
+
+Pour saisir un caractère en hexadécimal, utilisez un "x" après CTRL-V : >
+
+        CTRL-V x7f
+
+Cela va également jusqu'au caractère 255 (CTRL-V xff). Vous pouvez aussi
+utiliser "o" pour saisir un caractère avec sa valeur en octal et deux autres
+méthodes vous permettent de saisir des caractères exprimés sur 16 ou 32 bits
+(pour un caractère Unicode, par exemple) : >
+
+        CTRL-V o123
+        CTRL-V u1234
+        CTRL-V U12345678
+
+==============================================================================
+*24.9*  Digrammes
+
+Certains caractères ne figurent pas sur le clavier. Par exemple, le caractère
+copyright (©). Pour saisir ces caractères dans Vim, vous utilisez les
+digrammes, où deux caractères en représente un. Pour saisir un ©, par exemple,
+vous pressez sur trois touches : >
+
+        CTRL-K Co
+
+Pour connaître les digrammes disponibles, utilisez la commande suivante : >
+
+        :digraphs
+
+Vim affichera la table des digrammes. En voici trois lignes :
+
+  AC ~_ 159  NS |  160  !I ¡  161  Ct ¢  162  Pd £  163  Cu ¤  164  Ye ¥  165 ~
+  BB ¦  166  SE §  167  ': ¨  168  Co ©  169  -a ª  170  << «  171  NO ¬  172 ~
+  -- ­  173  Rg ®  174  'm ¯  175  DG °  176  +- ±  177  2S ²  178  3S ³  179 ~
+
+Ceci montre, par exemple, que le digramme que obtenez zn tapant CTRL-K Pd est
+le caractère (£).  Il s'agit du caractère 163 (décimal).
+   Pd est un abrégé de Pound (Livre). La plupart des digrammes sont choisis de
+sorte que vous ayez une idée de ce qu'ils produiront. Si vous parcourez la
+liste, vous en comprendrez la logique.
+   Vous pouvez intervertir le premier et le second caractère, si cette
+combinaison ne correspond à aucun digramme. Par conséquent, CTRL-K dP
+fonctionne également. Puisqu'il n'y a pas de digramme pour "dP", Vim cherchera
+aussi le digramme "Pd".
+
+        NOTE :
+        Les digrammes dépendent du jeu de caractères que Vim pense que vous
+	utilisez. Sous MS-DOS, ils sont différents de MS-Windows. Utilisez
+	systématiquement ":digraphs" pour trouver quels sont les digrammes
+	actuellement disponibles.
+
+Vous pouvez définir vos propres digrammes. Exemple : >
+
+        :digraph a" ä
+
+Ceci établit que CTRL-K a" insère un caractère ä. Vous pouvez également
+spécifier le caractère avec un nombre décimal. Ceci définit le même digramme :
+>
+        :digraph a" 228
+
+Pour plus d'informations sur les digrammes : |digraphs|
+   Une autre façon d'insérer des caractères spéciaux est d'utiliser le codage
+clavier. Pour plus d'informations : |45.5|
+
+==============================================================================
+*24.10* Commandes du mode Normal
+
+Le mode Insertion offre un nombre limité de commandes. En mode Normal vous en
+avez beaucoup plus. Lorsque vous voulez en utilisez une, habituellement vous
+quittez le mode Insertion avec <Echap>, exécutez la commande du mode Normal,
+puis revenez en mode Insertion grâce à "i" ou "a". 
+   Il y a plus rapide. Grâce à CTRL-O {commande} vous pouvez exécuter
+n'importe quelle commande du mode Normal sans quitter le mode Insertion.
+Ainsi, pour effacer le texte depuis le curseur jusqu'à la fin de la ligne : >
+
+        CTRL-O D
+
+Vous ne pouvez exécuter qu'une seule commande du mode Normal de cette façon.
+Mais vous pouvez spécifier un registre ou un quantificateur. Voici un exemple
+plus compliqué : >
+
+        CTRL-O "g3dw
+
+Ceci efface trois mots et les place dans le registre g.
+
+==============================================================================
+
+Chapitre suivant : |usr_25.txt|  Editer du texte formaté
+
+Copyright : voir |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:
+
+

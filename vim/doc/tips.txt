@@ -1,0 +1,458 @@
+*tips.txt*      Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+Astuces et idées pour bien utiliser Vim			*tips*
+
+N'oubliez pas de consulter le Manuel de l'utilisateur, il contient également
+de nombreux conseils pratiques |usr_toc.txt|.
+
+Édition de sources C					    |C-editing|
+Rechercher tous les endroits où un identifiant est utilisé  |ident-search|
+Restauration d'écran dans un xterm			    |xterm-screens|
+Défilement en mode Insertion				    |scroll-insert|
+Défilement adouci					    |scroll-smooth|
+Correction des erreurs de frappe courantes		    |type-mistakes|
+Comptage de mots, lignes, etc.				    |count-items|
+Restaurer la position du curseur			    |restore-position|
+Renommer des fichiers					    |rename-files|
+Accélérer les commandes externes			    |speed-up|
+Mappages utiles						    |useful-mappings|
+Compactage des fichiers d'aide				    |gzip-helpfile|
+Édition hexadécimale					    |hex-editing|
+Exécution des commandes shell dans une fenêtre		    |shell-window|
+Utiliser la notation <> dans des autocommandes		    |autocmd-<>|
+
+==============================================================================
+Édition de sources C					*C-editing*
+
+Vim offre plusieurs fonctionnalités afin d'aider à l'édition des programmes
+en C. En voici un court descriptif, avec les liens permettant d'y sauter :
+
+|usr_29.txt|	    Chapitre « Se déplacer dans des programmes » dans le
+		       Manuel de l'utilisateur
+|usr_30.txt|	    Chapitre « Éditer des programmes » dans le Manuel de
+		       l'utilisateur
+|C-indenting|	    Identation de texte à la volée
+|=|		    Réindenter plusieurs lignes
+|format-comments|   Mettre en forme des commentaires
+
+|:checkpath|	    Lister tous les fichiers inclus
+|[i|		    Rechercher l'identifiant sous le curseur dans les fichiers
+		       courant et inclus
+|[_CTRL-I|	    Sauter à la correspondance de "[i"
+|[I|		    Rechercher dans les fichiers courant et inclus toutes les
+		       lignes contenant l'identifiant sous le curseur
+|[d|		    Rechercher la définition de la macro sous le curseur dans
+		       les fichiers courant et inclus
+
+|CTRL-]|	    Sauter au marqueur sous le curseur (p. ex., la définition
+		       d'une fonction)
+|CTRL-T|	    Retourner à la position précédant le dernier CTRL-]
+|:tselect|	    Choisir un marqueur dans la liste des correspondances
+
+|gd|		    À la déclaration de la variable locale sous le curseur
+|gD|		    À la déclaration de la variable globale sous le curseur
+
+|gf|		    Éditer le fichier dont le nom est sous le curseur
+
+|%|		    À l'appariement de (), {}, [], /* */, #if, #else ou #endif
+|[/|		    Au précédent début de commentaire
+|]/|		    À la prochaine fin de commentaire
+|[#|		    Au précédent #if, #ifdef, ou #else non fermé
+|]#|		    Au prochain #else ou #endif non ouvert
+|[(|		    Au précédent '(' déparié
+|])|		    Au prochain ')' déparié
+|[{|		    Au précédent '{' déparié
+|]}|		    Au prochain '}' déparié
+
+|v_ab|		    Sélection d'un bloc de "[(" à "])", parenthèses incluses
+|v_ib|		    Sélection de l'intérieur d'un bloc de "[(" à "])"
+|v_aB|		    Sélection d'un bloc de "[{" à "]}", crochets inclus
+|v_iB|		    Sélection de l'intérieur d'un bloc de "[{" à "]}"
+
+==============================================================================
+Rechercher tous les endroits où un identifiant est utilisé	*ident-search*
+
+Vous savez probablement déjà que les marqueurs (voir |tags|) peuvent être
+utilisés pour sauter à l'endroit où une fonction, une variable est définie.
+Mais vous pouvez également vouloir sauter à tous les endroits où cette
+fonction, cette variable est utilisée. Il existe deux moyens pour ce faire :
+1. Utiliser la commande |:grep|. Ceci devrait fonctionner sur la plupart des
+   systèmes Unix, mais risque d'être lent (tous les fichiers sont lus) et ne
+   peut opérer la recherche que dans un seul répertoire.
+2. Utiliser les utilitaires ID. Rapides et capables d'opérer dans plusieurs
+   répertoires, ils utilisent une base de données pour répertorier tous les
+   emplacements à examiner. Vous aurez également besoin de quelques programmes
+   complémentaires. Et vous devrez maintenir votre base de données à jour.
+
+Pour utiliser les utilitaires ID GNU :
+
+Vous aurez besoin :
+- des utilitaires ID GNU installés (`mkid` est nécessaire pour créer le
+  fichier ID et `lid` pour utiliser les macros) ;
+- d'un fichier de base de données d'identifiants nommé "ID" dans le répertoire
+  courant. Vous pouvez le créez avec la commande shell `mkid fich1 fich2 ...`.
+
+Placez ceci dans votre fichier vimrc : >
+
+	map _u :call Recherche_ID()<Bar>execute "/\\<" . g:mot . "\\>"<CR>
+	map _n :n<Bar>execute "/\\<" . g:mot . "\\>"<CR>
+
+	function! Recherche_ID() XXX
+	  let g:mot = expand("<cword>")
+	  let x = system("lid --key=none ". g:mot)
+	  let x = substitute(x, "\n", " ", "g")
+	  execute "next " . x
+	endfun
+
+Pour l'utiliser, placez le curseur sur un mot, tapez "_u" et Vim chargera le
+fichier qui contient le mot. Recherchez l'occurrence suivante du mot dans le
+même fichier avec "n". Allez au fichier suivant avec "_n".
+
+Cela a été testé avec "id-utils-3.2" (c'est le nom du fichier d'archive des
+utilitaires ID GNU, disponible sur votre miroir FTP GNU favori).
+
+(L'idée vient d'Andreas Kutschera.)
+
+==============================================================================
+Restauration d'écran dans un xterm	*xterm-screens* *xterm-save-screen*
+
+(De comp.editors, par Juergen Weigert, en réponse à une question.)
+
+:> Une autre question est qu'après avoir quitté Vim, l'écran est laissé tel
+:> qu'il était, c.-à-d. que le contenu du fichier que je visualisais (éditais)
+:> reste visible. Les sorties de mes commandes précédentes comme `ls` sont
+:> perdues, c.-à-d. plus présentes dans le tampon défilant. Je sais qu'il
+:> existe une façon de restaurer l'écran après avoir quitté Vim et autres
+:> clones de Vi, mais je ne sais pas comment faire. Aide demandée. Merci.
+:
+:J'imagine que quelqu'un d'autre peut répondre à cette question. Je suppose
+:que Vim et Vi font la même chose que n'importe quel programme pour une
+:configuration de xterm donnée.
+
+Ils ne font pas forcément la même chose, et cela peut venir d'un problème
+entre termcap et terminfo. Vous devez savoir qu'il existe deux bases de
+données pour décrire les attributs d'un type de terminal particulier : termcap
+et terminfo. Ceci peut entraîner des conflits lorsque les entrées diffèrent ET
+que les programmes en question utilisent l'un terminfo et l'autre termcap
+(voir aussi |+terminfo|).
+
+Pour votre problème en particulier, vous êtes concerné par les séquences de
+contrôle ^[[?47h et ^[[?47l. Elles permettent de basculer entre les tampons
+d'écran principal et alternatif. On pourrait ainsi saisir >
+	echo -n "^[[?47h"; vim ... ; echo -n "^[[?47l"
+pour obtenir l'effet désiré. (La notation ^[ est mise pour le caractère
+d'échappement ; plus bas, on verra que les bases de données utilisent \E à la
+place.)
+
+Au lancement, Vim renvoie la valeur de la variable termcap "ti" (terminfo :
+"smcup") au terminal ; lorsqu'on quitte, il renvoie "te" (terminfo : "rmcup").
+Ainsi, ces deux variables sont placées de la même façon que dans l'exemple de
+séquence de contrôle ci-dessus.
+
+Comparez vos entrées termcap (fichier "/etc/termcap") et terminfo (commande
+`/usr/bin/infocmp -C xterm`) pour xterm. Toutes deux devraient être similaires
+à : >
+	:te=\E[2J\E[?47l\E8:ti=\E7\E[?47h:
+
+P.-S. : Si vous remarquez une différence, quelqu'un (votre administrateur
+système ?) aurait intérêt à passer au crible les bases termcap et terminfo,
+pour s'assurer de leur consistance.
+
+NOTE 1 : Si vous recompilez Vim avec FEAT_XTERM_SAVE défini dans "feature.h",
+le xterm interne inclura les entrées "te" et "ti" mentionnées.
+
+NOTE 2 : Si vous désirez annuler la restauration de l'écran, sans modifier
+votre termcap, ajoutez ceci à votre fichier vimrc : >
+	:set t_ti= t_te=
+
+==============================================================================
+Défilement en mode Insertion				*scroll-insert*
+
+Si vous êtes en mode Insertion et que vous désirez lire du texte situé juste
+en dehors de l'écran, utilisez "CTRL-X CTRL-E" et "CTRL-X CTRL-Y" pour faire
+défiler l'écran. |i_CTRL-X_CTRL-E|
+
+Pour faciliter ce défilement, vous pouvez employer ces mappages : >
+	:inoremap <C-E> <C-X><C-E>
+	:inoremap <C-Y> <C-X><C-Y>
+(Tapez-les littéralement et assurez-vous que 'cpoptions' ne contient pas le
+drapeau '<'.)
+   NOTE : Vous perdrez alors la possibilité de recopier le texte de la ligne
+au-dessus/en dessous. |i_CTRL-E|
+
+Il pourrait également être intéressant de fixer 'scrolloff' à une valeur plus
+grande, cela vous permettrait de toujours avoir plusieurs lignes de contexte
+autour du curseur. Si 'scrolloff' est supérieur à la moitié de la hauteur de
+la fenêtre, le curseur restera alors toujours au milieu de celle-ci et le
+texte défilera lorsque le curseur sera déplacé en haut/bas.
+
+==============================================================================
+Défilement adouci					*scroll-smooth*
+
+Si vous préférez un défilement un peu « adouci », essayez ces mappages : >
+
+	:map <C-U> <C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y><C-Y>
+	:map <C-D> <C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E><C-E>
+
+(Tapez-les littéralement et assurez-vous que 'cpoptions' ne contient pas le
+drapeau '<'.)
+
+==============================================================================
+Correction des erreurs de frappe courantes  		*type-mistakes*
+
+Si vous avez la (mauvaise) habitude de mal saisir certains mots, l'usage des
+abréviations vous permettra de les corriger. Par exemple : >
+
+	:ab fro for
+	:ab traductoin traduction
+
+==============================================================================
+Comptage de mots, lignes, etc.				*count-items*
+
+Pour dénombrer la fréquence d'apparition de n'importe quel motif dans un
+tampon, fixez 'report' à 0 et utilisez la commande de substitution pour
+remplacer le motif par lui-même. Le nombre de substitutions alors rapporté est
+le nombre d'occurrences. Exemples : >
+
+	:set report=0
+	:%s/./&/g		" caractères
+	:%s/\i\+/&/g		" mots
+	:%s/^			" lignes
+	:%s/le/&/g		" « le », n'importe où
+	:%s/\<le\>/&/g		" « le » en tant que mot
+
+Vous voudrez certainement désactiver 'hlsearch' ou taper ":nohlsearch".
+
+Cela ne marche pas si l'option 'modifiable' est activée. Comme méthode
+alternative, vous pouvez utiliser "g CTRL-G" en mode Visuel |v_g_CTRL-G|.
+
+==============================================================================
+Restaurer la position du curseur			*restore-position*
+
+Vous voudrez peut-être écrire un mappage qui effectue un changement quelque
+part dans le fichier puis restaure la position du curseur, sans faire défiler
+le texte. Par exemple, pour changer un champ de date dans un fichier : >
+
+	:map <F2> mcHmhgg/Dernière [Mm]odification :\s*/e+1<CR>"_D"=strftime("%d %b %Y")<CR>p'hzt`c
+
+Dissection de la mémorisation de la position :
+	mc	mémorise la position courante avec la marque 'c'
+	H	va à la première ligne de la fenêtre
+	mh	mémorise cette position avec la marque 'h'
+
+Dissection de la restauration de la position :
+	'h	va à l'ancienne première ligne de la fenêtre
+	zt	replace cette ligne en haut de la fenêtre
+	`c	retourne à la position originale du curseur
+
+==============================================================================
+Renommer des fichiers					*rename-files*
+
+Supposons que j'ai un répertoire contenant les fichiers suivants (répertoire
+pris au hasard :-)
+
+	buffer.c
+	charset.c
+	digraph.c
+	...
+
+et que je veuille renommer les fichiers *.c en *.blabla. Je ferai donc : >
+
+	$ vim
+	:r! ls *.c
+	:%s/\(.*\).c/mv & \1.blabla
+	:w !sh
+	:q!
+
+==============================================================================
+Accélérer les commandes externes			*speed-up*
+
+Dans certains cas, l'exécution d'une commande externe peut être très lente.
+Cela peut également ralentir l'expansion des motifs d'englobement sous Unix.
+Voici quelques suggestions pour améliorer la vitesse.
+
+Si votre fichier ".cshrc" (ou autre, selon le shell utilisé) est très long,
+vous devriez le scinder en une section pour un usage interactif et une pour un
+usage non-interactif (on parle dans ce cas de shell secondaire). Lorsque vous
+exécutez une commande depuis Vim, comme ":!ls", vous n'avez pas besoin des
+fonctionnalités interactives (p. ex., changer l'invite). Placez donc ces
+dernières après ces lignes : >
+
+	if ($?prompt == 0) then
+		exit 0
+	endif
+
+Un autre moyen est d'inclure le drapeau "-f" à l'option 'shell', p. ex. : >
+
+	:set shell=csh\ -f
+
+(La contre-oblique est nécessaire afin d'obtenir un espace dans l'option.)
+Ainsi, csh ne chargera pas le fichier d'initialisation ".cshrc". Ceci pourrait
+cependant causer la cessation de certaines fonctionnalités.
+
+==============================================================================
+Mappages utiles						*useful-mappings*
+
+Voici quelques mappages qui sont souvent appréciés.
+
+							*map-backtick*  >
+	:map ' `
+Ceci fait fonctionner l'apostrophe comme la contre-apostrophe. Place le
+curseur sur la colonne d'une marque, au lieu du premier caractère non-blanc de
+la ligne.
+
+							*emacs-keys*
+Pour une édition de la ligne de commande de style Emacs : >
+	" début de ligne
+	:cnoremap <C-A>		<Home>
+	" un caractère à gauche
+	:cnoremap <C-B>		<Left>
+	" supprime le caractère sous le curseur
+	:cnoremap <C-D>		<Del>
+	" fin de ligne
+	:cnoremap <C-E>		<End>
+	" un caractère à droite
+	:cnoremap <C-F>		<Right>
+	" ligne suivante dans l'historique
+	:cnoremap <C-N>		<Down>
+	" ligne précédente dans l'historique
+	:cnoremap <C-P>		<Up>
+	" un mot en arrière
+	:cnoremap <Esc><C-B>	<S-Left>
+	" un mot en avant
+	:cnoremap <Esc><C-F>	<S-Right>
+
+NOTE : Cela nécessite que 'cpoptions' ne contienne pas le drapeau '<'. |<>|
+
+							*format-bullet-list*
+Ce mappage sert à mettre en forme les listes à tirets. Il requiert une ligne
+vide au-dessus et au-dessous de chaque entrée de la liste. Les commandes
+d'expression sont employées ici pour pouvoir commenter le mappage. >
+
+	:let m =     ":map _f  :set ai<CR>"  " active 'autoindent'
+	:let m = m . "{O<Esc>"		     " ligne vide au-dessus des entrées
+	:let m = m . "}{)^W"		     " déplace le texte après le tiret
+	:let m = m . "i     <CR>     <Esc>"  " ajoute un espace pour indenter
+	:let m = m . "gq}"		     " met en forme après le tiret
+	:let m = m . "{dd"		     " supprime la ligne vide
+	:let m = m . "5lDJ"		     " colle le texte après le tiret
+	:execute m			     |" définit le mappage
+
+Sur la notation <>, voir |<>|. Tout ceci est saisi littéralement. Ainsi, "^W"
+correspond à '^' 'W', et non à CTRL-W. Vous pouvez ainsi copier/coller ce
+mappage vers Vim, si 'cpoptions' ne contient pas le drapeau '<'.
+
+Remarquez également que le dernier commentaire est introduit par |", car la
+commande ":execute" n'accepte par de commentaires directs.
+
+Vous devrez également fixer 'textwidth' à une valeur non-nulle, p. ex. : >
+	:set tw=70
+
+Un mappage à peu près équivalent, mais qui reporte l'indentation de la
+première ligne pour la liste. >
+	:map _f :set ai<CR>}{a                                                          <Esc>WWmmkD`mi<CR><Esc>kkddpJgq}'mJO<Esc>j
+NOTE : Ce mappage est une ligne unique.
+
+							*collapse*
+Ce deux mappages réduisent une succession de lignes vides (";v") ou remplies
+de blancs (";b") à une seule ligne : >
+	:map ;v   GoZ<Esc>:g/^$/.,/./-j<CR>Gdd
+	:map ;b   GoZ<Esc>:g/^[ <Tab>]*$/.,/[^ <Tab>]/-j<CR>Gdd
+
+==============================================================================
+Compactage des fichiers d'aide				*gzip-helpfile*
+
+Pour ceux d'entre vous qui manquent vraiment d'espace disque, il est possible
+de compacter les fichiers d'aide et de les consulter encore avec Vim. Vous
+aurez besoin pour cela du programme `gzip`. L'accès aux fichiers d'aide sera
+rendu un peu plus lent.
+
+1. Compactez tous les fichiers d'aide : `gzip doc/*.txt`.
+
+2. Éditez "doc/tags" et modifiez tous les ".txt" en ".txt.gz" : >
+	:%s=\(\t.*\.txt\)\t=\1.gz\t=
+
+3. Ajoutez cette ligne dans votre fichier vimrc >
+	set helpfile={nomrep}/help.txt.gz
+où {nomrep} est le nom du répertoire contenant les fichiers d'aide. Le greffon
+|gzip| s'occupera de décompacter les fichiers.
+
+Assurez-vous que $VIMRUNTIME est bien fixé à l'endroit où sont les autres
+fichiers de support Vim, si celui-ci est différent de l'emplacement du
+répertoire "doc" des fichiers compactés. Voir |$VIMRUNTIME|.
+
+==============================================================================
+Exécution des commandes shell dans une fenêtre		*shell-window*
+
+Il y a parfois des questions sur la possibilité d'exécuter un shell dans une
+fenêtre de Vim. La réponse : c'est impossible ! L'inclusion de cette
+fonctionnalité rajouterait beaucoup de code à Vim, ce qui est une bonne raison
+de s'abstenir. Après tout, Vim est un éditeur de texte et n'est pas destiné à
+d'autres tâches. N'importe comment, si vous désirez obtenir un résultat
+identique, essayez de partager l'écran de votre terminal ou de votre fenêtre
+avec le programme `splitvt`. Vous le trouverez probablement sur quelque
+serveur FTP. Sam Lantinga <slouken@cs.ucdavis.edu> en sait un peu plus sur le
+sujet. La commande `window` représente une alternative disponible sur les
+systèmes Unix BSD, qui supporte des fenêtres se chevauchant. Ou également le
+programme `screen`, trouvé sur "www.uni-erlangen.de", et qui gère des piles de
+fenêtres.
+
+==============================================================================
+Édition hexadécimale				    *hex-editing* *using-xxd*
+
+Voir la section |23.4| du Manuel de l'utilisateur.
+
+Si une extension particulière est employée pour des fichiers binaires (comme
+".exe", ".bin", etc.), il peut être utile d'automatiser le processus en
+plaçant les autocommandes suivantes dans votre fichier vimrc. Remplacez
+"*.bin" par la liste d'extensions séparées par des virgules que vous voudrez
+pouvoir éditer. >
+
+	" vim -b : édition de binaires en passant par `xxd` !
+	augroup Binaire
+	  au!
+	  au BufReadPre  *.bin let &bin=1
+	  au BufReadPost *.bin if &bin | %!xxd
+	  au BufReadPost *.bin set ft=xxd | endif
+	  au BufWritePre *.bin if &bin | %!xxd -r
+	  au BufWritePre *.bin endif
+	  au BufWritePost *.bin if &bin | %!xxd
+	  au BufWritePost *.bin set nomod | endif
+	augroup END
+
+==============================================================================
+Utiliser la notation <> dans des autocommandes		*autocmd-<>*
+
+La notation <> n'est pas reconnue dans l'argument d'une ":autocmd". Afin
+d'éviter l'emploi de caractères spéciaux, vous pouvez utiliser un mappage
+auto-destructeur pour obtenir la notation <>, puis appeler ce mappage depuis
+l'autocommande. Par exemple :
+							*map-self-destroy*  >
+	" Ajout automatique du nom de fichier au menu "Buffers", listant les
+	" tampons. Utilise un mappage auto-destructeur !
+	" 1. Utilise une ligne du tampon convertir les points '.' du nom de
+	"    fichier en '\.'.
+	" 2. Mémorise cela dans le registre '"'.
+	" 3. Ajoute ce nom au menu "Buffers".
+	" ATTENTION ! Il existe des effets de bord, comme la perte du contenu
+	" du registre courant et la suppression de tout mappage associé à "i".
+	"
+	autocmd BufNewFile,BufReadPre * nmap i :nunmap i<CR>O<C-R>%<Esc>:.g/\./s/\./\\./g<CR>0"9y$u:menu Buffers.<C-R>9 :buffer <C-R>%<C-V><CR><CR>
+	autocmd BufNewFile,BufReadPre * normal i
+
+La commande ":execute" constitue une autre méthode, peut-être meilleure. Dans
+la chaîne, vous pouvez utiliser la notation <> précédée par une
+contre-oblique. N'oubliez pas alors de protéger les contre-obliques '\' et
+doubles-apostrophes '"' en les précédant d'une contre-oblique. >
+
+	autocmd BufNewFile,BufReadPre * exe "normal O\<C-R>%\<Esc>:.g/\\./s/\\./\\\\./g\<CR>0\"9y$u:menu Buffers.\<C-R>9 :buffer \<C-R>%\<C-V>\<CR>\<CR>"
+
+Pour obtenir un vrai menu des tampons, il faudrait employer des fonctions
+utilisateur (voir |:function|), mais alors la notation <> ne serait plus
+utilisée, comme c'était notre but dans cet exemple-ci.
+
+ vim:tw=78:ts=8:ft=help:norl:

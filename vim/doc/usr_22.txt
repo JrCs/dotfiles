@@ -1,0 +1,391 @@
+*usr_22.txt*	Pour Vim version 6.2.  Dernière modification : 17 mar 2003
+
+	       MANUEL de l'UTILISATEUR VIM - par Bram Moolenaar
+
+			 Trouver le fichier à éditer
+
+
+Les fichiers peuvent être situés n'importe où. Dans ce cas, comment faire pour
+les trouver ? Vim offre diverses possibilités pour naviguer dans les
+arborescences de répertoires. Il existe des commandes pour sauter vers un
+fichier mentionné dans un autre fichier. Et Vim mémorise les fichiers qui ont
+déjà été édités.
+
+|22.1|	L'explorateur de fichiers
+|22.2|	Le répertoire courant
+|22.3|	Trouver un fichier
+|22.4|	La liste de tampons
+
+  Chapitre suivant : |usr_23.txt|  Éditer d'autres fichiers
+Chapitre précédent : |usr_21.txt|  Quitter et revenir
+Table des matières : |usr_toc.txt|
+
+==============================================================================
+*22.1*	L'explorateur de fichiers
+
+Vim dispose d'un greffon qui rend possible l'édition d'un répertoire. Essayez
+ceci : >
+
+	:edit .
+
+Par la magie des autocommandes et des scripts Vim, la fenêtre est remplie avec
+le contenu du répertoire. Cela ressemble à :
+
+	" Press ? for keyboard shortcuts ~
+	" Sorted by name (.bak,~,.o,.h,.info,.swp,.obj at end of list) ~
+	"= /home/mool/vim/vim6/runtime/doc/ ~
+	../ ~
+	check/ ~
+	Makefile ~
+	autocmd.txt ~
+	change.txt ~
+	eval.txt~ ~
+	filetype.txt~ ~
+	help.txt.info ~
+
+Vous pouvez voir les éléments suivants :
+1°  Un commentaire sur l'utilisation de '?' pour obtenir de l'aide sur les
+    fonctionnalités de l'explorateur de fichiers.
+2°  La deuxième ligne mentionne la manière dont les éléments du répertoires
+    sont listés. Ils peuvent être triés de diverses façons.
+3°  La troisième ligne indique le nom du répertoire courant.
+4°  Le répertoire "../" : il désigne le répertoire parent.
+5°  La liste des répertoires.
+6°  Les noms des fichiers ordinaires. Comme mentionné dans la deuxième ligne,
+    certains n'y figure pas immédiatement, mais « à la fin de la liste » ["at
+    end of list"].
+7°  Les noms des fichiers un peu moins ordinaires. Vim suppose que vous
+    utilisez moins souvent ces fichiers, en conséquence ils ont été placés à
+    la fin de la liste.
+
+Si la coloration syntaxique est activée, les différentes parties sont mises en
+surbrillance pour les identifier plus facilement.
+
+Vous pouvez utiliser les commandes Vim du mode Normal pour vous déplacer dans
+le texte. Par exemple, allez sur un fichier et tapez <Entree>. Vous éditez à
+présent ce fichier. Pour retourner à l'explorateur, utilisez ":edit ." à
+nouveau. CTRL-O fonctionne également.
+   Essayez <Entree> quand le curseur se trouve le nom d'un répertoire. Il en
+résulte que l'explorateur se rend dans ce répertoire et affiche les éléments
+qu'il contient. Taper <Entree> sur le premier répertoire ("../") vous remonte
+d'un niveau. Presser '-' fait la même chose, mais sans qu'il soit nécessaire
+de se trouver sur l'élément "../".
+
+Vous pouvez taper '?' pour obtenir une aide succinte sur ce que vous pouvez
+faire dans l'explorateur. Voici ce que vous obtenez :
+
+	" <enter> : open file or directory ~
+	" o : open new window for file/directory ~
+	" O : open file in previously visited window ~
+	" p : preview the file ~
+	" i : toggle size/date listing ~
+	" s : select sort field    r : reverse sort ~
+	" - : go up one level      c : cd to this dir ~
+	" R : rename file	   D : delete file ~
+	" :help file-explorer for detailed help ~
+
+Les premières commandes permettent de choisir le fichier à afficher. Selon la
+commande que vous utilisez, le fichier apparaîtra à différents endroits :
+
+	<Entree>	Utilise la fenêtre courante.
+	o		Ouvre une nouvelle fenêtre.
+	O		Utilise la dernière fenêtre visitée.
+	p		Utilise la fenêtre de prévisualisation, et replace le
+			curseur dans la fenêtre de l'explorateur.
+			|preview-window|
+
+Les commandes suivantes permettent d'afficher d'autres informations :
+
+	i		Affiche la taille et la date pour chaque fichier.
+			Utilisez 'i' à nouveau pour masquer ces informations.
+	s		Utilise le champ sous le curseur pour trier les
+			éléments. Affichez d'abord la taille et la date avec
+			'i'. Puis placez le curseur sur la taille de l'un des
+			fichiers et tapez 's'. Les fichiers sont maintenant
+			triés par ordre de taille. Tapez 's' alors que le
+			curseur est sur la date et les éléments seront triés
+			selon la date.
+	r		Inverse l'ordre du tri (pour la date comme pour la
+			taille).
+
+Il existe quelques commandes supplémentaires :
+
+	c		Remplace le répertoire courant par le répertoire
+			actuellement affiché. Vous pouvez alors saisir une
+			commande ":edit" avec l'un des fichiers sans préciser
+			son chemin.
+	R		Renomme le fichier sous le curseur. Une invite vous
+			demandera le nouveau nom.
+	D		Supprime le fichier sous le curseur. Une invite vous
+			demandera de confirmer la suppression.
+
+==============================================================================
+*22.2*	Le répertoire courant
+
+À l'image d'un shell, Vim possède le concept de « répertoire courant ».
+Supposez que vous êtes dans votre répertoire personnel et que vous souhaitez
+éditer plusieurs fichiers dans un répertoire "VraimentLongATaper". Vous
+pourriez faire : >
+
+	:edit VraimentLongATaper/fichier1.txt
+	:edit VraimentLongATaper/fichier2.txt
+	:edit VraimentLongATaper/fichier3.txt
+
+Pour éviter une bonne partie de la saisie, faites : >
+
+	:cd VraimentLongATaper
+	:edit fichier1.txt
+	:edit fichier2.txt
+	:edit fichier3.txt
+
+La commande ":cd" change le répertoire courant. Vous pouvez connaître le
+répertoire courant actuel avec la commande ":pwd" : >
+
+	:pwd
+	/home/Bram/VraimentLongATaper
+
+Vim mémorise le dernier répertoire que vous avez utilisé. Employez ":cd -"
+pour y retourner. Exemple : >
+
+	:pwd
+	/home/Bram/VraimentLongATaper
+	:cd /etc
+	:pwd
+	/etc
+	:cd -
+	:pwd
+	/home/Bram/VraimentLongATaper
+	:cd -
+	:pwd
+	/etc
+
+
+RÉPERTOIRE LOCAL À UNE FENÊTRE
+
+Quand vous partagez une fenêtre, les deux fenêtres utilisent le même
+répertoire courant. Si vous voulez éditer un nombre important de fichiers se
+situant ailleurs dans la nouvelle fenêtre, vous pouvez lui faire utiliser un
+répertoire différent, sans modifier le répertoire courant dans la première
+fenêtre. Cela s'appelle un répertoire local. >
+
+	:pwd
+	/home/Bram/VraimentLongATaper
+	:split
+	:lcd /etc
+	:pwd
+	/etc
+	CTRL-W w
+	:pwd
+	/home/Bram/VraimentLongATaper
+
+Tant qu'aucune commande ":lcd" n'a été utilisée, toutes les fenêtre partagent
+le même répertoire courant. Effectuer une commande ":cd" dans l'une des
+fenêtres changera aussi le répertoire courant de toutes les autres fenêtres.
+   Dans une fenêtre dans laquelle ":lcd" a été utilisé, un répertoire courant
+différent est mémorisé. L'utilisation de ":cd" ou de ":lcd" dans l'une des
+autres fenêtres ne le modifiera pas. Après l'utilisation d'une commande ":cd"
+dans une fenêtre utilisant un répertoire courant différent, elle utilisera à
+nouveau le même répertoire que les autres.
+
+==============================================================================
+*22.3*	Trouver un fichier
+
+Vous éditez un programme en C contenant cette ligne :
+
+	#include "inits.h" ~
+
+Vous voulez voir ce que contient le fichier "inits.h". Placez le curseur sur
+le nom du fichier et tapez : >
+
+	gf
+
+Vim trouvera le fichier et l'éditera.
+   Que ce passe-t-il si le fichier n'est pas dans le répertoire courant ? Vim
+utilisera l'option 'path' pour trouver le fichier. Cette option est une liste
+de noms de répertoires où chercher vos fichiers.
+   Supposez que vous vos fichiers à inclure soient situés dans le répertoire
+"c:/prog/include". Cette commande l'ajoutera dans l'option 'path' : >
+
+	:set path+=c:/prog/include
+
+Ce répertoire est un chemin absolu. Pas de la peine de se soucier du
+répertoire courant, Vim le trouvera toujours au même endroit. Mais que faire
+si vos fichiers sont situés dans un sous-répertoire par rapport au fichier
+actuel ? Vous pouvez spécifier un chemin relatif. Il débute par un point : >
+>
+	:set path+=./proto
+
+Cela indique à Vim de regarder dans le répertoire "proto", sous-répertoire du
+répertoire contenant le fichier depuis lequel vous utilisez "gf". Ainsi,
+l'utilisation de "gf" sur "inits.h" fera chercher le fichier "proto/inits.h" à
+Vim, à partir du répertoire du fichier actuel.
+   Sans le "./", c'est-à-dire "proto", Vim chercherait dans le répertoire
+"proto" en tant que sous-répertoire du répertoire courant. Mais il est
+possible que le répertoire courant ne soit pas celui qui contient le fichier
+que vous êtes en train d'éditer.
+
+L'option 'path' permet de spécifier les répertoires où chercher les fichiers
+de nombreuses autres manières. Consultez l'aide sur l'option 'path'.
+   L'option 'isfname' permet de déterminer quels caractères peuvent être
+inclus dans les noms de fichiers, et lesquels ne le peuvent pas (par exemple,
+le caractère '"' dans l'exemple précédent).
+
+Si vous connaissez le nom du fichier, mais que vous ignorez où il figure dans
+le fichier que vous éditez, vous pouvez taper : >
+
+	:find inits.h
+
+Vim utilisera alors l'option 'path' pour tenter de le localiser. Le résultat
+est semblable à la commande ":edit", à l'utilisation de 'path' près.
+
+Pour ouvrir le fichier trouvé dans une nouvelle fenêtre, utilisez CTRL-W f
+plutôt que "gf", ou utilisez ":sfind" plutôt que ":find".
+
+
+Voici une manière pratique de faire éditer à Vim un fichier se trouvant
+quelquepart dans les chemins de 'path' : >
+
+	vim "+find stdio.h"
+
+Le fichier "stdio.h" est recherché dans les chemins de 'path'. Les
+doubles-apostrophes sont nécessaires pour l'argument |-+c|.
+
+==============================================================================
+*22.4*	La liste des tampons
+
+L'éditeur Vim utilise le terme « tampon » ["buffer"] pour désigner un fichier
+en cours d'édition. En réalité, un tampon est une copie du fichier que vous
+éditez. Quand vous avez fini de modifier un tampon, vous écrivez son contenu
+dans le fichier. Les tampons ne contiennent pas seulement le contenu du
+fichier, mais aussi les marques, paramètres et toutes les informations qui
+vont avec.
+
+
+TAMPONS CACHÉS
+
+Supposons que vous éditez le fichier "un.txt" et que vous devez éditer le
+fichier "deux.txt". Vous pourriez simplement utiliser ":edit deux.txt", mais
+comme vous avez modifié "un.txt", cela ne fonctionne pas. Vous ne souhaitez
+pas non plus écrire "un.txt" tout de suite. Vim a la solution à votre 
+problème : >
+
+	:hide edit two.txt
+
+Le tampon "un.txt" disparaît de l'écran, mais Vim se souvient que vous éditez
+ce tampon, et conserve donc le texte modifié. Cela s'appelle un tampon caché
+["hidden buffer"] : le tampon contient du texte, mais vous ne pouvez pas le
+voir.
+   L'argument de la commande ":hide" est une autre commande. Cela donne à la
+commande le comportement qu'elle aurait si l'option 'hidden' était activée.
+Vous pourriez également activer cette option par vous-même. Le résultat est
+que dès qu'un tampon est abandonné, il devient caché.
+   Soyez prudent ! Si vous avez plusieurs tampons cachés contenant des
+modifications, ne quittez pas Vim sans vous assurer que tous les tampons sont
+enregistrés.
+
+
+TAMPONS INACTIFS
+
+Quand un tampon a été utilisé une première fois, Vim mémorise des informations
+à son sujet. Quand il n'est pas affiché dans une fenêtre et qu'il n'est pas
+caché, il apparaît tout de même dans la liste des tampons. Cela s'appelle un
+tampon inactif ["inactive buffer"]. Pour résumer :
+
+   Actif		Affiché dans une fenêtre, texte chargé.	     ["Active"]
+   Caché		Dans aucune fenêtre, texte chargé.	     ["Hidden"]
+   Inactif		Dans aucune fenêtre, texte non chargé.	    [Inactive"]
+
+Les tampons inactifs sont mémorisés, car Vim conserve des informations à leur
+sujet, comme les marques. Mémoriser le nom du fichier est également utile,
+afin vous puissiez voir les fichiers que vous avez édités. Et les éditer à
+nouveau.
+
+
+LISTER LES TAMPONS
+
+Affichez la liste des tampons avec cette commande : >
+
+	:buffers
+
+Une autre commande fait la même chose. Elle ne paraît pas évidente au premier
+abord, mais est bien plus courte à taper : >
+
+	:ls
+
+La sortie pourrait ressembler à ceci :
+
+  1 #h	"help.txt"			ligne 62 ~
+  2 %l+	"usr_21.txt"			ligne 1 ~
+  3	"usr_toc.txt"			ligne 1 ~
+
+La première colonne contient le numéro du tampon. Vous pouvez l'utiliser pour
+éditer le tampon sans avoir à taper son nom, voir plus bas.
+   Après le numéro de tampon se trouve les drapeaux. Puis le nom du fichier et
+enfin le numéro de la ligne où se trouvait le curseur lors de la dernière
+édition.
+   Les drapeaux pouvant apparaître sont les suivants (de gauche à droite) :
+
+	u	Tampon non-listé |unlisted-buffer|.
+	 %	Tampon courant.
+	 #	Tampon alternatif.
+	  l	Tampon chargé et affiché.
+	  h	Tampon chargé mais caché.
+	   =	Tampon en lecture seule.
+	   -	Tampon non modifiable, l'option 'modifiable' est désactivée.
+	    +	Tampon modifié.
+
+
+ÉDITER UN TAMPON
+
+Vous pouvez éditer un tampon par son numéro. Cela évite de devoir taper le nom
+du fichier : >
+
+	:buffer 2
+
+Mais la seule façon de connaître son numéro est de regarder dans la liste des
+tampons. Vous pouvez utiliser son nom, ou une partie de son nom, à la place : >
+
+	:buffer help
+
+Vim recherchera la meilleure correspondance pour le nom que vous avez saisi.
+Si un seul tampon correspond avec le nom, il sera ouvert. "help.txt" Dans le
+cas présent.
+   Pour ouvrir le tampon dans une nouvelle fenêtre : >
+
+	:sbuffer 3
+
+Cela fonctionne aussi avec un nom.
+
+
+UTILISER LA LISTE DES TAMPONS
+
+Vous pouvez vous déplacer dans la liste des tampons avec ces commandes :
+
+	:bnext		aller au tampon suivant
+	:bprevious	aller au tampon précédent
+	:bfirst		aller au premier tampon
+	:blast		aller au dernier tampon
+
+Pour enlever un tampon de la liste, utilisez la commande : >
+
+	:bdelete 3
+
+Encore une fois, cela fonctionne avec un nom.
+   Si vous supprimez un tampon actif (visible dans une fenêtre), la fenêtre
+sera fermée. Si vous supprimez le tampon courant, la fenêtre courante sera
+fermée. Si il s'agissait de la dernière fenêtre, Vim trouvera un autre tampon
+à éditer. Vous ne pouvez pas ne rien éditer !
+
+	NOTE :
+	Même après avoir supprimé le tampon avec ":bdelete", Vim s'en
+	souvient. En fait, il est « non-listé », il n'apparaît plus dans la
+	liste retournée par ":buffers". La commande ":buffers!" listera les
+	tampons non-listés (oui, Vim réalise l'impossible). Pour que Vim
+	oublie vraiment tout d'un tampon, utilisez ":bwipe". Voir aussi
+	l'option 'buflisted'.
+
+==============================================================================
+
+Chapitre suivant : |usr_23.txt|  Éditer d'autres fichiers
+
+Copyright : voir |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:

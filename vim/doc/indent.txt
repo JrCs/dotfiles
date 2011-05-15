@@ -1,0 +1,525 @@
+*indent.txt*    Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+Ce fichier traite de l'indentation des programmes C et autres fichiers.
+
+1. Indentation des programmes C	    |C-indenting|
+2. Indentation par expression	    |indent-expression|
+
+==============================================================================
+1. Indentation des programmes C				    *C-indenting*
+
+Les bases de l'indentation C sont abordées dans la section |30.2| du Manuel de
+l'utilisateur.
+
+Vim dispose d'options pour indenter automatiquement des programmes C. Ces
+options affectent uniquement l'indentation, sans faire aucune autre mise en
+forme. Pour mettre en forme des commentaires, voir |format-comments|.
+
+{uniquement si compilé avec les fonctionnalités |+smartindent| et |+cindent|}
+
+Il existe en fait quatre méthodes d'indentation différentes :
+'autoindent'	Utilise l'indentation de la ligne précédente.
+'smartindent'	Comme 'autoindent', mais reconnaît également certains éléments
+		de syntaxe C afin d'augmenter/diminuer l'indentation lorsque
+		c'est approprié.
+'cindent'	Fonctionne plus intelligemment que les deux méthodes
+		précédentes et permet de configurer le style d'indentation.
+'indentexpr'	La méthode la plus souple : évalue une expression pour
+		calculer l'indentation de la ligne. Si non-vide, cette option
+		prévaut sur les autres. Voir |indent-expression|.
+
+La suite de cette section décrit l'option 'cindent'.
+
+NOTE : L'indentation avec 'cindent' ne fonctionne pas pour tous les schémas de
+code. Vim n'est pas un compilateur C : il ne reconnaît pas toutes les
+syntaxes.
+
+Ces quatre options contrôlent l'indentation des programmes C :
+'cindent'	Active l'indentation automatique des programmes C.
+'cinkeys'	Définit les touches qui déclenchent la réindentation en mode
+		Insertion.
+'cinoptions'	Fixe votre style d'indentation préféré.
+'cinwords'	Définit les mots-clés qui entraînent l'augmentation de
+		l'indentation à la ligne suivante.
+
+Si 'lisp' n'est pas activé et que 'equalprg' est vide, l'opérateur "="
+indentera selon un algorithme interne à Vim plutôt qu'en appelant un programme
+externe.
+
+Voir |autocommand| si vous désirez activer automatiquement l'option 'cindent'
+pour les fichiers sources C, et la désactiver pour les autres.
+
+					*cinkeys-format* *indentkeys-format*
+L'option 'cinkeys' est une chaîne qui contrôle l'indentation de Vim en
+fonction de la saisie de certains caractères ou commandes dans certains
+contextes. NOTE : Cela ne concerne pas seulement l'indentation C.
+   Si 'indentexpr' n'est pas vide, 'indentkeys' est utilisé à la place. Le
+format de 'cinkeys' et 'indentkeys' est identique.
+
+Par défaut, l'option 'cinkeys' vaut "0{,0},0),:,0#,!^F,o,O,e", ce qui définit
+une indentation comme suit :
+
+	"0{"	si vous tapez '{' comme premier caractère d'une ligne
+	"0}"	si vous tapez '}' comme premier caractère d'une ligne
+	"0)"	si vous tapez ')' comme premier caractère d'une ligne
+	":"	si vous tapez ':' après une étiquette ou une instruction "case"
+	"0#"	si vous tapez '#' comme premier caractère d'une ligne
+	"!^F"	si vous tapez CTRL-F (qui n'est pas inséré)
+	"o"	si vous tapez un <CR> n'importe où ou si vous utilisez la
+		   commande "o" (pas en mode Insertion !)
+	"O"	si vous utilisez la commande "O" (pas en mode Insertion !)
+	"e"	si vous tapez le deuxième 'e' d'un "else" en début d'une ligne
+
+Les caractères suivants peuvent précéder chaque touche :
+!	Si un '!' précède la touche, Vim n'insérera pas la touche mais
+	réindentera la ligne courante. Cela vous permet de définir une touche
+	qui servira de commande pour réindenter la ligne courante. CTRL-F est
+	la touche par défaut pour ceci. Si vous utilisez CTRL-I, faites
+	attention car CTRL-I est le code ASCII pour <Tab>.
+*	Si un '*' précède la touche, Vim réindentera la ligne avant d'insérer
+	la touche. Si 'cinkeys' contient "*<Return>", Vim réindentera la ligne
+	courante avant d'ouvrir une nouvelle ligne.
+0	Si un zéro précède la touche (mais apparaît après '!' ou '*'), Vim
+	réindentera la ligne uniquement si la touche est le premier caractère
+	que vous y avez tapé. Utilisé avant '=', Vim réindentera la ligne
+	uniquement s'il y a un espace blanc avant le mot.
+
+Lorsque ni '!' ni '*' ne précède la touche, Vim réindentera la ligne après que
+vous aurez tapé la touche. Ainsi ';' modifie l'indentation d'une ligne qui
+inclut le ';'.
+
+Séquences spéciales :
+<>	La notation entre ces délimiteurs permet la saisie littérale du nom
+	des touches. Par exemple : "<Up>", "<Ins>" (voir |key-notation|).
+^	Les lettres précédées par un chapeau (^) sont des caractères de
+	contrôle. Par exemple : "^F" représente CTRL-F.
+o	Réindente une ligne lorsque vous utilisez la commande "o" ou que Vim
+	ouvre une nouvelle ligne sous la ligne courante (p. ex., si vous tapez
+	<Entree> en mode Insertion).
+O	Réindente une ligne lorsque vous utilisez la commande "O".
+e	Réindente une ligne qui débute par "else" lorsque vous saisissez le
+	deuxième 'e'.
+:	Réindente une ligne lorsqu'un ':' est saisi après une étiquette ou une
+	instruction "case". Ne réindente pas dans le cas d'un ':' dans
+	"classe::méthode" en C++. Pour réindenter quel que soit le cas du ':',
+	utilisez "<:>".
+=mot	Réindente lors de la saisie du dernier caractère de "mot". "mot" peut
+	en fait être une partie d'un autre mot. Ainsi "=end" provoquera une
+	réindentation lors de la saisie du "d" dans "endif" ou "endwhile",
+	mais pas dans "bend". Réindente également lorsque le complètement
+	donne un mot qui débute par "mot". "0=mot" ne réindentera que s'il y a
+	un espace blanc avant le mot.
+=~mot	Comme "=mot", mais ignore la casse.
+
+Si vous souhaitez vraiment réindenter lors de la saisie de 'o', 'O', 'e', '0',
+'<', '>', '*', ':' ou '!', utilisez respectivement "<o>", "<O>", "<e>", "<0>",
+"<<>", "<>>", "<*>", "<:>" ou "<!>" pour ces touches.
+
+Pour une indentation de style Emacs, où les lignes ne sont pas indentées à
+chaque fois que vous pressez <Entree> mais uniquement si vous pressez <Tab>,
+je suggère : >
+	:set cinkeys=0{,0},:,0#,!<Tab>,!^F
+Vous pourrez aussi souhaiter désactiver l'option 'autoindent'.
+
+NOTE : Si vous modifiez l'indentation de la ligne courante manuellement, Vim
+ignorera la valeur de 'cindent' pour cette ligne. Cela évite qu'une ligne ne
+soit réindentée après que vous l'aurez modifiée en tapant <RetArr>, <Tab> ou
+<Espace> dans l'indentation, ou en utilisant CTRL-T ou CTRL-D.
+
+		    				*cinoptions-values*
+L'option 'cinoptions' fixe le style de l'indentation gérée par Vim. Dans la
+liste ci-dessous, {N} représente un nombre de votre choix (qui peut être
+négatif). Lorsqu'un 's' suit ce nombre, Vim multiplie le nombre par
+'shiftwidth' : "1s" vaut 'shiftwidth', "2s", deux fois 'shiftwidth', etc.
+Vous pouvez également utiliser une notation décimale avec un point : "-0.5s"
+vaut « moins un demi » 'shiftwidth'.
+   Dans les exemples qui suivent, on considère que 'shiftwidth' vaut 4.
+
+	>{N}  Ajoute N à l'indentation « normale ». Utilisé après une ligne
+	      qui doit accroître l'indentation (lignes débutant par "if",
+	      une accolade ouvrante, etc.).
+	      (Valeur par défaut : 'shiftwidth'.)
+
+		cino=		    cino=>2		cino=>2s
+		  if (cond)	      if (cond)		  if (cond) ~
+		  {		      {			  { ~
+		      toto;		toto;			  toto; ~
+		  }		      }			  } ~
+
+	e{N}  Ajoute N à l'indentation courante à l'intérieur d'une paire
+	      d'accolades si l'accolade ouvrante est en fin de ligne (plus
+	      précisément : n'est pas le premier caractère dans une ligne).
+	      C'est utile si vous souhaitez une indentation différente selon
+	      que le '{' est en début ou en fin de ligne.
+	      (Valeur par défaut : 0.)				["End of line"]
+
+		cino=		    cino=e2		cino=e-2
+		  if (cond) {	      if (cond) {	  if (cond) { ~
+		      toto;		    toto;	    toto; ~
+		  }		      }			  } ~
+		  else		      else		  else ~
+		  {		      {			  { ~
+		      titi;		  titi;		      titi; ~
+		  }		      }			  } ~
+
+	n{N}  Ajoute N à l'indentation courante pour une instruction après
+	      un "if", "while", etc., si elle n'est PAS à l'intérieur d'une
+	      paire d'accolades. C'est utile si vous souhaitez une indentation
+	      différente selon qu'il y a un '{' avant l'instruction ou non.
+	      (Valeur par défaut : 0.)					["Not"]
+
+		cino=		    cino=n2		cino=n-2
+		  if (cond)	      if (cond)		  if (cond) ~
+		      toto;		    toto;	    toto; ~
+		  else		      else		  else ~
+		  {		      {			  { ~
+		      titi;		  titi;		      titi; ~
+		  }		      }			  } ~
+
+	f{N}  Place la première accolade ouvrante d'une fonction ou d'un autre
+	      bloc à la colonne N. Cela s'applique uniquement à une accolade
+	      ouvrante située en début de ligne, et qui n'est pas à
+	      l'intérieur d'autres accolades. Ce qui suit l'accolade est placé
+	      relativement à celle-ci.
+	      (Valeur par défaut : 0.)				      ["First"]
+
+		cino=		    cino=f.5s		cino=f1s
+		  fonc()	      fonc()		  fonc() ~
+		  {			{		      { ~
+		      int toto;		    int toto;		  int toto; ~
+
+	{{N}  Place les accolades ouvrantes à N caractères de l'indentation
+	      courante. Cela s'applique uniquement aux accolades ouvrantes
+	      qui sont à l'intérieur d'autres accolades.
+	      (Valeur par défaut : 0.)
+
+		cino=		    cino={.5s		cino={1s
+		  if (cond)	      if (cond)		  if (cond) ~
+		  {			{		      { ~
+		      toto;		  toto;		      toto; ~
+
+	}{N}  Place les accolades fermantes à N caractères de l'indentation
+	      des accolades ouvrantes correspondantes.
+	      (Valeur par défaut : 0.)
+
+		cino=		    cino={2,}-0.5s	cino=}2
+		  if (cond)	      if (cond)		  if (cond) ~
+		  {			{		  { ~
+		      toto;		  toto;		      toto; ~
+		  }		      }			    } ~
+
+	^{N}  Ajoute N à l'indentation courante à l'intérieur d'une paire
+	      d'accolades si l'accolade ouvrante est à la colonne 0. Cela peut
+	      spécifier une indentation différente pour une fonction entière
+	      (certains voudront peut-être employer un nombre négatif).
+	      (Valeur par défaut : 0.)
+
+		cino=		    cino=^-2		cino=^-s
+		  fonc()	      fonc()		  fonc() ~
+		  {		      {			  { ~
+		      if (cond)		if (cond)	  if (cond) ~
+		      {			{		  { ~
+			  a = b;	    a = b;	      a = b; ~
+		      }			}		  } ~
+		  }		      }			  } ~
+
+	:{N}  Place les étiquettes "case" à N caractères de l'indentation de
+	      l'instruction "switch".
+	      (Valeur par défaut : 'shiftwidth'.)
+
+		cino=		    cino=:0
+		  switch (x)	      switch(x) ~
+		  {		      { ~
+		      case 1:	      case 1: ~
+			  a = b;	  a = b; ~
+		      default:	      default: ~
+		  }		      } ~
+
+	={N}  Place les instructions intervenant après une étiquette "case" à
+	      N caractères de l'indentation de l'étiquette.
+	      (Valeur par défaut : 'shiftwidth'.)
+
+		cino=		    cino==10
+		   case 11:		case 11:  a = a + 1; ~
+		       a = a + 1;		  b = b + 1; ~
+
+	l{N}  Si N != 0, Vim s'alignera sur l'étiquette "case" plutôt que sur
+	      l'instruction suivante.				      ["Label"]
+
+		cino=			    cino=l1
+		    switch (a) {	      switch (a) { ~
+			case 1: {		  case 1: { ~
+				    break;	      break; ~
+				}		  } ~
+
+	g{N}  Place les déclarations de portée C++ à N caractères de
+	      l'indentation du bloc les contenant. Les déclarations de portée
+	      sont "public:", "protected:" ou "private:".
+	      (Valeur par défaut : 'shiftwidth'.)
+
+		cino=		    cino=g0
+		  {		      { ~
+		      public:	      public: ~
+			  a = b;	  a = b; ~
+		      private:	      private: ~
+		  }		      } ~
+
+	h{N}  Place les instructions intervenant après une déclaration de
+	      portée C++ à N caractères de l'indentation de l'étiquette.
+	      (Valeur par défaut : 'shiftwidth'.)
+
+		cino=		    cino=h10
+		   public:		public:   a = a + 1; ~
+		       a = a + 1;		  b = b + 1; ~
+
+	p{N}  Indente les déclarations de paramètres pour les fonctions de
+	      style K&R à N caractères de la marge.
+	      (Valeur par défaut : 'shiftwidth'.)
+
+		cino=		    cino=p0		cino=p2s
+		  fonc(a, b)	      fonc(a, b)	  fonc(a, b) ~
+		      int a;	      int a;			  int a; ~
+		      char b;	      char b;			  char b; ~
+
+	t{N}  Indente une déclaration de type de retour d'une fonction à N
+	      caractères de la marge.
+	      (Valeur par défaut : 'shiftwidth'.)
+
+		cino=		    cino=t0		cino=t7
+		      int	      int			 int ~
+		  fonc()	      fonc()		  fonc() ~
+
+	+{N}  Indente une continuation de ligne (une ligne qui se poursuit sur
+	      la suivante) de  N caractères supplémentaires.
+	      (Valeur par défaut : 'shiftwidth'.)
+
+		cino=			  cino=+10
+		  a = b + 9 *		    a = b + 9 * ~
+		      c;			      c; ~
+
+	c{N}  Indente les lignes de commentaires après le délimiteur de
+	      commentaire ouvrant, s'il n'y a pas d'autre texte avec lequel
+	      s'aligner, à N caractères du délimiteur de commentaire ouvrant.
+	      (Valeur par défaut : 3.) Voir aussi |format-comments|.
+
+		cino=			  cino=c5
+		  /*			    /* ~
+		     texte.			 texte. ~
+		   */			     */ ~
+
+	C{N}  Si N est non-nul, indente les lignes de commentaires de la
+	      quantité spécifiée par le drapeau 'c' ci-dessus, même s'il y a
+	      un autre texte après le délimiteur de commentaire ouvrant.
+	      (Valeur par défaut : 0.)
+
+		cino=c0			  cino=c0,C1
+		  /********		    /******** ~
+		    texte.		    texte. ~
+		  ********/		    ********/ ~
+	      (La valeur ":set comments& comments-=s1:/* comments^=s0:/*" est
+	      utilisée dans cet exemple.)
+
+	/{N}  Indente les lignes de commentaires de N caractères
+	      supplémentaires.
+	      (Valeur par défaut : 0.)
+
+		cino=			  cino=/4
+		  a = b;		    a = b; ~
+		  /* commentaire */		/* commentaire */ ~
+		  c = d;		    c = d; ~
+
+	({N}  Entre des parenthèses non fermées, indente de N caractères
+	      depuis la ligne avec la parenthèse non fermée. Ajoute
+	      'shiftwidth' pour chaque parenthèse non fermée. Si N vaut 0 ou
+	      si la parenthèse non fermée est le premier caractère de la
+	      ligne, aligne avec le prochain caractère non-blanc suivant la
+	      parenthèse non fermée.
+	      (Valeur par défaut : 'shiftwidth' × 2.)
+
+		cino=			  cino=(0
+		  if (c1 && (c2 ||	    if (c1 && (c2 || ~
+			      c3))		       c3)) ~
+		      toto;			toto; ~
+		  if (c1 &&		    if (c1 && ~
+			  (c2 || c3))		(c2 || c3)) ~
+		     {			       { ~
+
+	u{N}  Comme "({N}", mais pour un niveau plus profond.
+	      (Valeur par défaut : 'shiftwidth'.)
+
+		cino=			  cino=u2
+		  if (c123456789	    if (c123456789 ~
+			  && (c22345		    && (c22345 ~
+			      || c3))		      || c3)) ~
+
+	U{N}  Si N est non-nul, n'ignore pas l'indentation spécifiée par '('
+	      ou 'u' dans le cas où la parenthèse non fermée est le premier
+	      caractère non-blanc de la ligne.
+	      (Valeur par défaut : 0.)
+
+		cino= ou cino=(s	  cino=(s,U1
+		  c = c1 &&		    c = c1 && ~
+		      (				( ~
+		       c2 ||			    c2 || ~
+		       c3			    c3 ~
+		      ) && c4;			) && c4; ~
+
+	w{N}  Entre des parenthèses non fermées, si N est non-nul et si "(0"
+	      (respectivement "u0") est utilisé, ou si "U0" est utilisé et que
+	      la parenthèse non fermée est le premier caractère non-blanc de
+	      la ligne, aligne avec le caractère suivant immédiatement la
+	      parenthèse non fermée plutôt qu'avec le premier caractère
+	      non-blanc.
+	      (Valeur par défaut : 0.)				      ["White"]
+
+		cino=(0			  cino=(0,w1
+		  if (   c1		    if (   c1 ~
+			 && (   c2		&& (   c2 ~
+				|| c3))		    || c3)) ~
+		      toto;			toto; ~
+
+	m{N}  Si N est non-nul, aligne une ligne débutant par une parenthèse
+	      fermante avec le premier caractère de la ligne contenant la
+	      parenthèse ouvrante correspondante.
+	      (Valeur par défaut : 0.)				      ["Match"]
+
+		cino=(s			  cino=(s,m1
+		  c = c1 && (		    c = c1 && ( ~
+		      c2 ||			c2 || ~
+		      c3			c3 ~
+		      ) && c4;		    ) && c4; ~
+		  if (			    if ( ~
+		      c1 && c2			c1 && c2 ~
+		     )			    ) ~
+		      toto;			toto; ~
+
+					*java-cinoptions* *java-indenting*
+	j{N}  Indente correctement les classes Java anonymes. La valeur N
+	      n'est pas utilisée actuellement, mais doit être non-nulle. Par
+	      exemple, "j1" indentera correctement le bout de code suivant :
+
+		  object.add(new ChangeListener() { ~
+		      public void stateChanged(ChangeEvent e) { ~
+			  do_something(); ~
+		      } ~
+		  }); ~
+
+	){N}  Vim limite sa recherche de parenthèses non fermées à N lignes.
+	      Cela permet de limiter le temps dépensé pour la recherche de
+	      parenthèses.
+	      (Valeur par défaut : 20 lignes.)
+
+	*{N}  Vim limite sa recherche de commentaires non fermés à N lignes.
+	      Cela permet de limiter le temps dépensé pour la recherche de
+	      délimiteurs de commentaires.
+	      (Valeur par défaut : 30 lignes.)
+
+
+Voici la liste exhaustive des valeurs par défaut de cette option : >
+	cinoptions=>s,e0,n0,f0,{0,}0,^0,:s,=s,l0,gs,hs,ps,ts,+s,c3,C0,(2s,us,
+		   \U0,w0,m0,j0,)20,*30
+
+Vim placera une ligne à la colonne 1 si :
+- elle débute par '#' (directive préprocesseur), si 'cinkeys' contient '#' ;
+- elle débute par une étiquette (un mot-clé suivi par ':', autre que "case" et
+  "default") ;
+- une combinaison d'indentations quelconque lui fait avoir moins de 0
+  indentation.
+
+==============================================================================
+2. Indentation par expression				*indent-expression*
+
+Les bases pour l'utilisation d'une indentation flexible sont abordées dans la
+section |30.2| du Manuel de l'utilisateur.
+
+Si vous voulez écrire vos propres fichiers d'indentation, vous devrez y fixer
+l'option 'indentexpr'. Fixer aussi l'option 'indentkeys' est souvent utile.
+Voir le répertoire $VIMRUNTIME/indent pour trouver des exemples.
+
+
+REMARQUES SUR DES FICHIERS D'INDENTATION SPÉCIFIQUES
+----------------------------------------------------
+
+FORTRAN							*fortran-indent*
+
+Les blocs "if", "select case" et les constructions "where" sont indentés. Les
+commentaires, instructions étiquetées et continuations de lignes sont
+indentés si le Fortran est de forme source libre, tandis qu'ils ne sont pas
+indentées si le Fortran est de forme source fixe, à cause des contraintes pour
+la marge de gauche. Par conséquent, une correction manuelle de l'indentation
+sera nécessaire pour les instructions étiquetées et continuations de lignes
+quand la forme source fixe est utilisée. Voir |fortran-syntax| pour une
+explication de la méthode utilisée pour la détection de la forme d'une source.
+
+Boucles "do"
+------------
+Toutes les boucles "do" sont laissées sans indentation par défaut. Les boucles
+"do" peuvent être déstructurées en Fortran avec (éventuellement) plusieurs
+boucles se terminant sur une instruction exécutable étiquetée d'un type quasi
+arbitraire. Une indentation correcte nécessiterait une analyse aussi fine
+que celle du compilateur. L'ancien code, avec des boucles "do" se terminant
+sur des instructions étiquetées de type arbitraire, peut être indenté avec des
+programmes évolués comme Tidy ("http://www.unb.ca/chem/ajit/f_tidy.htm"). Les
+boucles structurées do/continue sont également laissées sans indentation car
+les instructions "continue" sont aussi utilisées pour d'autres fins que pour
+terminer une boucle "do". Des programmes tels que Tidy peuvent convertir des
+boucles structurées do/continue dans la forme do/enddo. Les boucles "do" de la
+forme do/enddo peuvent être indentées. Si vous utilisez uniquement des boucles
+structurées de la forme do/enddo, vous pouvez le déclarer en fixant la
+variable "fortran_do_enddo" dans votre fichier vimrc, comme suit >
+
+	let fortran_do_enddo = 1
+
+auquel cas les boucles "do" seront indentées. Si toutes vos boucles sont du
+type do/enddo uniquement dans, mettons, les fichiers ".f90", alors vous
+devriez positionner un drapeau de tampon avec une autocommande telle que >
+
+	au! BufRead,BufNewFile *.f90 let b:fortran_do_enddo=1
+
+pour obtenir des boucles "do" indentées dans les fichiers ".f90" et laissées
+telles quelles dans les fichiers Fortran avec d'autres extensions, comme
+".for".
+
+
+VERILOG							*verilog-indent*
+
+Les instructions générales de blocs comme "if", "for", "case", "always",
+"initial", "function", "specify", "begin", etc., sont indentées. Les
+instructions de blocs de modules (blocs de premier niveau) ne sont pas
+indentées par défaut. Si vous désirez qu'elles le soient, fixez cette variable
+dans votre fichier vimrc >
+
+	let b:verilog_indent_modules = 1
+
+et les blocs de modules seront indentés. Pour qu'ils ne le soient plus,
+supprimez la variable : >
+
+	:unlet b:verilog_indent_modules
+
+Pour fixer la variable uniquement pour les fichiers Verilog, les autocommandes
+suivantes peuvent être utilisées : >
+
+	au BufReadPost * if exists("b:current_syntax")
+	au BufReadPost *   if b:current_syntax == "verilog"
+	au BufReadPost *     let b:verilog_indent_modules = 1
+	au BufReadPost *   endif
+	au BufReadPost * endif
+
+Vous pouvez également utiliser la variable "b:verilog_indent_width" pour
+modifier la largeur de l'indentation (défaut : 'shiftwidth') : >
+
+	let b:verilog_indent_width = 4
+	let b:verilog_indent_width = &sw * 2
+
+En outre, vous pouvez activer le mode verbeux à des fins de débogage : >
+
+	let b:verilog_indent_verbose = 1
+
+N'oubliez pas de taper préalablement ":set cmdheight=2" pour permettre
+l'affichage des messages.
+
+ vim:tw=78:ts=8:ft=help:norl:

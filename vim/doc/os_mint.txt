@@ -1,0 +1,40 @@
+*os_mint.txt*	Pour Vim version 6.1.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Jens M. Felderhoff
+
+
+Comment faire pour ... ?				*MiNT* *Atari*
+
+Ce fichier contient les particularités de la version de Vim pour Atari MiNT.
+
+Pour compiller Vim sur Atari avec le système d'exploitation MiNT voir les
+sections "INSTALLATION" et "Makefile" dans le répertoire src.
+
+La version de Vim pour MiNT se comporte quasiment comme la version Unix.
+Le comportement sous Unix décrit dans la documentation est aussi applicable
+pour la version Mint de Vim à moins que cela ne soit explicitement spécifié.
+
+Pour l'utilisation du caractère d'englobement <~> (répertoire home) il faut
+que le shell supporte le caractère tilda. Le shell Bourne de base ne le
+reconnait pas. Les shells csh et ksh devraient le supporter.
+
+La version MiNT de Vim nécessite le fichier termcap /etc/termcap avec les
+possibilités du terminal. Les termcaps integrées sont supportées pour le
+terminal vt52. Les entrées Termcap pour le gestionnaire de fenêtres TOSWIN
+et la console virtuelle ont été rajoutées au fichier termcap distribué avec
+Vim.
+
+Si vous rencontrez des problèmes avec les touches <Retour Arrière> et <Suppr>
+consultez |:fixdel|.
+
+A cause de la lenteur de la mise à jour du terminal sous MiNT (exemple :
+Terminal sur port série), les options 'showcmd' et 'ruler' sont inactives par
+défaut. Si vous avez un terminal rapide essayez de les activer. Vous pouvez
+aussi vouloir activer 'ttyfast'.
+
+Envoyer les rapports de bogue à 
+
+	Jens M. Felderhoff, e-mail: <jmf@infko.uni-koblenz.de>
+
+ vim:tw=78:ts=8:ft=help:norl:	

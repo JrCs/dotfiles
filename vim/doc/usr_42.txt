@@ -1,0 +1,388 @@
+*usr_42.txt*	Pour Vim version 6.2.
+
+               MANUEL de l'UTILISATEUR VIM - par Bram Moolenaar
+
+                           Ajouter de nouveaux menus
+
+
+Vous avez pu constater jusqu'ici combien Vim était flexible. Cette qualité
+s'étend aussi aux menus utilisés dans l'IHM graphique. Vous pouvez définir vos
+propres entrées de menu pour faciliter l'accès à certaines commandes. Ce
+chapitre s'adresse uniquement aux adeptes de la souris.
+
+|42.1|	Introduction
+|42.2|	Commandes de menu
+|42.3|	Divers
+|42.4|	Barre d'outils et menus contextuels
+
+  Chapitre suivant : |usr_43.txt|   Utiliser les types de fichiers
+Chapitre précédent : |usr_41.txt|   Écrire un script Vim
+Table des matières : |usr_toc.txt|
+
+==============================================================================
+*42.1*	Introduction
+
+Les menus utilisés par Vim sont définis dans le fichier
+"$VIMRUNTIME/menu.vim". Si vous voulez écrire vos propres menus, vous devriez
+d'abord jeter un oeil dans ce fichier. Pour définir un élément de menu,
+utilisez la commande ":menu". La forme de base de cette commande est la
+suivante : >
+
+	:menu {elem-menu} {touches}
+
+L'argument {elem-menu} indique l'emplacement de l'élément dans le menu. Un
+exemple typique est "Fichier.Enregistrer", qui représente l'élément
+"Enregistrer" du menu "Fichier". Un point est utilisé pour séparer les noms.
+Exemple : >
+
+	:menu Fichier.Enregistrer   :update<CR>
+
+La commande ":update" écrit le fichier s'il a été modifié.
+   Vous pouvez ajouter un autre niveau :
+"Edition.Réglages\ Fichier.Largeur\ des\ indentations" définit un sous-menu
+"Réglages Fichier" dans le menu "Edition", avec un élément "Largeur
+des indentations". Vous pouvez même utiliser des niveaux encore plus profonds.
+Utilisez ceci avec modération, accéder à un tel élément va nécessiter un
+bon nombre de mouvements de la souris.
+   La commande ":menu" est très similaire à la commande ":map" : le côté
+gauche précise comment l'élément est déclenché et le côté droit, les
+caractères à exécuter. {sequence} est composé de caractères qui sont utilisés
+exactement comme si vous les aviez tapés. Par conséquent en mode Insertion,
+lorsque {touches} est du texte brut, ce texte est inséré.
+
+
+ACCÉLÉRATEURS
+
+Le caractère « et commercial » ('&') sert à définir un accélérateur. Par
+exemple, vous pouvez utiliser Alt + 'F' pour sélectionner "Fichier", puis 'E'
+pour "Enregistrer" (l'option 'winaltkeys' peut cependant désactiver cela !).
+Pour cela, il suffit que l'argument {elem-menu} ressemble à
+"&Fichier.&Enregistrer". Les caractères accélérateurs seront soulignés dans le
+menu.
+   Vous devez faire attention à ce que chaque touche ne soit utilisée qu'une
+seule fois dans chaque menu. Sinon vous ne saurez pas quelle alternative
+sera utilisée. Vim ne vous avertit pas à ce sujet.
+
+
+PRIORITÉS
+
+L'élément de menu Fichier.Enregistrer est en réalité défini comme suit : >
+
+	:menu 10.340 &Fichier.&Enregistrer<Tab>:w  :confirm w<CR>
+
+Le numéro 10.340 est appelé numéro de priorité. Il est utilisé par l'éditeur
+pour décider de l'emplacement de l'élément de menu. Le premier numéro (10)
+indique la position dans la barre de menus. Les menus portant les numéros les
+moins élevés sont placés vers la gauche, ceux portant les plus élevés vers la
+droite.
+   Voici les priorités utilisées par les menus standards :
+
+         10       20      40       50       60       70            9999
+
+     +------------------------------------------------------------------+
+     | Fichier  Edition  Outils  Syntaxe  Tampons  Fenêtre         Aide |
+     +------------------------------------------------------------------+
+
+Notez que le menu d'Aide porte un numéro très élevé, pour qu'il apparaisse le
+plus à droite possible.
+   Le second numéro (340) détermine la position de l'élément à l'intérieur du
+menu déroulant. Les numéros les moins élevés vont en haut, les plus élevés en
+bas. Voici les priorités dans le menu Fichier :
+
+			+-----------------------+
+	    10.310	|Ouvrir...		|
+	    10.320	|Ouvrir à part...	|
+	    10.325	|Nouveau		|
+	    10.330	|Fermer			|
+	    10.335	|---------------------- |
+	    10.340	|Enregister		|
+	    10.350	|Enregister sous...	|
+	    10.400	|---------------------- |
+	    10.410	|Différence avec...	|
+	    10.420	|Tester un patch...	|
+	    10.500	|---------------------- |
+	    10.510	|Imprimer...		|
+	    10.600	|---------------------- |
+	    10.610	|Enregistrer et quitter	|
+	    10.620	|Quitter		|
+			+-----------------------+
+
+Notez qu'il existe des plages de numéros inutilisés entre ces numéros. C'est
+là que vous pouvez insérer vos propres éléments, si vous le voulez réellement
+(il est souvent préférable de laisser les menus standards tels quels et
+d'ajouter un nouveau menu pour vos propres éléments).
+   Quand vous créez un sous-menu, vous pouvez ajouter un autre ".numéro" à la
+priorité. Ainsi, chaque nom dans {elem-menu} possède son numéro de priorité.
+
+
+CARACTÈRES SPÉCIAUX
+
+L'argument {elem-menu} de l'exemple ci-dessus est
+"&Fichier.&Enregistrer<Tab>:w". Ceci soulève un point important : {elem-menu}
+doit être un seul mot. Si vous voulez introduire un point, un espace ou une
+tabulation, vous devez soit utiliser la notation <> (<Space> et <Tab>, par
+exemple) soit utiliser une contre-oblique ('\') pour protéger ces caractères. >
+
+	:menu 10.305 &Fichier.&Faire\ Ceci\.\.\. :exit<CR>
+
+Dans cet exemple, le nom de l'élément de menu "Faire Ceci..." contient un
+espace et la commande est ":exit<CR>".
+
+Le caractère <Tab> dans un nom de menu est utilisé pour séparer la partie
+définissant le nom du menu de la partie qui donne un indice à l'utilisateur.
+La partie située après le <Tab> est affichée avec un alignement à droite dans
+le menu. Dans l'entrée Fichier.Enregistrer, l'argument utilisé est
+"&Fichier.&Enregistrer<Tab>:w". Ainsi le nom du menu est "Fichier.Enregistrer"
+et l'indice ":w".
+
+
+SÉPARATEURS
+
+Les lignes de séparation, utilisées pour regrouper des entrées de menu ayant
+un rapport entre elles, peuvent être définies en utilisant un nom qui commence
+et finit par un '-'. Par exemple "-sep-". Pour utiliser plusieurs séparateurs
+les noms doivent être différents. Sinon les noms n'ont aucune importance.
+   La commande d'un séparateur ne sera jamais exécutée, mais vous devez tout
+de même en définir une. Un simple deux-points suffit. Exemple : >
+
+	:amenu 20.510 Edition.-sep3- :
+
+==============================================================================
+*42.2*	Commandes de menu
+
+Vous pouvez définir des entrées de menu accessibles seulement dans certains
+modes. Cela fonctionne de la même manière que les variantes de la commande
+":map" :
+
+	:menu		Modes Normal, Visuel et Opérateur-en-cours
+	:nmenu		Mode Normal
+	:vmenu		Mode Visuel
+	:omenu		Mode Opérateur-en-cours
+	:menu!		Modes Insertion et Ligne-de-commande
+	:imenu		Mode Insertion
+	:cmenu		Mode Ligne-de-commande
+	:amenu		Tous les modes
+
+Pour éviter que les commandes d'une entrée de menu soient mappées, utilisez
+les commandes ":noremenu", ":nnoremenu", ":anoremenu", etc.
+
+
+UTILISER ":amenu"
+
+La commande ":amenu" est légèrement différente. Elle suppose que les {touches}
+que vous indiquez doivent être exécutées dans le mode Normal. Quand Vim est en
+mode Visuel ou Insertion lorsque le menu est utilisé, il doit d'abord
+retourner au mode Normal. ":amenu" insère un CTRL-C ou un CTRL-O pour vous.
+Par exemple, si vous utilisez cette commande : >
+
+	:amenu  90.100 Perso.Chercher\ Mot  *
+
+Les commandes de menu résultantes seront alors :
+
+	Mode Normal :			*
+	Mode Visuel :			CTRL-C *
+	Mode Opérateur-en-cours :	CTRL-C *
+	Mode Insertion :		CTRL-O *
+	Mode Ligne-de-commande :	CTRL-C *
+
+En mode Ligne-de-commande, CTRL-C abandonnera la commande en cours de saisie.
+En mode Visuel et Opérateur-en-cours, CTRL-C arrêtera le mode. CTRL-O en mode
+Insertion exécutera la commande et retournera au mode Insertion.
+   CTRL-O ne marche que pour une seule commande. Si vous avez besoin
+d'utiliser deux commandes ou plus, placez-les dans une fonction et appelez
+cette fonction. Exemple : >
+
+	:amenu  Perso.Fichier\ Suivant  :call <SID>FichierSuiv()<CR>
+	:function <SID>FichierSuiv()
+	:  next
+	:  1/^Code
+	:endfunction
+
+Cette entrée de menu permet d'aller au fichier suivant dans la liste des
+arguments avec ":next". Puis la ligne commençant par "Code" est recherchée.
+   Le <SID> précédant le nom de fonction est l'ID du script. Cela rend la
+fonction locale au script Vim courant. Ceci évite les problèmes quand une
+fonction avec le même nom est définie dans un autre script. Voir |<SID>|.
+
+
+MENUS SILENCIEUX
+
+Le menu exécute la {sequence} comme si vous l'aviez tapée. Pour une commande
+":", cela signifie que vous verrez la commande s'afficher sur la ligne de
+commande. Si c'est une commande longue, l'invite Appuyez-sur-entrée
+apparaîtra. Ce qui peut devenir très agaçant !
+   Pour éviter ceci, rendez le menu silencieux. Cela est réalisé en utilisant
+l'argument <silent>. Prenons l'appel de FichierSuiv() dans l'exemple
+précédent. Quand vous utilisez cette entrée de menu, voici ce que vous voyez
+sur la ligne de commande : >
+
+	:call <SNR>34_FichierSuiv()
+
+Pour éviter cela, insérez "<silent>" comme premier argument : >
+
+	:amenu <silent> Perso.Fichier\ Suivant :call <SID>FichierSuiv()<CR>
+
+N'abusez pas de "<silent>". Ce n'est pas nécessaire pour les commandes
+courtes. Si vous concevez un menu pour quelqu'un d'autre, la possibilité de
+voir la commande exécutée lui donnera une idée de ce qu'il aurait pu taper, au
+lieu d'utiliser la souris.
+
+
+LISTER LES MENUS
+
+Quand une commande de menu est saisie sans l'argument {touches}, elle liste
+les menus déjà définis. Vous pouvez spécifier un {elem-menu}, ou une partie,
+pour lister des menus spécifiques. Exemple : >
+
+	:amenu
+
+Ceci liste tous les menus. Cette liste est longue ! Il vaut mieux spécifier le
+nom d'un menu pour obtenir une liste plus courte : >
+
+	:amenu Edition
+
+Ici seuls les éléments du menu "Edition" sont listés pour tous les modes. Pour
+lister seulement un élément spécifique pour le mode Insertion : >
+
+	:imenu Edition.Annuler
+
+Prenez soin de taper très exactement le nom. La casse des caractères est prise
+en compte. Mais les '&' des accélérateurs peuvent être omis. Le <Tab> et ce
+qui suit peuvent également être omis.
+
+
+SUPPRIMER DES MENUS
+
+Pour supprimer un menu, on utilise la même commande que pour lister les menus,
+sauf que "menu" est remplacé par "unmenu". Donc ":menu" devient ":unmenu",
+":nmenu" devient ":nunmenu", etc. Pour supprimer l'élément
+"Outils.Lancer\ make" du mode Insertion : >
+
+	:iunmenu Outils.Lancer\ make
+
+Vous pouvez supprimer un menu entier, avec tous ses éléments, en utilisant le
+nom du menu. Exemple : >
+
+	:aunmenu Syntaxe
+
+Ceci supprime le menu Syntaxe et tous les éléments qu'il contient.
+
+==============================================================================
+*42.3*	Divers
+
+Vous pouvez changer l'apparence des menus grâce aux drapeaux de 'guioptions'.
+Par défaut ils sont tous inclus. Vous pouvez supprimer un drapeau avec une
+commande telle que : >
+
+	:set guioptions-=m
+<
+	m           Si supprimé, la barre de menus n'est pas affichée.
+
+	M           Si supprimé, les menus par défaut ne sont pas chargés.
+
+        g           Si supprimé, les éléments de menu désactivés ne sont pas
+                    grisés mais complètement supprimés de l'affichage.
+                    (Ne fonctionne pas sur tous les systèmes.)
+
+	t           Si supprimé, il est impossible de détacher les menus.
+
+La ligne en pointillés au sommet du menu n'est pas une ligne de séparation.
+Quand vous sélectionnez cet élément, le menu est « détaché » : il est affiché
+dans une fenêtre séparée. Cela s'appelle un menu détachable. C'est pratique si
+vous utilisez le même menu souvent.
+
+Pour traduire les éléments de menu, voir |:menutrans|.
+
+Puisque la souris doit être utilisée pour sélectionner un élément de menu,
+autant utiliser la commande ":browse" pour sélectionner un fichier. Et
+":confirm" pour obtenir une boîte de dialogue plutôt qu'un message d'erreur,
+p. ex., quand le tampon courant contient des modifications. Les deux peuvent
+être combinées : >
+
+	:amenu Fichier.Ouvrir  :browse confirm edit<CR>
+
+La commande ":browse" fait apparaître un sélecteur de fichier pour choisir le
+fichier à éditer. La commande ":confirm" fait apparaître un dialogue si le
+tampon courant a été modifié. Vous pouvez alors choisir entre enregistrer les
+modifications, les ignorer ou annuler la commande.
+   Pour des éléments plus compliqués, les fonctions confirm() et inputdialog()
+peuvent être utilisées. Les menus par défaut contiennent quelques exemples.
+
+==============================================================================
+*42.4*	Barre d'outils et menus contextuels
+
+Il existe deux menus spéciaux : ToolBar et PopUp. Les éléments commençant par
+ces noms n'apparaissent pas dans la barre de menus normale.
+
+
+BARRE D'OUTILS
+
+La barre d'outils apparaît seulement quand le drapeau 'T' est inclus dans
+l'option 'guioptions'.
+   La barre d'outils utilise des icones plutôt que du texte pour représenter
+les commandes. Par exemple, l'élément de menu appelé "ToolBar.Nouveau" fait
+apparaître l'icône "Nouveau" sur la barre d'outils.
+   Vim dispose d'office de 28 icônes. Vous pouvez trouver la liste ici :
+|builtin-tools|. La plupart d'entre elles sont utilisées dans la barre
+d'outils par défaut. Vous pouvez redéfinir ce que font ces éléments (après que
+les menus par défaut ont été configurés).
+   Vous pouvez ajouter un autre icône pour un élément de barre d'outils. Ou
+bien définir un nouvel élément de barre d'outils avec un icône. Par exemple,
+définissez un nouvel élément de barre d'outils avec : >
+
+	:tmenu ToolBar.Compiler   Compiler le fichier courant
+	:amenu ToolBar.Compiler   :!cc % -o %:r<CR>
+
+Maintenant vous devez créer l'icône. Pour MS-Windows elle doit être au format
+bitmap, avec pour nom "Compiler.bmp". Pour Unix le format XPM est utilisé, le
+nom de fichier étant "Compiler.xpm". La taille doit être de 18 pixels par 18.
+Sous MS-Windows d'autres tailles peuvent être utilisées, mais leur apparence
+sera dégradée.
+   Placez les bitmaps dans le sous-répertoire "bitmaps" de l'un des
+répertoires de 'runtimepath'. P. ex., "~/.vim/bitmaps/Compiler.xpm" sous Unix.
+
+Vous pouvez définir des bulles d'aide pour les éléments de la barre d'outils.
+Une bulle d'aide est un petit texte qui explique ce qu'un élément fera. Par
+exemple « Ouvrir Fichier ». Elle apparaît quand le pointeur de la souris reste
+immobile sur un élément pendant un court instant. C'est très pratique si la
+signification du pictogramme n'est pas vraiment évidente.
+Exemple : >
+
+	:tmenu ToolBar.Make   Lancer make dans le répertoire courant
+<
+	NOTE :
+        Faites attention à la casse des caractères utilisés. "Toolbar" et
+        "toolbar" sont différents de "ToolBar" !
+
+Pour supprimer une bulle d'aide, utilisez la commande |:tunmenu|.
+
+L'option 'toolbar' peut être utilisée pour afficher du texte à la place d'un
+icône, ou bien avoir les deux. La plupart des gens utilisent seulement
+l'icône, car le texte occupe beaucoup d'espace.
+
+
+MENU CONTEXTUEL
+
+Le menu contextuel s'affiche à l'endroit où se trouve le pointeur de la
+souris. Sous MS-Windows, vous pouvez l'activer en cliquant sur le bouton droit
+de la souris. Vous pouvez alors sélectionner un élément avec le bouton gauche.
+Sous Unix, le menu apparaît en pressant et en maintenant le bouton droit de la
+souris.
+   Le menu contextuel n'apparaît que si l'option 'mousemodel' est fixée à
+"popup" ou "popup_setpos". La différence entre les deux est que "popup_setpos"
+place le curseur à la position du pointeur de souris. En cliquant à
+l'intérieur d'une sélection, celle-ci sera utilisée sans être modifiée. En
+cliquant à l'extérieur d'une sélection, celle-ci sera supprimée.
+   Chaque mode dispose de son propre menu contextuel. C'est pourquoi on n'y
+trouve jamais d'éléments grisés comme dans les menus normaux.
+
+Quel est le sens de la vie, de l'univers et de tout le reste ?  *42*
+Douglas Adams, la seule personne qui savait à quoi correspondait réellement
+cette question, est à présent mort, malheureusement. Alors maintenant vous
+pouvez vous demander quel est le sens de la mort...
+
+==============================================================================
+
+Chapitre suivant : |usr_43.txt|   Utiliser les types de fichiers
+
+Copyright : voir |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:

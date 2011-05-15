@@ -1,0 +1,1786 @@
+*usr_41.txt*	Pour Vim version 6.2.
+
+	       MANUEL de l'UTILISATEUR VIM - par Bram Moolenaar
+
+			     Écrire un script Vim
+
+
+Le langage de script de Vim est utilisé dans le fichier de démarrage vimrc,
+les fichiers de syntaxe, et bien d'autres. Ce chapitre décrit les éléments qui
+peuvent être employés dans un script Vim. Il y en a beaucoup, ce qui explique
+la longueur de ce fichier.
+
+|41.1|	Introduction
+|41.2|	Variables
+|41.3|	Expressions
+|41.4|	Conditions
+|41.5|	Exécuter une expression
+|41.6|	Utiliser les fonctions
+|41.7|	Définir une fonction
+|41.8|	Exceptions
+|41.9|	Remarques diverses
+|41.10|	Écrire un greffon
+|41.11|	Écrire un greffon de type de fichier
+|41.12|	Écrire un greffon de compilateur
+
+  Chapitre suivant : |usr_42.txt|  Ajouter de nouveaux menus
+Chapitre précédent : |usr_40.txt|  Créer de nouvelles commandes
+Table des matières : |usr_toc.txt|
+
+==============================================================================
+*41.1*	Introduction					*vim-script-intro*
+
+Votre première expérience avec les scripts Vim est le fichier vimrc. Vim le
+lit quand il démarre et en exécute les commandes. Vous pouvez y fixer les
+options aux valeurs que vous préférez. Et dedans, vous pouvez utiliser
+n'importe quelle commande deux-points (les commandes qui débutent par ':' ;
+elles sont aussi parfois désignées sous le nom de commande Ex, ou commandes de
+la ligne de commande).
+   Les fichiers de syntaxe sont également des scripts Vim. Comme le sont les
+fichiers qui fixent des options pour un type de fichier spécifique. Une macro
+complexe peut être définie dans un fichier de script Vim séparé. D'autres
+utilisations encore sont possibles, voyez selon vos besoins.
+
+Commençons par un exemple simple : >
+
+	:let i = 1
+	:while i < 5
+	:  echo "le compteur vaut" i
+	:  let i = i + 1
+	:endwhile
+<
+	NOTE :
+	Les caractères ':' ne sont pas vraiment nécessaires ici. Vous en aurez
+	besoin uniquement quand vous tapez une commande. Dans un script Vim,
+	ils peuvent être omis. Nous les utiliserons ici quand même pour bien
+	montrer qu'il s'agit de commandes deux-points et qu'elles se
+	distinguent des commandes du mode Normal.
+
+La commande ":let" assigne une valeur à une variable. La forme générique est :
+
+	:let {variable} = {expression}
+
+Dans notre exemple, le nom de la variable est "i" et l'expression est une
+valeur simple, le nombre un.
+   La commande ":while" débute une boucle. La forme générique est :
+
+	:while {condition}
+	:  {instructions}
+	:endwhile
+
+Les instructions jusqu'au ":endwhile" correspondant sont exécutées tant que la
+condition est vraie. La condition utilisée ici est l'expression "i < 5". Elle
+est vraie tant que la variable i est inférieure à cinq.
+   La commande ":echo" affiche ses arguments. Dans ce cas, la chaîne "le
+compteur vaut" suivie de la valeur de la variable i. Comme i vaut un, on verra
+s'afficher :
+
+	le compteur vaut 1 ~
+
+Ensuite vient une autre commande ":let i =". La valeur utilisée est
+l'expression "i + 1". Cela ajoute un à la variable i et assigne la nouvelle
+valeur à la même variable.
+   La sortie complète du code de notre exemple sera :
+
+	le compteur vaut 1 ~
+	le compteur vaut 2 ~
+	le compteur vaut 3 ~
+	le compteur vaut 4 ~
+
+	NOTE :
+	S'il arrive que vous écriviez une boucle "while" qui continue de
+	tourner sans s'arrêter, vous pouvez l'interrompre en pressant CTRL-C
+	(CTRL-Attn sur MS-Windows).
+
+
+TROIS TYPES DE NOMBRES
+
+Les nombres peuvent être décimaux, hexadécimaux ou octaux. Un nombre
+hexadécimal débute par "0x" ou "0X". Par exemple, "0x1f" vaut 31. Un nombre
+octal débute par un zéro. "017" vaut 15. Attention : Ne mettez pas de zéros
+avant un nombre décimal, il serait interprété comme un nombre octal !
+   La commande ":echo" affiche toujours des nombres décimaux. Exemple : >
+
+	:echo 0x7f 036
+<	127 30 ~
+
+Un nombre est négatif s'il est précédé par un signe moins. Cela vaut aussi
+pour les nombres hexadécimaux et octaux. Le signe moins sert également pour
+les soustractions. Comparez ceci avec l'exemple précédent : >
+
+	:echo 0x7f -036
+<	97 ~
+
+Un espace blanc dans une expression est ignoré. De toute façon, il est
+recommandé de l'utiliser pour séparer les éléments, afin de rendre
+l'expression plus facile à lire. Par exemple, pour éviter la confusion avec un
+nombre négatif, placez un espace entre le signe moins et le nombre suivant : >
+
+	:echo 0x7f - 036
+
+==============================================================================
+*41.2*	Variables
+
+Un nom de variable consiste en une suite de lettres ASCII, chiffres et
+soulignés. Il ne peut pas débuter par un chiffre. Ces noms sont valides :
+
+	compteur
+	_aap3
+	variable_au_nom_tres_long_avec_des_soulignes
+	LongueurFonc
+	LONGUEUR
+
+Mais les noms "toto+titi" et "6var" sont invalides [N.D.T. : et pareillement
+les noms avec des caractères accentués, comme "supplément"].
+   Ces variables sont globales. Pour voir la liste des variables actuellement
+définies, utilisez cette commande : >
+
+	:let
+
+Vous pouvez utiliser les variables globales n'importe où. Cela signifie donc
+que quand la variable "quant" est déclarée dans un fichier de script, elle
+peut aussi être utilisée dans un autre fichier. Cela peut cependant prêter à
+confusion, voire conduire à des problèmes. Afin de les éviter, utilisez plutôt
+une variable locale à un fichier de script, en lui préfixant "s:". Par
+exemple, voyez le code de script : >
+
+	:let s:quant = 1
+	:while s:quant < 5
+	:  source autre.vim
+	:  let s:quant = s:quant + 1
+	:endwhile
+
+Comme "s:quant" est local au script, vous êtes assuré que le sourcement du
+script "autre.vim" ne modifiera pas cette variable. Si "autre.vim" utilisé
+aussi une variable "s:quant", ce sera une copie différente, locale à ce
+script. Pour plus d'informations sur les variables locales de script :
+|script-variable|.
+
+Il existe d'autres types de variables, voir |internal-variables|. Les plus
+courants sont :
+
+	b:nom		variable locale à un tampon
+	w:nom		variable locale à une fenêtre
+	g:nom		variable globale (également dans une fonction)
+	v:nom		variable prédéfinie par Vim
+
+
+SUPPRIMER DES VARIABLES
+
+Les variables restent en mémoire et peuvent être mises en évidence par la
+sortie de la commande ":let". Pour supprimer une variable, utilisez la
+commande ":unlet". Exemple : >
+
+	:unlet s:quant
+
+Ceci supprime la variable locale de script "s:quant" et libère la mémoire
+qu'elle utilisait. Si vous n'êtes pas sûr que la variable existe, et ne voulez
+pas de message d'erreur si ce n'est pas le cas, ajoutez '!' : >
+
+	:unlet! s:quant
+
+Quand un script se termine, les variables locales qu'il utilisait ne seront
+pas automatiquement libérées. Lors de sa prochaine exécution, il pourra
+continuer à utiliser les anciennes valeurs. Exemple : >
+
+	:if !exists("s:appel_quant")
+	:  let s:appel_quant = 0
+	:endif
+	:let s:appel_quant = s:appel_quant + 1
+	:echo "appelé" s:appel_quant "fois"
+
+La fonction "exists()" teste si une variable a déjà été définie. Son argument
+est le nom de la variable que vous désirez tester. Pas la variable elle-même !
+Si vous aviez saisi ceci >
+
+	:if !exists(s:appel_quant)
+
+alors la valeur de s:appel_quant aurait été utilisée comme nom de la variable
+que "exists()" teste. Ce n'est pas ce qu'on désire.
+   Le point d'exclamation '!' donne la négation d'une valeur. Si cette valeur
+était vraie, elle devient fausse. Si elle était fausse, elle devient vraie.
+Vous pouvez la lire comme un "not" (ou « non »). Ainsi, "if !exists()" peut
+être lu comme "if not exists()".
+   Ce que Vim appelle vrai, c'est tout ce qui n'est pas nul. Seul zéro est
+faux.
+
+
+VARIABLES DE CHAÎNE ET APOSTROPHES
+
+Jusqu'à présent, nous n'avons utilisé que des nombres pour les valeurs des
+variables. Mais on peut aussi utiliser des chaînes. Nombres et chaînes sont
+les deux seuls types de variables supportées par Vim. Le typage est dynamique,
+il est effectué à chaque fois qu'une valeur est assignée à une variable avec
+":let".
+   Pour assigner une valeur de type chaîne à une variable, vous devez utiliser
+des apostrophes. Il y en a deux types. D'abord les doubles-apostrophes : >
+
+	:let nom = "pierre"
+	:echo nom
+<	pierre ~
+
+Si vous voulez inclure une double-apostrophe à l'intérieur de la chaîne,
+placez devant une contre-oblique : >
+
+	:let nom = "\"pierre\""
+	:echo nom
+<	"pierre" ~
+
+Pour éviter le recours à la contre-oblique, vous pouvez spécifier une chaîne
+entre apostrophes simples : >
+
+	:let nom = '"pierre"'
+	:echo nom
+<	"pierre" ~
+
+Dans une chaîne entre apostrophes simples, tous les caractères sont
+interprétés littéralement. L'inconvénient, c'est qu'il est impossible d'y
+inclure une apostrophe simple. La contre-oblique est elle-même interprétée
+littéralement, vous ne pouvez donc pas l'utiliser pour changer la
+signification du caractère la suivant.
+   Dans les chaînes entre doubles-apostrophes, il est possible d'utiliser des
+caractères spéciaux. En voici quelques-uns souvent utiles :
+
+	\t		<Tab>
+	\n		<NL>, saut-de-ligne
+	\r		<CR>, <Entree>
+	\e		<Echap>
+	\b		<RetArr>, retour arrière
+	\"		"
+	\\		\, contre-oblique
+	\<Esc>		<Echap>
+	\<C-W>		CTRL-W
+
+Les deux derniers sont de simples exemples. La forme "\<nom>" peut être
+utilisée pour inclure la touche spéciale "nom".
+   Voir |expr-quote| pour la liste complète des éléments spéciaux dans une
+chaîne.
+
+==============================================================================
+*41.3*	Expressions
+
+Vim a une façon riche, mais simple, de gérer les expressions. Pour en obtenir
+les définitions complètes : |expression-syntax|. Nous ne découvrirons ici que
+les éléments les plus utilisés.
+   Les nombres, chaînes et variables mentionnés ci-dessus sont des expressions
+en eux-mêmes. Ainsi, à tout endroit où une expression est attendue, vous
+pouvez utiliser un nombre, une chaîne, une variable. Les autres éléments de
+base dans une expression sont :
+
+	$NOM		variable d'environnement
+	&nom		option
+	@r		registre
+
+Exemples : >
+
+	:echo "'tabstop' vaut :" &ts
+	:echo "Votre répertoire personnel est" $HOME
+	:if @a > 5
+
+La forme &nom peut être utilisée pour sauvegarder la valeur d'une option, la
+fixer à une nouvelle valeur ou faire autre chose, et restaurer l'ancienne
+valeur. Exemple : >
+
+	:let ic_sauv = &ic
+	:set noic
+	:/Le Début/,$delete
+	:let &ic = ic_sauv
+
+Vous êtes alors assuré que le motif "Le Début" est recherché avec l'option
+'ignorecase' désactivée. Ensuite, l'ancienne valeur de l'option est restaurée.
+
+
+OPÉRATEURS MATHÉMATIQUES
+
+Les choses deviennent plus intéressantes quand nous combinons ces éléments de
+base. Commençons par un peu d'arithmétique sur les nombres :
+
+	a + b		addition
+	a - b		soustraction
+	a * b		multiplication
+	a / b		division
+	a % b		modulo
+
+L'ordre habituel des opérateurs est utilisé. Exemple : >
+
+	:echo 10 + 5 * 2
+<	20 ~
+
+Le groupage se fait avec des parenthèses. Pas de surprises. Exemple : >
+
+	:echo (10 + 5) * 2
+<	30 ~
+
+Les chaînes peuvent être concaténées avec ".". Exemple : >
+
+	:echo "gloubi" . "boulga"
+<	gloubiboulga ~
+
+Quand la commande ":echo" a plusieurs arguments, elle les sépare avec un
+espace. Dans l'exemple, l'argument est une expression simple et il n'y a pas
+d'espaces insérés.
+
+L'expression conditionnelle suivante est empruntée au langage C :
+
+	a ? b : c
+
+Si 'a' est évalué vrai, 'b' est utilisé, sinon 'c' est utilisé. Exemple : >
+
+	:let i = 4
+	:echo i > 5 ? "i est grand" : "i est petit"
+<	i est petit ~
+
+Chacune des trois parties de la construction est évaluée séparément, vous
+pouvez donc voir cela un peu comme :
+
+	(a) ? (b) : (c)
+
+==============================================================================
+*41.4*	Conditions
+
+La commande ":if" exécute les instructions qui suivent jusqu'au ":endif"
+correspondant, uniquement si une condition est remplie. La forme générique
+est :
+
+	:if {condition}
+	:  {instructions}
+	:endif
+
+Les {instructions} seront exécutées seulement si la {condition} est évaluée
+vraie (non-nul). Elles doivent être des commandes valides. Si elles
+contiennent des détritus, Vim ne sera pas capable de trouver le ":endif".
+   Vous pouvez aussi utiliser ":else". La forme générique en est :
+
+	:if {condition}
+	:  {instructions}
+	:else
+	:  {instructions}
+	:endif
+
+Les deuxièmes {instructions} sont exécutées seulement si les premières ne le
+sont pas.
+   En outre, il y a ":elseif" :
+
+	:if {condition}
+	:  {instructions}
+	:elseif {condition}
+	:  {instructions}
+	:endif
+
+Cela fonctionne exactement comme si on utilisait un ":else" suivi d'un "if",
+mais sans qu'il soit besoin d'un ":endif" supplémentaire.
+   Cet exemple est utile pour votre fichier vimrc : il s'adapte à la valeur de
+l'option 'term' : >
+
+	:if &term == "xterm"
+	:  " Fait quelque chose pour un xterm
+	:elseif &term == "vt100"
+	:  " Fait quelque chose pour un terminal vt100
+	:else
+	:  " Fait quelque chose pour les autres terminaux
+	:endif
+
+
+OPÉRATEURS LOGIQUES
+
+Nous en avons déjà rencontrés quelques-uns dans nos exemples. Voici les plus
+fréquemment utilisés :
+
+	a == b		égal à
+	a != b		différent de
+	a >  b		supérieur à
+	a >= b		supérieur ou égal à
+	a <  b		inférieur à
+	a <= b		inférieur ou égal à
+
+Le résultat vaut un si la condition est remplie, zéro sinon. Exemple : >
+
+	:if v:version >= 600
+	:  echo "Félicitations !"
+	:else
+	:  echo "Vous utilisez une version ancienne, mettez-la à jour !"
+	:endif
+
+Ici, "v:version" est une variable définie par Vim, qui contient la valeur de
+la version de Vim. 600 désigne la version 6.0. La version 6.1 a la valeur
+601. C'est très utile pour écrire un script qui fonctionne avec plusieurs
+versions de Vim. |v:version|
+
+Les opérateurs logiques s'appliquent aux nombres comme aux chaînes. Quand vous
+comparez deux chaînes, la différence mathématique est utilisée : la valeur des
+octets est comparée, ce qui peut être mauvais pour certains langages.
+   Quand vous comparez une chaîne et un nombre, la chaîne est d'abord
+convertie en nombre. C'est assez délicat, car quand une chaîne ne ressemble
+pas à un nombre, le nombre zéro est utilisé. Par exemple >
+
+	:if 0 == "un"
+	:  echo "oui"
+	:endif
+
+renverra "oui", car "un" ne ressemble pas à un nombre, il est donc converti en
+nombre zéro.
+
+Pour les chaînes, il existe deux opérateurs supplémentaires :
+
+	a =~ b		correspond avec
+	a !~ b		ne correspond pas avec
+
+L'élément de gauche, 'a', est utilisé comme une chaîne. Celui de droite, 'b',
+est utilisé comme un motif dans une recherche. Exemple : >
+
+	:if chn =~ " "
+	:  echo "chn contient un espace"
+	:elseif chn !~ '\.$'
+	:  echo "chn n'a pas de point final"
+	:endif
+
+Notez l'utilisation d'une chaîne entre apostrophes simples pour le dernier
+motif. C'est utile, car les contre-obliques doivent être doublées entre
+doubles-apostrophes, et les motifs contiennent généralement de nombreuses
+contre-obliques.
+
+L'option 'ignorecase' est utilisée lors de la comparaison de chaînes. Si vous
+ne le souhaitez pas, ajoutez '#' pour respecter la casse ou '?' pour
+l'ignorer. Ainsi, "==?" compare l'égalité de deux chaînes en ignorant leur
+casse. Et "!~#" teste si un motif ne correspond pas avec, en considérant la
+casse des lettres.
+   Pour un récapitulatif complet, voir |expr-==|.
+
+
+UN PEU PLUS SUR LES BOUCLES
+
+Il a déjà été fait mention de la commande ":while". Deux instructions
+supplémentaires peuvent être insérées entre le ":while" et le ":endwhile" :
+
+	:continue	Saute en arrière vers le début de la boucle "while" ;
+			la boucle continue.
+	:break		Saute en avant vers le ":endwhile" ; la boucle est
+			interrompue.
+
+Exemple : >
+
+	:while compteur < 40
+	:  call faire_quelque_chose()
+	:  if cond_de_retour
+	:    continue
+	:  endif
+	:  if cond_de_fin
+	:    break
+	:  endif
+	:  sleep 50m
+	:endwhile
+
+La commande ":sleep" met Vim en veille. Le "50m" correspond à cinquante
+millisecondes. ":sleep 4" mettrait en veille pendant quatre secondes.
+
+==============================================================================
+*41.5*	Exécuter une expression
+
+Jusqu'ici, les commandes dans les scripts étaient exécutées directement par
+Vim. La commande ":execute" permet d'exécuter le résultat d'une expression.
+C'est une façon très puissante de construire des commandes et de les exécuter.
+   Par exemple, si vous voulez sauter à un marqueur dont le nom est contenu
+dans une variable : >
+
+	:execute "tag " . nom_marqueur
+
+Le "." est utilisé pour concaténer la chaîne "tag " avec la valeur de la
+variable "nom_marqueur". Supposez que "nom_marqueur" ait pour valeur
+"ma_macro", alors la commande exécutée sera : >
+
+	:tag ma_macro
+
+La commande ":execute" ne peut exécuter que des commandes deux-points.
+Cependant, la commande ":normal" exécute des commandes du mode Normal. Son
+argument n'est pas une expression, mais les caractères littéraux de la
+commande. Par exemple >
+
+	:normal gg=G
+
+saute à la première ligne et met en forme toutes les lignes avec l'opérateur
+"=".
+   Pour faire fonctionner ":normal" avec une expression, il faut le combiner
+avec ":execute". Exemple : >
+
+	:execute "normal " . commandes_nomales
+
+La variable "commandes_normales" doit contenir les commandes du mode Normal.
+   Assurez-vous que l'argument pour ":normal" est une commande complète. Sans
+cela, Vim ferait avorter la commande en atteignant la fin de l'argument. Par
+exemple, si vous avez lancé le mode Insertion, vous devrez aussi le quitter.
+Ceci est correct >
+
+	:execute "normal Inouveau texte \<Esc>"
+
+qui insère "nouveau texte " dans la ligne courante. Notez l'utilisation de la
+forme spéciale "\<Esc>" : elle évite d'avoir un vrai caractère d'échappement
+dans le script.
+
+==============================================================================
+*41.6*	Utiliser les fonctions
+
+Vim dispose de nombreuses fonctions prédéfinies et fournit ainsi un choix
+étendu de fonctionnalités. Quelques exemples seront donnés dans cette section.
+Pour obtenir la liste complète : |functions|.
+
+Une fonction peut être appelée avec la commande ":call". Les paramètres lui
+sont passés entre parenthèses, séparés par des virgules. Exemple : >
+
+	:call search("Date : ", "W")
+
+Ceci appelle la fonction search(), avec les arguments "Date : " et "W". La
+fonction search() utilise le premier argument comme un motif de recherche, et
+le second comme une liste de drapeaux. Le drapeau 'W' signifie que la
+recherche s'arrête à la fin du fichier.
+
+Une fonction peut être appelée dans une expression. Exemple : >
+
+	:let ligne = getline(".")
+	:let subs = substitute(ligne, '\a', "*", "g")
+	:call setline(".", subs)
+
+La fonction getline() récupère une ligne dans le fichier courant. Son argument
+est la spécification du numéro de la ligne. Dans l'exemple, "." est utilisé,
+ce qui correspond à la ligne où se situe le curseur.
+   La fonction substitute() a une action similaire à celle de la commande
+":substitute". Le premier argument est la chaîne sur laquelle procéder à la
+substitution. Le deuxième est le motif, le troisième la chaîne de
+remplacement. Puis viennent les drapeaux.
+   La fonction setline() fixe la ligne spécifiée par le premier argument à une
+nouvelle chaîne, le second argument. Dans l'exemple, la ligne courante est
+remplacée par le résultat du substitute() précédent. Ainsi, l'effet de ces
+trois instructions est équivalent à : >
+
+	:substitute/\a/*/g
+
+L'emploi des fonctions devient plus intéressant si vous avez plus de travail à
+faire avant et après l'appel de substitute().
+
+
+FONCTIONS						*function-list*
+
+Il existe de nombreuses fonctions. Vous les trouverez ici regroupées par
+thèmes. Voir |functions| pour un index alphabétique. Utilisez CTRL-] sur le
+nom d'une fonction pour sauter vers une aide plus détaillée.
+
+Manipulation de chaînes :
+	char2nr()	      donne la valeur ASCII d'un caractère
+	nr2char()	      donne un caractère selon sa valeur ASCII
+	escape()	      protège des caractères dans une chaîne avec '\'
+	strtrans()	      traduit une chaîne pour la rendre imprimable
+	tolower()	      passe une chaîne en minuscules
+	toupper()	      passe une chaîne en majuscules
+	match()		      position où un motif correspond dans une chaîne
+	matchend()	      position où finit la correspondance d'un motif
+	matchstr()	      correspondance d'un motif dans une chaîne
+	stridx()	      premier index d'une chaîne courte dans une longue
+	strridx()	      dernier index d'une chaîne courte dans une longue
+	strlen()	      donne la longueur d'une chaîne
+	substitute()	      substitue un motif par une chaîne
+	submatch()	      donne une sous-correspondance dans ":s"
+	strpart()	      donne une partie d'une chaîne
+	expand()	      étend les mots-clés spéciaux
+	type()		      type d'une variable
+
+Travail avec le texte du tampon courant :
+	byte2line()	      numéro de ligne d'un octet spécifique
+	line2byte()	      numéro d'octet pour une ligne spécifique
+	col()		      numéro de colonne du curseur ou d'une marque
+	virtcol()	      colonne d'écran du curseur ou d'une marque
+	line()		      numéro de ligne du curseur ou d'une marque
+	wincol()	      numéro de colonne de fenêtre du curseur
+	winline()	      numéro de ligne de fenêtre du curseur
+	getline()	      donne une ligne du tampon
+	setline()	      remplace une ligne dans le tampon
+	append()	      ajoute une chaîne après une ligne du tampon
+	indent()	      indente une ligne spécifique
+	cindent()	      indente selon l'indentation C
+	lispindent()	      indente selon l'indentation Lisp
+	nextnonblank()	      trouve la prochaine ligne non blanche
+	prevnonblank()	      trouve la précédente ligne non blanche
+	search()	      trouve une correspondance pour un motif
+	searchpair()	      trouve l'autre extrémité d'un couple début/fin
+
+Fonctions système et manipulation de fichiers :
+	browse()	      ouvre un sélecteur de fichier
+	glob()		      étend les jokers
+	globpath()	      étend les jokers dans un ensemble de répertoires
+	resolve()	      donne l'emplacement où pointe un raccourci
+	fnamemodify()	      modifie un nom de fichier
+	executable()	      teste si un programme exécutable existe
+	filereadable()	      teste si un fichier peut être lu
+	isdirectory()	      teste si un répertoire existe
+	getcwd()	      donne le répertoire de travail courant
+	getfsize()	      donne la taille d'un fichier
+	getftime()	      donne la date de dernière modif d'un fichier
+	localtime()	      donne la date actuelle
+	strftime()	      convertit une date en chaîne
+	tempname()	      donne le nom d'un fichier temporaire
+	delete()	      supprime un fichier
+	rename()	      renomme un fichier
+	system()	      donne le résultat d'une commande shell
+	hostname()	      nom du système
+
+Tampons, fenêtres et liste des arguments :
+	argc()		      nombre d'entrées dans la liste des arguments
+	argidx()	      position courante dans la liste des arguments
+	argv()		      donne une entrée dans la liste des arguments
+	bufexists()	      teste si un tampon existe
+	buflisted()	      teste si un tampon existe et est listé
+	bufloaded()	      teste si un tampon existe et est chargé
+	bufname()	      donne le nom d'un tampon spécifique
+	bufnr()		      donne le n° de tampon d'un tampon spécifique
+	winnr()		      donne le n° de fenêtre de la fenêtre courante
+	bufwinnr()	      donne le n° de fenêtre d'un tampon spécifique
+	winbufnr()	      donne le n° de tampon d'une fenêtre spécifique
+	getbufvar()	      donne une valeur de variable d'un tampon
+	setbufvar()	      fixe une variable dans un tampon spécifique
+	getwinvar()	      donne une valeur de variable d'une fenêtre
+	setwinvar()	      fixe une variable dans une fenêtre spécifique
+
+Repliage :
+	foldclosed()	      teste si une ligne est dans un repli fermé
+	foldlevel()	      donne le niveau de repli d'une ligne spécifique
+	foldtext()	      génère la ligne affichée pour un repli fermé
+
+Coloration syntaxique :
+	hlexists()	      teste si un groupe de surbrillance existe
+	hlID()		      donne l'ID d'un groupe de surbrillance
+	synID()		      donne l'ID de syntaxe à une position spécifique
+	synIDattr()	      donne un attribut spécifique d'un ID de syntaxe
+	synIDtrans()	      donne l'ID de syntaxe traduit
+
+Historique :
+	histadd()	      ajoute un élément à un historique
+	histdel()	      supprime un élément d'un historique
+	histget()	      donne un élément d'un historique
+	histnr()	      donne l'index de l'entrée d'historique courante
+
+Interactivité :
+	confirm()	      laisse l'utilisateur faire un choix
+	getchar()	      attend un caractère de l'utilisateur
+	getcharmod()	      donne les modificateurs du dernier caractère
+	input()		      attend une ligne de l'utilisateur
+	inputsecret()	      attend une ligne de l'utilisateur sans écho
+	inputdialog()	      attend une ligne de l'utilisateur dans 1 dialogue
+
+Serveur Vim :
+	serverlist()	      renvoie la liste des noms de serveurs
+	remote_send()	      envoie des caractères de cmd à un serveur Vim
+	remote_expr()	      évalue une expression dans un serveur Vim
+	server2client()	      envoie une réponse à un client d'un serveur Vim
+	remote_peek()	      teste s'il y a une réponse d'un serveur Vim
+	remote_read()	      lit une réponse d'un serveur Vim
+	foreground()	      place la fenêtre Vim au premier plan
+	remote_foreground()   place la fenêtre du serveur Vim au premier plan
+
+Divers :
+	mode()		      donne le mode d'édition courant
+	visualmode()	      dernier mode Visuel utilisé
+	hasmapto()	      teste si un mappage existe
+	mapcheck()	      teste si un mappage correspondant existe
+	maparg()	      donne la partie droite d'un mappage
+	exists()	      teste si une variable, fonction, etc. existe
+	has()		      teste si une fonctionnalité est supportée
+	cscope_connection()   teste si une connexion cscope existe
+	did_filetype()	      teste si une autocmd FileType a été utilisée
+	eventhandler()	      teste si dans une routine de traitement d'évén.
+	getwinposx()	      position X de la fenêtre IHM graphique Vim
+	getwinposy()	      position Y de la fenêtre IHM graphique Vim
+	winheight()	      donne la hauteur d'une fenêtre spécifique
+	winwidth()	      donne la largeur d'une fenêtre spécifique
+	libcall()	      appelle une fonc. dans une bibliothèque externe
+	libcallnr()	      idem, mais renvoie un nombre
+
+==============================================================================
+*41.7*	Définir une fonction
+
+Vim vous permet de définir vos propres fonctions. La déclaration de base d'une
+fonction se fait comme suit :
+
+	:function {nom}({var1}, {var2}, ...)
+	:  {corps}
+	:endfunction
+
+	NOTE :
+	Les noms de fonctions doivent débuter par une lettre majuscule.
+
+Nous allons essayer de définir une fonction simple qui retournera le plus
+petit de deux nombres. Elle commencera par cette ligne : >
+
+	:function Min(nb1, nb2)
+
+Ceci dit à Vim que la fonction s'appelle "Min" et prend deux arguments : "nb1"
+et "nb2".
+   La première chose que vous avez besoin de faire est de tester quel nombre
+le plus petit : >
+
+	:  if a:nb1 < a:nb2
+
+Le préfixe spécial "a:" dit à Vim que la variable est un argument de fonction.
+Assignons la variable "inf" à la valeur du plus petit nombre : >
+
+	:  if a:nb1 < a:nb2
+	:    let inf = a:nb1
+	:  else
+	:    let inf = a:nb2
+	:  endif
+
+La variable "inf" est une variable locale. Les variables utilisées à
+l'intérieur de fonctions sont locales à moins qu'elles n'aient un préfixe tel
+que "g:", "a:", ou "s:".
+
+	NOTE :
+	Pour accéder à une variable globale depuis l'intérieur d'une fonction,
+	vous devez y préfixer "g:". Ainsi, "g:quant" dans une fonction désigne
+	la variable globale "quant", tandis que "quant" fait référence à une
+	autre variable, locale à la fonction.
+
+Vous utilisez à présent l'instruction ":return" pour retourner le plus petit
+nombre à l'utilisateur. Enfin, vous terminez la fonction : >
+
+	:  return inf
+	:endfunction
+
+Voici la définition complète de notre fonction : >
+
+	:function Min(nb1, nb2)
+	:  if a:nb1 < a:nb2
+	:    let inf = a:nb1
+	:  else
+	:    let inf = a:nb2
+	:  endif
+	:  return inf
+	:endfunction
+
+Une fonction définie par l'utilisateur peut être appelée exactement de la même
+manière qu'une fonction interne. Seul le nom est différent. La fonction Min()
+peut être utilisée comme suit : >
+
+	:echo Min(5, 8)
+
+C'est seulement maintenant que la fonction sera exécutée et que ses lignes
+seront interprétées par Vim. Si elles contiennent des erreurs, comme
+l'utilisation d'une variable ou d'un fonction non définie, vous aurez
+maintenant des messages d'erreurs. Quand vous définissez la fonction, ces
+erreurs ne sont pas détectées.
+
+Quand une fonction atteint ":endfunction" ou que ":return" est utilisé sans
+argument, la fonction retourne zéro.
+
+Pour redéfinir une fonction qui existe déjà, utilisez '!' après la commande
+":function" : >
+
+	:function!  Min(nb1, nb2, nb3)
+
+
+UTILISER UNE PLAGE
+
+La commande ":call" peut se faire donner une plage de lignes. Celle-ci peut
+être utilisée de deux façons. Quand une fonction a été définie avec le mot-clé
+"range", elle gérera la plage de ligne elle-même.
+   La fonction se verra passer les variables "a:firstline" et "a:lastline".
+Elles contiennent les numéros de lignes de la plage avec laquelle la fonction
+a été appelée. Exemple : >
+
+	:function Compter_mots() range
+	:  let n = a:firstline
+	:  let quant = 0
+	:  while n <= a:lastline
+	:    let quant = quant + NombreMots(getline(n))
+	:    let n = n + 1
+	:  endwhile
+	:  echo quant . " mots trouvés"
+	:endfunction
+
+Vous pouvez appeler cette fonction avec : >
+
+	:10,30call Compter_mots()
+
+Elle sera exécutée une seule fois et retournera le nombre de mots.
+   L'autre façon d'utiliser une plage de lignes est de définir une fonction
+sans le mot-clé "range". La fonction sera appelée une fois pour chaque ligne
+de la plage, avec le curseur sur cette ligne. Exemple : >
+
+	:function  Numero()
+	:  echo "la ligne " . line(".") . " contient : " . getline(".")
+	:endfunction
+
+Si vous appelez cette fonction avec >
+
+	:10,15call Numero()
+
+la fonction sera appelée six fois.
+
+
+NOMBRE D'ARGUMENTS VARIABLE
+
+Vim vous permet de définir des fonctions admettant un nombre variable
+d'arguments. La commande suivante, par exemple, définit une fonction qui doit
+avoir au moins un argument ("prem"), et peut avoir jusqu'à 20 arguments
+supplémentaires : >
+
+	:function Montrer(prem, ...)
+
+La variable "a:1" contient le premier argument optionnel, "a:2" le second, et
+ainsi de suite. La variable "a:0" contient le nombre d'arguments
+supplémentaires.
+   Par exemple : >
+
+	:function Montrer(prem, ...)
+	:  echohl Title
+	:  echo "Montrer vaut " . a:prem
+	:  echohl None
+	:  let index = 1
+	:  while index <= a:0
+	:    execute 'echon "  Son argument " . index . " vaut " . a:' . index
+	:    let index = index + 1
+	:  endwhile
+	:  echo ""
+	:endfunction
+
+Ceci utilise la commande ":echohl" pour spécifier la surbrillance à utiliser
+pour la prochaine commande ":echo". ":echohl None" l'arrête à nouveau. La
+commande ":echon" fonctionne comme ":echo", mais sans coupure de ligne.
+
+
+LISTER DES FONCTIONS
+
+La commande ":function" liste les noms et arguments de toutes les fonctions
+définies par l'utilisateur : >
+
+	:function
+<	function Compter_mots() ~
+	function Montrer(prem, ...) ~
+	function Fixe_syntax(nom) ~
+
+Pour voir ce que fait une fonction, passez son nom en argument à ":function" :
+>
+	:function Fixe_syntax
+<	1     if &syntax == '' ~
+	2       let &syntax = a:nom ~
+	3     endif ~
+	   endfunction ~
+
+
+DÉBOGAGE
+
+Le numéro de ligne est utile quand vous obtenez un message d'erreur ou quand
+vous déboguez. Voir |debug-scripts| sur le mode débogage.
+   Vous pouvez en plus fixer l'option 'verbose' à 12 ou plus pour voir tous
+les appels de fonctions. Fixez-la à 15 ou plus pour voir chaque ligne
+exécutée.
+
+
+SUPPRIMER UNE FONCTION
+
+Pour supprimer la fonction Montrer() : >
+
+	:delfunction Montrer
+
+Vous obtenez une erreur quand la fonction n'existe pas.
+
+==============================================================================
+*41.8*	Exceptions
+
+Commençons par un exemple : >
+
+	:try
+	:  read ~/modeles/pascal.modl
+	:catch /E484:/
+	:  echo "Désolé, le fichier de modèle Pascal est introuvable."
+	:endtry
+
+La commande ":read" échouera si le fichier n'existe pas. Mais au lieu
+d'émettre un message d'erreur, ce code interceptera l'erreur et donnera un
+message détaillé à l'utilisateur.
+
+Pour les commandes placées entre un ":try" et un ":endtry", les erreurs sont
+transformées en exceptions. Une exception est une chaîne. Dans le cas d'une
+erreur, la chaîne est le message d'erreur. Or chaque erreur possède un numéro.
+Dans notre exemple, l'erreur que nous interceptons contient "E484:". Ce numéro
+reste toujours identique (alors que le message peut changer, par exemple quand
+il est traduit).
+
+Si la commande ":read" provoque une autre erreur, le motif "E484:" ne
+concordera plus. Cette exception ne sera alors pas interceptée et vous
+obtiendrez le message d'erreur habituel.
+
+Pour remédier à cela, vous pouvez essayer de faire : >
+
+	:try
+	:  read ~/modeles/pascal.modl
+	:catch
+	:  echo "Désolé, le fichier de modèle Pascal est introuvable."
+	:endtry
+
+De cette manière, toutes les erreurs seront interceptées. Mais alors vous ne
+pourrez plus distinguer certaines erreurs intéressantes, comme une ligne de
+mode invalide.
+
+La commande ":finally" offre un autre mécanisme utile : >
+
+	:let tmp = tempname()
+	:try
+	:  exe ".,$write " . tmp
+	:  exe "!filtre " . tmp
+	:  .,$delete
+	:  exe "$read " . tmp
+	:finally
+	:  call delete(tmp)
+	:endtry
+
+Ceci filtre les lignes depuis la position courante jusqu'à la fin du fichier
+avec la commande `filtre`, qui accepte un nom de fichier en argument. La
+commande "call delete(tmp)" sera toujours exécutée, indépendamment du bon
+fonctionnement ou non de la commande de filtrage et des autres instructions
+entre le ":try" et le ":finally". Vous êtes donc assuré que le fichier
+temporaire sera bien supprimé.
+
+Pour plus d'informations sur la gestion des exceptions, consultez le Manuel de
+référence : |exception-handling|.
+
+==============================================================================
+*41.9*	Remarques diverses
+
+Vous trouverez dans cette section un résumé des particularités qui
+s'appliquent aux scripts Vim. Elles sont également mentionnées à d'autres
+endroits, mais forment ici un mémo pratique.
+
+Le caractère fin-de-ligne dépend du système. Pour Unix, un simple caractère
+<NL> est utilisé. Pour MS-DOS, Windows, OS/2 et apparentés, c'est <CR><LF>. Ce
+point est important lors de l'utilisation de mappages se terminant par <CR>.
+Voir |:source_crnl|.
+
+
+ESPACES BLANCS
+
+Les lignes vides sont autorisées et ignorées.
+
+Les caractères d'espaces blancs (espaces et tabulations) situés en début de
+ligne sont toujours ignorés ; entre deux paramètres (p. ex. entre "set" et
+"cpoptions" dans l'exemple ci-dessous), ils sont réduits à un caractère blanc
+unique et jouent le rôle d'un séparateur, les espaces blancs après le dernier
+caractère (visible) pouvant être ignorés ou non, selon les situations (voir
+ci-dessous).
+
+Pour une commande ":set" comprenant le signe '=' (égal), comme dans >
+
+	:set cpoptions    =aABceFst
+
+l'espace blanc juste avant le '=' est ignoré. Mais il peut n'y avoir aucun
+espace après le '=' !
+
+Pour inclure un caractère d'espace blanc dans la valeur d'une option, il faut
+le protéger avec un '\' (contre-oblique), comme dans l'exemple suivant : >
+
+	:set tags=mon\ joli\ fichier
+
+Le même exemple écrit comme suit >
+
+	:set tags=mon joli fichier
+
+renverrait une erreur, car il serait interprété en tant que : >
+
+	:set tags=mon
+	:set joli
+	:set fichier
+
+
+COMMENTAIRES
+
+Le caractère '"' (double-apostrophe) débute un commentaire. Tous les
+caractères suivants (double-apostrophe incluse) jusqu'à la fin-de-ligne sont
+considérés comme un commentaire et sont ignorés, sauf pour les commandes ne
+reconnaissant pas les commentaires (voir les exemples ci-dessous). Un
+commentaire peut débuter à n'importe quelle position dans la ligne.
+
+Certaines commandes traitent les commentaires de façon particulière.
+Exemples : >
+
+	:abbrev Z Zorglub		" raccourci
+	:map <F3> o#include		" insère #include
+	:execute cmd			" exécution
+	:!ls *.c			" liste les fichiers C
+
+L'abréviation "Z" sera développée en « Zorglub		" raccourci ». Le
+mappage de <F3> sera la ligne entière après le « o# ... », comprenant le
+« " insère #include ». La commande "execute" renverra une erreur. La commande
+"!" enverra tout ce qui suit au shell, entraînant une erreur à cause d'un '"'
+sans correspondance.
+   Il ne peut y avoir de commentaires après les commandes ":map",
+":abbreviate", ":execute" et "!" (il existe quelques autres commandes avec
+cette restriction). Pour les commandes ":map", ":abbreviate" et ":execute", il
+existe une astuce : >
+
+	:abbrev Z Zorglub|" raccourci
+	:map <F3> o#include|" insère #include
+	:execute cmd			|" exécution
+
+Le caractère '|' permet de séparer une commande de la suivante. Et cette
+commande suivante est un simple commentaire.
+
+Remarquez qu'il n'y a pas d'espace avant le '|' pour l'abréviation et le
+mappage. Pour ces commandes, tout caractère jusqu'à la fin-de-ligne ou un
+autre '|' est inclus. Cela peut avoir pour conséquence d'inclure des espaces
+blancs finaux surnuméraires : >
+
+	:map <F4> o#include  
+
+Afin d'éviter ce problème, vous pouvez activez l'option 'list' lorsque vous
+éditez des fichiers vimrc.
+
+
+ÉCUEILS À ÉVITER
+
+Un problème encore plus fâcheux survient dans l'exemple suivant : >
+
+	:map ,ab o#include
+	:unmap ,ab 
+
+Ici, ",ab " sera mappé à "o#include", il n'y a pas de d'espaces blancs
+supplémentaires. Cependant "unmap" ne se termine pas directement avec la
+fin-de-ligne, Vim essaiera donc d'annuler le mappage ",ab ", qui n'existe pas
+comme séquence mappée. Une erreur sera renvoyée, qui sera difficile à
+identifier, car le caractère d'espace blanc final dans ":unmap ,ab " n'est pas
+visible.
+
+Et c'est exactement la même chose qui se produit lorsqu'on place un
+commentaire après une commande ":unmap" : >
+
+	:unmap ,ab     " commentaire
+
+Ici, la partie du commentaire sera ignorée. Mais Vim essaiera d'annuler le
+mappage ",ab     ", qui n'existe pas. Réécrivez-le comme ceci : >
+
+	:unmap ,ab|    " commentaire
+
+
+RESTAURER LA VUE
+
+Parfois, vous voudrez faire un changement puis revenir à votre emplacement
+initial. Vous voudrez également restaurer la position relative dans le tampon,
+afin que la même ligne apparaisse en haut de l'écran.
+   Cet exemple copie la ligne courante et la colle au tout début du fichier :
+>
+	:map ,p ma"aYHmbgg"aP`bzt`a
+
+Dissection : >
+
+	ma"aYHmbgg"aP`bzt`a
+<	ma		     marque avec a la position courante
+	  "aY		     copie la ligne courante dans le registre a
+	     Hmb	     va à la 1ère ligne de la fenêtre, la marque avec b
+		gg	     va à la 1ère ligne du fichier
+		  "aP	     colle la ligne précédemment copiée
+		     `b	     retourne à la ligne du haut de la fenêtre
+		       zt    positionne le texte dans la fenêtre comme avant
+			 `a  retourne à position initiale du curseur
+
+
+PAQUETAGES DE FONCTIONS
+
+Afin d'éviter que le nom de vos fonctions n'interfère avec celui des fonctions
+d'autres utilisateurs que vous auriez récupéré, utilisez cette méthode :
+- Faites précéder chaque nom de fonction d'une chaîne unique. J'utilise
+  souvent une abréviation (par exemple, "OW_" pour les fonctions de la fenêtre
+  d'options ["Option Window"]).
+- Réunissez les définitions de vos fonctions dans un seul fichier et fixez
+  une variable globale pour indiquer qu'elles ont été chargées. Si vous
+  sourcez ce fichier à nouveau, déchargez-en d'abord les fonctions.
+
+Exemple : >
+
+	" Ceci est le paquetage XYZ
+
+	if exists("XYZ_inclus")
+	    delfun XYZ_un
+	    delfun XYZ_deux
+	endif
+
+	function XYZ_un(a)
+	    ... corps de la fonction ...
+	endfun
+
+	function XYZ_deux(b)
+	    ... corps de la fonction ...
+	endfun
+
+	let XYZ_inclus = 1
+
+==============================================================================
+*41.10*	Écrire un greffon				*write-plugin*
+
+Vous pouvez écrire un script Vim que de nombreuses autres personnes seront
+amenées à utiliser. C'est ce qu'on appelle un greffon. Les utilisateurs
+pourront déposer votre script dans leur répertoire "plugin" et utiliser
+directement ses fonctionnalités |add-plugin|.
+
+Il existe en fait deux types de greffons :
+- les greffons globaux : pour tous les fichiers ;
+- les greffons de types de fichiers : uniquement pour les fichiers d'un type
+  spécifique.
+
+Dans cette section, on s'intéressera au premier type. Mais la plupart des
+remarques resteront pertinentes pour les greffons de types de fichiers. Les
+spécificités de ces derniers types sont abordées dans la section suivante
+|write-filetype-plugin|.
+
+
+NOM
+
+En premier lieu, il vous faut choisir un nom pour votre greffon. Ses
+fonctionnalités doivent ressortir clairement de ce nom. Et il devrait
+apparaître peu probable que, si quelqu'un d'autre écrivait un greffon portant
+le même nom, il fasse quelque chose de différent. Veuillez aussi limiter les
+noms à 8 caractères, pour éviter des problèmes avec les anciens systèmes
+Windows. [N.D.T. : Et si vous escomptez publier ce greffon sur Internet,
+n'oubliez pas que son nom doit être accessible à un anglophone, comme
+d'ailleurs le corps du script ; c'est ce qui explique que l'exemple présenté
+ci-dessous n'est pas traduit.] XXX
+
+Un script qui corrigerait des erreurs de frappe pourrait s'appeler
+"typecorr.vim". Nous imaginerons ici son écriture en guise d'exemple.
+
+Pour que le greffon puisse fonctionner pour tout le monde, il faut suivre un
+petit nombre de règles. Elles seront détaillées pas à pas. Le texte complet du
+greffon n'est donné qu'à la fin.
+
+
+CORPS
+
+Commençons par le corps du greffon, les lignes qui font effectivement le
+travail : >
+
+ 14	iabbrev teh the
+ 15	iabbrev otehr other
+ 16	iabbrev wnat want
+ 17	iabbrev synchronisation
+ 18		\ synchronization
+ 19	let s:count = 4
+
+La liste courante devrait être beaucoup plus longue, bien sûr.
+
+	NOTE :
+	Les numéros de lignes n'ont été ajoutés qu'à titre indicatif, ne les
+	placez pas dans votre fichier de greffon !
+
+
+EN-TÊTE
+
+Vous serez probablement amené à modifier votre greffon, et bientôt vous
+risquez de disposer de plusieurs versions plus ou moins récentes. De plus,
+quand vous distribuerez ce fichier, les gens voudront savoir qui a écrit ce
+superbe greffon et où ils peuvent lui envoyer leurs remarques. En conséquence,
+placez un en-tête au début du greffon : >
+
+  1	" Vim global plugin for correcting typing mistakes
+  2	" Last Change:	2000 Oct 15
+  3	" Maintainer:	Bram Moolenaar <Bram@vim.org>
+
+Un mot sur la question du copyright et de la licence : comme les greffons sont
+très utiles et qu'il n'est pas souhaitable que leur distribution soit
+restreinte, veuillez s'il vous plaît diffuser vos greffons dans le domaine
+public ou bien utiliser la licence Vim |license|. Une simple mention au début
+du fichier devrait être suffisante. Par exemple : >
+
+  4 	" License:	This file is placed in the public domain.
+
+
+CONTINUATION DE LIGNE, ÉVITER LES EFFETS DE BORD	*use-cpo-save*
+
+
+Dans la ligne 18 ci-dessus, le mécanisme de continuation de ligne est utilisé
+|line-continuation|. Les utilisateurs avec l'option 'compatible' activée
+connaîtront des problèmes ici, ils obtiendront un message d'erreur. Or on ne
+peut pas simplement désactiver 'compatible', cela aurait trop d'effets de
+bord. Pour éviter cela, nous fixons l'option 'cpoptions' à sa valeur par
+défaut Vim, et nous la restaurerons après coup. Cela permettra l'utilisation
+du mécanisme de de continuation de ligne et le bon fonctionnement du script
+dans la plupart des cas. On procède ainsi : >
+
+ 11	let s:save_cpo = &cpo
+ 12	set cpo&vim
+ ...
+ 42	let &cpo = s:save_cpo
+
+On enregistre d'abord l'ancienne valeur de 'cpoptions' dans la variable
+"s:save_cpo". À la fin du greffon, cette valeur est restaurée.
+
+NOTE : On utilise ici une variable locale de script |s:var|. Une variable
+globale pourrait déjà être occupée pour autre chose. Utilisez toujours des
+variables locales aux scripts pour des choses qui ne sont utilisées que dans
+le script.
+
+
+DÉSACTIVATION
+
+Il est possible qu'un utilisateur ne souhaite pas utiliser systématiquement un
+greffon. Ou que l'administrateur système l'ait déposé dans le répertoire
+système "plugin", mais qu'un utilisateur ait son propre greffon qu'il souhaite
+utiliser. Alors, l'utilisateur doit pouvoir désactiver le chargement de ce
+greffon spécifique. Cela est possible grâce à : >
+
+  6	if exists("loaded_typecorr")
+  7	  finish
+  8	endif
+  9	let loaded_typecorr = 1
+
+Ceci évite également que le script étant chargé deux fois, il provoque des
+messages d'erreurs pour la redéfinition de fonctions et des problèmes pour
+les autocommandes qui sont présentes en double.
+
+
+MAPPAGE
+
+Rendons à présent notre greffon plus intéressant : nous allons ajouter un
+mappage qui ajoute une correction pour le mot sous le curseur. On pourrait se
+contenter de choisir une séquence clavier pour ce mappage, mais l'utilisateur
+pourrait déjà l'utiliser pour autre chose. Pour permettre à l'utilisateur de
+définir quelles touches un mappage utilise dans un greffon, l'élément <Leader>
+peut être utilisé : >
+
+ 22	  map <unique> <Leader>a  <Plug>TypecorrAdd
+
+L'objet "<Plug>TypecorrAdd" sert également à ce travail, voir un peu plus bas.
+
+L'utilisateur peut fixer la variable "mapleader" à la séquence de touches
+qu'il souhaite pour exécuter ce mappage. Ainsi, si l'utilisateur avait fait >
+
+	let mapleader = "_"
+
+le mappage aurait défini "_a". Si l'utilisateur n'avait pas fait ceci, la
+valeur par défaut aurait été utilisée, qui est une contre-oblique. Alors, un
+mappage pour "\a" aurait été défini.
+
+Remarquez l'utilisation de <unique>, qui provoquera un message d'erreur si le
+mappage semble déjà exister. |:map-<unique>|
+
+Mais si l'utilisateur souhaite définir sa propre séquence de touches ? On peut
+permettre cela grâce à ce mécanisme : >
+
+ 21	if !hasmapto('<Plug>TypecorrAdd')
+ 22	  map <unique> <Leader>a  <Plug>TypecorrAdd
+ 23	endif
+
+Ceci teste si un mappage à "<Plug>TypecorrAdd" existe déjà, le mappage à
+"<Leader>a" étant défini uniquement si ce n'est pas le cas. L'utilisateur peut
+alors placer cette ligne dans son fichier vimrc : >
+
+	map ,c  <Plug>TypecorrAdd
+
+La séquence de touches mappée sera alors ",c", au lieu de "_a" ou "\a".
+
+
+MORCEAUX CHOISIS
+
+Si un script devient plus long, vous voudrez certainement découper votre
+travail en plusieurs morceaux. Vous pouvez utiliser des fonctions ou des
+mappages pour cela. Mais ils ne devront pas interférer avec ceux d'autres
+scripts. Par exemple, vous pourriez définir une fonction Add(), mais un autre
+script utiliserait déjà la même fonction. Pour éviter cela, on définit une
+fonction locale au script en y préfixant ":s".
+
+Définissons une fonction qui ajoute une nouvelle correction de frappe : >
+
+ 30	function s:Add(from, correct)
+ 31	  let to = input("type the correction for " . a:from . ": ")
+ 32	  exe ":iabbrev " . a:from . " " . to
+ ...
+ 36	endfunction
+
+Nous pouvons maintenant appeler la fonction "s:Add()" depuis le script. Si un
+autre script définit aussi "s:Add()", il sera local à ce script et ne pourra
+être appelé que depuis le script où il a été défini. Il peut aussi y avoir une
+fonction Add() globale (sans le "s:"), et qui sera encore une autre fonction.
+
+<SID> peut être utilisé avec les mappages. Il génère un ID script, qui
+identifie le script courant. Dans notre greffon d'exemple, nous l'utilisons
+comme ceci : >
+
+ 24	noremap <unique> <script> <Plug>TypecorrAdd  <SID>Add
+ ...
+ 28	noremap <SID>Add  :call <SID>Add(expand("<cword>"), 1)<CR>
+
+Ainsi, quand un utilisateur tape "\a", cette séquence est invoquée : >
+
+	\a  ->  <Plug>TypecorrAdd  ->  <SID>Add  ->  :call <SID>Add()
+
+Si un script différent mappait également "<SID>Add", il aurait un autre ID
+script et définirait ainsi un autre mappage.
+
+Remarquez que "<SID>Add()" est ici utilisé à la place de "s:Add()". C'est
+parce que le mappage est tapé par l'utilisateur, donc en dehors du script.
+<SID> est traduit en ID du script, afin que Vim sache dans quel script
+chercher la fonction Add().
+
+	NOTE :
+	Tout ceci est un peu compliqué, mais c'est nécessaire pour que le
+	greffon puisse fonctionner avec d'autres greffons. La règle de base
+	est d'utiliser "<SID>Add()" dans les mappages, et "s:Add()" aux autres
+	endroits (le script lui-même, les autocommandes, les commandes
+	utilisateur).
+
+Nous pouvons aussi ajouter une entrée de menu pour faire la même chose que le
+mappage : >
+
+ 26	noremenu <script> Plugin.Add\ Correction      <SID>Add
+
+Le menu "Plugin" est recommandé pour ajouter des éléments de menu pour les
+greffons. Dans ce cas, seul un élément est utilisé. Quand vous en ajoutez
+plusieurs, il est généralement préférable de créer un sous-menu. Par exemple,
+"Plugin.CVS" pour un greffon qui offrirait les opérations CVS
+"Plugin.CVS.checkin", "Plugin.CVS.checkout", etc.
+
+NOTE : À la ligne 28, ":noremap" est utilisé pour éviter tout problème avec
+d'autres mappages. Quelqu'un pourrait avoir remappé ":call", par exemple. À la
+ligne 24, nous avons également utilisé ":noremap", mais nous voulions que
+"<SID>Add" soit remappé. C'est pourquoi "<script>" est utilisé ici. Il
+n'autorise que les mappages qui sont locaux au script |:map-<script>|. La même
+chose est faite à la ligne 26 pour ":noremenu" |:menu-<script>|.
+
+
+<SID> ET <Plug>						*using-<Plug>*
+
+<SID> et <Plug> sont tous deux utilisés pour éviter que les mappages de
+séquences clavier n'interfèrent avec les mappages qui sont à utiliser
+uniquement à partir d'autres mappages. Notez la différence entre l'utilisation
+de <SID> et de <Plug> :
+
+<Plug>	est visible en dehors du script. Il est utilisé pour les mappages
+	auxquels l'utilisateur souhaite mapper une séquence clavier. <Plug>
+    	est un code spécial que la saisie d'une touche ne pourra jamais
+    	produire.
+    	Pour rendre improbable l'utilisation de la même séquence de caractères
+    	par d'autres greffons, utilisez cette structure : "<Plug> nomscript
+    	nommappage". Dans notre exemple, le nom du script est "Typecorr" et
+    	celui du mappage "Add". Cela donne "<Plug>TypecorrAdd". Seuls les
+    	premiers caractères des noms de script et de mappage sont mis en
+    	majuscules, afin qu'on puisse repérer où chacun commence.
+
+<SID>	est l'ID script, un identifiant unique pour chaque script.
+	En interne, Vim traduit <SID> en "<SNR>123_", où "123" peut désigner
+    	n'importe quel nombre. Ainsi, une fonction "<SID>Add()" aura comme nom
+    	"<SNR>11_Add()" dans un script et "<SNR>22_Add()" dans un autre. Vous
+    	pouvez voir cela quand vous utilisez la commande ":function" pour
+    	obtenir la liste des fonctions. La traduction de <SID> dans les
+    	mappages est exactement identique, c'est ainsi que vous pouvez appeler
+    	une fonction locale de script depuis un mappage.
+
+
+COMMANDE UTILISATEUR
+
+Maintenant, ajoutons une commande utilisateur pour ajouter une correction : >
+
+ 38	if !exists(":Correct")
+ 39	  command -nargs=1  Correct  :call s:Add(<q-args>, 0)
+ 40	endif
+
+La commande utilisateur est définie uniquement si aucune autre commande ne
+porte déjà le même nom. Sinon, une erreur serait obtenue ici. Le recouvrement
+de la commande utilisateur existante avec ":command!" n'est probablement pas
+une bonne chose, l'utilisateur se demanderait alors pourquoi la commande qu'il
+a définie lui-même ne marche pas. |:command|
+
+
+VARIABLES DE SCRIPT
+
+Quand une variable débute par "s:", c'est une variable de script. Elle ne peut
+être utilisée qu'à l'intérieur d'un script. En dehors, elle n'est pas visible.
+Cela évite des problèmes lors de l'utilisation d'un même nom de variable dans
+des scripts différents. Les variables seront conservées tant que Vim
+fonctionnera. Et les mêmes variables seront utilisées quand le même script
+sera sourcé à nouveau. |s:var|
+
+Un autre avantage est que ces variables peuvent aussi être utilisées dans les
+fonctions, autocommandes et commandes utilisateur qui sont définies dans le
+script. Dans notre exemple, nous pouvons ajouter quelques lignes pour compter
+le nombre de corrections : >
+
+ 19	let s:count = 4
+ ...
+ 30	function s:Add(from, correct)
+ ...
+ 34	  let s:count = s:count + 1
+ 35	  echo s:count . " corrections now"
+ 36	endfunction
+
+"s:count" est d'abord initialisé à 4 dans le script lui-même. Quand la
+fonction s:Add() est appelée par la suite, elle incrémente "s:count".
+L'endroit d'où la fonction est appelée n'est pas un problème, car comme elle a
+été définie dans ce script, elle utilisera les variables locales du script.
+
+
+LE RÉSULTAT
+
+Voici le résultat complet de l'exemple : >
+
+  1	" Vim global plugin for correcting typing mistakes
+  2	" Last Change:	2000 Oct 15
+  3	" Maintainer:	Bram Moolenaar <Bram@vim.org>
+  4	" License:	This file is placed in the public domain.
+  5
+  6	if exists("loaded_typecorr")
+  7	  finish
+  8	endif
+  9	let loaded_typecorr = 1
+ 10
+ 11	let s:save_cpo = &cpo
+ 12	set cpo&vim
+ 13
+ 14	iabbrev teh the
+ 15	iabbrev otehr other
+ 16	iabbrev wnat want
+ 17	iabbrev synchronisation
+ 18		\ synchronization
+ 19	let s:count = 4
+ 20
+ 21	if !hasmapto('<Plug>TypecorrAdd')
+ 22	  map <unique> <Leader>a  <Plug>TypecorrAdd
+ 23	endif
+ 24	noremap <unique> <script> <Plug>TypecorrAdd  <SID>Add
+ 25
+ 26	noremenu <script> Plugin.Add\ Correction      <SID>Add
+ 27
+ 28	noremap <SID>Add  :call <SID>Add(expand("<cword>"), 1)<CR>
+ 29
+ 30	function s:Add(from, correct)
+ 31	  let to = input("type the correction for " . a:from . ": ")
+ 32	  exe ":iabbrev " . a:from . " " . to
+ 33	  if a:correct | exe "normal viws\<C-R>\" \b\e" | endif
+ 34	  let s:count = s:count + 1
+ 35	  echo s:count . " corrections now"
+ 36	endfunction
+ 37
+ 38	if !exists(":Correct")
+ 39	  command -nargs=1  Correct  :call s:Add(<q-args>, 0)
+ 40	endif
+ 41
+ 42	let &cpo = s:save_cpo
+
+La ligne 33 n'a pas encore été expliquée. Elle applique la nouvelle correction
+au mot sous le curseur. La commande |:normal| est utilisée pour employer la
+nouvelle abréviation. NOTE : Les mappages et abréviations sont étendus ici,
+même si la fonction a été appelée depuis un mappage défini avec ":noremap".
+
+
+DOCUMENTATION						*write-local-help*
+
+Il est bienvenu d'écrire une documentation pour votre greffon, en particulier
+si son comportement peut être modifié par l'utilisateur. Voir |add-local-help|
+sur la façon d'installer une telle documentation.
+
+Voici un exemple simple de fichier d'aide de greffon, nommé "typecorr.txt" : >
+
+  1	*typecorr.txt*	Plugin for correcting typing mistakes
+  2
+  3	If you make typing mistakes, this plugin will have them corrected
+  4	automatically.
+  5
+  6	There are currently only a few corrections.  Add your own if you like.
+  7
+  8	Mappings:
+  9	<Leader>a   or   <Plug>TypecorrAdd
+ 10		Add a correction for the word under the cursor.
+ 11
+ 12	Commands:
+ 13	:Correct {word}
+ 14		Add a correction for {word}.
+ 15
+ 16							*typecorr-settings*
+ 17	This plugin doesn't have any settings.
+
+[N.D.T. : La documentation d'un greffon doit se faire originellement en
+anglais. Mais si vous pouvez en fournir une traduction française, elle ne
+saurait être qu'appréciée.] XXX
+
+La première ligne est en réalité la seule pour laquelle le format pose
+problème. En effet, elle sera extraite du fichier d'aide pour pour être placée
+dans la section « AJOUTS LOCAUX » du fichier "help.txt" |local-additions|. Le
+premier '*' doit apparaître dans la première colonne de la première ligne.
+
+Vous pouvez ajouter d'autres marqueurs entre ** dans votre fichier d'aide.
+Mais attention à ne pas utiliser un marqueur d'aide existant. Vous voudrez
+probablement utiliser le nom de votre greffon dans la plupart des marqueurs,
+comme "typecorr-settings" dans l'exemple.
+
+L'utilisation de références à d'autres parties de l'aide en ligne entre || est
+encouragée. Cela aide l'utilisateur à trouver de l'aide sur les sujets
+associés.
+
+
+RÉSUMÉ    						*plugin-special*
+
+Résumé des éléments spéciaux à utiliser dans un greffon :
+
+s:nomvar		Variables locales au script.
+
+<SID>			ID Script, utilisé pour les mappages et fonctions
+			locales au script.
+
+hasmapto()		Fonction pour tester si l'utilisateur a déjà défini un
+			mappage pour une fonctionnalité offerte par le script.
+
+<Leader>		Valeur de "mapleader", avec lequel l'utilisateur
+			définit les touches par lesquelles débutent les
+			mappages des greffons.
+
+:map <unique>		Émet un avertissement si un mappage existe déjà.
+
+:noremap <script>	Utilise uniquement les mappages locaux de script, pas
+			les mappages globaux.
+
+exists(":Cmd")		Teste si une commande utilisateur existe déjà.
+
+==============================================================================
+*41.11*	Écrire un greffon de type de fichier	    *write-filetype-plugin*
+
+							*ftplugin*
+Un greffon de type de fichier est semblable à un greffon global, sauf qu'il
+fixe des options et définit des mappages uniquement pour le tampon courant.
+Voir |add-filetype-plugin| sur l'utilisation de ce type de greffon.
+
+Lisez d'abord la section précédente sur les greffons globaux |41.10|. Tout ce
+qui y est dit s'applique aussi aux greffons de types de fichiers. Il y a
+cependant quelques détails supplémentaires, qui sont expliqués ici. Le point
+essentiel est qu'un greffon de type de fichier ne devrait avoir d'effet que
+sur le tampon courant.
+
+
+DÉSACTIVATION
+
+Si vous écrivez un greffon de type de fichier destiné à être utilisé par de
+nombreuses personnes, elle doivent pouvoir désactiver son chargement. Placez
+ceci au début du greffon : >
+
+	" Only do this when not done yet for this buffer
+	if exists("b:did_ftplugin")
+	  finish
+	endif
+	let b:did_ftplugin = 1
+
+Cela permet aussi d'éviter que le même greffon soit exécuté deux fois pour le
+même tampon (quand vous utilisez une commande ":edit" sans arguments).
+
+Maintenant, les utilisateurs peuvent désactiver complètement de chargement du
+greffon par défaut en créant un greffon de type de fichier avec seulement
+cette ligne : >
+
+	let b:did_ftplugin = 1
+
+Cela nécessite que le répertoire du greffon de type de fichier vienne avant
+$VIMRUNTIME dans 'runtimepath' !
+
+Si vous souhaitez utiliser le greffon par défaut, mais recouvrir un de ses
+paramètres, vous pouvez écrire le paramètre différent dans un script : >
+
+	setlocal textwidth=70
+
+Maintenant, placez ce script dans le répertoire "after", afin qu'il soit
+sourcé après le greffon de type de fichier distribué "vim.vim"
+|after-directory|. Pour Unix, cela serait "~/.vim/after/ftplugin/vim.vim".
+NOTE : Le greffon par défaut aura fixé "b:did_ftplugin", mais il est ignoré
+ici.
+
+
+OPTIONS
+
+Pour être assuré que le greffon de type de fichier affecte uniquement le
+tampon courant, utilisez la commande >
+
+	:setlocal
+
+pour fixer des options. Et fixez uniquement des options locales à un tampon
+(se reporter à l'aide sur les options pour déterminer cela). Quand vous
+utilisez |:setlocal| pour des options globales ou des options locales à une
+fenêtre, la valeur changera pour de nombreux tampons, et ce n'est pas ce qu'un
+greffon de type de fichier devrait faire.
+
+Quand une option a une valeur qui est une liste de drapeaux ou d'items,
+préférez l'utilisation de "+=" et "-=" pour conserver la valeur existante.
+Méfiez-vous, car l'utilisateur peut avoir déjà changé la valeur d'une option.
+Il est souvent plus prudent de ramener une option à sa valeur par défaut, puis
+de la changer. Exemple : >
+
+	:setlocal formatoptions& formatoptions+=ro
+
+
+MAPPAGES
+
+Pour être assuré que les mappages fonctionneront uniquement dans le tampon
+courant, utilisez la commande : >
+
+	:map <buffer>
+
+Vous devrez la combiner avec un mappage à deux volets comme expliqué plus
+haut. Cet exemple montre comment définir une fonctionnalité dans un greffon de
+type de fichier : >
+
+	if !hasmapto('<Plug>JavaImport')
+	  map <buffer> <unique> <LocalLeader>i <Plug>JavaImport
+	endif
+	noremap <buffer> <unique> <Plug>JavaImport oimport ""<Left><Esc>
+
+|hasmapto()| est utilisé pour tester si l'utilisateur a déjà défini un mappage
+à "<Plug>JavaImport". Si ce n'est pas le cas, alors le greffon de type de
+fichier définit le mappage par défaut. Cela débute par |<LocalLeader>|, qui
+permet à l'utilisateur de sélectionner les touches qu'il souhaite que le
+mappage du greffon utilise au début. C'est une contre-oblique par défaut.
+   "<unique>" est utilisé pour donner un message d'erreur si le mappage existe
+déjà ou entre en conflit avec un mappage existant.
+   |:noremap| est utilisé afin d'éviter que tout autre mappage défini par
+l'utilisateur n'interfère. Vous pourrez vouloir utiliser ":noremap <script>"
+pour permettre de remapper des mappages définis dans ce script qui débute par
+<SID>.
+
+L'utilisateur doit pouvoir désactiver les mappages d'un greffon de type de
+fichier sans affecter le reste. Voici comment on procède, avec l'exemple d'un
+greffon pour le type de fichier "mail" : >
+
+	" Add mappings, unless the user didn't want this.
+	if !exists("no_plugin_maps") && !exists("no_mail_maps")
+	  " Quote text by inserting "> "
+	  if !hasmapto('<Plug>MailQuote')
+	    vmap <buffer> <LocalLeader>q <Plug>MailQuote
+	    nmap <buffer> <LocalLeader>q <Plug>MailQuote
+	  endif
+	  vnoremap <buffer> <Plug>MailQuote :s/^/> /<CR>
+	  nnoremap <buffer> <Plug>MailQuote :.,$s/^/> /<CR>
+	endif
+
+Deux variables globales sont utilisées :
+no_plugin_maps		désactive les mappages pour tous les greffons de
+			   types de fichiers
+no_mail_maps		désactive les mappages pour un type de fichier
+			   spécifique
+
+
+COMMANDES UTILISATEUR
+
+Pour ajouter une commande utilisateur pour un type de fichier spécifique, afin
+qu'elle ne puisse être utilisée que dans un seul tampon, passez l'argument
+"-buffer" à |:command|. Exemple : >
+
+	:command -buffer  Make  make %:r.s
+
+
+VARIABLES
+
+Un greffon de type de fichier sera sourcé pour chaque tampon du type
+correspondant. Les variables locales de script |s:var| seront partagées entre
+toutes les invocations. Utilisez les variables locales de tampon |b:var| si
+vous souhaitez utiliser une variable spécifiquement pour un tampon.
+
+
+FONCTIONS
+
+La définition d'une fonction n'est nécessaire qu'une seule fois. Mais le
+greffon de type de fichier sera sourcé à chaque fois qu'un fichier de ce type
+est ouvert. Cette construction vous assure que la fonction ne sera définie que
+la première fois : >
+
+	:if !exists("*s:Func")
+	:  function s:Func(arg)
+	:    ...
+	:  endfunction
+	:endif
+
+
+ANNULATION
+
+Lorsque l'utilisateur exécute ":setfiletype xyz", les paramètres utilisés pour
+le type de fichier précédent devraient être annulés. Fixez la variable
+"b:undo_ftplugin" aux commandes qui annuleront ces paramètres dans votre
+greffon de type de fichier. Exemple : >
+
+	let b:undo_ftplugin = "setlocal fo< com< tw< commentstring<"
+		\ . "| unlet b:match_ignorecase b:match_words b:match_skip"
+
+Utilisez ":setlocal" avec '<' après le nom d'une option pour la ramener à sa
+valeur globale. C'est généralement le meilleur moyen pour réinitialiser la
+valeur de l'option.
+
+L'exemple précédent nécessite la suppression préalable du drapeau 'C' de
+'cpoptions' pour autoriser la continuation de ligne, comme décrit ci-dessus
+|use-cpo-save|.
+
+
+NOM DE FICHIER
+
+Le type de fichier doit être inclut dans le nom du greffon |ftplugin-name|.
+Utilisez une de ces trois formes :
+
+	.../ftplugin/typefich.vim
+	.../ftplugin/typefich_toto.vim
+	.../ftplugin/typefich/titi.vim
+
+"typefich" désigne le type du fichier, "toto" et "titi" sont des noms
+arbitraires.
+
+
+RÉSUMÉ							*ftplugin-special*
+
+Résumé des éléments spéciaux à utiliser dans un greffon de type de fichier :
+
+<LocalLeader>		Valeur de "maplocalleader", avec lequel l'utilisateur
+			définit les touches par lesquelles débutent les
+			mappages des greffons de types de fichiers.
+
+:map <buffer>		Définit un mappage local au tampon.
+
+:noremap <script>	Remappe uniquement les mappages définis dans ce script
+			qui débute par <SID>.
+
+:setlocal		Fixe une option uniquement pour le tampon courant.
+
+:command -buffer	Définit une commande utilisateur locale au tampon.
+
+exists("*s:Fonc")	Teste si une fonction a déjà été définie.
+
+Voir aussi |plugin-special| pour les éléments spéciaux à utiliser pour tous
+les greffons.
+
+==============================================================================
+*41.12*	Écrire un greffon de compilateur	    *write-compiler-plugin*
+
+Un greffon de compilateur fixe des options à utiliser avec un compilateur
+spécifique. L'utilisateur peut le charger avec la commande |:compiler|. Ces
+greffons servent principalement à fixer les options 'errorformat' et
+'makeprg'.
+
+Le mieux est de jeter un coup d'oeil sur des exemples. Cette commande éditera
+tous les greffons de compilateurs par défaut : >
+
+	:next $VIMRUNTIME/compiler/*.vim
+
+Utilisez |:next| pour passer au fichier de greffon suivant.
+
+La seule particularité de ces fichiers est un mécanisme qui permet à
+l'utilisateur de recouvrir ou de surcharger le fichier par défaut. Les
+fichiers par défaut débutent par : >
+
+	:if exists("current_compiler")
+	:  finish
+	:endif
+	:let current_compiler = "perso"
+
+Quand vous écrivez un fichier de compilateur et le placez dans votre
+répertoire de support personnel (p. ex., "~/.vim/compiler" pour Unix), vous
+fixez la variable "current_compiler" pour sauter les paramètres du fichier par
+défaut.
+
+Quand vous écrivez un greffon de compilateur pour la distribution Vim ou pour
+répertoire de support système, utilisez le mécanisme mentionné ci-dessus. Si
+"current_compiler" a déjà été fixé par un greffon utilisateur, alors rien ne
+se passera.
+
+Quand vous écrivez un greffon de compilateur pour recouvrir les paramètres
+d'un greffon par défaut, ne testez pas "current_compiler". Ce greffon est
+censé être chargé en dernier, il devrait donc se situer dans un répertoire
+à la fin de 'runtimepath'. Par exemple, "~/.vim/after/compiler" pour Unix.
+
+==============================================================================
+
+Chapitre suivant : |usr_42.txt|  Ajouter de nouveaux menus
+
+Copyright : voir |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:

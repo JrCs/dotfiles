@@ -1,0 +1,431 @@
+*usr_20.txt*	Pour Vim version 6.2.  Dernière modification : 30 avr 2003
+
+	       MANUEL de L'UTILISATEUR VIM - par Bram Moolenaar
+
+			Saisir rapidement des commandes
+
+
+Vim dispose de plusieurs fonctionnalités qui facilitent la saisie des
+commandes. Les commandes ":" peuvent être abrégées, éditées et répétées. Le
+complètement est disponible à peu près partout.
+
+|20.1|	Édition de la ligne de commande
+|20.2|	Abréviations sur la ligne de commande
+|20.3|	Complètement de la ligne de commande
+|20.4|	Historique de la ligne de commande
+|20.5|	Fenêtre "command-line" XXX
+
+  Chapitre suivant : |usr_21.txt|  Quitter et revenir
+Chapitre précédent : |usr_12.txt|  Trucs et astuces
+Table des matières : |usr_toc.txt|
+
+==============================================================================
+*20.1*	Édition de la ligne de commande
+
+Lorsque vous utilisez une commande ":" ou que vous recherchez une chaîne de
+caractères avec / ou ?, Vim positionne le curseur en bas de l'écran. Là, vous
+tapez la commande ou le motif de recherche. On l'appelle la « ligne de
+commande », même lorsqu'elle est utilisée pour saisir une commande de
+recherche.
+
+La façon la plus évidente de modifier la commande que vous tapez est
+d'utiliser la touche <RetArr>, qui efface le caractère situé avant le curseur.
+Pour effacer un autre caractère tapé plus tôt, déplacez au préalable le
+curseur avec les touches fléchées.
+
+Par exemple, vous avez tapé : >
+
+	:s/mache/cochon/
+
+Avant de taper <Entree>, vous remarquez que "mache" devrait être "vache". Pour
+corriger cela, vous tapez <FlecheGauche> 12 fois. Le curseur est maintenant
+juste après le "m" de "mache". Tapez <RetArr> et "v" pour corriger : >
+
+	:s/vache/cochon/
+
+Maintenant, vous pouvez taper <Entree>. Vous n'avez pas besoin de ramener le
+curseur à la fin de la ligne avant d'exécuter la commande.
+
+Les touches les plus utilisées pour se déplacer dans la ligne de commande
+sont :
+
+	<FlecheGauche>		un caractère vers la gauche
+	<FlecheDroite>		un caractère vers la droite
+	<MAJ-FlecheGauche> ou
+	<CTRL-FlecheGauche>	un mot vers la gauche
+	<MAJ-FlecheDroite> ou
+	<CTRL-FlecheDroite>	un mot vers la droite
+	CTRL-B ou <Home>	au début de la ligne
+	CTRL-E ou <End>		à la fin de la ligne
+
+	NOTE :
+	<MAJ-FlecheGauche> (flèche gauche avec la touche MAJ enfoncée) et
+	<CTRL-FlecheGauche> (flèche gauche avec la touche CTRL enfoncée) ne
+	fonctionnent pas sur tous les claviers. Il en est de même pour les
+	autres combinaisons avec MAJ ou CTRL.
+
+Vous pouvez aussi utiliser la souris pour déplacer le curseur.
+
+
+SUPPRESSION
+
+Comme mentionné précédemment, la touche <RetArr> supprime le caractère avant
+le curseur. Pour supprimer un mot entier, utilisez CTRL-W.
+
+	/le joli cochon ~
+
+    CTRL-W
+
+	/le joli ~
+
+CTRL-U supprime tout le texte, ce qui permet de commencer l'écriture d'une
+nouvelle commande.
+
+
+REMPLACEMENT
+
+La touche <Inser> bascule entre l'insertion et le remplacement des caractères
+déjà saisis. Si vous avez par exemple :
+
+	/le joli cochon~
+
+Déplacez le curseur au début de "joli" avec <MAJ-FlecheGauche> deux fois (ou
+<FlecheGauche> 11 fois, si <MAJ-FlecheGauche> ne marche pas). Maintenant,
+tapez <Inser> pour remplacer les caractères et tapez "grand" :
+
+	/le grandcochon ~
+
+Oups, nous avons perdu l'espace. Maintenant, n'utilisez pas <RetArr> puisqu'il
+supprimerait le "d" (c'est différent du mode Remplacement). À la place, tapez
+<Inser> pour passer du remplacement à l'insertion, puis tapez l'espace :
+
+	/le grand cochon ~
+
+
+ANNULATION
+
+Vous pensiez exécuter une commande ":" ou "/", mais vous vous êtes ravisé.
+Pour vous débarrasser de ce que vous avez déjà tapé, mais sans l'exécuter,
+tapez CTRL-C ou <Echap>.
+
+	NOTE :
+	<Echap> est la touche universelle pour "sortir". Malheureusement, dans
+	le bon vieux Vi, taper <Echap> dans la ligne de commande exécutait la
+	commande ! Puisque cela pourrait être considéré comme un bogue, Vim
+	annule la commande avec <Echap>. Cependant, avec l'option 'cpoptions',
+	Vim peut être compatible avec Vi. Lorsque vous utilisez un mappage
+	(qui a pu être écrit pour Vi), "<Esc>" fonctionne comme dans Vi. En
+	conséquence, utiliser CTRL-C est une méthode qui marchera toujours.
+
+Si vous êtes au début de la ligne de commande, et que vous tapez <RetArr>, la
+commande est annulée. Cela revient à supprimer le ":" ou le "/" du début de la
+commande.
+
+==============================================================================
+*20.2*	Abréviations sur la ligne de commande
+
+Certaines commandes ":" sont vraiment longues à écrire. Nous avons déjà vu que
+":substitute" pouvait être abrégée par ":s". Il s'agit d'un mécanisme général,
+car toutes les commandes ":" peuvent être abrégées.
+
+Jusqu'où peut-on abréger les commandes ? Il y a 26 lettres, mais bien plus de
+commandes. Par exemple, ":set" commence aussi par ":s", mais ":s" n'est pas
+l'abréviation d'une commande ":set". Par contre, ":set" peut être abrégée par
+":se".
+
+Lorsque la forme courte d'une commande peut être utilisée pour deux commandes,
+seule l'une d'entre elles est correcte. Il n'existe aucune logique pour les
+reconnaître, vous devrez les apprendre. La forme valide la plus courte est
+mentionnée dans les fichiers de l'aide. Par exemple : >
+
+	:s[ubstitute]
+
+Cela signigie que la forme abrégée de ":substitute" est ":s". Les caractères
+entre crochets sont optionnels. Ainsi, ":su" et ":sub" fonctionneront aussi.
+
+Dans le manuel utilisateur, nous utiliserons soit le nom complet de la
+commande, soit une version abrégée qui reste néanmoins lisible. Par exemple,
+":function" peut être abrégée par ":fu". Mais, comme la plupart des gens ne
+comprendront pas cette forme abrégée, nous utiliserons ":fun". (Vim n'a pas de
+commande ":funny", sinon ":fun" aurait été ambigüe.) 
+
+Dans les scripts Vim, il est recommandé d'écrire le nom complet de la
+commande. Cela facilite la compréhension lorsque vous y revenez plus tard pour
+le modifier. Sauf peut-être pour quelques commandes très courantes comme ":w"
+(":write") et ":r" (":read").
+
+Une commande particulièrement dangereuse est la commande ":end", qui pourrait
+être la forme abrégée de ":endif", ":endwhile" ou ":endfunction". Donc,
+utilisez toujours le nom complet.
+
+
+NOMS COURTS DES OPTIONS
+
+Dans le manuel utilisateur, le nom des options est toujours la version longue,
+même si beaucoup d'options ont des formes abrégées. Cependant, contrairement
+aux commandes ":", il n'y a qu'une abréviation correcte pour chaque option.
+Par exemple, la forme abrégée de 'autoindent' est 'ai'. Ces deux commandes
+sont donc équivalentes : >
+
+	:set autoindent
+	:set ai
+
+Vous pouvez trouver la liste complète des noms longe et abrégés des options
+ici : |option-list|.
+
+==============================================================================
+*20.3*	Complètement de la ligne de commande
+
+Il s'agit de l'une des fonctionnalités de Vim qui est à elle seule une raison
+de passer de Vi à Vim. Une fois que vous l'aurez utilisé, vous ne pourrez plus
+vous en passer.
+
+Si vous avez par exemple un répertoire qui contient les fichiers :
+
+	info.txt
+	intro.txt
+	corpsdudocument.txt
+
+Pour éditer le dernier fichier, vous utilisez la commande : >
+
+	:edit corpsdudocument.txt
+
+Il est facile de se tromper. Une façon plus rapide est : >
+
+	:edit c<Tab>
+
+qui aboutira à la même commande. Que s'est-il passé ? La touche <Tab> réalise
+un complètement automatique du mot avant le curseur, dans notre cas "c". Vim
+regarde dans le répertoire et trouve un seul fichier qui commence par un "c".
+Ce doit être celui que l'utilisateur recherche, donc Vim complète le nom du
+fichier pour vous.
+
+Maintenant, tapez : >
+
+	:edit i<Tab>
+
+Vim émet un signal sonore et, et vous donne : >
+
+	:edit info.txt
+
+Le signal sonore signifie que Vim a trouvé plusieurs fichiers qui
+correspondent. Il utilise la première correspondance qu'il trouve (dans
+l'ordre alphabétique). Si vous tapez <Tab> une nouvelle fois, vous
+obtiendrez : >
+
+	:edit intro.txt
+
+Donc, si le premier <Tab> ne vous donne pas le fichier que vous désirez,
+renouvelez cette opération. S'il y a encore d'autres correspondances, elles
+sont toutes affichées, une par une. Si vous tapez <Tab> sur la dernière
+correspondance, vous reviendrez sur ce que vous aviez initialement tapé : >
+
+	:edit i
+
+Ensuite, la liste reprend de nouveau. Vim parcourt donc une boucle sur la
+liste des correspondances. Utilisez CTRL-P si vous désirez parcourir la liste
+en sens inverse :
+
+	      <------------------- <Tab> -------------------------+
+								  |
+		  <Tab> -->		       <Tab> -->
+	:edit i		      :edit info.txt		   :edit intro.txt
+		  <-- CTRL-P		       <-- CTRL-P
+	   |
+	   +---------------------- CTRL-P ------------------------>
+
+
+CONTEXTE
+
+Lorsque vous tapez ":set i" à la place de ":edit i" puis que vous pressez
+<Tab>, vous obtenez : >
+
+	:set icon
+
+Hé, pourquoi n'avez-vous pas obtenu ":set info.txt" ? C'est parce que le
+complètement de Vim est sensible au contexte. Le type de mots que Vim va
+rechercher dépend de la commande que vous avez tapée. Vim sait que vous ne
+pouvez pas utiliser un nom de fichier juste après une commande ":set", mais
+que vous pouvez utiliser un nom d'option.
+
+À nouveau, en pressant <Tab> plusieurs fois, Vim va parcourir un cycle sur
+toutes les correspondances. Comme il y en a beaucoup, il vaut mieux davantage
+de caractères avant : >
+
+	:set isk<Tab>
+
+donne : >
+
+	:set iskeyword
+
+Maintenant, tapez "=" puis <Tab> : >
+
+	:set iskeyword=@,48-57,_,192-255
+
+Que s'est-il passé ? Vim a complété avec la dernière valeur de l'option. Vous
+pouvez maintenant l'éditer.
+
+Le complètement avec <Tab> est réalisé avec ce que Vim s'attend à trouver à
+cet endroit. Faites un essai pour voir comment cela fonctionne. Dans certains
+cas, vous n'obtiendrez pas ce que vous voulez, soit parce que Vim ne comprend
+pas ce que vous voulez, soit parce que le complètement n'est pas implémenté
+pour ce contexte. Dans ce cas, un caractère <Tab> est inséré (affiché ^I).
+
+
+LISTE DES CORRESPONDANCES
+
+Lorsqu'il existe beaucoup de correspondances, vous aimeriez avoir une vue
+d'ensemble. Il vous suffit de taper CTRL-D. Par exemple, appuyer sur CTRL-D
+après : >
+
+	:set is
+
+retourne : >
+
+	:set is
+	incsearch  isfname    isident    iskeyword  isprint
+	:set is
+
+Vim retourne la liste des correspondances, puis au texte que vous avez tapé.
+Vous pouvez maintenant vérifier dans la liste si l'élément que vous recherchez
+est présent. S'il n'est pas affiché, vous pouvez utiliser la touche <RetArr>
+pour corriger le mot. S'il a beaucoup de correspondances, tapez davantage de
+caractères avant de presser la touche <Tab> pour compléter le reste du mot.
+
+Si vous avez regardé attentivement la liste ci-dessus, vous aurez noté que
+"incsearch" ne commence pas par "is". Par contre, "is" est l'abréviation de
+"incsearch". (Beaucoup d'options ont un nom court et un nom long). Vim est
+assez intelligent pour deviner que vous avez peut-être voulu étendre le nom
+court de l'option en son nom long.
+
+
+ENCORE PLUS FORT
+
+La commande CTRL-L complète le mot avec la chaîne non-ambigüe la plus longue
+possible. Si vous tapez ":edit i" et qu'il existe deux fichiers "info.txt" et
+"info_backup.txt", vous obtiendrez ":edit info".
+
+L'option 'wildmode' permet de changer la façon dont fonctionne le
+complètement.
+L'option 'wildmenu' permet d'obtenir la liste des correspondances sous la
+forme d'un menu.
+Utilisez l'option 'suffixes' pour indiquer les fichiers les moins importants
+qui doivent apparaître à la fin de la liste des fichiers.
+L'option 'wildignore' indique les fichiers qui ne doivent pas être utilisés
+pour le complètement.
+
+Plus d'informations peuvent être trouvées à la page : |cmdline-completion|
+
+==============================================================================
+*20.4*	Historique de la ligne de commande
+
+Dans le chapitre 3, nous avons vu rapidement l'historique. Vous pouvez
+utiliser la touche <FlecheHaut> pour rappeler une ancienne commande.
+<FlecheBas> vous ramène aux commandes les plus récentes.
+
+Il existe en fait quatre historiques. Ceux que nous détaillons ici sont celui
+des commandes ":" et celui des commandes de recherche "/" et "?". Les
+commandes "/" et "?" utilisent le même historique, parce qu'il s'agit de deux
+commandes de recherches. Les deux autres historiques sont celui des
+expressions et celui de la ligne de saisie de la fonction input(). Voir
+|cmdline-history|
+
+Supposons que vous ayez écrit une commande ":set", puis tapé dix commandes
+":", et que vous voulez de nouveau exécuter la commande ":set". Vous pourriez
+presser ":", puis dix fois la touche <FlecheHaut>. Mais il existe une façon
+plus rapide : >
+
+	:se<Up>
+
+Vim revient maintenant sur la première commande précédente qui commence par
+"se". Il y a de bonnes chances qu'il s'agira de la commande ":set" que vous
+recherchiez. Vous ne devriez pas avoir à taper <FlecheHaut> trop souvent (à
+moins que vous n'ayez saisi que des commandes ":set").
+
+La touche <FlecheHaut> va utiliser le texte que vous avez déjà tapé pour le
+comparer avec les lignes de l'historique. Seules les lignes qui correspondent
+sont utilisées.
+
+Si vous ne retrouvez pas la ligne que vous vouliez, utilisez <FlecheBas> pour
+revenir à ce que que vous aviez tapé, afin de le corriger. Ou utilisez CTRL-U
+pour tout recommencer.
+
+Pour voir toutes les lignes de l'historique : >
+
+	:history
+
+Il s'agit de l'historique des commandes ":". L'historique des commandes de
+recherche est affiché avec cette commande : >
+
+	:history /
+
+CTRL-P agira comme <FlecheHaut>, sauf qu'il ignorera ce que vous avez déjà
+tapé. De la même manière, CTRL-N agira comme <FlecheBas>. CTRL-P est
+l'abréviation de "précédent", CTRL-N est l'abréviation de "next" ["suivant"].
+
+==============================================================================
+*20.5*	Fenêtre "command-line"
+
+La saisie du texte sur la ligne de commande ne fonctionne pas de la même
+manière que la saisie de texte en mode Insertion. Vous ne disposez pas de
+beaucoup de commandes pour modifier le texte. Pour la plupart de commandes,
+cela ne posera pas de problèmes, mais vous aurez parfois besoin de taper des
+lignes de commandes plus compliquées. C'est dans ce cas que la fenêtre de la
+ligne de commande, appelée « fenêtre command-line » XXX, se révéle utile.
+
+Ouvrez la fenêtre de la ligne de commande avec : >
+
+	q:
+
+Vim ouvre alors une (petite) fenêtre en bas de l'écran. Elle contient
+l'historique de la ligne de commande, ainsi qu'une dernière ligne vide.
+
+	+-------------------------------------+
+	|une autre fenêtre		      |
+	|~				      |
+	|file.txt=============================|
+	|:e c				      |
+	|:e config.h.in			      |
+	|:set path=.,/usr/include,,	      |
+	|:set iskeyword=@,48-57,_,192-255     |
+	|:set is			      |
+	|:q				      |
+	|:				      |
+	|command-line=========================|
+	|				      |
+	+-------------------------------------+
+
+Vous êtes maintenant en mode Normal. Vous pouvez utiliser les touches "hjkl"
+pour vous déplacer. Par exemple, utilisez "5k" pour vous positionner sur la
+ligne ":e config.h.in". Taper "$h" pour aller sur le "i" de "in" et tapez
+"cwout". Vous avez alors changé la ligne en :
+
+	:e config.h.out ~
+
+Pressez alors <Entree> et cette commande va être exécutée. La fenêtre de la
+ligne de commande se ferme.
+
+La touche <Entree> exécute la commande de la ligne située sous le curseur.
+Elle ne tient pas compte du mode (Normal ou Insertion) dans lequel se trouve
+Vim. Les modifications faites dans la fenêtre de la ligne de commande sont
+perdues. Elles ne seront pas modifiées dans l'historique, sinon que la
+commande que vous venez d'exécuter sera ajoutée à la fin de l'historique,
+comme toutes les commandes exécutées.
+
+La fenêtre de la ligne de commande est très utile lorsque vous voulez avoir
+une vue d'ensemble de l'historique, trouver une commande similaire, la
+modifier et la rééxécuter. Une commande de recherche peut être utilisée pour
+retrouver un motif.
+
+Dans l'exemple précédent, la commande de recherche "?config" aurait pu être
+utilisée pour retrouver la commande précédente qui contenait "config". C'est
+un peu étrange, parce que vous utilisez une ligne de commande pour rechercher
+dans la fenêtre de la ligne de commande. En tapant cette commande de
+recherche, vous ne pourrez pas ouvrir une autre fenêtre de la ligne de
+commande, car il ne peut y en avoir qu'une seule.
+
+==============================================================================
+
+Chapitre suivant : |usr_21.txt|  Quitter et revenir
+
+Copyright : voir |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:

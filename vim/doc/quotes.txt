@@ -1,0 +1,282 @@
+*quotes.txt*    Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+							*quotes*
+Voici un petit florilège des témoignages de sympathie que j'ai reçus via
+forums ou courriels.
+
+
+Vim, n.m. (accusatif du latin vis, « force ») : Grande énergie, vitalité
+débordante.							(Dictionnaire)
+
+VIM est tellement supérieur à vi qu'une bonne partie de mes anciens ":map"
+sous vi sont devenus superflus !		      (Tony Nugent, Australie)
+
+Ayant eu l'esprit façonné par les interfaces graphiques du monde Windows, j'ai
+longtemps considéré les personnes utilisant Vi comme des martiens
+anthropomorphes. Après un essai, je suis vraiment devenu accroc à cette
+puissance et je me retrouve maintenant à taper des commandes Vim dans les
+endroits les plus incongrus ! C'est pourquoi j'aimerais voir Vim embarqué dans
+toutes les applications où l'on édite du texte.		        (José Fonseca)
+
+Bien que tous les programmes aient été utilisés durant la préparation de la
+nouvelle copie, la majeure partie du travail d'édition a été effectué avec VIM
+versions 4.5 et 5.0 sous GNU-Linux (Redhat 4.2).
+		  (Arnold Robbins, Israël, auteur de "Learning the Vi editor")
+
+De tous les logiciels ouverts que j'ai vus et utilisés, et j'en ai vu
+beaucoup, Vim est le meilleur, le plus utile et le mieux conçu, juste après
+le noyau Linux lui-même.    				   (Peter Jay Salzman)
+
+Il est bon de rappeler que la _totalité_ de SourceForge a été écrite avec Vim
+et sa formidable coloration syntaxique PHP. Je crois que l'équipe technique de
+SF.net toute entière utilise Vim et nous sommes tous enthousiastes de vous
+avoir parmi nous !						  (Tim Perdue)
+
+Vim fait partie de ce petit nombre d'outils que je ne saurais comment
+remplacer. C'est du sacré bon boulot !				 (Biju Chacko)
+
+Je me pose rarement des questions sur VIM, comme je crois un poisson ne
+s'interroge pas sur l'eau. C'est l'environnement dans lequel tout le reste se
+produit. Je suis un administrateur système très sollicité et travaillant sur
+de nombreuses plates-formes différentes. VIM est le seul logiciel cohérent sur
+tous ces systèmes, le seul à ne pas lâcher de temps en temps. Quand un nouveau
+système arrive sans VIM, je l'installe séance tenante. C'est vraiment
+formidable d'avoir un outil qui est le même partout, qui est totalement
+fiable, au point qu'on puisse l'oublier et se concentrer sur le reste.
+							      (Pete Schaeffer)
+
+Ayant récemment réussi à faire tourner vim via telnet en passant par un Nokia
+Communicator, je peux aujourd'hui affirmer qu'il marche aussi très bien sur un
+Palm Pilot.						 (Allan Kelly, Écosse)
+
+Vous avez fait un boulot remarquable avec VIM, Bram ! Plus je l'utilise et
+plus je suis impressionné (je suis un vieux vétéran de `vi` qui s'est mis à
+`emacs` dès ses premières versions, à la fin des années 70, et fut soulagé de
+retrouver `vi` avec le premier UNIX croisé par hasard en 1983). À mon avis, il
+est temps que `vim` remplace `emacs` pour le titre de Roi des Éditeurs.
+							     (Bo Thidé, Suède)
+
+J'aime VIM et je l'utilise aussi intensivement.		          (Larry Wall)
+
+Vi est comme une Ferrari : si vous êtes débutant c'est une garce à manoeuvrer,
+mais dès que vous l'avez en main, il est économe, puissant et RAPIDE !
+								     (Inconnu)
+VIM ressemble à un nouveau modèle de Ferrari, et même à l'oreille :
+« VIIIIIIMMM ! »				    (Stephen Riehm, Allemagne)
+
+Schon bei Nutzung eines Bruchteils der VIM-Funktionen wird der Benutzer recht
+schnell die Vorzuege dieses Editors kennen- und schaetzenlernen.
+   Traduction : Même en n'utilisant qu'une partie des fonctions de VIM,
+l'utilisateur s'habituera et appréciera rapidement les avantages de cet
+éditeur.
+	 (Garry Glendown, conclusion d'un article sur Vim, iX magazine 9/1998)
+
+J'ai fait l'acquisition récente du livre de O'Reilly sur VI (traitant aussi de
+VIM en profondeur) et je reste stupéfait devant la puissance de cette
+application.						      (Jeffrey Rankin)
+
+Mon gars, je croyais tout savoir sur VIM, mais à chaque fois que je consulte
+la documentation en ligne, je découvre un nouveau détail sympa que
+j'ignorais ! Je dois dire que cette documentation est une des plus réussies
+que j'aie vue dans un produit -- bien plus même que celle de la plupart des
+produits commerciaux.					     (Gautam Mudunuri)
+
+VIM 4.5 est vraiment un éditeur fantastique. Il a teeeeeellement de
+fonctionnalités, et plus important, les valeurs par défaut sont si
+judicieusement choisies que vous n'avez rien besoin de changer !! Les mots me
+manquent pour exprimer mon émerveillement et ma gratitude aux créateurs de
+Vim. Continuez ainsi.						  (Vikas, ÉUA)
+
+Je me demande combien de temps cela prendra pour que les gens fassent
+référence aux autres clones de Vi comme des clones de VIM ?   (Darren Hiebert)
+
+J'ai entendu parler du
+[positionnement-automatique-dans-le-fichier-d'erreurs-généré-par-make] dans
+l'un des fils de discussion sur ces « Parfaits Éditeurs de Programmation » et
+j'ai été ravi de découvrir que Vim le supportait déjà.
+						(Brendan Macmillan, Australie)
+
+Je viens tout juste de découvrir Vim (5.0) et j'en parle à tous ceux que je
+connais ! Je leur raconte que VIM signifie « VI pour le nouveau Millénaire ».
+Un grand merci !					   (Matt F. Valentine)
+
+Je pense qu'on peut dès à présent rebaptiser VI en « Vim Imité », et non pas
+l'inverse.						   (Rungun Ramanathan)
+
+La Loi de VIM :
+Pour chaque élément b de l'ensemble des comportements possibles B du programme
+P, il existe un temps fini t avant lequel au moins un utilisateur u de
+l'ensemble des utilisateurs U du programme P demandera à b de devenir un
+élément de l'ensemble des comportements autorisés B' (B' <= B).
+Ou encore : tôt ou tard, chacun voudra chaque chose en option.	       (Negri)
+
+Chaque fois que j'arrive sur une nouvelle plate-forme, la première chose que
+je fais est d'y porter VIM. Ces derniers temps, je suis tout simplement sidéré
+par sa simplicité de compilation via l'outil configure.
+						      (A. M. Sabuncu, Turquie)
+
+Les options sont vraiment excellentes et très puissantes.      (Anish Maharaj)
+
+La collection Printemps des interfaces utilisateur est arrivée et d'après les
+différentes boutiques, la tendance est au retour vengeur de la console texte
+80x24 ! VIM, le clone de l'éditeur Vi, débarque sur les étals de Mars,
+arborant, dans sa version 5.0, une éblouissante coloration syntaxique dans des
+tons pastels. Pointu et paramétrable, VIM crève l'écran en réinterprétant
+l'ensemble complet des commandes « une touche » du vieux Vi.
+	  (http://www.ntk.net/index.cgi?back=archive98/now0327.txt&line=179#l)
+
+Je saisis cette opportunité pour vous faire savoir que VIM 5 CASSE LA
+BARAQUE ! La coloration syntaxique : comment pourrais-je survivre sans ?!
+Merci d'avoir donné à l'humanité cet éditeur ultime !	       (Mun Johl, ÉUA)
+
+Merci encore pour Vim. Je l'utilise tous les jours sous Linux.
+		     (Eric Foster-Johnson, auteur de "UNIX Programming Tools")
+
+Le MEILLEUR ÉDITEUR À JAMAIS.				     (Stuart Woolford)
+
+Je me suis servi de la plupart des fonctionnalités de Vim au moins une fois,
+fréquemment pour un bon nombre, et je peux affirmer sans mentir que je ne
+saurais plus me passer d'une seule. Ma productivité a aisément doublé par
+rapport à quand j'utilisais Vi.				    (Sitaram Chamarty)
+
+J'a-do-re Vim. C'est incroyable. Mon premier-né se prénommera « Vimberly ».
+							       (Jose Unpingco)
+
+Suggestion : « VIM », c'est « VI aMélioré » -- de beaucoup !
+						      (Sven Guckes, Allemagne)
+
+J'utilise Vim tous les jours. Je passe plus de temps dans Vim que dans
+n'importe quel autre programme... C'est le meilleur clone de Vi qui soit.
+Génial, tout simplement.			    (Craig Sanders, Australie)
+
+Je recommande vivement l'utilisation de Vim -- ses annuler/restaurer
+infiniment répétables m'ont épargnés beaucoup d'ennuis.		 (Terry Brown)
+
+Merci mille fois d'avoir écrit ce qui est à mon avis le meilleur éditeur de
+texte sur cette planète. Si je devais avoir un autre chat, je l'appellerais
+« Vim ».						    (Bob Sheehan, ÉUA)
+
+Je tape :set all et l'écran est RECOUVERT d'options. Un écran entier de choses
+à fixer et à activer. Je croise d'anciennes connaissances comme wrapmargin,
+modelines et showmode, mais l'écran est RECOUVERT de nouveaux amis ! Je les
+aime tous ! J'aime VIM ! Je suis comblé d'avoir trouvé cet éditeur ! Je
+ressens ce que j'avais déjà ressenti en découvrant vi après des années passées
+avec ed. Je ne pensais jamais me séparer de mon ed bien-aimé, mais vi... oh
+dieu ! vi était magnifique. Et maintenant, VIM.	      (Peter Jay Salzman, ÉUA)
+
+Je suis réellement heureux avec un paquetage logiciel si merveilleux ; bien
+plus que presque tous ces coûteux produits commerciaux.		 (Jeff Walker)
+
+Chaque fois que je relis la documentation de Vim, je suis rempli d'excitation
+en songeant à la puissance de cet éditeur.  (William Edward Webber, Australie)
+
+Hourra pour VIM !! Il est « au bout des doigts » comme Vi et il possède les
+extensions qui font défaut à Vi : la sélection de zones de texte pour
+appliquer des commandes par blocs, un écran d'aide clair où l'on peut
+facilement naviguer, et plus encore.				    (Paul Pax)
+
+LA RAISON POUR LAQUELLE je n'utilise plus cette macro incroyablement utile,
+c'est que j'utilise VIM -- elle y est en standard !!
+						    (Stephen Riehm, Allemagne)
+
+Je suis un utilisateur de Vim et je l'aime. Je l'emploie pour toute ma
+programmation : C, C++, HTML, etc.				 (Tim Allwine)
+
+J'ai découvert Vim après des années de combat avec le Vi original et je ne
+saurais plus m'en passer.			       (Emmanuel Mogenet, ÉUA)
+
+Emacs n'a pas la moindre chance de perdurer contre Vim. De surcroît, Vim
+dispose de la documentation la plus détaillée que j'aie jamais vue dans un
+logiciel -- bien meilleure que pour la plupart des produits commerciaux !
+								(Leiming Qian)
+
+Les gens seront soufflés par cette version de Vim quand ils découvriront
+combien elle est fantastique. 			      (Tony Nugent, Australie)
+
+J'ai suivi votre conseil & me suis finalement procuré VIM & je suis très
+impressionné. Conversion instantanée.		       (Patrick Killelea, ÉUA)
+
+VIM est de loin le logiciel libre que je préfère et j'ai été particulièrement
+ravi par la version 3.0. C'est vraiment du bon boulot.	   (Robert Colon, ÉUA)
+
+VIM est un bonheur d'utilisation, il est si pratique et bien pensé que je me
+demande comment on peut utiliser des outils de développement visuel. VIM est
+puissant et élégant, il paraît simple mais est à peu près aussi complexe qu'un
+747 (notamment quand j'ouvre mon incessament croissant .vimrc). Continuez dans
+cette voie, VIM est une pièce maîtresse du logiciel libre.
+						  (Louis-David Mitterand, ÉUA)
+
+Je peine à réaliser combien l'utilisation de VIM est fabuleuse. Je pense que
+mes collègues de travail sont fatigués de m'entendre sans cesse le ressasser.
+Mais certains regards s'éclairent.  				 (Rick Croote)
+
+Emacs prend bien trop de temps au lancement, il est trop lourd et complexe
+pour un usage efficace et son interface ne fait qu'apporter à la confusion.
+Vim a pour lui la rapidité, la légèreté, la puissance, une bonne interface et
+est adapté à tous les usages.				(Paal Ditlefsen Ekran)
+
+J'ai été très enthousiaste quand j'ai découvert Vim 3.0. Il est presque sans
+défaut. La gestion des fichiers d'échange et les possibilités de sauvegarde
+sont robustes, ainsi que la protection contre une double édition du fichier.
+La compatibilité avec Vi est très bonne (et c'est indispensable pour mon
+cerveau conditionné par des années d'utilisation).
+						(Gert van Antwerpen, Pays-Bas)
+
+Le mode Visuel de VIM est une fonctionnalité très puissante !
+						      (Tony Nugent, Australie)
+
+Je dois dire que VIM est =LE= meilleur morceau de code source jamais paru sur
+le Net.							     (Jim Battle, ÉUA)
+
+En fait, si vous cherchez un nouveau vi, je vous conseille VIM-3.0. C'est de
+loin la meilleure version de vi que j'ai vue.		 (Albert W. Schueller)
+
+J'ajoute que VIM est un très bon éditeur, capable de soutenir la comparaison
+avec n'importe quoi.					     (Ilya Beloozerov)
+
+À vrai dire, j'ai eu à utiliser elvis, vile, xvi, calvin, etc. Et c'est
+pourquoi je peux affirmer que VIM est le meilleur !	(Ferenc Deak, Hongrie)
+
+VIM est de loin le meilleur éditeur que j'ai utilisé depuis longtemps et j'ai
+testé justement tout ce qui existait sur les plates-formes que j'utilise. VIM
+est le meilleur sur chacune d'elle.			       (Guy L. Oliver)
+
+VIM est le meilleur éditeur depuis la tablette de pierre. (Jose Unpingco, ÉUA)
+
+Grâce à VIM, j'ai enfin réalisé le passage d'emacs à vi -- en tant qu'éditeur,
+il est supérieur sur de nombreux points : manipulations au clavier,
+consommation mémoire, modification de texte, pour n'en citer que 3.
+								   (Mark Adam)
+
+Maintenant, lorsque je souhaite connaître un point particulier sur vi, je
+lance VIM et consulte sa documentation !		   (Nikhil Patel, ÉUA)
+
+Ayant l'expérience de vi, VIM me rend l'édition de texte bien plus agréable
+qu'avant que je ne découvre ce programme.	    (Steinar Knutsen, Norvège)
+
+J'utilise VIM depuis la version 3.0. Depuis ce moment, il est le SEUL éditeur
+dont je me serve, sous Solaris, Linux et OS/2 Warp. Je conseille VIM à tous
+mes amis : ils l'essaient puis continuent à l'utiliser. VIM est vraiment le
+meilleur logiciel que j'ai téléchargé sur Internet et le meilleur éditeur que
+je connaisse.					    (Marco Eccettuato, Italie)
+
+
+Pour conclure :
+     __     ___		    _	    _	_  ___ _____
+     \ \   / (_)_ __ ___   (_)___  | | | |/ _ \_   _|
+      \ \ / /| | '_ ` _ \  | / __| | |_| | | | || |
+       \ V / | | | | | | | | \__ \ |  _  | |_| || |
+	\_/  |_|_| |_| |_| |_|___/ |_| |_|\___/ |_|
+	     ____ _____ _   _ _____ _____ _ _
+	    / ___|_   _| | | |	___|  ___| | |
+	    \___ \ | | | | | | |_  | |_  | | |
+	     ___) || | | |_| |	_| |  _| |_|_|
+	    |____/ |_|	\___/|_|   |_|	 (_|_)	      (Tony Nugent, Australie)
+
+Traduction libre : Vim, ça arrache !! XXX
+
+ vim:tw=78:ts=8:ft=help:norl:

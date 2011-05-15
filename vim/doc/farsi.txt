@@ -1,0 +1,302 @@
+*farsi.txt*	Pour Vim version 6.2.  Dernière modification : 29 oct 2002
+
+
+	     MANUEL de RÉFÉRENCE VIM - par Mortaza Ghassab Shiran
+
+						*farsi* *Farsi*
+Écriture de droite à gauche et codage clavier farsi pour Vim
+
+{absent de Vi}
+
+                                                *E27*
+{uniquement si compilé avec la fonctionnalité |+farsi|}
+
+Ces fonctions ont été écrites par Mortaza Ghassab Shiran <shiran@jps.net>.
+
+
+Introduction
+------------
+
+Dans les fichiers orientés de droite à gauche, les caractères apparaissent à
+l'écran de la droite vers la gauche. Ce type de fichiers sert essentiellement
+à la rédaction de documents farsi, à la composition de fax ou encore à
+l'écriture de mémos en farsi.
+
+Les commandes, invites et fichiers d'aide ne sont pas en farsi, par
+conséquent, l'interface utilisateur reste l'interface standard de Vi.
+
+
+Fonctionnalités
+---------------
+
+o  Édition des fichiers orientés de gauche à droite comme dans le Vim
+   original, sans changement.
+
+o  Affichage et édition de fichiers dans des fenêtres de droite à gauche.
+   L'orientation des fenêtres est propre à chacune, ainsi il est possible de
+   voir le même fichier simultanément dans les modes droite à gauche et gauche
+   à droite.
+
+o  Compatibilité avec le Vim original. Presque toutes les fonctionnalités
+   fonctionnent en mode droite à gauche (voir les bogues plus bas).
+
+o  Changement du codage clavier et du sens d'insertion en utilisant une seule
+   une seule commande.
+
+o  Retour depuis le mode d'insertion à reculons vers la place correcte, à
+   savoir le même caractère dans le fichier (si possible).
+
+o  En mode farsi, les nombres sont toujours entrés de la gauche vers la
+   droite. Lorsqu'un caractère non numérique est saisi, ce dernier est inséré
+   juste à gauche du dernier chiffre.
+
+o  Aucun terminal spécial doté de la capacité droite-à-gauche n'est requis.
+   Les changements droite à gauche sont complétement indépendants du matériel. 
+   Seule la police de caractères farsi est nécessaire.
+
+o  Codage clavier farsi sur la ligne de commande en mode d'insertion inversé.
+
+o  Basculement du mode gauche-à-droite au droite-à-gauche et inversement avec
+   la touche de fonction F8.
+
+o  Basculement entre encodage standard farsi ISIR-3342 et farsi Vim via la
+   touche de fonction F9. Comme cela n'a d'intérêt que pour du texte écrit en
+   mode droite-à-gauche, cette fonction n'est également supportée qu'en mode
+   droite-à-gauche.
+
+
+Polices de caractères farsi			*farsi fonts*
+---------------------------
+
+Si l'archive "extra" est décompressée, les fichiers suivants se trouvent dans le
+sous-répertoire "farsi" du répertoire "$VIM" :
+
+   +  far-a01.pcf    police de caractères X Windows pour Unix, y compris les
+		     systèmes Linux
+   +  far-a01.bf     police de caractères X Windows pour SunOs
+   +  far-a01.f16    une police de caractères pour l'affichage sur Unix, y
+	             compris les systèmes Linux
+   +  far-a01.fon    une police de caractères à espacement constant pour
+		     MS-Windows NT/95/98
+   +  far-a01.com    une police de caractères d'écran pour DOS
+
+
+Installation des polices de caractères
+--------------------------------------
+
+o  Installation des polices de caractères sur les systèmes MS-Windows
+   (NT/95/98)
+
+   Depuis le "Panneau de Configuration", démarrez le programme "Polices de
+   caractères". Ensuite, depuis le menu "Fichier", sélectionnez l'élément de
+   menu "une nouvelle police de caractères...". Sélectionnez la police
+   "far-a01.fon", et suivez le guide d'installation.
+   NOTE : Plusieurs personnes ont rapporté que cela ne fonctionnait pas. La
+   solution n'est pas connue.
+
+o  Installation des polices de caractères pour systèmes X Window (Unix/Linux)
+
+   Selon votre système, copiez "far-a01.pcf.Z" ou "far-a01.pcf.gz" dans le
+   répertoire de votre choix. Changez vers le répertoire contenant les polices
+   farsi et exécutez les commandes : >
+   
+      >  mkfontdir
+      >  xset +fp chemin_vers_le_répertoire_contenant_les_polices_farsi
+<
+      
+o  Installation des polices de caractères pour systèmes X Window (SunOs)
+
+   Copiez la police "far-a01.bf" dans le répertoire de votre choix. Changez
+   vers le répertoire contenant la police "far-a01.fb" et exécutez les
+   commandes : >
+   
+      >  fldfamily
+      >  xset +fp chemin_vers_le_répertoire_contenant_les_polices_farsi
+<
+
+o  Installation des polices de caractères d'écrans ASCII (Unix/Linux)
+
+   Pour un système Linux, copiez le "far-a01.f16" dans le répertoire
+   "/usr/lib/kbd/consolefonts" et exécutez le programme `setfont` de cette
+   façon : "setfont far-a01.f16". Pour les autres systèmes, (par exemple, SCO
+   Unix), référez-vous s'il-vous-plaît à la section d'installation des polices
+   de caractères de vos manuels d'administration système.
+
+o  Installation des polices de caractères d'écrans ASCII (DOS)
+
+   Après le démarrage de votre système, avant votre première utilisation de
+   Vim, chargez les polices farsi en executant le programme de chargement des
+   polices "far-a01.com".
+
+
+Utilisation
+-----------
+
+Avant de démarrer Vim, l'environnement dans lequel Vim est exécuté en mode
+farsi doit être configuré. En plus de l'installation des polices farsi, il
+existe des points, relatifs à l'environnement de certains systèmes, que vous
+pourriez avoir besoin de configurer : mappages des codes claviers, passer une
+carte graphique en mode ASCII, configurer le pilote d'entrée-sortie en mode
+transparent 8 bits...
+
+o  Utiliser les polices farsi
+
+   + Dans l'IHM graphique de Vim, fixez 'guifont' à "far-a01". Pour cela,
+     tapez ":set guifont=far-a01" en mode normal dans la fenêtre Vim.
+
+     Vous pouvez affecter automatiquement la valeur "far-a01" à 'guifont'
+     pendant le démarrage de Vim en ajoutant ":set guifont=far-a01" à votre
+     fichier ".vimrc" ("_vimrc" sur les plateformes NT/95/98).
+
+     Sous environnement X, vous pouvez également lancer Vim avec l'option
+     "-fn far-a01".
+
+   + Avec Vim dans un xterm, démarrez un xterm disposant de polices farsi
+     (par exemple : "kterm -fn far-a01"). Ensuite, démarrez VIM dans ce
+     terminal.
+
+   + Avec Vim sous DOS, avant la première utilisation de Vim, téléchargez les
+     polices farsi en exécutant le programme de téléchargement des polices
+     "far-a01.com".
+	 
+o  Activation du codage clavier farsi
+
+   Pour activer le codage clavier farsi, activez soit 'altkeymap', soit
+   'fkmap'. Ceci peut être effectué en tapant ":set akm" ou ":set fk" dans la
+   fenêtre Vim. Vous pouvez avoir 'altkeymap' ou 'fkmap' positionné par défaut
+   en ajoutant ":set akm" ou ":set fk" dans votre fichier ".vimrc" ou "_vimrc"
+   dans le cas des plateformes NT/95/98.
+
+   Pour désactiver le codage clavier farsi comme second codage clavier par
+   défaut, réinitialisez 'altkeymap' en tapant ":set noakn".
+
+o  Mode droite-à-gauche farsi
+
+   Par défaut, Vim démarre en mode gauche à droite. Pour changer l'orientation
+   de la fenêtre, vous pouvez, au choix :
+
+   + démarrer Vim avec l'option -F (ex : vim -F ...) ;
+
+   + utiliser la touche de fonction F8 pour basculer entre les modes
+     gauche-à-droite et droite-à-gauche ;
+
+   + taper "set rl" dans la ligne de commande quand vous êtes en mode
+     gauche-à-droite ('rl' est l'abréviation de 'rightleft') ;
+
+   + ajouter la ligne "set rl" dans votre fichier ".vimrc" pour démarrer Vim
+     en mode droite-à-gauche de façon permanente.
+
+
+Encodage
+--------
+
+L'encodage utilisé pour les caractères est le standard ISIR-3342 étendu de
+Vim avec une fonction interne de conversion entre le ISIR-3342 standard et le
+ISIR-3342 étendu de Vim.
+
+Pour des raisons de portabilité de documents, l'encodage des caractères est
+conservé à l'identique d'une plateforme à l'autre (c'est-à-dire UNIX,
+NT/95/98, MS DOS, ...).
+
+o  Clavier
+
+   + CTRL-_ en mode Insertion/Remplacement bascule entre les modes
+     farsi(akm)/Latin comme suit :
+
+      + CTRL-_ déplace le curseur jusqu'à la fin du texte saisi en mode
+        Insertion ;
+
+      + CTRL-_ en mode Normal ne bascule que le codage clavier entre les
+        modes Farsi(akm)/Latin. Le texte farsi est alors entré en mode
+        Insertion à reculons ;
+
+   + F8 - bascule entre les modes gauche-à-droite et droite-à-gauche ;
+
+   + F9 - bascule l'encodage entre le ISIR-3342 standard et le ISIR-3342
+     étendu de Vim (supporté seulement en mode droite-à-gauche) ;
+
+   + le codage clavier est basé sur le standard iranien ISIRI-2901.
+     Le tableau qui suit montre le codage clavier lorsque le mode farsi(akm)
+     est activé :
+
+        -------------------------------------
+        `  1  2  3  4  5  6  7  8  9  0  -  =
+        ¢  ±  ²  ³  ´  µ  ¶  ·  ¸  ¹  °    ½
+        -------------------------------------
+        ~  !  @  #  $  %  ^  &  *  (  )  _  +
+        ~  £  §  ®  ¤  ¥  ª  ¬  è  ¨  ©  é  «
+        -------------------------------------
+        q  w  e  r  t  z  u  i  o  p  [  ]
+        Ó  Ò  Æ  Ù  Ø  Õ  Ö  à  Ê  É  Ç  ~H
+        -------------------------------------
+        Q  W  E  R  T  Z  U  I  O  P  {  }
+        ÷  õ  ô  ó  ò  ý  ð  ö  [  ]  {  }
+        -------------------------------------
+        a  s  d  f  g  h  j  k  l  ;  '  \
+        Ñ  Ð  á  Ã  Ü  Á  Å  Þ  Ý  Ú  Û  ë
+        -------------------------------------
+        A  S  D  F  G  H  J  K  L  :  "  |
+        ù  û|  þ  ú  ø  À  ü  æ  ç  º  »  ê
+        -------------------------------------
+        <  y  x  c  v  b  n  m  ,  .  /
+        ¾  ×  Ô  Î  Í  Ì  Ë  Ä  ß  ¦  ¯
+        -------------------------------------
+        >  Y  X  C  V  B  N  M  <  >  ?
+        ¼  ñ  Ô  Ï  Í  ¡  Ë  Â  ¾  ¼  ¿
+        -------------------------------------
+
+Note :
+	¡  est utilisé pour le farsi PSP (coupure sans espace)
+
+	¢  est utilisé pour le farsi PCN (pour attribut HAMZE)
+
+
+Restrictions
+------------
+
+o  CTRL-B n'est pas supporté en mode Insertion/Remplacement lorsque 'fkmap'
+   (mode farsi) est activé.
+
+o  Si vous changez de codage de caractères entre latin/farsi, le tampon
+   de restauration sera réinitialisé (vidé). Ainsi, la restauration ne
+   fonctionne (en utilisant '.') que dans le mode dans lequel vous êtes.
+
+o  Quand des nombres sont entrés en mode farsi, le tampon de restauration est
+   réinitialisé (vidé). Ainsi, vous ne pouvez pas refaire le dernier
+   changement (en utilisant '.') après avoir entré des nombres.
+
+o  CTRL-R n'est pas supporté quand les modes gauche-à-droite et farsi
+   sont activés.
+
+o  En mode droite-à-gauche, la recherche de motifs latins ne fonctionne
+   pas, sauf si vous entrez le motif de recherche à l'envers.
+
+o  En mode Normal, il n'y a pas de support pour entrer les nombres de gauche
+   à droite et, par soucis de flexibilité, la logique de codage clavier est
+   également restreinte.
+
+o  Sous l'environnement X Window, si vous souhaitez exécuter Vim dans un
+   émulateur de terminaux xterm avec le mode farsi activé, vous devez avoir un
+   émulateur de terminaux xterm compatible ANSI. Ceci parce que les codes de
+   caractères supérieurs à 128 (en décimal) ont une signification dans
+   particulière dans l'émulateur de terminaux standard xterm.
+
+   NOTE : Sous un environnement X Window, l'IHM graphique de Vim fonctionne
+   correctement en mode farsi. Cela élimine toute nécessité d'émulateur de
+   terminaux.
+
+
+Bogues
+------
+
+En mode Insertion/Remplacement et en mode farsi, si vous changez à plusieurs
+reprises la position du curseur (via des mouvements de curseur) et entrez du
+nouveau texte, et que vous essayez d'annuler le dernier changement,
+l'annulation sera en retard d'un changement. Mais, si vous continuez à
+défaire, vous retrouverez la ligne de texte originale. Vous pouvez aussi
+utiliser U pour défaire tous les changements effectués sur la ligne courante.
+
+Pour plus d'informations concernant les bogues, référez-vous au fichier
+"rileft.txt".
+
+ vim:tw=78:ts=8:ft=help:norl:

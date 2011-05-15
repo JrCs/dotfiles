@@ -1,0 +1,1498 @@
+*index.txt*     Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+							    *index*
+Ce fichier répertorie toutes les commandes de chaque mode, en offrant un lien
+et une brève description pour chacune d'elles. Les listes sont triées par
+valeur ASCII.
+
+Astuce : Pour trouver une fonctionnalité précise, utilisez une commande de
+recherche. Par exemple, pour ce qui se rapporte au coupage de texte,
+saisissez : "/coupe".
+
+1. Mode Insertion			|insert-index|
+2. Mode Normal				|normal-index|
+   2.1. Objets textuels				|objects|
+   2.2. Commandes de fenêtrage			|CTRL-W|
+   2.3. Commandes avec crochet			|[|
+   2.4. Commandes débutant par 'g'		|g|
+   2.5. Commandes débutant par 'z'		|z|
+3. Mode Visuel				|visual-index|
+4. Édition en mode Ligne-de-commande	|ex-edit-index|
+5. Commandes Ex				|ex-cmd-index|
+
+Pour une liste sommaire des options, voir "help.txt" XXX |option-list|.
+Pour une description complète des options, voir "options.txt" |options|.
+Pour une liste complète de tous les marqueurs d'aide, voir |help-tags|. XXX
+
+==============================================================================
+1. Mode Insertion   					    *insert-index*
+
+LIEN		CAR		ACTION EN MODE INSERTION	    ~
+--------------------------------------------------------------------
+|i_CTRL-@|	CTRL-@		insère le dernier texte inséré et quitte le
+				   mode Insertion
+|i_CTRL-A|	CTRL-A		insère le dernier texte inséré
+		CTRL-B		inusité |i_CTRL-B-gone|
+|i_CTRL-C|	CTRL-C		quitte le mode Insertion sans tenir compte des
+				   abréviations, sauf si 'insertmode' est
+				   activé
+|i_CTRL-D|	CTRL-D		supprime une indentation de 'shiftwidth' au
+				   début de la ligne courante
+|i_CTRL-E|	CTRL-E		insère le caractère situé ligne suivante
+				   en dessous du curseur
+		CTRL-F		inusité (mais présent par défaut dans 'cinkeys'
+				   pour réindenter la ligne courante)
+|i_CTRL-G_j|	CTRL-G CTRL-J	une ligne plus bas, à la colonne où
+				   l'insertion a débuté
+|i_CTRL-G_j|	CTRL-G j	une ligne plus bas, à la colonne où
+				   l'insertion a débuté
+|i_CTRL-G_j|	CTRL-G <Bas>	une ligne plus bas, à la colonne où
+				   l'insertion a débuté
+|i_CTRL-G_k|	CTRL-G CTRL-K	une ligne plus haut, à la colonne où
+				   l'insertion a débuté
+|i_CTRL-G_k|	CTRL-G k	une ligne plus haut, à la colonne où
+				   l'insertion a débuté
+|i_CTRL-G_k|	CTRL-G <Haut>	une ligne plus haut, à la colonne où
+				   l'insertion a débuté
+|i_<BS>|	<RetArr>	supprime le caractère devant le curseur
+|i_digraph|	{car1}<RetArr>{car2}
+				entre un digramme (si 'digraph' est activé)
+|i_CTRL-H|	CTRL-H		comme <RetArr>
+|i_<Tab>|	<Tab>		insère un caractère <Tab>
+|i_CTRL-I|	CTRL-I		comme <Tab>
+|i_<NL>|	<NL>		comme <CR>
+|i_CTRL-J|	CTRL-J		comme <CR>
+|i_CTRL-K|	CTRL-K {car1} {car2}
+				entre un digramme
+|i_CTRL-L|	CTRL-L		si 'insertmode' est activé : quitte le mode
+				   Insertion
+|i_<CR>|	<CR>		ouvre une nouvelle ligne
+|i_CTRL-M|	CTRL-M		comme <CR>
+|i_CTRL-N|	CTRL-N		trouve la prochaine correspondance du mot-clé
+				   devant le curseur
+|i_CTRL-O|	CTRL-O		exécute une seule commande et retourne en mode
+				   Insertion
+|i_CTRL-P|	CTRL-P		trouve la correspondance précédente du mot-clé
+				   devant le curseur
+|i_CTRL-Q|	CTRL-Q		comme CTRL-V, à moins qu'il ne soit utilisé
+				   pour le contrôle de flux du terminal
+|i_CTRL-R|	CTRL-R {0-9a-z"%#*:=}
+				insère le contenu d'un registre
+|i_CTRL-R_CTRL-R| CTRL-R CTRL-R {0-9a-z"%#*:=}
+				insère le contenu d'un registre littéralement
+|i_CTRL-R_CTRL-O| CTRL-R CTRL-O {0-9a-z"%#*:=}
+				insère le contenu d'un registre littéralement
+				   sans auto-indentation
+|i_CTRL-R_CTRL-P| CTRL-R CTRL-P {0-9a-z"%#*:=}
+				insère le contenu d'un registre littéralement
+				   et rétablit l'indentation
+		CTRL-S		(utilisé pour le contrôle de flux du terminal)
+|i_CTRL-T|	CTRL-T		insère une indentation de 'shiftwidth' au
+				   début de la ligne courante
+|i_CTRL-U|	CTRL-U		supprime tous le caractères saisis dans la
+				   ligne courante
+|i_CTRL-V|	CTRL-V {car}	insère {car} littéralement
+|i_CTRL-V_digit| CTRL-V {nombre} insère la valeur de trois chiffres décimaux
+				   comme un seul octet
+|i_CTRL-W|	CTRL-W		supprime le mot devant le curseur
+|i_CTRL-X|	CTRL-X {mode}	entre dans le sous-mode CTRL-X, voir plus bas
+|i_CTRL-Y|	CTRL-Y		insère le caractère situé ligne précédente
+				   au-dessus du curseur
+|i_CTRL-Z|	CTRL-Z		si 'insertmode' est activé : suspend Vim
+|i_<Esc>|	<Echap>		quitte le mode Insertion (sauf si 'insertmode'
+				   est activé)
+|i_CTRL-[|	CTRL-[		comme <Echap>
+|i_CTRL-\_CTRL-N| CTRL-\ CTRL-N	passe en mode Normal
+|i_CTRL-\_CTRL-G| CTRL-\ CTRL-G passe au mode spécifié par 'insertmode'
+		CTRL-\ a - z	réservés pour usage ultérieur
+		CTRL-\ autres	inusités
+|i_CTRL-]|	CTRL-]		développe une abréviation
+|i_CTRL-^|	CTRL-^		inverse l'utilisation des mappages |:lmap|
+|i_CTRL-_|	CTRL-_		si 'allowrevins' est activé : change de langue
+				   (hébreu, farsi) {uniquement si compilé avec
+				   la fonctionnalité |+rightleft|}
+
+	     de <Espace> à '~'	inusités, sauf '0' et '^' suivis par CTRL-D
+
+|i_0_CTRL-D|	0 CTRL-D	supprime l'indentation de la ligne courante
+|i_^_CTRL-D|	^ CTRL-D	supprime l'indentation de la ligne courante,
+				   la restaure ligne suivante
+
+|i_<Del>|	<Suppr>		supprime le caractère sous le curseur
+
+		Méta-caractères (0x80 à 0xff : 128 à 255)
+				inusités
+
+|i_<Left>|	<Gauche>	curseur un caractère à gauche
+|i_<S-Left>|	<S-Gauche>	curseur un mot à gauche
+|i_<C-Left>|	<C-Gauche>	curseur un mot à gauche
+|i_<Right>|	<Droite>	curseur un caractère à droite
+|i_<S-Right>|	<S-Droite>	curseur un mot à droite
+|i_<C-Right>|	<C-Droite>	curseur un mot à droite
+|i_<Up>|	<Haut>		curseur une ligne plus haut
+|i_<S-Up>|	<S-Haut>	comme <PagePrec>
+|i_<Down>|	<Bas>		curseur une ligne plus bas
+|i_<S-Down>|	<S-Bas>		comme <PageSuiv>
+|i_<Home>|	<Debut>		curseur en début de ligne
+|i_<C-Home>|	<C-Debut>	curseur au début du fichier
+|i_<End>|	<Fin>		curseur en fin de ligne
+|i_<C-End>|	<C-Fin>		curseur à la fin du fichier
+|i_<PageUp>|	<PagePrec>	un écran vers le haut
+|i_<PageDown>|	<PageSuiv>	un écran vers le bas
+|i_<F1>|	<F1>		comme <Aide>
+|i_<Help>|	<Aide>		quitte le mode Insertion et affiche la fenêtre
+				   d'aide
+|i_<Insert>|	<Inser>		permute les modes Insertion/Remplacement
+|i_<LeftMouse>|	<ClicGauche>	curseur à la position du clic de la souris
+|i_<MouseDown>|	<MoletteBas>	défile de trois lignes vers le bas
+|i_<S-MouseDown>| <S-MoletteBas> défile d'une page vers le bas
+|i_<MouseUp>|	<MoletteHaut>	défile de trois lignes vers le haut
+|i_<S-MouseUp>|	<S-MoletteHaut>	défile d'une page vers le haut
+
+Commandes du sous-mode CTRL-X :
+{uniquement si compilé avec la fonctionnalité |+insert_expand|}
+|i_CTRL-X_CTRL-D|   CTRL-X CTRL-D	complète les identifiants définis
+|i_CTRL-X_CTRL-E|   CTRL-X CTRL-E	défile vers le haut
+|i_CTRL-X_CTRL-F|   CTRL-X CTRL-F	complète les noms de fichiers
+|i_CTRL-X_CTRL-I|   CTRL-X CTRL-I	complète les identifiants
+|i_CTRL-X_CTRL-K|   CTRL-X CTRL-K	complète les identifiants à partir du
+					   dictionnaire
+|i_CTRL-X_CTRL-L|   CTRL-X CTRL-L	complète les lignes entières
+|i_CTRL-X_CTRL-N|   CTRL-X CTRL-N	complètement suivant
+|i_CTRL-X_CTRL-P|   CTRL-X CTRL-P	complètement précédent
+|i_CTRL-X_CTRL-T|   CTRL-X CTRL-T	complète les identifiants à partir du
+					   thésaurus
+|i_CTRL-X_CTRL-Y|   CTRL-X CTRL-Y	défile vers le bas
+|i_CTRL-X_CTRL-]|   CTRL-X CTRL-]	complète les marqueurs
+
+==============================================================================
+2. Mode Normal						    *normal-index*
+
+CAR	 tout caractère non-blanc
+MOT	 une séquence de caractères non-blancs
+N	 un nombre saisi avant la commande
+{mouv}	 une commande qui déplace le curseur (un « mouvement »)
+texteM	 le texte couvert par un {mouv}ement
+SECTION	 une section débutant possiblement par '}' au lieu de '{'
+
+NOTES :	 1 = commande de déplacement du curseur
+         2 = peut être annulé/restauré
+
+LIEN		CAR	     NOTE  ACTION EN MODE NORMAL	    ~
+--------------------------------------------------------------------
+		CTRL-@		   inusité
+|CTRL-A|	CTRL-A		2  ajoute N au nombre sous/après le curseur
+|CTRL-B|	CTRL-B		1  défile de N écrans vers l'arrière
+|CTRL-C|	CTRL-C		   interrompt la commande (recherche) courante
+|CTRL-D|	CTRL-D		   défile de N lignes vers le bas (défaut :
+				      1/2 écran)
+|CTRL-E|	CTRL-E		   défile de N lignes vers le haut
+|CTRL-F|	CTRL-F		1  défile de N écrans vers l'avant
+|CTRL-G|	CTRL-G		   affiche le nom du fichier et la position
+|<BS>|		<RetArr>	1  comme "h"
+|CTRL-H|	CTRL-H		1  comme "h"
+|<Tab>|		<Tab>		1  va à la N-ième plus récente entrée de la
+				      liste des sauts
+|CTRL-I|	CTRL-I		1  comme <Tab>
+|<NL>|		<NL>		1  comme "j"
+|CTRL-J|	CTRL-J		1  comme "j"
+		CTRL-K		   inusité
+|CTRL-L|	CTRL-L		   rafraîchit l'écran
+|<CR>|		<CR>		1  curseur au premier CAR N lignes plus bas
+|CTRL-M|	CTRL-M		1  comme <CR>
+|CTRL-N|	CTRL-N		1  comme "j"
+|CTRL-O|	CTRL-O		1  va à la N-ième plus ancienne entrée de la
+				      liste des sauts
+|CTRL-P|	CTRL-P		1  curseur N lignes plus haut
+		CTRL-Q		   (utilisé pour le contrôle de flux du
+				      terminal)
+|CTRL-R|	CTRL-R		2  restaure les changements annulés par "u"
+		CTRL-S		   (utilisé pour le contrôle de flux du
+				      terminal)
+|CTRL-T|	CTRL-T		   saute au N-ième plus ancien marqueur de la
+				      pile de marqueurs
+|CTRL-U|	CTRL-U		   défile de N lignes vers le haut (défaut :
+				      1/2 écran)
+|CTRL-V|	CTRL-V		   passe en mode Visuel par blocs
+|CTRL-W|	CTRL-W {car}	   commandes de fenêtrage, voir |CTRL-W|
+|CTRL-X|	CTRL-X		2  soustrait N du nombre sous/après le curseur
+|CTRL-Y|	CTRL-Y		   défile de N lignes ves le bas
+|CTRL-Z|	CTRL-Z		   suspend le programme (ou lance un shell)
+		CTRL-[ <Echap>	   inusité
+|CTRL-\_CTRL-N| CTRL-\ CTRL-N	   passe en mode Normal (ne fait rien)
+|CTRL-\_CTRL-G| CTRL-\ CTRL-G	   passe au mode spécifié par 'insertmode'
+		CTRL-\ a - z	   réservés pour usage ultérieur
+		CTRL-\ autres      inusités
+|CTRL-]|	CTRL-]		   ":ta" pour l'identifiant sous le curseur
+|CTRL-^|	CTRL-^		   édite le N-ième fichier alternatif
+				      (équivalent à ":e #N")
+		CTRL-_		   inusité
+
+|<Space>|	<Espace>	1  comme "l"
+|!|		!{mouv}{filtre}
+				2  filtre texteM avec la commande {filtre}
+|!!|		!!{filtre}	2  filtre N lignes avec la commande {filtre}
+|quote|		"{a-zA-Z0-9.%#:-"} utilise le registre {a-zA-Z0-9.%#:-"} pour
+				      la commande de couper-copier-coller
+				      suivante (majuscule pour ajouter ;
+				      {.%#:} défini uniquement avec coller)
+|#|		#		1  recherche vers l'arrière la N-ième
+				      occurrence de l'identifiant sous le
+				      curseur
+|$|		$		1  curseur à la fin de la N-ième ligne suivante
+|%|		%		1  trouve le crochet/parenthèse/accolade
+				      suivant sur cette ligne et saute à sa
+				      correspondance, ou pour le délimiteur de
+				      commentaires C suivant, ou pour la
+				      prochaine directive du préprocesseur
+|N%|		{quant}%    	1  va au N-ième pourcentage du fichier
+|&|		&		2  répète la dernière commande ":s"
+|'|		'{a-zA-Z0-9}	1  curseur au premier CAR de la ligne avec la
+				      marque {a-zA-Z0-9}
+|''|		''		1  curseur au premier CAR de la ligne où était
+				      le curseur avant le dernier saut
+|'(|		'(		1  curseur au premier CAR de la ligne où la
+				      phrase courante débute
+|')|		')		1  curseur au premier CAR de la ligne où la
+				      phrase courante finit
+|'<|		'<		1  curseur au premier CAR de la ligne où la
+				      zone Visuel débute/débutait dans le
+				      tampon courant
+|'>|		'>		1  curseur au premier CAR de la ligne où la
+				      zone Visuel finit/finissait dans le
+				      tampon courant
+|'[|		'[		1  curseur au premier CAR de la ligne où
+				      débutait le dernier texte modifié ou
+				      collé
+|']|		']		1  curseur au premier CAR de la ligne où
+				      finissait le dernier texte modifié ou
+				      collé
+|'{|		'{		1  curseur au premier CAR de la ligne où le
+				      paragraphe courant débute
+|'}|		'}		1  curseur au premier CAR de la ligne où le
+				      paragraphe courant finit
+|(|		(		1  curseur N phrases vers l'arrière
+|)|		)		1  curseur N phrases vers l'avant
+|star|		*		1  recherche vers l'avant la N-ième occurrence
+				      de l'identifiant sous le curseur
+|+|		+		1  curseur au premier CAR N lignes plus bas
+|,|		,		1  répète la dernière commande "f", "t", "F"
+				      ou "T" en sens inverse N fois
+|-|		-		1  curseur au premier CAR N lignes plus haut
+|.|		.		2  répète le dernier changement en remplançant
+				      {quant} par N
+|/|		/{motif}<CR>	1  recherche vers l'avant la N-ième occurrence
+				      de {motif}
+|/<CR>|		/<CR>		1  recherche vers l'avant le {motif} de la
+				      dernière recherche
+|count|		0		1  curseur au premier caractère de la ligne
+|count|		1		   {quant}ificateur passé en arg. avant une cmd
+|count|		2		       "
+|count|		3		       "
+|count|		4		       "
+|count|		5		       "
+|count|		6		       "
+|count|		7		       "
+|count|		8		       "
+|count|		9		       "
+|:|		:		1  démarre la saisie d'une commande Ex
+|N:|		{quant}:	   démarre la saisie d'une commande Ex avec la
+				      plage de la ligne courante à N lignes
+				      plus bas
+|;|		;		1  répète le dernier "f", "t", "F", "T" N fois
+|<|		<{mouv}	2	   décale texteM de 'shiftwidth' à gauche
+|<<|		<<		2  décale N lignes de 'shiftwidth' à gauche
+|=|		={mouv}	2	   filtre les lignes de texteM avec 'equalprg'
+|==|		==		2  filtre N lignes avec 'equalprg'
+|>|		>{mouv}	2	   décale texteM de 'shiftwidth' à droite
+|>>|		>>		2  décale N lignes de 'shiftwidth' à droite
+|?|		?{motif}<CR>	1  recherche vers l'arrière la N-ième
+				      occurrence précédente de {motif}
+|?<CR>|		?<CR>		1  recherche vers l'arrière le {motif} de la
+				      dernière recherche
+|@|		@{a-z}		2  exécute le contenu du registre {a-z} N fois
+|@:|		@:		   répète la précédente commande ":" N fois
+|@@|		@@		2  répète la précédente cmd "@{a-z}" N fois
+|A|		A		2  ajoute du texte après la fin de ligne N fois
+|B|		B		1  curseur N MOTS vers l'arrière
+|C|		["x]C		2  change de la position du curseur à la fin
+				      de ligne, et N - 1 lignes supplémentaires
+				      [dans le registre x] ; synonyme de "c$"
+|D|		["x]D		2  coupe de la position du curseur à la fin
+				      de ligne, et N - 1 lignes supplémentaires
+				      [dans le registre x] ; synonyme de "d$"
+|E|		E		1  curseur vers l'avant à la fin du N-ième MOT
+|F|		F{car}		1  curseur à la N-ième occurrence de {car}
+				      vers la gauche
+|G|		G		1  curseur à la ligne N (défaut : dernière)
+|H|		H		1  curseur à la ligne N à partir du haut de
+				      l'écran
+|I|		I		2  insère du texte avant le premier CAR de la
+				      ligne N fois
+|J|		J		2  fusionne N lignes (défaut : 2)
+|K|		K		   recherche le mot-clé sous le curseur avec
+				      'keywordprg'
+|L|		L		1  curseur à la ligne N à partir du bas de
+				      l'écran
+|M|		M		1  curseur au milieu de l'écran
+|N|		N		1  répète le dernier "/" ou "?" N fois en sens
+				      inverse
+|O|		O		2  ouvre une nouvelle ligne au-dessus du
+				      curseur et insère du texte, N fois
+|P|		["x]P		2  colle le texte [du registre x] devant le
+				      curseur N fois
+|Q|		Q		   passe en mode Ex
+|R|		R		2  entre en mode Remplacement : remplace les
+				      caractères existants, répète le texte
+				      entré N - 1 fois
+|S|		["x]S		2  coupe N lignes [dans le registre x] et passe
+				      en mode Insertion ; synonyme de "^cc" ou
+				      "0cc", selon l'indentation choisie
+|T|		T{car}		1  curseur juste après la N-ième occurrence de
+				      {car} à gauche
+|U|		U		2  annule toutes les dernières modifications
+				      sur une ligne
+|V|		V		   lance le mode Visuel par lignes
+|W|		W		1  curseur N MOTS vers l'avant
+|X|		["x]X		2  coupe N caractères avant le curseur [dans
+				      le registre x]
+|Y|		["x]Y		   copie N lignes [dans le registre x] ;
+				      synonyme de "yy"
+|ZZ|		ZZ		   enregistre le fichier courant si modifié,
+				      et quitte
+|ZQ|		ZQ		   quitte le fichier courant sans enregistrer
+|[|		[{car}		   commandes avec crochet (voir plus bas)
+		\		   inusité
+|]|		]{car}		   commandes avec crochet (voir plus bas)
+|^|		^		1  curseur au premier CAR de la ligne
+|_|		_		1  curseur au premier CAR N - 1 lignes plus bas
+|`|		`{a-zA-Z0-9}	1  curseur à la marque {a-zA-Z0-9}
+|`(|		`(		1  curseur au début de la phrase courante
+|`)|		`)		1  curseur à la fin de la phrase courante
+|`<|		`<		1  curseur au début de la zone Visuel
+|`>|		`>		1  curseur à la fin de la zone Visuel
+|`[|		`[		1  curseur au début du précédent texte modifié
+				      ou collé
+|`]|		`]		1  curseur à la fin du précédent texte modifié
+				      ou collé
+|``|		``		1  curseur à la position précédant le dernier
+				      saut
+|`{|		`{		1  curseur au début du paragraphe courant
+|`}|		`}		1  curseur à la fin du paragraphe courant
+|a|		a		2  ajoute du texte après le curseur N fois
+|b|		b		1  curseur N mots vers l'arrière
+|c|		["x]c{mouv}	2  coupe texteM [dans le registre x] et passe
+				      en mode Insertion
+|cc|		["x]cc		2  coupe N lignes [dans le registre x] et
+				      passe en mode Insertion
+|d|		["x]d{mouv}	2  coupe texteM [dans le registre x]
+|dd|		["x]dd		2  coupe N lignes [dans le registre x]
+|do|		do		2  comme ":diffget"
+|dp|		dp		2  comme ":diffput"
+|e|		e		1  curseur à la fin du N-ième mot vers l'avant
+|f|		f{car}		1  curseur à la N-ième occurrence de {car}
+				      vers la droite
+|g|		g{car}		   commandes étendues (voir plus bas)
+|h|		h		1  curseur N caractères vers la gauche
+|i|		i		2  insère du texte devant le curseur N fois
+|j|		j		1  curseur N lignes vers le bas
+|k|		k		1  curseur N lignes vers le haut
+|l|		l		1  curseur N caractères vers la droite
+|m|		m{A-Za-z}	   marque {A-Za-z} sur la position du curseur
+|n|		n		1  répète le dernier "/" ou "?" N fois
+|o|		o		2  ouvre une nouvelle ligne en dessous du
+				      curseur et insère du texte, N fois
+|p|		["x]p		2  colle le texte [du registre x] après le
+				      curseur N fois
+|q|		q{0-9a-zA-Z"}	   enregistre le texte saisi dans le registre
+				      {0-9a-zA-Z"} (majuscule pour ajouter)
+|q|		q		   pendant l'enregistrement : l'arrête
+|q:|		q:		   édite la ligne de commande ":" dans la
+				      fenêtre command-line
+|q/|		q/	           édite la ligne de commande "/" dans la
+				      fenêtre command-line
+|q?|		q?		   édite la ligne de commande "?" dans la
+				      fenêtre command-line
+|r|		r{car}		2  remplace N caractères par {car}
+|s|		["x]s		2  coupe N caractères [dans le registre x] et
+				      passe en mode Insertion
+|t|		t{car}		1  curseur juste avant la N-ième occurrence de
+				      {car} vers la droite
+|u|		u		2  annule les changements
+|v|		v		   lance le mode Visuel par caractères
+|w|		w		1  curseur N mots vers l'avant
+|x|		["x]x		2  coupe N caractères sous et après le curseur
+				      [dans le registre x]
+|y|		["x]y{mouv}	   copie texteM [dans le registre x]
+|yy|		["x]yy		   copie N lignes [dans le registre x]
+|z|		z{car}		   commandes débutant par 'z' (voir plus bas)
+|{|		{		1  curseur N paragraphes vers l'arrière
+|bar|		|		1  curseur à la colonne N
+|}|		}		1  curseur N paragraphes vers l'avant
+|~|		~		2  si 'tildeop' est désactivé : change la
+				      casse des N caractères sous le curseur
+				      et place le curseur à la fin
+|~|		~{mouv}		   si 'tildeop' est activé : change la casse
+				      de texteM
+|<C-End>|	<C-Fin>		1  comme "G"
+|<C-Home>|	<C-Debut>	1  comme "gg"
+|<C-Left>|	<C-Gauche>	1  comme "b"
+|<C-LeftMouse>|	<C-ClicGauche>	   ":ta" sur le mot-clé cliqué par la souris
+|<C-Right>|	<C-Droite>	1  comme "w"
+|<C-RightMouse>| <C-ClicDroit>	   comme CTRL-T
+|<Del>|		["x]<Suppr>	2  comme "x"
+|N<Del>|	{quant}<Suppr>	   supprime le dernier chiffre de {quant}
+|<Down>|	<Bas>		1  comme "j"
+|<End>|		<Fin>		1  comme "$"
+|<F1>|		<F1>		   comme <Aide>
+|<Help>|	<Aide>		   ouvre une fenêtre d'aide
+|<Home>|	<Debut>		1  comme "0"
+|<Insert>|	<Inser>		2  comme "i"
+|<Left>|	<Gauche>	1  comme "h"
+|<LeftMouse>|	<ClicGauche>	1  curseur à la position du clic de la souris
+|<MiddleMouse>| <ClicMilieu>	2  comme "P" à la position du clic de la souris
+|<PageDown>|	<PageSuiv>	   comme CTRL-F
+|<PageUp>|	<PagePrec>	   comme CTRL-B
+|<Right>|	<Droite>	1  comme "l"
+|<RightMouse>|	<ClicDroit>	   lance le mode Visuel, place le curseur à la
+				      position du clic de la souris
+|<S-Down>|	<S-Bas>		1  comme CTRL-F
+|<S-Left>|	<S-Gauche>	1  comme "b"
+|<S-LeftMouse>|	<S-ClicGauche>	   comme "*" à la position du clic de la souris
+|<S-Right>|	<S-Droite>	1  comme "w"
+|<S-RightMouse>| <S-ClicDroit>	   comme "#" à la position du clic de la souris
+|<S-Up>|	<S-Haut>	1  comme CTRL-B
+|<Undo>|	<Annul>		2  comme "u"
+|<Up>|		<Haut>		1  comme "k"
+|<MouseDown>|	<MoletteBas>	   défile de trois lignes vers le bas
+|<S-MouseDown>|	<S-MoletteBas>	   défile d'une page entière vers le bas
+|<MouseUp>|	<MoletteHaut>	   défile de trois lignes vers le haut
+|<S-MouseUp>|	<S-MoletteHaut>	   défile d'une page entière vers le haut
+
+==============================================================================
+2.1. Objets textuels					    *objects*
+
+Ils sont utilisables après un opérateur ou en mode Visuel pour désigner un
+objet.
+
+LIEN		 OBJET		   SIGNIFICATION		    ~
+--------------------------------------------------------------------
+|v_a(|		 a(		   comme ab
+|v_a)|		 a)		   comme ab
+|v_a<|		 a<		   « un <> » de '<' au '>' apparié
+|v_a>|		 a>		   comme a<
+|v_aB|		 aB		   un BLOC de "[{" à "]}"
+|v_aW|		 aW		   un MOT (avec un espace)
+|v_a[|		 a[		   « un [] » de '[' au ']' apparié
+|v_a]|		 a]		   comme a[
+|v_ab|		 ab		   un bloc de "[(" à "])"
+|v_ap|		 ap		   un paragraphe (avec un espace)
+|v_as|		 as		   une phrase (avec un espace)
+|v_aw|		 aw		   un mot (avec un espace)
+|v_a{|		 a{		   comme aB
+|v_a}|		 a}		   comme aB
+|v_i(|		 i(		   comme ib
+|v_i)|		 i)		   comme ib
+|v_i<|		 i<		   « intérieur d'un <> » de '<' au '>' apparié
+|v_i>|		 i>		   comme i<
+|v_iB|		 iB		   intérieur d'un BLOC de "[{" à "]}"
+|v_iW|		 iW		   intérieur d'un MOT
+|v_i[|		 i[		   « intérieur d'un [] » de '[' au ']' apparié
+|v_i]|		 i]		   comme i[
+|v_ib|		 ib		   intérieur d'un bloc de "[(" à "])"
+|v_ip|		 ip		   intérieur d'un paragraphe
+|v_is|		 is		   intérieur d'un phrase
+|v_iw|		 iw		   intérieur d'un mot
+|v_i{|		 i{		   comme iB
+|v_i}|		 i}		   comme iB
+
+==============================================================================
+2.2. Commandes de fenêtrage				    *CTRL-W*
+
+LIEN		 COMMANDE	   ACTION EN MODE NORMAL	    ~
+--------------------------------------------------------------------
+|CTRL-W_CTRL-B|	 CTRL-W CTRL-B	   comme "CTRL-W b"
+|CTRL-W_CTRL-C|	 CTRL-W CTRL-C	   comme "CTRL-W c"
+|CTRL-W_CTRL-D|	 CTRL-W CTRL-D	   comme "CTRL-W d"
+|CTRL-W_CTRL-F|	 CTRL-W CTRL-F	   comme "CTRL-W f"
+		 CTRL-W CTRL-G	   comme "CTRL-W g ..."
+|CTRL-W_CTRL-H|	 CTRL-W CTRL-H	   comme "CTRL-W h"
+|CTRL-W_CTRL-I|	 CTRL-W CTRL-I	   comme "CTRL-W i"
+|CTRL-W_CTRL-J|	 CTRL-W CTRL-J	   comme "CTRL-W j"
+|CTRL-W_CTRL-K|	 CTRL-W CTRL-K	   comme "CTRL-W k"
+|CTRL-W_CTRL-L|	 CTRL-W CTRL-L	   comme "CTRL-W l"
+|CTRL-W_CTRL-N|	 CTRL-W CTRL-N	   comme "CTRL-W n"
+|CTRL-W_CTRL-O|	 CTRL-W CTRL-O	   comme "CTRL-W o"
+|CTRL-W_CTRL-P|	 CTRL-W CTRL-P	   comme "CTRL-W p"
+|CTRL-W_CTRL-Q|	 CTRL-W CTRL-Q	   comme "CTRL-W q"
+|CTRL-W_CTRL-R|	 CTRL-W CTRL-R	   comme "CTRL-W r"
+|CTRL-W_CTRL-S|	 CTRL-W CTRL-S	   comme "CTRL-W s"
+|CTRL-W_CTRL-T|	 CTRL-W CTRL-T	   comme "CTRL-W t"
+|CTRL-W_CTRL-V|	 CTRL-W CTRL-V	   comme "CTRL-W v"
+|CTRL-W_CTRL-W|	 CTRL-W CTRL-W	   comme "CTRL-W w"
+|CTRL-W_CTRL-X|	 CTRL-W CTRL-X	   comme "CTRL-W x"
+|CTRL-W_CTRL-Z|	 CTRL-W CTRL-Z	   comme "CTRL-W z"
+|CTRL-W_CTRL-]|	 CTRL-W CTRL-]	   comme "CTRL-W ]"
+|CTRL-W_CTRL-^|	 CTRL-W CTRL-^	   comme "CTRL-W ^"
+|CTRL-W_CTRL-_|	 CTRL-W CTRL-_	   comme "CTRL-W _"
+|CTRL-W_+|	 CTRL-W +	   augmente la hauteur de la fenêtre courante
+				      de N lignes
+|CTRL-W_-|	 CTRL-W -	   diminue la hauteur de la fenêtre courante
+				      de N lignes
+|CTRL-W_<|	 CTRL-W <	   diminue la largeur de la fenêtre courante
+				      de N colonnes
+|CTRL-W_=|	 CTRL-W =	   égalise la hauteur de toutes les fenêtres
+|CTRL-W_>|	 CTRL-W >	   augmente la largeur de la fenêtre courante
+				      de N colonnes
+|CTRL-W_H|	 CTRL-W H	   déplace la fenêtre courante le plus à gauche
+|CTRL-W_J|	 CTRL-W J	   déplace la fenêtre courante tout en bas
+|CTRL-W_K|	 CTRL-W K	   déplace la fenêtre courante tout en haut
+|CTRL-W_L|	 CTRL-W L	   déplace la fenêtre courante le plus à droite
+|CTRL-W_P|	 CTRL-W P	   va à la fenêtre précédente
+|CTRL-W_R|	 CTRL-W R	   rotation des fenêtres vers le haut N fois
+|CTRL-W_S|	 CTRL-W S	   comme "CTRL-W s"
+|CTRL-W_W|	 CTRL-W W	   va à la N-ième fenêtre précédente (boucle
+				      si dernière fenêtre)
+|CTRL-W_]|	 CTRL-W ]	   partage la fenêtre et saute au marqueur
+				      sous le curseur
+|CTRL-W_^|	 CTRL-W ^	   partage la fenêtre et édite le fichier
+				      alternatif N
+|CTRL-W__|	 CTRL-W _	   fixe la hauteur de la fenêtre courante à N
+				      (défaut : très grand)
+|CTRL-W_b|	 CTRL-W b	   va à la fenêtre du bas
+|CTRL-W_c|	 CTRL-W c	   ferme la fenêtre courante (comme |:close|)
+|CTRL-W_d|	 CTRL-W d	   partage la fenêtre et saute à la définition
+				      sous le curseur
+|CTRL-W_f|	 CTRL-W f	   partage la fenêtre et édite le nom de
+				      fichier sous le curseur
+|CTRL-W_g_CTRL-]| CTRL-W g CTRL-]  partage la fenêtre et applique |:tjump| au
+				      marqueur sous le curseur
+|CTRL-W_g]|	 CTRL-W g ]	   partage la fenêtre et applique |:tselect|
+				      au marqueur sous le curseur
+|CTRL-W_g}|	 CTRL-W g }	   applique |:ptjump| au marqueur sous le
+				      curseur
+|CTRL-W_h|	 CTRL-W h	   va à la N-ième fenêtre vers la gauche
+				      (s'arrête à la première)
+|CTRL-W_i|	 CTRL-W i	   partage la fenêtre et saute à la déclaration
+				      de l'identifiant sous le curseur
+|CTRL-W_j|	 CTRL-W j	   va à la N-ième fenêtre vers le bas
+				      (s'arrête à la dernière) XXX bram
+|CTRL-W_k|	 CTRL-W k	   va à la N-ième fenêtre vers le haut
+				      (s'arrête à la première) XXX
+|CTRL-W_l|	 CTRL-W l	   va à la N-ième fenêtre vers la droite
+				      (s'arrête à la dernière)
+|CTRL-W_n|	 CTRL-W n	   ouvre une nouvelle fenêtre haute de N lignes
+|CTRL-W_o|	 CTRL-W o	   fermer les fenêtres autres que la courante
+				      (comme |:only|)
+|CTRL-W_p|	 CTRL-W p	   va à la fenêtre précédente (dernier accès)
+|CTRL-W_q|	 CTRL-W q	   quitte la fenêtre courante (comme |:quit|)
+|CTRL-W_r|	 CTRL-W r	   rotation des fenêtres vers le bas N fois
+|CTRL-W_s|	 CTRL-W s	   partage la fenêtre courante en deux, la
+				      nouvelle fenêtre haute de N lignes
+|CTRL-W_t|	 CTRL-W t	   va à la fenêtre du haut
+|CTRL-W_v|	 CTRL-W v	   partage la fenêtre courante verticalement,
+				      la nouvelle fenêtre large de N lignes
+|CTRL-W_w|	 CTRL-W w	   va à la N-ième suivante fenêtre (boucle si
+				      dernière fenêtre)
+|CTRL-W_x|	 CTRL-W x	   permute la fenêtre courante et la fenêtre N
+				      (défaut : suivante)
+|CTRL-W_z|	 CTRL-W z	   ferme la fenêtre d'aperçu
+|CTRL-W_bar|	 CTRL-W |	   fixe la largeur de la fenêtre à N colonnes
+|CTRL-W_}|	 CTRL-W }	   affiche le marqueur sous le curseur dans
+				      une fenêtre d'aperçu
+|CTRL-W_<Down>|	 CTRL-W <Bas>	   comme "CTRL-W j"
+|CTRL-W_<Up>|	 CTRL-W <Haut>	   comme "CTRL-W k"
+|CTRL-W_<Left>|	 CTRL-W <Gauche>   comme "CTRL-W h"
+|CTRL-W_<Right>| CTRL-W <Droite>   comme "CTRL-W l"
+
+==============================================================================
+2.3. Commandes avec crochet				    *[* *]*
+
+LIEN		CAR	     NOTE  ACTION EN MODE NORMAL	    ~
+--------------------------------------------------------------------
+|[_CTRL-D|	[ CTRL-D	   saute au premier "#define" trouvé dans les
+				      fichiers courant et inclus correspondant
+				      au mot sous le curseur (commence par le
+				      début du fichier courant)
+|[_CTRL-I|	[ CTRL-I	   saute à la première ligne des fichiers
+				      courant et inclus contenant le mot sous
+				      le curseur (commence par le début du
+				      fichier courant)
+|[#|		[#		1  curseur au N-ième "#if", "#else" ou "#ifdef"
+				      précédent sans correspondance
+|['|		['		1  curseur à la marque minuscule précédente,
+				      sur le premier CAR
+|[(|		[(		1  curseur au N-ième '(' déparié précédent
+|[star|		[*		1  comme "[/"
+|[`|		[`		1  curseur à la marque minuscule précédente
+|[/|		[/		1  curseur au N-ième début de commentaire C
+				      "/*" précédent
+|[D|		[D		   liste tous les "#define" dans les
+				      fichiers courant et inclus correspondant
+				      au mot sous le curseur (commence par le
+				      début du fichier courant)
+|[I|		[I		   liste toutes les lignes des fichiers
+				      courant et inclus contenant le mot sous
+				      le curseur (commence par le début du
+				      fichier courant)
+|[P|		[P		2  comme "[p"
+|[[|		[[		1  curseur N sections vers l'arrière
+|[]|		[]		1  curseur N SECTIONS vers l'arrière
+|[c|		[c		1  curseur au N-ième début de changement
+				      précédent
+|[d|		[d		   affiche le premier "#define" trouvé dans les
+				      fichiers courant et inclus correspondant
+				      au mot sous le curseur (commence par le
+				      début du fichier courant)
+|[f|		[f		   comme "gf"
+|[i|		[i		   affiche la première ligne des fichiers
+				      courant et inclus contenant le mot sous
+				      le curseur (commence par le début du
+				      fichier courant)
+|[p|		[p		2  comme "P", mais ajuste l'indentation à la
+				      ligne courante
+|[m|		[m		1  curseur au N-ième début de membre précédent
+|[z|		[z		1  va au début du repli ouvert
+|[{|		[{		1  curseur au N-ième '{' déparié précédent
+|[<MiddleMouse>| [<ClicMilieu>	2  comme "[p"
+
+|]_CTRL-D|	] CTRL-D	   saute au premier "#define" trouvé dans les
+				      fichiers courant et inclus correspondant
+				      au mot sous le curseur (commence à la
+				      position du curseur)
+|]_CTRL-I|	] CTRL-I	   saute à la première ligne des fichiers
+				      courant et inclus contenant le mot sous
+				      le curseur (commence à la position du
+				      curseur)
+|]#|		]#		1  curseur au N-ième "#endif" ou "#else"
+				      suivant sans correspondance
+|]'|		]'		1  curseur à la marque minuscule suivante, sur
+				      le premier CAR
+|])|		])		1  curseur au N-ième ')' déparié suivant
+|]star|		]*		1  comme "]/"
+|]`|		]`		1  curseur à la marque minuscule suivante
+|]/|		]/		1  curseur à la N-ième fin de commentaire C
+				      "*/" suivante
+|]D|		]D		   liste tous les '#define' trouvés dans les
+				      fichiers courant et inclus correspondant
+				      au mot sous le curseur (commence à la
+				      position du curseur)
+|]I|		]I		   liste toutes les lignes dans les fichiers
+				      courant et inclus contenant le mot sous
+				      le curseur (commence à la position du
+				      curseur)
+|]P|		]P		2  comme "[p"
+|][|		][		1  curseur N SECTIONS vers l'avant
+|]]|		]]		1  curseur N sections vers l'avant
+|]c|		]c		1  curseur au N-ième début de changement
+				      suivant
+|]d|		]d		   affiche le premier "#define" trouvé dans les
+				      fichiers courant et inclus correspondant
+				      au mot sous le curseur (commence à la
+				      position du curseur)
+|]f|		]f		   comme "gf"
+|]i|		]i		   affiche la première ligne dans les fichiers
+				      courant et inclus contenant le mot sous
+				      le curseur (commence à la position du
+				      curseur)
+|]p|		]p		2  comme "p", mais ajuste l'indentation à la
+				      ligne courante
+|]m|		]m		1  curseur au N-ième début de membre suivant
+|]z|		]z		1  va à la fin du repli ouvert
+|]}|		]}		1  curseur au N-ième '}' déparié suivant
+|]<MiddleMouse>| ]<ClicMilieu>	2  comme "]p"
+
+==============================================================================
+2.4. Commandes débutant par 'g'				    *g*
+
+LIEN		CAR	     NOTE  ACTION EN MODE NORMAL	    ~
+--------------------------------------------------------------------
+|g_CTRL-A|	g CTRL-A	   uniquement si compilé avec MEM_PROFILE
+				      défini : donne les statistiques d'usage
+				      de la mémoire
+|g_CTRL-G|	g CTRL-G	   donne des informations sur la position
+				      courante du curseur
+|g_CTRL-H|	g CTRL-H	   lance le mode Sélection par blocs
+|g_CTRL-]|	g CTRL-]	   applique |:tjump| au marqueur sous le
+				      curseur
+|g#|		g#		1  comme "#", mais sans utiliser "\<" et "\>"
+|g$|		g$		1  si 'wrap' désactivé : au caractère le plus à
+				      droite de la ligne courante à l'écran ;
+				   si 'wrap' activé : va au caractère le plus à
+				      droite de la ligne courante
+|g&|		g&		2  répète le dernier ":s" sur toutes les lignes
+|g'|		g'{marque}	1  comme |'| mais sans modifier la liste des
+				      sauts
+|g`|		g`{marque}	1  comme |`| mais sans modifier la liste des
+				      sauts
+|gstar|		g*		1  comme "*", mais sans utiliser "\<" et "\>"
+|g0|		g0		1  si 'wrap' désactivé : au caractère le plus à
+				      gauche de la ligne courante à l'écran ;
+				   si 'wrap' activé : va au caractère le plus à
+				      gauche de la ligne courante
+|g8|		g8		   affiche la valeur hexa des octets utilisés
+				      par le caractère UTF-8 sous le curseur
+|g?|		g?		2  opérateur de codage Rot13
+|g?g?|		g??		2  code la ligne courante avec Rot13
+|g?g?|		g?g?		2  code la ligne courante avec Rot13
+|gD|		gD		1  va à la définition du mot sous le curseur
+				      dans le fichier courant
+|gE|		gE		1  va vers l'arrière à la fin du MOT précédent
+|gH|		gH		   lance le mode Sélection par lignes
+|gI|		gI		2  comme "I", mais va toujours à la colonne 1
+|gJ|		gJ		2  fusionne les lignes sans insérer d'espace
+|gP|		["x]gP		2  comme "P", mais laisse le curseur à la fin
+				      du texte collé
+|gR|		gR		2  entre en mode Remplacement Virtuel
+|gU|		gU{mouv}	2  passe texteM en majuscules
+|gV|		gV		   évite de resélectionner la zone Visuel
+				      précédente après l'exécution d'un
+				      mappage ou menu en mode Sélection
+|g]|		g]		   applique |:tselect| au marqueur sous le
+				      curseur
+|g^|		g^		1  si 'wrap' désactivé : va au CAR le plus à
+				      gauche de la ligne courante à l'écran ;
+				   si 'wrap' activé : va au CAR le plus à
+				      gauche de la ligne courante
+|ga|		ga		   affiche la valeur ASCII du caractère sous
+				      le curseur
+|gd|		gd		1  va à la définition du mot sous le curseur
+				      dans la fonction courante
+|ge|		ge		1  va vers l'arrière à la fin du mot précédent
+|gf|		gf		   lance l'édition le fichier dont le nom est
+				      sous le curseur
+|gg|		gg		1  curseur à la ligne N (défaut : première)
+|gh|		gh		   lance le mode Sélection
+|gi|		gi		2  comme "i", mais va d'abord à la marque |'^|
+|gj|		gj		1  comme "j", mais va N lignes d'écran plus
+				      bas si 'wrap' est activé
+|gk|		gk		1  comme "k", mais va N lignes d'écran plus
+				      haut si 'wrap' est activé
+|gm|		gm		1  curseur au caractère du milieu de la ligne
+				      courante
+|go|		go		1  curseur à l'octet N du tampon courant
+|gp|		["x]gp		2  comme "p", mais laisse le curseur à la fin
+				      du texte collé
+|gq|		gq{mouv}	2  met en forme texteM
+|gr|		gr{car}		2  remplace N caractères par {car} en mode
+				      Remplacement Virtuel
+|gs|		gs		   rien pendant N secondes (défaut : 1)
+|gu|		gu{mouv}	2  passe texteM en minuscules
+|gv|		gv		   resélectionne la zone Visuel précédente
+|g~|		g~{mouv}	2  changer la casse de texteM
+|g<Down>|	g<Bas>		1  comme "gj"
+|g<End>|	g<Fin>		1  comme "g$"
+|g<Home>|	g<Debut>	1  comme "g0"
+|g<LeftMouse>|	g<ClicGauche>	   comme <C-ClicGauche>
+		g<ClicMilieu>	   comme <C-ClicMilieu>
+|g<RightMouse>|	g<ClicDroit>	   comme <C-ClicDroit>
+|g<Up>|		g<Haut>		1  comme "gk"
+
+==============================================================================
+2.5. Commandes débutant par 'z'				    *z*
+
+LIEN		CAR	     NOTE  ACTION EN MODE NORMAL	    ~
+--------------------------------------------------------------------
+|z<CR>|		z<CR>		   rafraîchit, la ligne courante en haut de la
+				      fenêtre, le curseur au premier CAR
+|zN<CR>|	z{hauteur}<CR>	   rafraîchit, fixe à {hauteur} lignes la
+				      hauteur de la fenêtre
+|z+|		z+		   curseur à la ligne N (défaut : ligne sous
+				      la fenêtre), sinon comme "z<CR>"
+|z-|		z-		   rafraîchit, la ligne courante en bas de la
+				      fenêtre, le curseur au premier CAR
+|z.|		z.		   rafraîchit, la ligne courante au centre de
+				      la fenêtre, le curseur au premier CAR
+|zA|		zA		   ouvre un repli fermé ou ferme un repli
+				      ouvert récursivement
+|zC|		zC		   ferme les replis récursivement
+|zD|		zD	      	   supprime les replis récursivement
+|zE|		zE	      	   élimine tous les replis
+|zF|		zF	      	   crée un repli de N lignes
+|zM|		zM	      	   fixe 'foldlevel' à zéro
+|zN|		zN	      	   active 'foldenable'
+|zO|		zO	      	   ouvre les replis récursivement
+|zR|		zR	      	   fixe 'foldlevel' au repli le plus profond
+|zX|		zX	      	   réapplique 'foldlevel'
+|z^|		z^	      	   curseur à la ligne N (défaut : ligne
+				      au-dessus la fenêtre), sinon comme "z-"
+|za|		za		   ouvre un repli fermé, ferme un repli ouvert
+|zb|		zb		   rafraîchit, ligne courante en bas de fenêtre
+|zc|		zc		   ferme un repli
+|zd|		zd		   supprime un repli
+|ze|		ze		   si 'wrap' désactivé : défile horizontalement
+				      afin de placer le curseur à la fin (côté
+				      droit) de l'écran
+|zf|		zf{mouv}	   créée un repli pour texteM
+|zh|		zh		   si 'wrap' désactivé : défile de N caractères
+				      à droite
+|zi|		zi		   inverse 'foldenable'
+|zj|		zj		1  va au début du repli suivant
+|zk|		zk		1  va à la fin du repli précédent
+|zl|		zl		   si 'wrap' désactivé : défile de N caractères
+				      à gauche
+|zm|		zm	           soustrait 1 à 'foldlevel'
+|zn|		zn	           désactive 'foldenable'
+|zo|		zo	           ouvre le repli
+|zr|		zr		   ajoute 1 à 'foldlevel'
+|zs|		zs		   si 'wrap' désactivé : défile horizontalement
+				      afin de placer le curseur au début (côté
+				      gauche) de l'écran
+|zt|		zt		   rafraîchit, ligne courante en haut de la
+				      fenêtre
+|zv|		zv		   ouvre suffisamment de replis pour voir la
+				      ligne courante
+|zx|		zx		   réapplique 'foldlevel' et exécute "zv"
+|zz|		zz		   rafraîchit, ligne courante au centre de la
+				      fenêtre
+|z<Left>|	z<Gauche>	   comme "zh"
+|z<Right>|	z<Droite>	   comme "zl"
+
+==============================================================================
+3. Mode Visuel						    *visual-index*
+
+La plupart des commandes du mode Visuel sont les mêmes que celles du mode
+Normal. Celles listées ici sont celles qui sont différentes.
+
+LIEN		COMMANDE     NOTE  ACTION EN MODE VISUEL	    ~
+--------------------------------------------------------------------
+|v_CTRL-\_CTRL-N| CTRL-\ CTRL-N	   quitte le mode Visuel
+|v_CTRL-\_CTRL-G| CTRL-\ CTRL-G	   passe au mode spécifié par 'insertmode'
+|v_CTRL-G|	CTRL-G		   bascule entre les modes Visuel et Sélection
+|v_<BS>|	<RetArr>	2  mode Sélection : supprime la zone
+				      sélectionnée
+|v_CTRL-H|	CTRL-H		2  comme <RetArr>
+|v_CTRL-O|	CTRL-O		   bascule du mode Sélection au mode Visuel
+				      pour une commande
+|v_CTRL-V|	CTRL-V		   passe en mode Visuel par blocs ou quitte le
+				      mode Visuel
+|v_CTRL-]|	CTRL-]		   saute au marqueur en surbrillance
+|v_!|		!{filtre}	2  filtre les lignes de texte de la zone
+				      avec la commande externe {filtre}
+|v_:|		:		   débute une ligne de commande avec les
+				      lignes de la zone Visuel comme plage
+|v_<|		<		2  décale les lignes de la zone Visuel de
+				      'shiftwidth' à gauche
+|v_=|		=		2  filtre les lignes de la zone Visuel avec le
+				      programme externe 'equalprg'
+|v_>|		>		2  décale les lignes de la zone Visuel de
+				      'shiftwidth' à droite
+|v_b_A|		A		2  mode Bloc : ajoute le même texte à la fin
+				      de chaque ligne de la zone Visuel
+|v_C|		C		2  coupe la zone Visuel et passe en mode
+				      Insertion
+|v_D|		D		2  coupe la zone Visuel
+|v_b_I|		I		2  mode Bloc : insère le même texte au début
+				      de chaque ligne de la zone Visuel
+|v_J|		J		2  fusionne les lignes de la zone Visuel
+|v_K|		K		   lance 'keywordprg' sur la zone Visuel
+|v_O|		O		   déplace le curseur à l'autre extrémité
+				      (horizontalement) de la zone
+		Q		   ne lance pas le mode Ex
+|v_R|		R		2  coupe la zone Visuel et passe en mode
+				      Insertion
+|v_S|		S		2  coupe la zone Visuel et passe en mode
+				      Insertion
+|v_U|		U		2  passe la zone Visuel en majuscules
+|v_V|		V		   passe en mode Visuel par lignes ou quitte
+				      ce mode
+|v_X|		X		2  coupe le texe de la zone Visuel
+|v_Y|		Y		   copie le texte de la zone Visuel
+|v_a(|		a(		   comme ab
+|v_a)|		a)		   comme ab
+|v_a<|		a<		   étend la zone Visuel avec un bloc <>
+|v_a>|		a>		   comme a<
+|v_aB|		aB		   étend la zone Visuel avec un bloc {}
+|v_aW|		aW		   étend la zone Visuel avec « un MOT »
+|v_a[|		a[		   étend la zone Visuel avec un bloc []
+|v_a]|		a]		   comme a[
+|v_ab|		ab		   étend la zone Visuel avec un bloc ()
+|v_ap|		ap		   étend la zone Visuel avec un paragraphe
+|v_as|		as		   étend la zone Visuel avec une phrase
+|v_aw|		aw		   étend la zone Visuel avec « un mot »
+|v_a{|		a{		   comme aB
+|v_a}|		a}		   comme aB
+|v_c|		c		2  coupe la zone Visuel et passe en mode
+				      Insertion
+|v_d|		d		2  coupe le texte de la zone Visuel
+|v_gJ|		gJ		2  fusionne les lignes de la zone Visuel sans
+				      ajouter d'espaces
+|v_gq|		gq		2  met en forme les lignes de la zone Visuel
+|v_gv|		gv		   échange les zones Visuel courante et
+				      précédente
+|v_i(|		i(		   comme ib
+|v_i)|		i)		   comme ib
+|v_i<|		i<		   étend la zone avec l'intérieur d'un bloc <>
+|v_i>|		i>		   comme i<
+|v_iB|		iB		   étend la zone avec l'intérieur d'un bloc {}
+|v_iW|		iW		   étend la zone avec « l'intérieur d'un MOT »
+|v_i[|		i[		   étend la zone avec l'intérieur d'un bloc []
+|v_i]|		i]		   comme i[
+|v_ib|		ib		   étend la zone avec l'intérieur d'un bloc ()
+|v_ip|		ip		   étend la zone avec l'intérieur d'un
+				      paragraphe
+|v_is|		is		   étend la zone avec l'intérieur d'une phrase
+|v_iw|		iw		   étend la zone avec « l'intérieur d'un mot »
+|v_i{|		i{		   comme iB
+|v_i}|		i}		   comme iB
+|v_o|		o		   déplace le curseur à l'autre extrémité
+				      (horizontalement) de la zone
+|v_r|		r		2  coupe la zone Visuel et passe en mode
+				      Insertion
+|v_s|		s		2  coupe la zone Visuel et passe en mode
+				      Insertion
+|v_u|		u		2  passe la zone Visuel en minuscules
+|v_v|		v		   passe en mode Visuel par caractères, ou
+				      quitte ce mode
+|v_x|		x		2  coupe le texte de la zone Visuel
+|v_y|		y		   copie le texte de la zone Visuel
+|v_~|		~		2  inverse la casse de la zone Visuel
+
+==============================================================================
+4. Édition en mode Ligne-de-commande			    *ex-edit-index*
+
+On passe en mode Ligne-de-commande avec les commandes ":", "!", "/" ou "?".
+   Les caractères normaux sont insérés à la position courante du curseur.
+   Le « complètement » ci-dessous fait référence au complètement contextuel :
+il complétera des noms de fichiers, marqueurs, commandes, etc. de manière
+appropriée.
+
+LIEN		CAR		ACTION EN MODE LIGNECMD		    ~
+--------------------------------------------------------------------
+		CTRL-@		inusité
+|c_CTRL-A|	CTRL-A		complète le motif devant le curseur et insère
+				   toutes les correspondances
+|c_CTRL-B|	CTRL-B		curseur au début de la ligne de commande
+|c_CTRL-C|	CTRL-C		comme <Echap>
+|c_CTRL-D|	CTRL-D		liste toutes les correspondances du motif
+				   devant le curseur
+|c_CTRL-E|	CTRL-E		curseur à la fin de la ligne de commande
+|'cedit'|	CTRL-F		valeur de 'cedit' par défaut : ouvre la
+				   fenêtre command-line ; sinon, inusité
+		CTRL-G		inusité
+|c_<BS>|	<RetArr>	supprime le caractère devant le curseur
+|c_digraph|	{car1} <RetArr> {car2}
+				entre un digramme si 'digraph' est activé
+|c_CTRL-H|	CTRL-H		comme <RetArr>
+|c_<Tab>|	<Tab>		si 'wildchar' vaut <Tab> : complète le motif
+				   devant le curseur
+|c_<S-Tab>|	<S-Tab>		comme CTRL-P
+|c_wildchar|	'wildchar'	complète le caractère devant le curseur
+				   (défaut : <Tab>)
+|c_CTRL-I|	CTRL-I		comme <Tab>
+|c_<NL>|	<NL>		comme <CR>
+|c_CTRL-J|	CTRL-J		comme <CR>
+|c_CTRL-K|	CTRL-K {car1} {car2}
+				entre un digramme
+|c_CTRL-L|	CTRL-L		insère la plus longue partie commune des
+				   correspondances du motif devant le curseur
+|c_<CR>|	<CR>		exécute la commande saisie
+|c_<CR>|	CTRL-M		comme <CR>
+|c_CTRL-N|	CTRL-N		après 'wildchar' en cas d'occurrences
+				   multiples : à la correspondance suivante ;
+				   sinon : comme <Bas>
+		CTRL-O		inusité
+|c_CTRL-P|	CTRL-P		après 'wildchar' en cas d'occurrences
+				   multiples : à la correspondance précédente ;
+				   sinon : comme <Haut>
+|c_CTRL-Q|	CTRL-Q		comme CTRL-V, à moins qu'il ne soit utilisé
+				   pour le contrôle de flux du terminal
+|c_CTRL-R|	CTRL-R {0-9a-z"%#*:= CTRL-F CTRL-P CTRL-W CTRL-A}
+				insère le contenu d'un registre ou objet sous
+				   le curseur comme s'il était saisi
+|c_CTRL-R_CTRL-R| CTRL-R CTRL-R {0-9a-z"%#*:= CTRL-F CTRL-P CTRL-W CTRL-A}
+				insère le contenu d'un registre ou objet sous
+				   le curseur littéralement
+		CTRL-S		(utilisé pour le contrôle de flux du terminal)
+		CTRL-T		inusité
+|c_CTRL-U|	CTRL-U		supprime tous les caractères
+|c_CTRL-V|	CTRL-V		insère le prochain non-chiffre littéralement,
+				   insère un nombre de trois chiffres décimaux
+				   comme un octet unique
+|c_CTRL-W|	CTRL-W		supprime le mot devant le curseur
+		CTRL-X		inusité (réservé pour le complètement)
+|c_CTRL-Y|  	CTRL-Y		copie la sélection amodale
+		CTRL-Z		inusité (réservé pour suspendre)
+|c_<Esc>|	<Echap>		abandonne la ligne de commande sans l'exécuter
+|c_<Esc>|	CTRL-[		comme <Echap>
+|c_CTRL-\_CTRL-N| CTRL-\ CTRL-N passe en mode Normal, abandonne la ligne de cmd
+|i_CTRL-\_CTRL-G| CTRL-\ CTRL-G passe au mode spécifié par 'insertmode',
+				   abandonne la ligne de cmd
+		CTRL-\ a - z	réservés pour usage ultérieur
+		CTRL-\ autres	inusités
+		CTRL-]		inusité
+|c_CTRL-^|	CTRL-^		inverse l'utilisation des mappages |:lmap|
+|c_CTRL-_|	CTRL-_		si 'allowrevins' est activé : change de langue
+				   (hébreu, farsi)
+|c_<Del>|	<Suppr>		supprime le caractère sous le curseur
+
+|c_<Left>|	<Gauche>	curseur un caractère à gauche
+|c_<S-Left>|	<S-Gauche>	curseur un mot à gauche
+|c_<C-Left>|	<C-Gauche>	curseur un mot à gauche
+|c_<Right>|	<Droite>	curseur un caractère à droite
+|c_<S-Right>|	<S-Droite>	curseur un mot à droite
+|c_<C-Right>|	<C-Droite>	curseur un mot à droite
+|c_<Up>|	<Haut>		rappelle la commande de l'historique précédente
+				   débutant par le motif sous le curseur
+|c_<S-Up>|	<S-Haut>	rappelle la commande de l'historique précédente
+|c_<Down>|	<Bas>		rappelle la prochaine commande de l'historique
+				   débutant par le motif sous le curseur
+|c_<S-Down>|	<S-Bas>		rappelle la commande suivante de l'historique
+|c_<Home>|	<Debut>		curseur au début de la ligne de commande
+|c_<End>|	<Fin>		curseur à la fin de la ligne de commande
+|c_<PageDown>|	<PageSuiv>	comme <S-Bas>
+|c_<PageUp>|	<PagePrec>	comme <S-Haut>
+|c_<Insert>|	<Inser>		permute les modes Insertion/Remplacement
+|c_<LeftMouse>|	<ClicGauche>	curseur à la position du clic de la souris
+
+Tu l'as enfin trouvé, Arthur !			    *holy-grail*
+
+==============================================================================
+5. Commandes Ex					    *ex-cmd-index* *:index*
+
+Ceci est une liste sommaire mais complète de toutes les commandes ":", sans
+préciser leurs arguments. La partie optionnelle du nom de la commande est mise
+entre []. Les commandes sont triées selon la partie obligatoire de leur nom.
+
+LIEN		COMMANDE	ACTION				    ~
+--------------------------------------------------------------------
+|:!|		:!		filtre les lignes ou exécute une cmd externe
+|:!!|		:!!		répète la dernière commande ":!"
+|:#|		:#		comme ":number"
+|:&|		:&		répète la dernière commande ":substitute"
+|:star|		:*		exécute le contenu d'un registre
+|:<|		:<		décale les lignes de 'shiftwidth' à gauche
+|:=|		:=		affiche la ligne courante du curseur
+|:>|		:>		décale les lignes de 'shiftwidth' à droite
+|:@|		:@		exécute le contenu d'un registre
+|:@@|		:@@		répète la dernière commande ":@"
+|:Next|		:N[ext]		va au fichier précédent de la liste des
+				   arguments
+|:Print|	:P[rint]	affiche les lignes
+|:X|		:X		demande la clé de chiffrement
+|:append|	:a[ppend]	ajoute du texte
+|:abbreviate|	:ab[breviate]	entre une abréviation
+|:abclear|	:abc[lear]	supprime toutes les abréviations
+|:all|		:al[l]		ouvre une fenêtre pour chaque fichier de la
+				   liste des arguments
+|:amenu|	:am[enu]	ajoute un nouvel élément de menu pour tous les
+				   modes
+|:anoremenu|	:an[oremenu]	ajoute un nouveau menu non-remappable pour
+				   tous les modes
+|:args|		:ar[gs]		affiche la liste des arguments
+|:argadd|	:arga[dd]	ajoute des éléments à la liste des arguments
+|:argdelete|	:argd[elete]	supprime des éléments de la liste des arguments
+|:argdo|	:argdo		lance un commande sur tous les éléments de la
+				   liste des arguments
+|:argglobal|	:argg[lobal]	définit la liste des arguments globale
+|:arglocal|	:argl[ocal]	définit une liste des arguments locale
+|:argument|	:argu[ment]	va à un fichier particulier dans la liste des
+				   arguments
+|:ascii|	:as[cii]	affiche la valeur ASCII du car sous le curseur
+|:autocmd|	:au[tocmd]	entre ou affiche des autocommandes
+|:augroup|	:aug[roup]	choisit le groupe d'autocommandes à utiliser
+|:aunmenu|	:aun[menu]	supprime un menu pour tous les modes
+|:buffer|	:b[uffer]	va à un fichier particulier dans la liste des
+				   tampons
+|:bNext|	:bN[ext]	va au fichier précédent de la liste des tampons XXX
+|:ball|		:ba[ll]		ouvre une fenêtre pour chaque fichier dans la
+				   liste des tampons
+|:badd|		:bad[d]		ajoute un fichier à la liste des tampons
+|:bdelete|	:bd[elete]	supprime un fichier de la liste des tampons
+|:behave|	:be[have]	fixe le comportement de la souris et de la
+				   sélection
+|:bfirst|	:bf[irst]	va au premier fichier de la liste des tampons
+|:blast|	:bl[ast]	va au dernier fichier de la liste des tampons
+|:bmodified|	:bm[odified]	va au prochain fichier modifié de la liste des
+				   tampons
+|:bnext|	:bn[ext]	va au prochain fichier de la liste des tampons
+|:botright|	:bo[tright]	fait apparaître la fenêtre d'un partage en bas
+				   ou complètement à droite
+|:bprevious|	:bp[revious]	va au fichier précédent de la liste des tampons
+|:brewind|	:br[ewind]	va au premier fichier de la liste des tampons
+|:break|	:brea[k]	sort d'une boucle ":while"
+|:breakadd|	:breaka[dd]	ajoute un point d'arrêt (débogage)
+|:breakdel|	:breakd[el]	supprime un point d'arrêt (débogage)
+|:breaklist|	:breakl[ist]	liste les points d'arrêts (débogage)
+|:browse|	:bro[wse]	utilise le sélecteur de fichier
+|:buffers|	:buffers	liste tous les fichiers de la liste des tampons
+|:bunload|	:bun[load]	décharge un tampon particulier
+|:bwipeout|	:bw[ipeout]	supprime vraiment un tampon
+|:change|	:c[hange]	remplace une ou plusieurs lignes
+|:cNext|	:cN[ext]	va à l'erreur précédente
+|:cabbrev|	:ca[bbrev]	comme ":abbreviate", mais en mode Lignecmd
+|:cabclear|	:cabc[lear]	supprime toutes les abréviations pour le mode
+				   Lignecmd
+|:call|		:cal[l]		appelle une fonction
+|:catch|	:cat[ch]	partie d'une commande ":try"
+|:cc|		:cc		va à une erreur particulière
+|:cclose|	:ccl[ose]	ferme la fenêtre mise-au-point
+|:cd|		:cd		change de répertoire
+|:center|	:ce[nter]	centre des lignes
+|:cfile|	:cf[ile]	lit le fichier d'erreurs et saute à la première
+|:cfirst|	:cfir[st]	va à l'erreur spécifiée (défaut : première)
+|:cgetfile|	:cg[etfile]	lit le fichier d'erreurs
+|:chdir|	:chd[ir]	change de répertoire
+|:checkpath|	:che[ckpath]	liste les fichiers inclus
+|:checktime|	:checkt[ime]	contrôle l'horodatage des tampons chargés
+|:clist|	:cl[ist]	liste toutes les erreurs
+|:clast|	:cla[st]	va à une erreur spécifique (défaut : dernière)
+|:close|	:clo[se]	ferme la fenêtre courante
+|:cmap|		:cm[ap]		comme ":map", mais pour le mode Lignecmd
+|:cmapclear|	:cmapc[lear]	supprime tous les mappages en mode Lignecmd
+|:cmenu|	:cme[nu]	ajoute un menu en mode Lignecmd
+|:cnext|	:cn[ext]	va à l'erreur suivante
+|:cnewer|	:cnew[er]	va à la liste d'erreurs la plus récente
+|:cnfile|	:cnf[ile]	va à la première erreur du fichier suivant
+|:cnoremap|	:cno[remap]	comme ":noremap", mais pour le mode Lignecmd
+|:cnoreabbrev|	:cnorea[bbrev]	comme ":noreabbrev", mais pour le mode Lignecmd
+|:cnoremenu|	:cnoreme[nu]	comme ":noremenu", mais pour le mode Lignecmd
+|:copy|		:co[py]		copie des lignes
+|:colder|	:col[der]	va à la liste d'erreurs la plus ancienne
+|:colorscheme|	:colo[rscheme]	charge un jeu de couleurs spécifique
+|:command|	:com[mand]	crée une commande définie par l'utilisateur
+|:comclear|	:comc[lear]	supprime toutes les commandes utilisateur
+|:compiler|	:comp[iler]	paramètre un compilateur spécifique
+|:continue|	:con[tinue]	retourne au ":while"
+|:confirm|	:conf[irm]	demande confirmation à l'utilisateur si besoin
+|:copen|	:cope[n]	ouvre la fenêtre mise-au-point
+|:cprevious|	:cp[revious]	va à l'erreur précédente
+|:cquit|	:cq[uit]	quitte Vim avec un code d'erreur
+|:crewind|	:cr[ewind]	va à une erreur spécifique (défaut : première)
+|:cscope|	:cs[cope]	exécute une commande `cscope`
+|:cstag|	:cst[ag]	utilise `cscope` pour sauter à un marqueur
+|:cunmap|	:cu[nmap]	comme ":unmap", mais pour le mode Lignecmd
+|:cunabbrev|	:cuna[bbrev]	comme ":unabbrev", mais pour le mode Lignecmd
+|:cunmenu|	:cunme[nu]	supprime un menu en mode Lignecmd
+|:cwindow|	:cw[indow]	ouvre ou ferme la fenêtre mise-au-point
+|:delete|	:d[elete]	supprime des lignes
+|:debug|	:deb[ug]	lance une commande en mode débogage
+|:debuggreedy|	:debugg[reedy]	lit les commandes du mode débogage depuis
+				   l'entrée standard
+|:delcommand|	:delc[ommand]	supprime une commande utilisateur
+|:delfunction|	:delf[unction]	supprime une fonction utilisateur
+|:display|	:di[splay]	affiche les registres
+|:diffupdate|	:dif[fupdate]	met à jour les tampons 'diff'
+|:diffget|	:diffg[et]	supprime les différences dans le tampon courant
+|:diffpatch|	:diffp[atch]	applique une rustine et montre les différences
+|:diffput|	:diffpu[t]	supprime les différences dans l'autre tampon
+|:diffsplit|	:diffs[plit]	montre les différences avec un autre tampon
+|:digraphs|	:dig[raphs]	entre ou affiche des digrammes
+|:djump|	:dj[ump]	saute au premier "#define"
+|:dlist|	:dl[ist]	liste tous les "#define"
+|:doautocmd|	:do[autocmd]	applique des autocommandes au tampon courant
+|:doautoall|	:doautoa[ll]	applique des autocmd à tous les tampons chargés
+|:dsearch|	:ds[earch]	affiche le premier "#define"
+|:dsplit|	:dsp[lit]	partage la fenêtre et saute au premier #define
+|:edit|		:e[dit]		édite un fichier
+|:echo|		:ec[ho]		affiche le résultat des expressions
+|:echoerr|	:echoe[rr]	comme ":echo", mais affiche comme une erreur
+				   et utilise l'historique
+|:echohl|	:echoh[l]	fixe la surbrillance pour les commandes ":echo"
+|:echomsg|	:echom[sg]	comme ":echo", mais utilise l'historique
+|:echon|	:echon		comme ":echo", mais sans <EOL>
+|:else|		:el[se]		partie d'une commande ":if"
+|:elseif|	:elsei[f]	partie d'une commande ":if"
+|:emenu|	:em[enu]	exécute un menu par son nom
+|:endif|	:en[dif]	termine le ":if" précédent
+|:endfunction|	:endf[unction]	termine une fonction utilisateur
+|:endtry|	:endt[ry]	termine le ":try" précédent
+|:endwhile|	:endw[hile]	termine le ":while" précédent
+|:enew|		:ene[w]		édite un nouveau tampon, sans nom
+|:ex|		:ex		comme ":edit"
+|:execute|	:exe[cute]	exécute le résultat d'une expression
+|:exit|		:exi[t]		comme ":xit"
+|:file|		:f[ile]		donne ou fixe le nom de fichier courant
+|:files|	:files		liste tous les fichiers de la liste des tampons
+|:filetype|	:filet[ype]	(dés)active la détection du type de fichier
+|:find|		:fin[d]		trouve un fichier dans 'path' et l'édite
+|:finally|	:fina[lly]	partie d'une commande ":try"
+|:finish|	:fini[sh]	termine le sourcement d'un script Vim
+|:first|	:fir[st]	va au premier fichier de la liste des arguments
+|:fixdel|	:fix[del]	fixe le code la touche <Suppr>
+|:fold|		:fo[ld]		crée un repli
+|:foldclose|	:foldc[lose]	ferme les replis
+|:folddoopen|	:foldd[oopen]	exécute une commande sur les lignes en dehors
+				   d'un repli fermé
+|:folddoclosed|	:folddoc[losed]	exécute une commande sur les lignes d'un repli
+				   fermé
+|:foldopen|	:foldo[pen]	ouvre les replis
+|:function|	:fu[nction]	définit une fonction utilisateur
+|:global|	:g[lobal]	exécute des cmd sur les lignes correspondantes
+|:goto|		:go[to]		va à un octet du tampon
+|:grep|		:gr[ep]		lance 'grepprg', saute à la première occurrence
+|:gui|		:gu[i]		lance l'IHM graphique
+|:gvim|		:gv[im]		lance l'IHM graphique
+|:help|		:h[elp]		ouvre une fenêtre d'aide
+|:helpfind|	:helpf[ind]	dialogue pour ouvrir une fenêtre d'aide
+|:highlight|	:hi[ghlight]	spécifie les méthodes de coloration
+|:hide|		:hid[e]		cache le tampon courant
+|:history|	:his[tory]	affiche l'historique
+|:insert|	:i[nsert]	insère du texte
+|:iabbrev|	:ia[bbrev]	comme ":abbrev", mais pour le mode Insertion
+|:iabclear|	:iabc[lear]	comme ":abclear", mais pour le mode Insertion
+|:if|		:if		exécute des cmd si la condition est vraie
+|:ijump|	:ij[ump]	saute à la définition d'un identifiant
+|:ilist|	:il[ist]	liste les lignes où un identifiant correspond
+|:imap|		:im[ap]		comme ":map", mais pour le mode Insertion
+|:imapclear|	:imapc[lear]	comme ":mapclear", mais pour le mode Insertion
+|:imenu|	:ime[nu]	ajoute un menu en mode Insertion
+|:inoremap|	:ino[remap]	comme ":noremap", mais pour le mode Insertion
+|:inoreabbrev|	:inorea[bbrev]	comme ":noreabbrev" mais pour le mode Insertion
+|:inoremenu|	:inoreme[nu]	comme ":noremenu", mais pour le mode Insertion
+|:intro|	:int[ro]	affiche le message d'accueil
+|:isearch|	:is[earch]	affiche une ligne où un identifiant correspond
+|:isplit|	:isp[lit]	partage la fenêtre et saute à la définition
+				   d'un identifiant
+|:iunmap|	:iu[nmap]	comme ":unmap", mais pour le mode Insertion
+|:iunabbrev|	:iuna[bbrev]	comme ":unabbrev", mais pour le mode Insertion
+|:iunmenu|	:iunme[nu]	supprime un menu pour le mode Insertion
+|:join|		:j[oin]		fusionne des lignes
+|:jumps|	:ju[mps]	affiche la liste des sauts
+|:k|		:k		fixe une marque
+|:list|		:l[ist]		affiche des lignes
+|:last|		:la[st]		va au dernier fichier de la liste des arguments
+|:language|	:lan[guage]	fixe la langue (région linguistique)
+|:lcd|		:lc[d]		change de répertoire localement
+|:lchdir|	:lch[dir]	change de répertoire localement
+|:left|		:le[ft]		aligne des lignes à gauche
+|:let|		:let		assigne une valeur à une variable ou une option
+|:ls|		:ls		liste tous les tampons
+|:loadview|	:lo[adview]	charge la vue de la fenêtre depuis un fichier
+|:move|		:m[ove]		déplace des lignes
+|:mark|		:ma[rk]		positionne une marque
+|:make|		:mak[e]		exécute la commande externe 'makeprg' et
+				   traite les messages d'erreurs
+|:map|		:map		entre ou affiche un mappage
+|:mapclear|	:mapc[lear]	supprime tous les mappages en mode Normal
+				   et Visuel
+|:marks|	:marks		liste toutes les marques
+|:match|	:mat[ch]	définit un motif à mettre en surbrillance
+|:menu|		:me[nu]		ajoute un nouvel élément de menu
+|:menutranslate| :menut[ranslate]  ajoute un élément de traduction de menu
+|:messages|	:mes[sages]	affiche les messages précédemment émis
+|:mkexrc|	:mk[exrc]	écrit les mappages et paramètres courants dans
+				   un fichier
+|:mksession|	:mks[ession]	écrit les infos de la session dans un fichier
+|:mkvimrc|	:mkv[imrc]	écrit les mappages et paramètres courants dans
+				   un fichier
+|:mkview|	:mkvie[w]	écrit la vue de la fenêtre dans un fichier
+|:mode|		:mod[e]		donne ou change le mode de l'écran
+|:next|		:n[ext]		va au fichier suivant de la liste des arguments
+|:new|		:new		crée une nouvelle fenêtre vide
+|:nmap|		:nm[ap]		comme ":map", mais pour le mode Normal
+|:nmapclear|	:nmapc[lear]	supprime tous les mappages en mode Normal
+|:nmenu|	:nme[nu]	ajoute un menu en mode Normal
+|:nnoremap|	:nn[oremap]	comme ":noremap", mais pour le mode Normal
+|:nnoremenu|	:nnoreme[nu]	comme ":noremenu", mais pour le mode Normal
+|:noremap|	:no[remap]	entre un mappage non-remappable
+|:nohlsearch|	:noh[lsearch]	suspend la surbrillance 'hlsearch'
+|:noreabbrev|	:norea[bbrev]	entre une abréviation non-remappable
+|:noremenu|	:noreme[nu]	ajoute un menu non-remappable
+|:normal|	:norm[al]	exécute des commandes du mode Normal
+|:number|	:nu[mber]	affiche des lignes avec leurs numéros
+|:nunmap|	:nun[map]	comme ":unmap", mais pour le mode Normal
+|:nunmenu|	:nunme[nu]	supprime un menu en mode Normal
+|:open|		:o[pen]		lance le mode Open (non disponible)
+|:omap|		:om[ap]		comme ":map", mais en mode Opérateur-en-cours
+|:omapclear|	:omapc[lear]	supprime tous les mappages en mode
+				   Opérateur-en-cours
+|:omenu|	:ome[nu]	ajoute un menu en mode Opérateur-en-cours
+|:only|		:on[ly]		ferme toutes les fenêtres sauf la courante
+|:onoremap|	:ono[remap]	comme ":noremap", mais en mode
+				   Opérateur-en-cours
+|:onoremenu|	:onoreme[nu]	comme ":noremenu" mais en mode
+				   Opérateur-en-cours
+|:options|	:opt[ions]	ouvre la fenêtre d'options
+|:ounmap|	:ou[nmap]	comme ":unmap", mais en mode Opérateur-en-cours
+|:ounmenu|	:ounme[nu]	supprime un menu en mode Opérateur-en-cours
+|:print|	:p[rint]	affiche des lignes
+|:pclose|	:pc[lose]	ferme la fenêtre d'aperçu
+|:perl|		:pe[rl]		exécute une commande Perl
+|:perldo|	:perld[o]	exécute une commande Perl pour chaque ligne
+|:pop|		:po[p]		saute à la dernière entrée de la pile de
+				   marqueurs
+|:ppop|		:pp[op]		":pop" dans la fenêtre d'aperçu
+|:preserve|	:pre[serve]	écrit tout le texte dans le fichier d'échange
+|:previous|	:prev[ious]	va au fichier précédent de la liste des
+				   arguments
+|:promptfind|	:pro[mptfind]	boîte de dialogue pour la recherche de texte
+|:promptrepl|	:promptr[epl]	boîte de dialogue pour la substitution de texte
+|:ptag|		:pt[ag]		affiche le marqueur dans une fenêtre d'aperçu
+|:ptNext|	:ptN[ext]	|:tNext| dans la fenêtre d'aperçu
+|:ptfirst|	:ptf[irst]	|:trewind| dans la fenêtre d'aperçu
+|:ptjump|	:ptj[ump]	|:tjump| et affiche le marqueur dans la
+				   fenêtre d'aperçu
+|:ptlast|	:ptl[ast]	|:tlast| dans la fenêtre d'aperçu
+|:ptnext|	:ptn[ext]	|:tnext| dans la fenêtre d'aperçu
+|:ptprevious|	:ptp[revious]	|:tprevious| dans fenêtre d'aperçu
+|:ptrewind|	:ptr[ewind]	|:trewind| dans la fenêtre d'aperçu
+|:ptselect|	:pts[elect]	|:tselect| et affiche le marqueur dans la
+				   fenêtre d'aperçu
+|:put|		:pu[t]		insère le contenu d'un registre dans le texte
+|:pwd|		:pw[d]		affiche le répertoire courant
+|:python|	:py[thon]	exécute une commande Python
+|:pyfile|	:pyf[ile]	exécute un fichier de script Python
+|:quit|		:q[uit]		quitte la fenêtre courante (quitte Vim, si
+				   c'est la dernière fenêtre)
+|:quitall|	:quita[ll]	quitte Vim
+|:qall|		:qa[ll]		quitte Vim
+|:read|		:r[ead]		insère le contenu d'un fichier dans le texte
+|:recover|	:rec[over]	recouvre un fichier depuis un fichier d'échange
+|:redo|		:red[o]		restaure un changement annulé
+|:redir|	:redi[r]	redirige les messages dans un fichier ou un
+				   registre
+|:redraw|	:redr[aw]	force le rafraîchissement de l'écran
+|:registers|	:reg[isters]	affiche le contenu des registres
+|:resize|	:res[ize]	change la hauteur de la fenêtre courante
+|:retab|	:ret[ab]	change la taille des tabulations
+|:return|	:retu[rn]	provoque le retour d'une fonction
+|:rewind|	:rew[ind]	va au premier fichier de la liste des arguments
+|:right|	:ri[ght]	aligne des lignes à droite
+|:runtime|	:ru[ntime]	source les scripts Vim de 'runtimepath'
+|:rviminfo|	:rv[iminfo]	lit le fichier viminfo
+|:substitute|	:s[ubstitute]	trouve du texte et le remplace
+|:sNext|	:sN[ext]	partage la fenêtre et va au fichier précédent
+				   de la liste des arguments
+|:sargument|	:sa[rgument]	partage la fenêtre et va à un fichier
+				   particulier de la liste des arguments
+|:sall|		:sal[l]		ouvre une fenêtre pour chaque fichier dans la
+				   liste des arguments
+|:saveas|	:sav[eas]	enregistre le fichier sous un autre nom
+|:sbuffer|	:sb[uffer]	partage la fenêtre et va à un fichier
+				   particulier de la liste des tampons
+|:sbNext|	:sbN[ext]	partage la fenêtre et va au fichier précédent
+				   de la liste des tampons
+|:sball|	:sba[ll]	ouvre un fenêtre pour chaque fichier dans la
+				   liste des tampons
+|:sbfirst|	:sbf[irst]	partage la fenêtre et va au premier fichier de
+				   la liste des tampons
+|:sblast|	:sbl[ast]	partage la fenêtre et va au dernier fichier de
+				   la liste des tampons
+|:sbmodified|	:sbm[odified]	partage la fenêtre et va à un fichier modifié
+				   de la liste des tampons
+|:sbnext|	:sbn[ext]	partage la fenêtre et va au prochain fichier
+				   de la liste des tampons
+|:sbprevious|	:sbp[revious]	partage la fenêtre et va au fichier précédent
+				   de la liste des tampons
+|:sbrewind|	:sbr[ewind]	partage la fenêtre et va au premier fichier de
+				   la liste des tampons
+|:scriptnames|	:scrip[tnames]	liste les noms de tous les scripts Vim sourcés
+|:scriptencoding| :scripte[ncoding]  définit l'encodage des scripts Vim
+|:scscope|	:scs[cope]	partage la fenêtre et exécute la cmd cscope
+|:set|		:se[t]		affiche ou fixe des options
+|:setfiletype|	:setf[iletype]	fixe 'filetype', à moins qu'il ne le soit déjà
+|:setglobal|	:setg[lobal]	affiche les valeurs globales des options
+|:setlocal|	:setl[ocal]	affiche ou fixe les options localement
+|:sfind|	:sf[ind]	partage la fenêtre courante et édite un
+				   fichier dans 'path'
+|:sfirst|	:sfir[st]	partage la fenêtre et va au premier fichier de
+				   la liste des arguments
+|:shell|	:sh[ell]	appelle un shell
+|:simalt|	:sim[alt]	IHM graphique Win32 : simule la touche Alt de
+				   Windows
+|:sign|		:sig[n]		manipule des symboles
+|:silent|	:sil[ent]	exécute une commande silencieusement
+|:sleep|	:sl[eep]	met en veille pour quelques secondes
+|:slast|	:sla[st]	partage la fenêtre et va au dernier fichier de
+				   la liste des arguments
+|:smagic|	:sm[agic]	":substitute" avec 'magic'
+|:snext|	:sn[ext]	partage la fenêtre et va au prochain fichier
+				   de la liste des arguments
+|:sniff|	:sni[ff]	envoie une requête à `sniff`
+|:snomagic|	:sno[magic]	":substitute" avec 'nomagic'
+|:source|	:so[urce]	lit des commandes Ex ou Vim dans un fichier
+|:split|	:sp[lit]	partage la fenêtre courante
+|:sprevious|	:spr[evious]	partage la fenêtre et va au fichier précédent
+				   de la liste des arguments
+|:srewind|	:sr[ewind]	partage la fenêtre et va au premier fichier de
+				   la liste des arguments
+|:stop|		:st[op]		suspend Vim ou lance un nouveau shell
+|:stag|		:sta[g]		partage la fenêtre et saute à un marqueur
+|:startinsert|	:star[tinsert]	lance le mode Insertion
+|:stopinsert||	:stopi[nsert]	quitte le mode Insertion
+|:stjump|	:stj[ump]	exécute ":tjump" et partage la fenêtre
+|:stselect|	:sts[elect]	exécute ":tselect" et partage la fenêtre
+|:sunhide|	:sun[hide]	comme ":unhide"
+|:suspend|	:sus[pend]	comme ":stop"
+|:sview|	:sv[iew]	partage la fenêtre et édite en lecture seule
+|:swapname|	:sw[apname]	affiche le nom du fichier d'échange courant
+|:syntax|	:sy[ntax]	coloration syntaxique
+|:syncbind|	:sync[bind]	synchronise les fenêtres 'scrollbind'
+|:t|		:t		comme ":copy"
+|:tNext|	:tN[ext]	saute au marqueur correspondant précédent
+|:tag|		:ta[g]		saute à un marqueur
+|:tags|		:tags		affiche le contenu de la pile de marqueurs
+|:tcl|		:tc[l]		exécute une commande Tcl
+|:tcldo|	:tcld[o]	exécute une commande Tcl pour chaque ligne
+|:tclfile|	:tclf[ile]	exécute un fichier de script Tcl
+|:tearoff|	:te[aroff]	détache un menu
+|:tfirst|	:tf[irst]	saute au premier marqueur correspondant
+|:throw|	:th[row]	émet une exception
+|:tjump|	:tj[ump]	comme ":tselect", mais saute directement s'il
+				   n'y a qu'une occurrence
+|:tlast|	:tl[ast]	saute au dernier marqueur correspondant
+|:tmenu|	:tm[enu]	définit une bulle d'aide pour un menu
+|:tnext|	:tn[ext]	saute au prochain marqueur correspondant
+|:topleft|	:to[pleft]	fait apparaître la fenêtre d'un partage en
+				   haut ou complètement à gauche
+|:tprevious|	:tp[revious]	saute au marqueur correspondant précédent
+|:trewind|	:tr[ewind]	saute au premier marqueur correspondant
+|:try|		:try		exécute des commandes en gérant les erreurs et
+				   les exceptions
+|:tselect|	:ts[elect]	liste et propose les marqueurs correspondants
+|:tunmenu|	:tu[nmenu]	supprime une bulle d'aide dans un menu
+|:undo|		:u[ndo]		annule le(s) dernier(s) changement(s)
+|:unabbreviate|	:una[bbreviate]	supprime une abréviation
+|:unhide|	:unh[ide]	ouvre une fenêtre pour chaque fichier chargé
+				   dans la liste des tampons
+|:unlet|	:unl[et]	supprime une variable
+|:unmap|	:unm[ap]	supprime un mappage
+|:unmenu|	:unme[nu]	supprime un menu
+|:update|	:up[date]	écrit le tampon si modifié
+|:vglobal|	:v[global]	exécute des cmd sur les lignes ne
+				   correspondant pas
+|:version|	:ve[rsion]	donne les informations sur la version courante
+|:verbose|	:verb[ose]	exécute une commande avec 'verbose' fixé
+|:vertical|	:vert[ical]	force la prochaine commande de partage à
+				   partager verticalement
+|:visual|	:vi[sual]	comme ":edit", mais quitte le mode Ex
+|:view|		:vie[w]		édite un fichier en lecture seule
+|:vmap|		:vm[ap]		comme ":map", mais pour le mode Visuel
+|:vmapclear|	:vmapc[lear]	supprime tous les mappages en mode Visuel
+|:vmenu|	:vme[nu]	ajoute un menu en mode Visuel
+|:vnoremap|	:vn[oremap]	comme ":noremap", mais pour le mode Visuel
+|:vnew|		:vne[w]		crée une nouvelle fenêtre vide, en partageant
+				   verticalement
+|:vnoremenu|	:vnoreme[nu]	comme ":noremenu", mais pour le mode Visuel
+|:vsplit|	:vs[plit]	partage la fenêtre courante verticalement
+|:vunmap|	:vu[nmap]	comme ":unmap", mais pour le mode Visuel
+|:vunmenu|	:vunme[nu]	supprime un menu en mode Visuel
+|:write|	:w[rite]	enregistre un fichier
+|:wNext|	:wN[ext]	enregistre et va au fichier précédent sur la
+				   liste des arguments
+|:wall|		:wa[ll]		écrit tous les tampons (modifiés)
+|:while|	:wh[ile]	exécute une boucle tant que la condition est
+				   vraie
+|:winsize|	:wi[nsize]	donne/fixe la taille de la fenêtre (obsolète)
+|:wincmd|	:winc[md]	exécute une commande de fenêtrage (CTRL-W)
+|:winpos|	:winp[os]	donne/fixe la position de la fenêtre
+|:wnext|	:wn[ext]	enregistre et va au fichier suivant sur la
+				   liste des arguments
+|:wprevious|	:wp[revious]	enregistre et va au fichier précédent sur la
+				   liste des arguments
+|:wq|		:wq		enregistre et quitte la fenêtre ou Vim
+|:wqall|	:wqa[ll]	écrit les tampons modifiés et quitte Vim
+|:wviminfo|	:wv[iminfo]	écrit le fichier viminfo
+|:xit|		:x[it]		écrit le tampon si modifié et quitte la
+				   fenêtre ou Vim
+|:xall|		:xa[ll]		comme ":wqall"
+|:yank|		:y[ank]		copie des lignes dans un registre
+|:z|		:z		affiche plusieurs lignes
+|:~|		:~		répète la dernière commande ":substitute"
+
+ vim:tw=78:ts=8:ft=help:norl:

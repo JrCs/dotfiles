@@ -1,0 +1,1525 @@
+*starting.txt*  Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+Lancement de Vim					*starting*
+
+1. Arguments de Vim		    |vim-arguments|
+2. Vim sur Amiga		    |starting-amiga|
+3. Utiliser eVim		    |evim-keys|
+4. Initialisation		    |initialization|
+5. $VIM et $VIMRUNTIME		    |$VIM|
+6. Suspendre Vim		    |suspend|
+7. Sauvegarder des paramètres	    |save-settings|
+8. Vues et Sessions		    |views-sessions|
+9. Le fichier viminfo		    |viminfo-file|
+
+==============================================================================
+1. Arguments de Vim					*vim-arguments*
+
+La plupart du temps, Vim est lancé pour éditer un seul fichier avec la
+commande :
+
+	vim nomfichier					*-vim*
+
+Plus généralement, Vim est lancé avec :
+
+	vim [option | nomfichier] ...
+
+Les arguments (options ou noms de fichiers) peuvent être mélangés et donnés
+quel qu'en soit le nombre. Il convient cependant de faire attention aux
+options acceptant un argument.
+
+Pour la compatibilité avec les différentes versions de Vi, voir
+|cmdline-arguments|.
+
+Parmi les cinq éléments ci-dessous, un et un seul peut être choisi pour
+définir comment lancer l'édition :
+
+							*-file* *---*
+nomfichier	Un ou plusieurs noms de fichiers. Le premier sera le fichier
+		courant et sera lu dans le tampon. Le curseur sera positionné
+		sur la première ligne du tampon.
+		Pour éviter qu'un nom de fichier débutant par un '-' ne soit
+		interprété comme une option, faites précéder la liste des
+		arguments par "--". Par exemple : >
+			vim -- -nomfichier
+<		Tout argument après le "--" sera interprété comme un nom de
+		fichier, aucun argument d'option ni "+{cmd}" ne peut suivre.
+
+							*--*
+-		Cet argument peut signifier deux choses, selon que le mode Ex
+		doive ou non être utilisé.
+
+		Démarrage en mode Normal : >
+			vim -
+			ex -v -
+<		Lance l'édition d'un nouveau tampon, rempli par le texte lu
+		sur stdin. Les commandes devant normalement être lues sur
+		stdin sont maintenant lues sur stderr. Par exemple : >
+			find . -name "*.c" -print | vim -
+<		Le tampon sera considéré comme modifié, car il contient du
+		texte qui doit être enregistré. Ceci aura toujours lieu, sauf
+		en mode lecture seule, par exemple : >
+			ls | view -
+<
+		Démarrage en mode Ex : >
+			ex -
+			vim -e -
+			exim -
+			vim -E
+<		Lance l'édition en mode silencieux. Voir |-s-ex|.
+
+							*-t* *-tag*
+-t {marqueur}	Un marqueur. {marqueur} est recherché dans le fichier de
+		marqueurs, le fichier associé devient le fichier courant, et
+		la commande associée est exécutée. La plupart du temps, c'est
+		utilisé pour les programmes en C, auquel cas {marqueur} est
+		souvent un nom de fonction : le fichier contenant cette
+		fonction est ouvert et le curseur est positionné au début de
+		la fonction (voir |tags|).				["Tag"]
+
+							*-q* *-qf*
+-q [ficherr]	Mode mise-au-point. Le fichier nommé [ficherr] est lu et la
+		première erreur est affichée. Voir |quickfix|.
+		Si [ficherr] est omis, l'option 'errorfile' est utilisée comme
+		nom de fichier. Voir 'errorfile' pour la valeur par défaut.
+		{absent de Vi}					   ["Quickfix"]
+
+(rien)    	Sans aucun des éléments ci-dessus, Vim débutera l'édition d'un
+		nouveau tampon. Il sera vide et n'aura pas de nom de fichier.
+
+
+Le mode de démarrage peut être changé en utilisant un autre nom que "vim", ce
+qui est équivalent à donner des options :
+ex	  vim -e    Démarre en mode Ex (voir |Ex-mode|)		    *ex*
+exim	  vim -E    Démarre en mode Ex amélioré (voir |Ex-mode|)    *exim*
+		       (normalement non installé)
+view	  vim -R    Démarre en mode lecture seule (voir |-R|)	    *view*
+gvim	  vim -g    Lance l'IHM graphique (voir |IHMg|)		    *gvim*
+gex	  vim -eg   Lance l'IHM graphique en mode Ex		    *gex*
+gview	  vim -Rg   Lance l'IHM graphique en mode lecture seule	    *gview*
+rvim	  vim -Z    Comme `vim`, mais en mode restreint (voir |-Z|) *rvim*
+rview	  vim -RZ   Comme `view`, mais en mode restreint	    *rview*
+rgvim	  vim -gZ   Comme `gvim`, mais en mode restreint	    *rgvim*
+rgview	  vim -RgZ  Comme `gview`, mais en mode restreint	    *rgview*
+evim      vim -y    "Easy Vim" : active 'insertmode' (voir |-y|)    *evim*
+eview     vim -yR   Comme `evim`, mais en mode lecture seule	    *eview*
+vimdiff   vim -d    Démarre en mode diff |diff-mode|
+gvimdiff  vim -gd   Démarre en mode diff |diff-mode|
+
+Si des caractères additionnels suivent ces noms, il sont ignorés. Par exemple,
+vous pouvez utiliser "gvim-5" pour lancer l'IHM graphique. Vous devez disposer
+d'un exécutable pour ce nom, bien sûr.
+
+Sous Unix, vous devriez normalement avoir un exécutable nommé "vim", et des
+liens ayant différents noms pour lancer cet exécutable. Si votre système ne
+supporte pas les liens et que vous ne voulez pas avoir plusieurs copies de
+l'exécutable, vous pouvez utiliser des alias à la place. Par exemple : >
+	alias view   vim -R
+	alias gvim   vim -g
+<
+							*startup-options*
+Les arguments d'options peuvent être spécifiés dans n'importe quelle ordre.
+Les options composées d'une seule lettre peuvent être concaténées après un
+tiret. Il ne peut y avoir aucun argument d'option après l'argument "--".
+
+Sur VMS, tous les arguments d'options sont pris en compte comme s'il étaient
+en minuscules, à moins d'être précédés par une oblique ('/'). Ainsi, "-R"
+signifie recouvrement et '-/R' lecture seule.
+
+--help							*-h* *--help*
+-h		Donne le message d'utilisation (aide) et quitte.
+		Voir |info-message| pour capturer le texte.
+		{absent de Vi}
+
+							*--version*
+--version	Affiche les informations de version et quitte. Même sortie que
+		pour la commande |:version|.
+		Voir |info-message| pour capturer le texte.
+		{absent de Vi}
+
+							*--noplugin*
+--noplugin	Ignore le chargement des greffons. Désactive l'option
+		'loadplugins'. {absent de Vi}
+		NOTE : L'argument |-u| peut également empêcher le chargement
+		des greffons :
+			ARGUMENT   FICHIERS VIMRC CHARGÉS   GREFFONS CHARGÉS  ~
+			(aucun)		    oui			  oui
+			-u NONE		    non			  non
+			-u NORC		    non			  oui
+			--noplugin	    oui			  non
+
+							*--literal*
+--literal	Considère les noms de fichiers littéralement, n'étend pas les
+		caractères d'englobement. Inutile sur Unix, car Vim considère
+		toujours les noms de fichiers littéralement (c'est le shell
+		qui étend les jokers).
+		S'applique à tous les noms de fichiers, même ceux qui
+		précèdent cet argument.
+
+							*-+*
++[no]   	Le curseur sera positionné sur la ligne [no] du premier
+		fichier édité. Si [no] est omis, le curseur sera placé sur la
+		dernière ligne.
+
+							*-+/*
++/{motif}   	Le curseur sera positionné sur la première ligne contenant
+		{motif} dans le premier fichier édité (voir |pattern| pour les
+		motifs de recherche disponibles).
+
++{commande}						*-+c* *-c*
+-c {commande}	{commande} sera exécuté après la lecture du premier fichier
+		(et après l'exécution des autocommandes et lignes de mode pour
+		ce fichier). {commande} est interprété comme une commande Ex.
+		Si {commande} contient des espaces, ils doivent être protégés
+		entre doubles-apostrophes (selon le shell utilisé).
+		Par exemple : >
+			vim  "+set si"  main.c
+			vim  "+find stdio.h"
+			vim  -c "set ff=dos"  -c wq  perso.mak
+<
+		NOTE : Vous pouvez cumuler jusqu'à 10 arguments '+' ou "-c"
+		dans une commande `vim`. Il sont exécutés dans l'ordre donné.
+		Un argument "-S" compte comme un argument "-c".
+		{Vi autorise une seule commande}
+
+							*--cmd*
+--cmd {commande}
+		{commande} sera exécuté avant la prise en compte du fichier
+		vimrc. Sinon, se comporte comme "-c {commande}". Vous pouvez
+		utiliser jusqu'à 10 de ces commandes, indépendamment des
+		commandes données par "-c".
+		{absent de Vi}
+
+							*-S*
+-S {fichier}	{fichier} sera sourcé après que le premier fichier aura été
+		lu. C'est un raccourci pour : >
+			-c "source {fichier}"
+<		Il peut être mélangé à des arguments "-c" et répété comme
+		"-c". La limite de 10 arguments "-c" s'applique ici aussi.
+		{fichier} ne peut pas débuter par un '-'.
+		{absent Vi}
+
+-S		Fonctionne comme "-S Session.vim". Uniquement si utilisé comme
+		dernier argument ou quand une autre option '-' suit.
+
+							*-r*
+-r		Mode recouvrement. Sans argument de nom de fichier, une liste
+		des fichiers d'échange existants est donnée. Avec un nom de
+		fichier, un fichier d'échange est lu pour recouvrer une
+		session d'édition qui s'est mal terminée. Voir
+		|crash-recovery|.
+							*-L*
+-L		Comme "-r".
+		{uniquement dans certaines versions de Vi : liste les sessions
+		d'édition recouvrables}
+
+							*-R*
+-R		Mode lecture seule. L'option 'readonly' sera activée pour tous
+		les fichiers édités. Vous pourrez toujours éditer le tampon,
+		mais il sera protégé contre un écrasement accidentel. Si vous
+		avez oublié que vous êtes en mode Vue et que vous faites des
+		modifications, vous pouvez tout de même les enregistrer en
+		ajoutant un '!' juste après la commande Ex, comme dans ":w!".
+		L'option 'readonly' peut être désactivée avec ":set noro"
+		(voir le chapitre sur les options, |options|). Les éditions
+		suivantes ne se feront plus en mode lecture seule. Lancer
+		l'exécutable `view` a le même effet que l'argument "-R".
+		L'option 'updatecount' sera fixée à 10000, espaçant ainsi les
+		écritures automatiques du fichier d'échange.	  ["Read-only"]
+
+							*-m*
+-m		Les modifications ne peuvent pas être écrites. L'option
+		'write' sera désactivée afin d'interdire l'enregistrement.
+		Toutefois, il est possible de réactiver l'option 'write' pour
+		autoriser l'écriture.
+		{absent de Vi}
+
+							*-M*
+-M		Les modifications ne sont pas autorisées. L'option
+		'modifiable' sera désactivée afin d'interdire tout changement.
+		L'option 'write' sera désactivée afin d'interdire
+		l'enregistrement. Toutefois, il est possible de réactiver les
+		options 'modifiable' et 'write' pour autoriser la modification
+		et l'écriture.
+		{absent de Vi}
+
+						*-Z* *restricted-mode* *E145*
+-Z		Mode restreint. Toutes les commandes qui utilisent un shell
+		externe sont interdites. Ceci inclut des commandes telles que
+		CTRL-Z (suspendre), ":sh", les filtres, la fonction system(),
+		l'expansion de contre-apostrophes, etc.
+		{absent de Vi}
+
+							*-g*
+-g		Lance Vim en mode IHM graphique. Voir |gui|.
+		{absent de Vi}
+
+							*-v*
+-v		Lance Ex en mode Vi. Diffère uniquement lorsque l'exécutable
+		est appelé "ex" ou "gvim". Pour "gvim", l'IHM graphique n'est
+		pas lancée si possible.
+
+							*-e*
+-e		Lance Vim en mode Ex |Q|. Diffère uniquement si l'exécutable
+		n'est pas nommé "ex".
+
+							*-E*
+-E		Lance Vim en mode Ex amélioré |gQ|. Diffère uniquement si
+		l'exécutable n'est pas nommé "exim".
+		{absent de Vi}
+
+							*-s-ex*
+-s		Mode silencieux, ou non interactif. Uniquement lorsque Vim est
+		lancé avec `ex` ou précédé par l'argument "-e". Sinon, voir
+		|-s|. À utiliser lorsque Vim doit exécuter des commandes Ex
+		depuis un fichier plutôt que depuis le terminal. La plupart
+		des invites et messages informatifs seront désactivés ; mais
+		pas les messages d'erreurs et d'avertissements, ni la sortie
+		des commandes affichant du texte, comme ":print" et ":list".
+		Seules les initialisations spécifiées avec l'argument "-u"
+		seront prises en compte, les autres étant ignorées.
+
+							*-b*
+-b		Mode binaire. Les E/S vers le fichier accepteront uniquement
+		<NL> comme séparateur de lignes. Les options 'expandtab' et
+		'textwidth' sont remises à zéro. L'option 'binary' est
+		activée. Ceci est fait après avoir lu le fichier vimrc/exrc
+		mais avant de lire n'importe quel fichier de la liste
+		d'arguments. Voir aussi |edit-binary|.
+		{absent de Vi}
+
+							*-l*
+-l		Mode Lisp. Active les options 'lisp' et 'showmatch'.
+
+							*-A*
+-A		Mode arabe. Active l'option 'arabic'.
+		{absent Vi} {uniquement si compilé avec la fonctionnalité
+		|+arabic| (qui inclut |+rightleft|), sinon Vim quitte en
+		émettant un message d'erreur}
+
+							*-F*
+-F		Mode farsi. Active les options 'fkmap' et 'rightleft'.
+		{absent Vi} {uniquement si compilé avec les fonctionnalités
+		|+rightleft| et |+farsi|, sinon Vim quitte en émettant un
+		message d'erreur}
+
+							*-H*
+-H		Mode hébreu. Active les options 'hkmap' et 'rightleft'.
+		{absent de Vi} {uniquement si compilé avec la fonctionnalité
+		|+rightleft|, sinon Vim quitte en émettant un message
+		d'erreur}
+
+							*-V* *verbose*
+-V[N]		Verbeux. Fixe l'option 'verbose' à N (10 par défaut). Des
+		messages seront émis pour chaque fichier chargé par ":source"
+		et pour chaque lecture ou écriture du fichier viminfo. Peut
+		être utilisé pour déterminer ce qui est fait au démarrage ou
+		lorsqu'on quitte.
+		{absent de Vi}
+
+							*-D*
+-D		Débogage. Lance le mode débogage lors de l'exécution de la
+		première commande d'un script. |debug-mode|
+		{absent de Vi} {uniquement si compilé avec la fonctionnalité
+		|+eval|}
+
+							*-C*
+-C		Mode compatible. Active l'option 'compatible'. Vous pouvez
+		l'utiliser pour être compatible Vi, même en présence d'un
+		fichier vimrc. La commande ":set nocompatible" permet de toute
+		manière de la désactiver. Voir aussi |compatible-default|.
+		{absent de Vi}
+
+							*-N*
+-N		Mode non compatible. Désactive l'option 'compatible'. Vous
+		pouvez l'utiliser pour être non compatible Vi, lorsqu'il n'y a
+		pas de fichier vimrc. Voir aussi |compatible-default|.
+		{absent de Vi}
+
+							*-y* *easy*
+-y		Mode facile. Implicite avec |evim| et |eview|. Démarre avec
+		'insertmode' activé et se comporte comme un éditeur de type
+		cliquer-taper. Le script "$VIMRUNTIME/evim.vim" est sourcé.
+		Des mappages sont définis pour fonctionner comme dans la
+		plupart des éditeurs cliquer-taper, voir |evim-keys|. L'IHM
+		graphique est lancée si elle est disponible.
+		{absent de Vi}					       ["easY"]
+
+							*-n*
+-n		Aucun fichier d'échange ne sera utilisé. Aucun recouvrement ne
+		sera possible après un plantage. Utile si vous souhaitez voir
+		ou éditer un fichier sur un périphérique très lent (p. ex.,
+		une disquette).
+		Ceci peut également être fait par ":set updatecount=0". Vous
+		pourrez le rétablir à nouveau en fixant l'option 'updatecount'
+		à une valeur non-nulle, p. ex., ":set uc=100".
+		'updatecount' est fixé à 0 APRÈS avoir l'exécution des
+		commandes du fichier vimrc, mais avant les initialisations de
+		l'IHM graphique. Ainsi, il recouvre la valeur de 'updatecount'
+		du fichier vimrc, mais pas celle du fichier gvimrc. Voir
+		|startup|.
+		Si vous voulez réduire les accès au disque (p. ex., pour un
+		portable), n'utilisez pas "-n", mais fixez plutôt 'updatetime'
+		et 'updatecount' à des nombres très grands et tapez
+		":preserve" lorsque vous souhaitez enregistrer votre travail.
+		Vous vous ménagez ainsi la possibilité d'un recouvrement après
+		plantage.
+		{absent de Vi}
+
+							*-o*
+-o[N]		Ouvre N fenêtres, en partageant horizontalement. Si N est
+		omis, une fenêtre est ouverte pour chaque fichier donné en
+		argument. S'il n'y a pas assez de place, seuls les premiers
+		fichiers obtiennent une fenêtre. S'il y a plus de fenêtres que
+		de fichiers en argument, les dernières fenêtres éditeront un
+		fichier vide.
+		{absent de Vi}
+
+							*-O*
+-O[N]		Ouvre N fenêtres, en partageant verticalement. Sinon, comme
+		"-o".
+		Si les arguments "-o" et "-O" sont donnés tous deux, c'est le
+		dernier sur la ligne de commande qui est pris en compte.
+		{absent de Vi}
+
+							*-T*
+-T {terminal}	Fixe le type du terminal à {terminal}. Cela influence les
+		codes que Vim enverra au terminal. En principe, ce n'est pas
+		nécessaire, car Vim est capable de déterminer le type de
+		terminal utilisé (voir |terminal-info|).
+		{absent de Vi}
+
+							*-d*
+-d		Démarre en mode diff, comme |vimdiff|.
+		{absent de Vi} {uniquement si compilé avec la fonctionnalité
+		|+diff|}
+
+-d {periph}	Uniquement sur Amiga et lorsque non compilé avec la
+		fonctionnalité |+diff|. Fonctionne comme "-dev".
+							*-dev*
+-dev {periph}	Amiga uniquement : le {periph}érique est ouvert pour être
+		utilisé pour l'édition.
+		Normalement, vous utiliseriez ceci pour fixer la position et
+		la taille de la fenêtre : "-d con:x/y/largeur/hauteur",
+		p. ex., "-d con:30/10/600/150". Mais vous pouvez également
+		l'utiliser pour lancer l'édition sur un autre périphérique,
+		p. ex., "AUX:".
+		{absent de Vi}					     ["DEVice"]
+
+							*-f*
+-f		Amiga : ne pas relancer Vim pour ouvrir une nouvelle fenêtre.
+		Cette option est utile lorsque Vim est lancé par un programme
+		qui attend que la session d'édition se termine (p. ex., `mail`
+		ou `readnews`). Voir |amiga-window|.
+
+		IHM graphique : ne pas se déconnecter du programme qui a lancé
+		Vim. Si omis, l'IHM graphique lance un nouveau processus et
+		quitte celui en cours. Cette option est utile lorsque Vim est
+		lancé par un programme qui attend que la session d'édition se
+		termine (p. ex., `mail` ou `readnews`). Si vous voulez que
+		gvim ne se déconnecte jamais, ajoutez le drapeau 'f' à
+		'guioptions' dans votre fichier gvimrc.
+		Attention : Vous pouvez utiliser '-gf' pour lancer l'IHM
+		graphique au premier plan, mais '-fg' est utilisé pour
+		modifier la couleur du premier plan. Voir |gui-fork|.
+		{absent de Vi}					 ["Foreground"]
+							*--nofork*
+--nofork	IHM graphique : ne pas fourcher. Identique à |-f|.
+
+							*-u* *E282*
+-u {vimrc}	Le fichier {vimrc} est lu pour les initialisations. La plupart
+		des autres initialisations sont sautées |initialization|. Cela
+		peut être utilisé pour lancer Vim dans un mode spécial, avec
+		des mappages ou des paramètres spéciaux. Un alias depuis le
+		shell peut alors être pratique. Par exemple : >
+			alias vimc vim -u ~/.c_vimrc !*
+<		Vous pouvez aussi utiliser des |autocommand|es.
+		Si {vimrc} vaut "NONE" (en majuscules), toutes les
+		initialisations des fichiers et variables d'environnement sont
+		sautées, y compris la lecture du fichier gvimrc au lancement
+		de l'IHM graphique. Les greffons ne sont pas chargés non plus.
+		Si {vimrc} vaut "NORC" (en majuscules), l'effet est le même
+		que pour "NONE", mais le chargement des greffons est effectué.
+		L'utilisation de l'argument "-u" entraîne par défaut
+		l'activation de l'option 'compatible'. Cela peut avoir des
+		effets de bord inattendus. Voir |'compatible'|.
+		{absent de Vi}					  ["User file"]
+
+							*-U* *E230*
+-U {gvimrc}	Le fichier {gvimrc} est lu pour les initialisations lorsque
+		l' IHM graphique est lancée. Les autres initialisations pour
+		l'IHM graphique sont sautées. Si {gvimrc} vaut "NONE", aucun
+		fichier n'est lu pour les initialisations.
+		Exception : la lecture du fichier des menus du système est
+		toujours faite.
+		{absent de Vi}
+
+							*-i*
+-i {viminfo}	Le fichier {viminfo} est utilisé à la place du fichier viminfo
+		par défaut. Si le nom "NONE" (en majuscules) est précisé,
+		aucun fichier viminfo n'est lu ni écrit, même si 'viminfo' est
+		fixé ou que les commandes ":rv" ou ":wv" sont utilisées. Voir
+		aussi |viminfo-file|.
+		{absent de Vi}
+
+							*-x*
+-x		Utilise un chiffrement pour lire/écrire des fichiers. Invitera
+		à saisir une clé, stockée par la suite dans l'option 'key'.
+		Toutes les écritures utiliseront ensuite cette clé pour
+		chiffrer le texte. L'argument "-x" n'est pas nécessaire lors
+		de la lecture d'un fichier, car un test est effectué afin de
+		déterminer si le fichier lu a été chiffré, auquel cas Vim
+		demande automatiquement la clé. |encryption|
+
+							*-X*
+-X		N'essaie pas de se connecter au serveur X pour obtenir le
+		titre de la fenêtre courante et pouvoir copier/coller avec le
+		presse-papiers X. Cela évite un temps de démarrage plus long
+		lorsque Vim est lancé dans un émulateur de terminal et que la
+		connexion au serveur X est lente.
+		Cet argument n'est pris en compte que sur Unix ou VMS lorsque
+		Vim a été compilé avec la fonctionnalité |+X11|. Sinon, il est
+		ignoré.
+		Pour annuler la connexion sur certains terminaux seulement,
+		voir l'option 'clipboard'.
+		Lorsque Vim a été compilé avec le protocole de gestion de
+		session X11 (XSMP), l'option "-X" désactive aussi cette
+		connexion car elle peut se révéler lente.
+		{absent de Vi}
+
+							*-s*
+-s {script-E}	Le fichier de script {script-E} est lu. Les caractères qu'il
+		contient sont interprétés comme si vous veniez de les taper.
+		Cela équivaut à exécuter la commande ":source {script-E}". Si
+		la fin du fichier est atteinte avant de quitter l'éditeur, des
+		caractères supplémentaires seront lus depuis le clavier.
+		Fonctionne uniquement si Vim n'est pas lancé en mode Ex,
+		voir |-s-ex|. Voir aussi |complex-repeat|.
+		{absent de Vi}
+
+							*-w*
+-w {script-S}	Tous les caractères que vous tapez sont écrits dans le fichier
+		{script-S}, jusqu'à ce que vous quittiez Vim. Cela est utile
+		si vous souhaitez créer un fichier de script à utiliser avec
+		`vim -s` ou ":source!". Si le fichier {script-S} existe déjà,
+		les nouveaux caractères y sont ajoutés. Voir aussi
+		|complex-repeat|.
+		{absent de Vi}					      ["Write"]
+
+							*-W*
+-W {script-S}	Comme "-w", mais écrase un fichier existant (n'y ajoute pas).
+		{absent de Vi}
+
+							*-w_nr*
+-w{nombre}	Ne fait rien ; présent pour des raisons de compatibilité Vi.
+		Dans Vi, fixe l'option 'window', qui n'est pas présente dans
+		Vim.
+
+--remote [+{cmd}] {fichier} ...
+		Ouvre le {fichier} dans un autre Vim qui fonctionne en tant
+		que serveur. Tout autre argument qu'un fichier doit être
+		spécifié avant celui-ci.
+		Voir |--remote|. {absent de Vi}
+
+--remote-silent [+{cmd}] {fichier} ...
+		Comme --remote, mais n'émet pas de message s'il n'y a pas de
+		serveur.
+		Voir |--remote-silent|. {absent de Vi}
+
+--remote-wait [+{cmd}] {fichier} ...
+		Comme --remote, mais attend que le serveur ait fini d'éditer
+		le(s) fichier(s).
+		Voir |--remote-wait|. {absent de Vi}
+
+--remote-wait-silent [+{cmd}] {fichier} ...
+		Comme --remote-wait, mais n'émet pas de message s'il n'y a pas
+		de serveur.
+		Voir |--remote-wait-silent|. {absent de Vi}
+
+--servername {nom}
+		Spécifie le nom du serveur Vim avec lequel communiquer, ou le
+		nom à prendre.
+		Voir |--servername|. {absent de Vi}
+
+--remote-send {sequence}
+		Envoie la {sequence} clavier à un serveur Vim et quitte.
+		Voir |--remote-send|. {absent de Vi}
+
+--remote-expr {expr}
+		Évalue {expr} dans un autre Vim qui fonctionne en tant que
+		serveur. Le résultat est affiché sur la sortie standard.
+		Voir |--remote-expr|. {absent de Vi}
+
+--serverlist	Donne une liste des noms de serveurs Vim et quitte.
+		Voir |--serverlist|. {absent de Vi}
+
+							*--socketid*
+--socketid {ID}	IHM graphique GTK+ uniquement : gvim essaie d'utiliser le
+		mécanisme GtkPlug, afin de fonctionner dans une autre fenêtre.
+		Voir |gui-gtk-socketid| pour les détails.
+		{absent de Vi}
+
+							*--echo-wid*
+--echo-wid	IHM graphique GTK+ uniquement : fait afficher à gvim
+		l'identifiant de la fenêtre sur stdout, ce qui peut être
+		utilisé pour lancer gvim dans une brique d'interface KPart. Le
+		format de sortie est :
+			WID: 12345\n ~
+		{absent de Vi}					  ["Window ID"]
+
+							*--role*
+--role {role}	IHM graphique GTK+ 2 uniquement : définit le {role} de la
+		fenêtre principale. Le rôle d'une fenêtre permet à un
+		gestionnaire de fenêtres de l'identifier de façon unique, afin
+		par exemple de pouvoir restituer le placement de cette
+		fenêtre. The --role argument is passed automatically when
+		restoring the session on login XXX. Voir |gui-gnome-session|.
+		{absent de Vi}
+
+-nb							*-nb*
+-nb:{hote}:{port}:{motpasse}
+		Essaie de se connecter à NetBeans et d'en devenir un éditeur
+		externe. La seconde forme spécifie le nom d'hôte, le port et
+		le mot de passe pour se connecter à NetBeans.
+		Voir |netbeans-run|.
+
+
+Exemple d'utilisation d'un fichier de script pour remplacer un nom dans
+plusieurs fichiers :
+1. Créez un fichier "subs.vi" contenant les commandes de substitutions,
+   suivies de la commande ":wq" : >
+	:%s/Jean/Paul/g
+	:%s/Marc/Luc/g
+	:wq
+2. Exécutez Vim sur tous les fichiers que vous souhaitez modifier : >
+	foreach i ( *.let ) vim -s subs.vi $i
+
+Si l'exécutable est appelé "view", Vim démarrera en mode lecture seule. C'est
+utile si vous pouvez créer un lien symbolique ou physique de "view" vers
+`vim`. Le démarrage en mode lecture seule peut aussi être fait par `vim -R`.
+
+Si l'exécutable est appelé "ex", Vim démarrera en mode Ex. C'est-à-dire qu'il
+acceptera uniquement les commandes ":". Mais si l'argument "-v" est donné, Vim
+démarrera en mode Normal de toute façon.
+
+Des arguments supplémentaires sont disponibles sur les systèmes Unix si le
+support de l'IHM graphique X11 a été compilé. Voir |gui-resources|.
+
+==============================================================================
+2. Vim sur Amiga					*starting-amiga*
+XXX Cette section est à revoir (avec un amigaïste ?)
+LANCER VIM DEPUIS LE BANC DE TRAVAIL			*workbench*
+
+Vim peut être lancé depuis le banc de travail ["workbench"] en double-cliquant
+sur son icône. Il démarrera alors avec un tampon vide.
+
+Vim peut être lancé pour éditer un ou plusieurs fichiers en utilisant une
+icône "Project". Le "Default Tool" de l'icône doit être le nom de chemin
+complet de l'exécutable Vim. Le nom du fichier ".info" doit être le même que
+le nom du fichier texte. En double-cliquant sur cette icône, Vim sera lancé
+avec le nom du fichier comme nom de fichier courant, et celui-ci sera lu dans
+le tampon (s'il existe). Vous pouvez éditer plusieurs fichiers en cliquant sur
+les icônes tout en maintenant la touche Maj enfoncée, sans oublier de
+double-cliquer sur la dernière. Le "Default Tool" pour toutes ces icônes doit
+être le même.
+
+Il n'est pas possible de donner des arguments à Vim, autres que des noms de
+fichiers, depuis le banc de travail.
+
+
+LA FENÊTRE VIM						*amiga-window*
+
+Vim s'exécutera dans la fenêtre CLI où il a été lancé. Si Vim a été lancé avec
+la commande `run` ou `runback`, ou si Vim a été lancé depuis le banc de
+travail, il ouvrira une fenêtre lui-même.
+
+Détails techniques :
+	Pour ouvrir la nouvelle fenêtre, une petite astuce est utilisée. Dès
+	que Vim détecte qu'il ne fonctionne pas dans une fenêtre CLI normale,
+	il créera un fichier de script dans "t:". Ce script contient la même
+	commande que celle avec laquelle Vim a été lancé, ainsi qu'une
+	commande `endcli`. Ce script est ensuite exécuté avec une commande
+	`newcli` (les commandes `c:run` et `c:newcli` sont nécessaires pour
+	que cela fonctionne). Le fichier de script restera présent jusqu'au
+	prochain redémarrage, ou jusqu'à ce que vous le supprimiez. Cette
+	méthode est nécessaire pour que les commandes ":sh" et ":!"
+	fonctionnent correctement. Mais quand Vim a été lancé avec l'option
+	"-f" (au premier plan), cette méthode n'est pas utilisée. La raison
+	pour cela est que quand un programme lance Vim avec l'option "-f", il
+	attendra que Vim se termine. Or avec l'astuce du script, le programme
+	d'appel ignore quand Vim se termine. L'option "-f" peut être utilisée
+	quand Vim est appelé par un lecteur de courriel, qui attend également
+	que la session d'édition se termine. Cela aura comme conséquence de
+	rendre les commandes ":sh" et ":!" indisponibles quand l'option "-f"
+	est utilisée.
+
+Vim détectera automatiquement la taille de la fenêtre et réagira au
+redimensionnement de la fenêtre. Sous Amiga DOS 1.3, il est conseillé
+d'utiliser le programme `fastfonts`, "FF", pour accélérer le rafraîchissement
+de l'affichage.
+
+==============================================================================
+3. Utiliser eVim					*evim-keys*
+
+"Easy Vim" [« Vim facile »] permet d'utiliser Vim comme un éditeur
+cliquer-taper. C'est plutôt contraire à l'esprit original de Vi. Mais cela
+peut aider ceux qui n'utilisent pas suffisamment Vim pour en retenir
+les commandes. Avec un peu de chance, ils découvriront qu'en apprenant
+l'utilisation des commandes du mode Normal, ils seront beaucoup plus efficaces
+dans leur édition.
+
+Dans eVim, ces options sont modifiées par rapport à leurs valeurs par défaut :
+	:set nocompatible	utilise les améliorations de Vim
+	:set insertmode		reste en mode Insertion la plupart du temps
+	:set hidden		garde les tampons invisibles chargés
+	:set backup		garde des fichiers de sauvegarde (pas sur VMS)
+	:set backspace=2	le retour arrière dans tous les contextes
+	:set autoindent		auto-indentation des nouvelles lignes
+	:set history=50		conserve 50 lignes de commandes Ex
+	:set ruler		affiche la position du curseur
+	:set incsearch		montre les correspondances pendant la saisie
+				   du motif de recherche
+	:set mouse=a		utilise la souris dans tous les modes
+	:set hlsearch		met en surbrillance toutes les occurrences
+				   d'un motif de recherche
+	:set whichwrap+=<,>,[,] <Gauche> et <Droite> ne s'arrêtent pas aux
+				   coupures de lignes
+	:set guioptions-=a	non-Unix uniquement : pas d'auto-sélection
+
+Ces touches sont mappées :
+	<Bas>		déplace par lignes d'écran plutôt que de fichier
+	<Haut>		idem
+	Q		met en forme comme "gq", au lieu de passer en mode Ex
+	<RetArr>	en mode Visuel : supprime la sélection
+	CTRL-X		en mode Visuel : coupe dans le presse-papiers
+	<S-Suppr>	idem
+	CTRL-C		en mode Visuel : copie dans le presse-papiers
+	<C-Inser>	idem
+	CTRL-V		colle depuis le presse-papiers (dans tous les modes)
+	<S-Inser>	idem
+	CTRL-Q		fait ce que CTRL-V fait par défaut
+	CTRL-Z		annule
+	CTRL-Y		restaure
+	<M-Espace>	menu système
+	CTRL-A		sélectionne tout
+	<C-Tab>		fenêtre suivante, comme "CTRL-W w"
+	<C-F4>		ferme la fenêtre, comme "CTRL-W c"
+
+Et de plus :
+- ":behave mswin" est utilisé, voir |:behave| ;
+- la coloration syntaxique est activée ;
+- la détection des types de fichiers est activée, les greffons de types de
+  fichiers et d'indentation sont activés ;
+- dans un fichier texte, 'textwidth' est fixé à 78.
+
+Conseil : Si vous souhaitez passer en mode Normal pour pouvoir taper une
+séquence de commandes, utilisez CTRL-L. |i_CTRL-L|
+
+==============================================================================
+4. Initialisation				    *initialization* *startup*
+
+Cette section concerne la version non-IHM-graphique de Vim. Voir |gui-fork|
+pour les initialisations supplémentaires lors du lancement de l'IHM graphique.
+
+Au démarrage, Vim passe en revue les variables et les fichiers de
+l'environnement, et fixe ses paramètres en conséquence. Vim procède dans cet
+ordre :
+
+1° Fixer les options 'shell' et 'term'		    *SHELL* *COMSPEC* *TERM*
+	La variable d'environnement $SHELL, si elle existe, est utilisée pour
+	fixer l'option 'shell'. Sur MS-DOS et Win32, la variable $COMPSPEC XXX
+	est utilisée si $SHELL n'est pas définie.
+	La variable d'environnement $TERM, si elle existe, est utilisée pour
+	fixer l'option 'term'.
+
+2° Traiter les arguments
+	Les options et noms de fichiers de la commande qui lance Vim sont
+	examinés. Des tampons sont créés pour tous les fichiers (mais pas
+	encore chargés).
+
+3° Exécuter les commandes Ex des variables et/ou fichiers d'environnement
+	Une variable d'environnement est lue comme une ligne de commande Ex,
+	où plusieurs commandes doivent être séparées par '|' ou <NL>.
+							*vimrc* *exrc*
+	Un fichier contenant des commandes d'initialisation est appelé un
+	fichier « vimrc ». Chaque ligne de ce fichier est exécutée comme une
+	ligne de commande Ex. On parle aussi parfois de fichier « exrc ».
+	C'est le même type de fichier, mais "exrc" est aussi utilisé par Vi,
+	tandis que "vimrc" est spécifique à Vim. Voir aussi |vimrc-intro|.
+
+	Emplacements recommandés pour vos initialisations personnelles :
+		Unix		    $HOME/.vimrc
+		OS/2		    $HOME/.vimrc ou $VIM/.vimrc (ou _vimrc)
+		MS-DOS et Win32     $HOME/_vimrc ou $VIM/_vimrc
+		Amiga		    s:.vimrc ou $VIM/.vimrc
+
+	Si Vim a été lancé avec "-u nomfichier", le fichier "nomfichier" est
+	utilisé. Toutes les initialisations suivantes jusqu'à 5° sont
+	ignorées. Vous pouvez utiliser `vim -u NONE` pour ignorer ces
+	initialisations. Voir |-u|.
+
+	Si Vim a été lancé en mode Ex avec l'argument "-s", toutes les
+	initialisations suivantes jusqu'à 4° sont ignorées. Seule l'option
+	"-u" est interprétée.
+							*evim.vim*
+     a. Si Vim a été lancé en tant que |evim| ou |eview|, ou avec l'argument
+	|-y|, le script "$VIMRUNTIME/evim.vim" sera chargé.
+							*system-vimrc*
+     b. Sur Unix, MS-DOS, MS-Windows, OS/2, VMS, Macintosh, RISC OS et Amiga,
+	le fichier vimrc du système est lu pour les initialisations.
+	L'emplacement de ce fichier est donné par la commande ":version". En
+	général, il s'agit de "$VIM/vimrc".
+	NOTE : Ce fichier est TOUJOURS lu en mode 'compatible', puisque la
+	désactivation automatique de 'compatible' n'est faite que plus tard.
+	Ajoutez une commande ":set nocp" si vous le souhaitez.
+
+			  *VIMINIT* *.vimrc* *_vimrc* *EXINIT* *.exrc* *_exrc*
+     c. Quatre emplacements sont recherchés pour les initialisations. Le
+	premier trouvé est utilisé, les autres sont ignorés.
+	- La variable d'environnement $VIMINIT (voir |compatible-default|). (*)
+	- Le(s) fichier(s) vimrc de l'utilisateur :
+		    "$HOME/.vimrc"	(sur Unix et OS/2) (*)
+		    "s:.vimrc"		(sur Amiga) (*)
+		    "home:.vimrc"	(sur Amiga) (*)
+		    "$VIM/.vimrc"	(sur OS/2 et Amiga) (*)
+		    "$HOME/_vimrc"	(sur MS-DOS et Win32) (*)
+		    "$VIM\_vimrc"	(sur MS-DOS et Win32) (*)
+		NOTE : Pour Unix, OS/2 et Amiga, si ".vimrc" n'existe pas,
+		"_vimrc" est aussi essayé, pour le cas où un système de
+		fichiers compatible MS-DOS est utilisé. Pour MS-DOS et Win32,
+		".vimrc" est essayé avant "_vimrc", au cas où des noms de
+		fichiers longs sont utilisés.
+		NOTE : Pour MS-DOS et Win32, "$HOME" est d'abord testé. Si ni
+		"_vimrc" ni ".vimrc" n'est trouvé, "$VIM" est testé. Voir
+		|$VIM| pour quand $VIM n'est pas défini.
+	- La variable d'environnement $EXINIT.
+	- Le(s) fichier(s) exrc de l'utilisateur. Comme pour le fichier vimrc
+	  de l'utilisateur, sauf que "vimrc" est remplacé par "exrc". Mais
+	  sans le (*) !
+
+     d. Si l'option 'exrc' est activée (elle ne l'est pas par défaut), quatre
+	fichiers sont recherchés dans le répertoire courant. Le premier trouvé
+	est utilisé, les autres sont ignorés.
+	- Le fichier ".vimrc" (sur Unix, Amiga et OS/2) (*)
+	             "_vimrc" (sur MS-DOS et Win32) (*)
+	- Le fichier "_vimrc" (sur Unix, Amiga et OS/2) (*)
+	             ".vimrc" (sur MS-DOS et Win32) (*)
+	- Le fichier ".exrc" (sur Unix, Amiga et OS/2)
+	             "_exrc" (sur MS-DOS et Win32)
+	- Le fichier "_exrc" (sur Unix, Amiga et OS/2)
+		     ".exrc" (sur MS-DOS et Win32)
+
+     (*) L'utilisation de ce fichier ou de cette variable d'environnement
+	 désactivera 'compatible' par défaut. Voir |compatible-default|.
+
+4° Charger les scripts de greffons			*load-plugins*
+	Cela revient à effectuer la commande : >
+		:runtime plugin/*.vim
+<	Tous les sous-répertoires "plugin" des répertoires dans 'runtimepath'
+	seront recherchés, et tous les fichiers d'extension ".vim" seront
+	sourcés (dans l'ordre alphabétique par répertoires).
+	Le chargement des greffons n'aura pas lieu si :
+	- l'option 'loadplugins' a été désactivée dans un fichier vimrc ;
+	- l'argument de commande |--noplugin| a été utilisé ;
+	- l'argument de commande "-u NONE" a été utilisé |-u| ;
+	- Vim a été compilé sans la fonctionnalité |+eval|.
+	NOTE : L'utilisation de "-c set noloadplugins" ne fonctionne pas, car
+	les commandes de la ligne de commande n'ont pas encore été exécutées à
+	ce stade.
+
+5° Fixer 'shellpipe' et 'shellredir'
+	Les options 'shellpipe' et 'shellredir' sont fixées selon la valeur de
+	l'option 'shell', à moins qu'elles n'aient déjà été fixées avant.
+	Cela signifie que Vim déterminera 'shellpipe' et 'shellredir' pour
+	vous, à moins que vous ne le fassiez vous-même.
+
+6° Fixer 'updatecount' à zéro, si l'argument de commande "-n" est utilisé
+
+7° Fixer les options pour l'édition binaire
+	Si l'argument "-b" a été donné à Vim, les options pour l'édition
+	binaire seront fixées maintenant. Voir |-b|.
+
+8° Traiter les initialisations pour l'IHM graphique
+	Uniquement si lancé avec `gvim`, les initialisations pour l'IHM
+	graphique seront faites maintenant. Voir |gui-init|.
+
+9° Lire le fichier viminfo
+	Si l'option 'viminfo' n'est pas vide, le fichier viminfo est lu.
+	Voir |viminfo-file|.
+
+10° Lire le fichier d'erreurs
+	Si l'argument "-q" a été donné à Vim, le fichier d'erreurs est lu. En
+	cas d'échec, fait quitter Vim.
+
+11° Ouvrir toutes les fenêtres
+	Si l'argument de commande |-o| a été donné, les fenêtres seront
+	ouvertes (mais pas encore affichées).
+	Quand vous changez d'écran, cela survient immédiatement. Le
+	rafraîchissement commence.
+	Si l'argument "-q" à été donné à Vim, on saute à la première erreur.
+	Les tampons pour toutes les fenêtres seront chargés.
+
+12° Exécuter les commandes de démarrage
+	Si l'argument "-t" a été donné à Vim, saute au marqueur.
+	Les commandes données avec les arguments |-c| et |+cmd| sont
+	exécutées.
+	Si l'option 'insertmode' est activée, entre en mode Insertion.
+	Les autocommandes |VimEnter| sont exécutées.
+
+
+CONSEILS D'UTILISATION POUR LES INITIALISATIONS
+
+Configuration globale
+---------------------
+Créez un fichier vimrc pour fixer les paramètres et mappages pour toutes vos
+sessions d'édition. Placez-le dans l'un des endroits répertoriés en 3° c. :
+	~/.vimrc	(Unix et OS/2)
+	s:.vimrc	(Amiga)
+	$VIM\_vimrc	(MS-DOS et Win32)
+NOTE : La création d'un fichier vimrc entraînera la désactivation de l'option
+'compatible' par défaut. Voir |compatible-default|.
+
+Configuration locale
+--------------------
+Placez toutes les commandes dont vous avez besoin pour éditer les fichiers
+situés dans un répertoire particulier dans un fichier vimrc, et placez-le dans
+ce répertoire sous le nom ".vimrc" ("_vimrc" pour MS-DOS et Win32). NOTE :
+Pour que Vim prenne en compte ces fichiers locaux, vous devez activer l'option
+'exrc'. Voir aussi |trojan-horse|.
+
+Configuration sur tout un système
+---------------------------------
+Cela vous concerne uniquement si vous administrez un système Unix
+multi-utilisateurs et que vous souhaitez fixer des paramètres par défaut pour
+tous les utilisateurs. Créez un fichier vimrc contenant les paramètres et
+mappages par défaut et placez-le à l'endroit donné par la commande ":version".
+
+Sauvegarder l'état courant de Vim dans un fichier
+-------------------------------------------------
+À partir du moment ou vous avez modifié des options ou créé un mappage, vous
+pouvez désirer les enregistrer dans un fichier vimrc pour les réemployer
+ultérieurement. Voir |save-settings| à propos de la sauvegarde de l'état
+courant de la configuration dans un fichier.
+
+Éviter les problèmes de configuration pour les utilisateurs de Vi
+-----------------------------------------------------------------
+Vi utilise la variable $EXINIT et le fichier "~/.exrc". Si vous ne voulez pas
+créer de conflit avec Vi, utilisez la variable $VIMINIT et le fichier vimrc à
+la place.
+
+Les variables d'environnement Amiga
+-----------------------------------
+Sur Amiga, deux types de variables d'environnement existent. Celles fixées
+avec la commande `setenv` du DOS v. 1.3 (ou supérieure) sont reconnues. Voir
+le Manuel d'AmigaDOS 1.3. Les variables d'environnement fixées avec la vieille
+commande Manx `Set` (avant la version 5.0) ne sont pas supportées.
+
+Séparateurs de ligne MS-DOS
+---------------------------
+Sur des systèmes MS-DOS et apparentés (Win32 et OS/2), Vim suppose que tous
+les fichiers vimrc utilisent une séquence <CR><NL> comme séparateur de ligne.
+Cela posera des problèmes si vous avez un fichier avec seulement des <NL>, et
+une ligne comme ":map xx yy^M". Le ^M sera alors ignoré.
+
+							*compatible-default*
+Au démarrage, l'option 'compatible' est activée. Elle sera utilisée lorsque
+Vim commence ses initialisations. Mais dès qu'un fichier vimrc (global ou
+local) est trouvé ou que la variable d'environnement $VIMINIT est fixée, elle
+sera fixée à 'nocompatible'. Cela a comme effet de bord de modifier d'autres
+options (voir 'compatible') ; mais seules celles qui n'ont pas été fixées ou
+(dés)activées seront changées. L'effet est le même que si 'compatible' avait
+cette valeur depuis le démarrage de Vim.
+   NOTE : Ceci ne s'applique pas pour le fichier vimrc du système.
+
+Mais il y a un autre effet de bord à activer ou désactiver 'compatible' au
+moment où un fichier vimrc est trouvé : les mappages sont interprétés
+lorsqu'ils sont rencontrés. Cela fait une différence quand on utilise des
+choses comme "<CR>". Si le mappage dépend de la valeur de 'compatible',
+activez ou désactivez-en la valeur avant de donner le mappage.
+
+Le comportement ci-dessus peut être contourné de plusieurs façons :
+- Si l'argument d'option "-N" est donné, 'nocompatible' sera utilisé, même si
+  aucun fichier vimrc n'existe.
+- Si l'argument d'option "-C" est donné, 'compatible' sera utilisé, même si un
+  fichier vimrc existe.
+- Si l'argument "-u {vimrc}" est donné, 'compatible' sera utilisé.
+- Si le nom de l'exécutable se termine par « ex », cela se passe comme si
+  l'argument "-C" était donné : 'compatible' sera utilisé, même si un fichier
+  vimrc existe. Ceci afin que Vim se comporte comme Ex, quand il est invoqué
+  par `ex`.
+
+
+ÉVITER LES CHEVAUX DE TROIE				*trojan-horse*
+
+Lors de la lecture d'un fichier vimrc ou exrc dans le répertoire courant,
+certaines commandes peuvent être désactivées, pour des raisons de sécurité, en
+activant l'option 'secure'. Cela est toujours fait lors de l'exécution d'une
+commande depuis un fichier de marqueurs. Il serait sinon possible que vous
+utilisiez accidentellement un fichier vimrc ou de marqueurs qu'un autre
+utilisateur aurait créé et qui contiendrait des commandes malicieuses. Les
+commandes désactivées sont celles qui lancent un shell, écrivent dans un
+fichier et les ":autocmd". Les commandes ":map" sont affichées à l'écran, vous
+pouvez donc les surveiller.
+
+Si vous souhaitez que Vim exécute toutes les commandes dans un fichier vimrc
+local, vous pouvez désactiver l'option 'secure' dans les variables
+d'environnement $EXINIT ou $VIMINIT, ou bien dans le fichier vimrc ou exrc
+global. Il n'est pas possible de le faire dans le fichier vimrc ou exrc du
+répertoire courant, pour des raisons évidentes.
+
+Sur les systèmes Unix, cela vaut uniquement si vous n'êtes pas le propriétaire
+du fichier vimrc. ATTENTION ! Si vous dépaquetez une archive qui contient un
+fichier vimrc ou exrc, vous en devenez le propriétaire. Vous n'êtes alors plus
+protégé. Vérifiez ce fichier vimrc avant de lancer Vim dans son répertoire, ou
+désactivez l'option 'exrc'. Certains systèmes Unix autorisent les utilisateurs
+à céder la propriété d'un fichier (commande `chown`). Cela permet à un autre
+utilisateur de créer un fichier vimrc malicieux et de vous en rendre
+propriétaire. Soyez vigilant !
+
+Lorsqu'on utilise des commandes de recherche de marqueur, l'exécution de la
+commande de recherche (la dernière partie de la ligne dans le fichier de
+marqueurs) est toujours effectuée en mode 'secure'. Cela fonctionne exactement
+de la même façon que pour l'exécution d'une commande dans un fichier
+vimrc/exrc local.
+
+							*slow-start*
+Si le démarrage de Vim se révèle particulièrement long, plusieurs causes sont
+envisageables :
+- Si une version Unix a été compilée avec l'IHM graphique et/ou X11 (vérifiez
+  la sortie de ":version" pour "+GUI" et "+X11"), il peut lui être nécessaire
+  de charger des bibliothèques partagées et de se connecter au serveur X11.
+  Essayez de compiler une version sans "+GUI" et "+X11". Cela devrait aussi
+  réduire la taille de l'exécutable.
+  Utilisez l'argument de commande |-X| pour éviter de vous connecter au
+  serveur X si vous travaillez dans un terminal.
+- Si 'viminfo' est fixé, le chargement du fichier viminfo peut prendre un
+  moment. Vous pouvez vérifier si le problème vient bien de là en désactivant
+  temporairement 'viminfo' (utilisez l'argument de commande "-i NONE", |-i|).
+  Si c'est le cas, essayez de réduire le nombre de lignes enregistrées dans un
+  registre avec ":set viminfo='20\"50". |viminfo-file|
+
+							*:intro*
+Lorsque Vim est invoqué sans nom de fichier, un message d'accueil est affiché
+(à l'usage de ceux qui ignorent ce qu'est Vim). Il disparaît dès que l'écran
+est rafraîchi, de n'importe quelle façon. La commande ":intro" permet de
+réafficher ce message (s'il n'y a pas assez de place, vous n'en verrez qu'une
+partie).
+   Pour désactiver son affichage au démarrage, ajoutez le drapeau 'I' à
+l'option 'shortmess'.
+
+							*info-message*
+Les arguments |--help| et |--version| font afficher un message à Vim, puis
+quitter. Normalement, le message est envoyé sur la sortie standard et peut
+ainsi être redirigé vers un fichier avec : >
+
+	vim --help >fichier
+
+Et depuis Vim : >
+
+	:read !vim --help
+
+Quand vous utilisez gvim, un test est effectué pour déterminer s'il a été
+lancé depuis le bureau, sans terminal pour y afficher des messages. Le test
+recherche si ni stdout ni stderr ne sont un émulateur de terminal. Cela
+interrompt la commande ":read", comme utilisée dans l'exemple ci-dessus. Pour
+qu'elle fonctionne à nouveau, fixez 'shellredir' à ">" au lieu du défaut de
+">&" : >
+
+	:set shellredir=>
+	:read !gvim --help
+
+Cependant, cela ne fonctionne toujours pas sur les systèmes où gvim n'utilise
+pas du tout stdout.
+
+==============================================================================
+5. $VIM et $VIMRUNTIME
+							*$VIM*
+La variable d'environnement $VIM est utilisée pour localiser différents
+fichiers utilisateur de Vim, comme le script vimrc de démarrage de
+l'utilisateur. Elle dépend du système, voir |startup|.
+
+Afin d'éviter à chaque utilisateur de fixer lui-même la variable $VIM, Vim
+essaiera d'en obtenir la valeur dans cet ordre :
+1° La valeur donnée par la variable d'environnement $VIM. Vous pouvez
+   l'utiliser pour spécifier à Vim un répertoire de fichiers de support.
+   Par exemple : >
+	setenv VIM /home/babar/vim
+2° Le chemin de 'helpfile' est utilisé, à moins qu'il contienne également une
+   variable d'environnement (vaut par défaut "$VIMRUNTIME/doc/help.txt" :
+   problème de l'oeuf et de la poule). Le nom de fichier ("help.txt" ou
+   n'importe quel autre) est supprimé. Ensuite, les noms de répertoires finaux
+   sont supprimés dans cet ordre : "doc", "runtime" et "vim{version}" (p. ex.,
+   "vim54").
+3° Pour MS-DOS, Win32 et OS/2, Vim essaie d'utiliser le nom du répertoire de
+   l'exécutable. S'il se termine par "/src", cette terminaison est supprimé.
+   C'est utile si vous avez dépaqueté le fichier ZIP dans un répertoire, et
+   ajusté le chemin de recherche pour trouver l'exécutable vim. Les noms de
+   répertoires finaux sont supprimés dans cet ordre : "runtime" et
+   "vim{version}" (p. ex., "vim54").
+4° Pour Unix, le répertoire d'installation défini lors de la compilation est
+   utilisé (voir la sortie de ":version").
+
+Lorsque Vim a effectué toutes ces étapes, il fixera la variable
+d'environnement $VIM. Pour la modifier après coup, utilisez une commande
+":let", comme ceci : >
+	:let $VIM = "/home/babar/vim/"
+<
+							*$VIMRUNTIME*
+La variable d'environnement $VIMRUNTIME est utilisée pour localiser différents
+fichiers de support, tels que la documentation en ligne et les fichiers
+utilisés pour la coloration syntaxique. Par exemple, le fichier d'aide
+principal est normalement "$VIMRUNTIME/doc/help.txt".
+
+Afin d'éviter à chaque utilisateur de fixer lui-même la variable $VIMRUNTIME,
+Vim essaiera d'en obtenir la valeur dans cet ordre :
+1° Si la variable d'environnement $VIMRUNTIME est fixée, elle est utilisée.
+   Vous pouvez l'utiliser si les fichiers de support sont situés à un
+   emplacement inhabituel.
+2° Si "$VIM/vim{version}" existe, il est utilisé. {version} est le numéro de
+   version de Vim, sans aucun '-' ou '.' (par exemple : "$VIM/vim54"). C'est
+   la valeur normale de $VIMRUNTIME.
+3° Si "$VIM/runtime" existe, il est utilisé.
+4° La valeur de $VIM est utilisée. Cela permet la compatibilité ascendante.
+5° Si l'option 'helpfile' est fixée et ne contient pas de '$', sa valeur est
+   utilisée, avec "doc/help.txt" supprimé à la fin.
+
+Sous Unix, si une valeur par défaut pour $VIMRUNTIME a été définie à la
+compilation (voir la sortie de ":version"), les étapes 2, 3 et 4 sont sautées,
+et la valeur par défaut de compilation est utilisé après l'étape 5. Cela
+signifie que la valeur par défaut de compilation recouvre la valeur de $VIM.
+C'est utile si $VIM vaut "/etc" et que les fichiers de support sont dans
+"/usr/share/vim/vim54".
+
+Lorsque Vim a effectué toutes ces étapes, il fixera la variable
+d'environnement $VIMRUNTIME. Pour la modifier après coup, utilisez une
+commande ":let", comme ceci : >
+	:let $VIMRUNTIME = "/home/babar/vim/vim54"
+
+==============================================================================
+6. Suspendre Vim    					*suspend*
+
+					*iconize* *iconise* *CTRL-Z* *v_CTRL-Z*
+CTRL-Z			Suspend Vim, comme ":stop".
+			Fonctionne en mode Normal et Visuel. En mode Insertion
+			et Lignecmd, CTRL-Z est inséré comme un caractère
+			normal. En mode Visuel, Vim revient en mode Normal.
+
+:sus[pend][!]	ou			*:sus* *:suspend* *:st* *:stop*
+:st[op][!]		Suspend Vim.
+			Si '!' est omis et 'autowrite' activé, tous les
+			tampons modifiés possédant un nom sont enregistrés.
+			Si '!' est donné ou 'autowrite' désactivé, les tampons
+			modifiés ne sont pas enregistrés : n'oubliez pas de
+			ramener Vim au premier plan plus tard !
+
+Dans l'IHM graphique, la suspension est traitée comme une icônisation de gvim.
+Sur Windows 95/NT, gvim est minimisé.
+
+Sur beaucoup de systèmes Unix, il est possible de suspendre Vim avec CTRL-Z.
+Cela est faisable uniquement en mode Normal et Visuel (voir la section
+|vim-modes|). Vim reprendra alors si vous le rappelez au premier plan. Sur
+d'autres systèmes, CTRL-Z lancera un nouveau shell (identique à la commande
+":sh"). Vim reprendra lorsque vous quitterez ce shell.
+
+Sous X Window, la sélection n'est plus disponible lorsque Vim est suspendu.
+Cela signifie que vous ne pourrez pas la coller dans une autre application
+(puisque Vim est suspendu, une tentative pour obtenir la sélection mettrait le
+programme en attente).
+
+==============================================================================
+7. Sauvegarder des paramètres				*save-settings*
+
+La plupart du temps, vous éditerez votre fichier vimrc à la main. C'est ce qui
+vous donne la plus grande flexibilité. Il existe cependant quelques commandes
+pour générer automatiquement un fichier vimrc. Vous pouvez utiliser ces
+fichiers tels quels, ou bien copier/coller des lignes pour les inclure dans un
+autre fichier vimrc.
+
+							*:mk* *:mkexrc*
+:mk[exrc] [fichier]	Écrit les mappages courants et les options modifiées
+			dans [fichier] (défaut : ".exrc" dans le répertoire
+			courant), à moins qu'il n'existe déjà. {absent de Vi}
+
+:mk[exrc]! [fichier]	Écrit toujours les mappages courants et les options
+			modifiées dans [fichier] (défaut : ".exrc" dans le
+			répertoire courant). {absent de Vi}
+
+							*:mkv* *:mkvimrc*
+:mkv[imrc][!] [fichier]	Comme ":mkexrc", mais avec ".vimrc" par défaut dans le
+			répertoire courant. La commande ":version" est
+			également écrite dans le fichier. {absent de Vi}
+
+Ces commandes écriront des commandes ":map" et ":set" dans un fichier, de
+telle sorte que lorsqu'elles seront exécutées, les options et mappages
+courants seront fixés aux mêmes valeurs. Les options 'columns', 'endofline',
+'fileformat', 'key', 'lines', 'modified', 'scroll', 'term', 'textmode',
+'ttyfast' et 'ttymouse' ne sont pas incluses, car elles dépendent du terminal
+ou du fichier.
+   NOTE : Les options 'binary', 'paste' et 'readonly' sont incluses, ce qui ne
+correspond pas nécessairement à ce que vous voudriez.
+
+Lorsque des touches spéciales sont utilisées dans les mappages, l'option
+'cpoptions' sera temporairement fixée à sa valeur par défaut Vim, afin
+d'éviter qu'un mappage soit mal interprété. Cela rend le fichier incompatible
+avec Vi, mais assure la compatibilité avec différents terminaux.
+
+Seuls les mappages globaux sont enregistrés, pas ceux locaux à un tampon.
+
+Une pratique courante est d'utiliser un fichier vimrc par défaut, de faire des
+modifications avec les commandes ":map" et ":set", puis de les écrire dans le
+fichier vimrc. Chargez d'abord le ".vimrc" par défaut avec une commande comme
+":source ~babar/.vimrc.progC", modifiez les paramètres que vous souhaitez et
+sauvegardez-les dans le répertoire courant avec ":mkvimrc!". Si vous voulez en
+faire votre vimrc par défaut, déplacez-le dans votre répertoire personnel
+(sous Unix), s: (Amiga) ou répertoire $VIM (MS-DOS).
+   Vous pouvez également utiliser des |autocommand|es et/ou des lignes de mode
+|modeline|.
+
+Si vous voulez seulement ajouter un unique paramètre d'option à votre fichier
+vimrc, vous pouvez procéder comme suit :
+1° Éditer votre fichier vimrc avec Vim ;
+2° Faire varier la valeur de l'option jusqu'à ce qu'elle vous convienne.
+   P. ex., tester différentes valeurs pour 'guifont' ;
+3° Ajouter une ligne pour fixer la valeur de l'option, en utilisant le
+   registre d'expression '=' pour entrer la valeur. P. ex., pour l'option
+   'guifont' : >
+	o:set guifont=<C-R>=&guifont<CR><Echap>
+<  [<C-R> désigne CTRL-R, <CR> un retour chariot, et <Echap> la touche
+   d'échappement.]
+
+NOTE : Si vous créez un fichier vimrc, cela peut influencer l'option
+'compatible', ce qui aurait certainement des effets de bord. Voir
+|'compatible'|. ":mkvimrc", ":mkexrc" et ":mksession" écrivent la commande
+pour activer ou désactiver l'option 'compatible' dans le fichier de sortie en
+premier, à cause de ces effets de bord.
+
+==============================================================================
+8. Vues et Sessions					*views-sessions*
+
+Ce sujet est abordé dans les sections |21.4| et |21.5| du Manuel de
+l'utilisateur.
+
+{absent de Vi}
+{uniquement si compilé avec la fonctionnalité |+mksession|}
+
+							*View* *view-file*
+Une Vue est un ensemble de paramètres qui s'appliquent à une fenêtre. Vous
+pouvez enregistrer une Vue et la restaurer ultérieurement : le texte sera
+affiché de la même façon. Les options et mappages de cette fenêtre seront
+également restaurés, pour que vous puissiez continuer l'édition comme quand
+vous avez enregistré la Vue.
+
+						*Session* *session-file*
+Une Session regroupe les Vues de toutes les fenêtres ainsi que les paramètres
+globaux. Vous pouvez enregistrer une Session et la restaurer ultérieurement :
+la disposition des fenêtres sera identique. Vous pouvez utiliser les Sessions
+pour passer rapidement d'un projet à un autre, en chargeant automatiquement
+les fichiers sur lesquels vous travailliez dans le cadre de tel projet.
+
+Les Vues et les Sessions forment un complément appréciable aux fichiers
+viminfo, qui sont utilisés pour enregistrer les informations de toutes les
+Vues et Sessions ensemble. |viminfo-file|
+
+Pour commencer rapidement l'édition avec une Vue ou une Session précédemment
+enregistrée, utilisez l'argument |-S| : >
+	vim -S Session.vim
+<
+							*:mks* *:mksession*
+:mks[ession][!] [fich]	Écrit un script qui restaure la session d'édition
+			courante.
+			Si [!] est inclus, un fichier existant sera écrasé.
+			Si [fich] est omis, "Session.vim" sera utilisé.
+
+La sortie de ":mksession" est comme ":mkvimrc", mais des commandes
+supplémentaires sont ajoutées au fichier, selon la valeur de l'option
+'sessionoptions'. Lorsqu'il est exécuté avec une commande ":source", ce
+fichier :
+ 1. Restaure les options et mappages globaux, si 'sessionoptions' contient
+    "options". Les mappages locaux de script ne seront pas enregistrés ;
+ 2. Restaure les variables globales qui débutent par une majuscule et
+    contiennent au moins une lettre minuscule, si 'sessionoptions' contient
+    "globals" ;
+ 3. Décharge tous les tampons actuellement chargés ;
+ 4. Restaure le répertoire courant si 'sessionoptions' contient "curdir", ou
+    fixe le répertoire courant à l'emplacement du fichier de Session si
+    'sessionoptions' contient "sesdir" ;
+ 5. Restaure la position de la fenêtre IHM graphique de Vim, si
+    'sessionoptions' contient "winpos" ;
+ 6. Restaure la taille de l'écran, si 'sessionoptions' contient "resize" ;
+ 7. Recharge la liste des tampons, avec les dernières positions du curseur. Si
+    'sessionoptions' contient "buffers", tous les tampons sont restaurés, y
+    compris les tampons cachés et déchargés. Sinon, seuls les tampons dans les
+    fenêtres sont restaurés ;
+ 8. Restaure toutes les fenêtres avec la même disposition. Si 'sessionoptions'
+    contient "help", les fenêtres d'aide sont également restaurées. Si
+    'sessionoptions' contient "blank", les fenêtres contenant des tampons sans
+    nom seront restaurées. Si 'sessionoptions' contient "winsize" et qu'aucune
+    fenêtre d'aide ou éditant un tampon sans nom n'a été omise, les tailles
+    des fenêtres sont restaurées (relativement à la taille de l'écran). Sinon,
+    les fenêtres se verront attribuer une taille raisonnable ;
+ 9. Restaure les Vues de toutes les fenêtres, comme avec |:mkview|. Mais
+    'sessionoptions' est utilisé à la place de 'viewoptions' ;
+10. Si un fichier du même nom que le fichier de Session existe, mais se
+    termine par "x.vim" (pour "eXtra"), il est aussi exécuté. Vous pouvez
+    utiliser les fichiers *x.vim pour spécifier des paramètres supplémentaires
+    et des actions associées à une Session donnée, comme la création
+    d'éléments de menu dans la version IHM graphique.
+
+Après avoir restauré la Session, le nom de fichier complet de votre Session
+courante est disponible dans la variable interne "v:this_session"
+|this_session-variable|. Un mappage d'exemple : >
+	:nmap <F2> :wa<Bar>exe "mksession! " . v:this_session<CR>:so ~/sessions/
+Ceci enregistre la Session courante et lance la commande pour en charger une
+autre.
+
+							*:mkvie* *:mkview*
+:mkvie[w][!] [fichier]	Écrit un script Vim qui restaure le contenu de la
+			fenêtre courante.
+			Si [!] est inclus, un fichier existant sera écrasé.
+			Si [fichier] est omis ou est un nombre de 1 à 9, un
+			nom sera généré et 'viewdir' y sera préfixé. Si le
+			dernier nom de répertoire dans 'viewdir' n'existe pas,
+			ce répertoire est créé. Un fichier existant est alors
+			toujours écrasé. Utilisez |:loadview| pour charger
+			cette vue à nouveau.
+			Si [fichier] est le nom d'un fichier ('viewdir' n'est
+			pas utilisé), une commande pour éditer le fichier est
+			ajoutée au fichier généré.
+
+La sortie de ":mkview" contient ces éléments :
+1. La liste des arguments utilisée dans la fenêtre. Lorsque la liste des
+   arguments globale est utilisée, elle correspond à la liste globale. L'index
+   dans la liste des arguments est également restauré.
+2. Le fichier en cours d'édition dans la fenêtre. S'il n'y a pas de fichier,
+   la fenêtre est vidée.
+3. Les mappages, abréviations et options locales à la fenêtre si 'viewoptions'
+   contient "options" ou "localoptions". Pour les options, seules les valeurs
+   locales au tampon courant et les valeurs locales à la fenêtre sont
+   restaurées.
+   Lorsque la vue est enregistrée en tant que partie d'une session et que
+   'sessionoptions' contient "options", les valeurs globales des options
+   locales seront également enregistrées.
+4. L'état des replis si le repliage manuel est utilisé et que 'viewoptions'
+   contient "folds". Les replis ouverts/fermés à la main sont restaurés.
+5. La position du défilement et la position du curseur dans le fichier. Cela
+   ne fonctionne pas très bien quand il y a des replis fermés.
+6. Le répertoire local courant, s'il est différent du répertoire global
+   courant.
+
+NOTE : Les Vues et les Sessions ne sont pas parfaites :
+- Elles ne restaurent pas tout. Par exemple les définitions de fonctions, les
+  autocommandes et ":syntax on" ne sont pas pris en compte. Les éléments comme
+  le contenu des registres et l'historique de la ligne de commande sont dans
+  le fichier viminfo, pas dans les Vues ou les Sessions.
+- Les valeurs des options globales sont fixées uniquement lorsqu'elles
+  diffèrent de la valeur par défaut. Lorsque la valeur courante n'est pas
+  celle par défaut, le chargement d'une Session ne la ramènera pas à la valeur
+  par défaut. Les options locales seront toutefois ramenées à la valeur par
+  défaut.
+- Les mappages existants seront écrasés sans avertissement. Un mappage
+  existant peut provoquer une erreur car il est ambigu.
+- Concernant la restauration des replis manuels et des replis fermés/ouverts,
+  des changements dans le fichier entre l'enregistrement et le rechargement
+  de la Vue risquent de la perturber.
+- Le script Vim n'est pas très performant. Mais reste bien plus rapide que de
+  taper toutes les commandes vous-même !
+
+							*:lo* *:loadview*
+:lo[adview] [no]	Charge la vue pour le fichier courant. Si [no] est
+			omis, la vue enregistrée avec ":mkview" est chargée.
+			Si [no] est spécifié, la vue enregistrée avec ":mkview
+			[no]" est chargée.
+
+La combinaison de ":mkview" et ":loadview" peut être utilisée pour enregistrer
+jusqu'à 10 vues différentes d'un fichier. Elles sont placées dans le
+répertoire précisé par l'option 'viewdir'. Les vues sont enregistrées en
+utilisant le nom du fichier. Si un fichier est renommé, ou invoqué par un
+lien (symbolique), la vue ne sera pas trouvée.
+
+Pensez à nettoyer votre répertoire 'viewdir' de temps en temps.
+
+Pour enregistrer et restaurer automatiquement les vues des fichiers *.c : >
+	au BufWinLeave *.c mkview
+	au BufWinEnter *.c silent loadview
+
+==============================================================================
+9. Le fichier viminfo				*viminfo* *viminfo-file*
+						*E136* *E575* *E576* *E577*
+Si vous quittez Vim et le relancez ultérieurement, vous risquez de perdre un
+certain nombre d'informations. Le fichier viminfo peut être utilisé pour
+conserver ces informations, ce qui vous permet de reprendre là où vous en
+étiez.
+
+Ce sujet est abordé dans la section |21.3| du Manuel de l'utilisateur.
+
+{uniquement si compilé avec la fonctionnalité |+viminfo|}
+
+Le fichier viminfo peut enregistrer :
+- l'historique de la ligne de commande ;
+- l'historique de la recherche de chaîne ;
+- l'historique de la ligne d'entrée ;
+- le contenu des registres ;
+- les marques pour plusieurs fichiers ;
+- les marques de fichier, pointant vers un emplacement de ce fichier ;
+- le dernier motif de recherche/substitution (pour "n" et "&") ;
+- la liste des tampons ;
+- les variables globales.
+
+Vous pouvez aussi utiliser un fichier de Session. La différence est que le
+fichier viminfo ne dépend pas de votre session de travail courante. Il n'y a
+normalement qu'un seul fichier viminfo. Les fichiers de Session sont utilisés
+pour enregistrer spécifiquement l'état d'une Session. Vous pouvez en avoir
+plusieurs, une pour chaque projet sur lequel vous travaillez. Les fichiers
+viminfo et de Session peuvent être utilisés ensemble dès le lancement de Vim
+pour travailler dans la configuration que vous désirez. |session-file|
+
+							*viminfo-read*
+Au lancement de Vim, si l'option 'viminfo' n'est pas vide, le contenu du
+fichier viminfo est lu et les informations peuvent être réutilisées de façon
+appropriée. Les marques ne sont pas lues au démarrage (mais les marques de
+fichiers le sont). Voir |initialization| concernant le réglage de l'option
+'viminfo' au démarrage.
+
+							*viminfo-write*
+Lorsqu'on quitte Vim, si l'option 'viminfo' n'est pas vide, les informations
+sont enregistrées dans le fichier viminfo (en fait, elles sont ajoutées au
+fichier existant, s'il y en a un). La valeur de l'option 'viminfo' est une
+chaîne contenant les informations à propos des informations à enregistrer et
+le nombre qui doit en être enregistré (voir 'viminfo').
+
+NOTES pour Unix :
+- Les droits d'accès pour le fichier viminfo seront fixés de manière à
+  empêcher les autres utilisateurs de le lire, car il peut contenir des
+  commandes ou du texte avec lesquels vous avez travaillé.
+- Si vous voulez partager le fichier viminfo avec d'autres utilisateurs
+  (p. ex., si vous changez d'identité avec `su`), vous pouvez rendre le
+  fichier accessible en écriture pour le groupe ou les autres. Vim conservera
+  ces droits lors de l'écriture de nouveaux fichiers viminfo. Soyez prudent,
+  ne permettez pas à n'importe qui de lire/écrire dans votre fichier viminfo !
+- Vim n'écrasera pas un fichier viminfo qui n'est pas accessible en écriture
+  pour le « véritable » utilisateur courant. Ceci est utile quand vous changez
+  d'identité (`su`) pour devenir root, mais que votre répertoire $HOME reste
+  le répertoire d'un utilisateur normal. Sans cela, Vim créerait un fichier
+  viminfo appartenant à root et que personne d'autre ne pourrait lire.
+
+Les marques sont enregistrées séparément pour chaque fichier. Quand un fichier
+est lu et que 'viminfo' n'est pas vide, les marques de ce fichier sont
+chargées depuis le fichier viminfo.
+   NOTE : Les marques sont écrites uniquement quand on quitte Vim, ce qui est
+logique car les marques sont enregistrées pour tous les fichiers que vous avez
+ouverts durant votre session d'édition, sauf si ":bdel" a été utilisé. Si vous
+souhaitez enregistrer les marques pour un fichier que vous êtes sur le point
+d'abandonner avec ":bdel", utilisez ":wv".
+   Les marques '[' et ']' ne sont pas enregistrées, mais '"' l'est. La marque
+'"' est très utile pour sauter à la dernière position connue du curseur dans
+le dernier fichier édité quand on a quitté Vim. Aucune marque n'est
+enregistrée pour les fichiers débutant par une chaîne donnée avec le drapeau
+'r' de l'option 'viminfo'. Cela peut servir pour éviter d'enregistrer des
+marques pour des fichiers sur des supports amovibles (utilisez par exemple
+"ra:,rb:" pour MS-DOS et "rdf0:,rdf1:,rdf2:" pour Amiga).
+
+							*viminfo-file-marks*
+Les marques majuscules (de 'A à 'Z) sont enregistrées lors de l'écriture du
+fichier viminfo. Les marques numérotées (de '0 à '9) sont un peu spéciales. À
+l'écriture du fichier viminfo (en quittant Vim ou lorsque la commande
+":wviminfo" est invoquée), '0 est fixé à la position courante du fichier
+courant. L'ancien '0 est déplacé en '1, '1 en '2, etc. Ceci ressemble à ce qui
+se passe avec les registres de coupage "1 à "9. Si la même position est déjà
+présente dans '0 à '9, cette marque est déplacée en '0, pour éviter d'avoir
+deux fois la même. Le résultat est qu'avec "'0", vous pouvez retourner à
+l'endroit exact (fichier et ligne) d'où vous avez quitté Vim. Pour le faire
+immédiatement, essayez cette commande : >
+
+	vim -c "normal '0"
+
+Dans (t)csh, vous pouvez utiliser un alias :XXX bram >
+
+	alias dvim vim -c '"'normal "'"0'"'
+
+
+NOM DU FICHIER VIMINFO					*viminfo-file-name*
+
+- Le nom par défaut du fichier viminfo est "$HOME/.viminfo" pour Unix et OS/2,
+  "s:.viminfo" pour Amiga, "$HOME\_viminfo" pour MS-DOS et Win32. Pour ces
+  deux derniers, si $HOME n'est pas défini, "$VIM\_viminfo" est utilisé. Si
+  $VIM n'est pas défini non plus, "c:\_viminfo" est utilisé. Pour OS/2,
+  "$VIM/.viminfo" est utilisé lorsque $VIM est définie, et pas $HOME.
+- Le drapeau 'n' de l'option 'viminfo' peut être utilisé pour spécifier un
+  autre nom pour le fichier viminfo. |'viminfo'|
+- L'argument "-i" de Vim peut aussi être utilisé pour spécifier un autre nom
+  de fichier, |-i|. Si "NONE" (en majuscule) est donné, aucun fichier viminfo
+  n'est lu ni écrit. Même pas avec les commandes ci-dessous !
+- Pour les commandes ci-dessous, un autre nom de fichier peut être donné,
+  celui-ci recouvrant alors le nom par défaut et le nom donné avec 'viminfo'
+  ou "-i" (sauf si c'est NONE).
+
+
+ENCODAGE DE CARACTÈRES					*viminfo-encoding*
+
+Le texte du fichier viminfo est encodé selon la valeur de l'option 'encoding'.
+Normalement, vous travaillerez toujours avec la même valeur pour 'encoding',
+et il n'y aura pas de problèmes. Cependant, si vous lisez un fichier viminfo
+avec une autre valeur pour 'encoding' que celle dans laquelle il a été écrite,
+une partie du texte (les caractères non-ASCII) pourra être invalide. Si c'est
+trop gênant, ajoutez le drapeau 'c' à l'option 'viminfo' : >
+	:set viminfo+=c
+Vim tentera alors de convertir le texte du fichier viminfo de sa valeur
+'encoding' initiale à la valeur 'encoding' courante. Vim doit avoir été
+compilé avec la fonctionnalité |+iconv| pour cela. Les noms de fichiers ne
+sont pas convertis.
+
+
+LECTURE ET ÉCRITURE MANUELLE
+
+Deux commandes peuvent être utilisées pour lire et écrire manuellement le
+fichier viminfo. Cela peut servir pour échanger les registres entre deux
+programmes Vim lancés : tapez d'abord ":wv" dans l'un, puis ":rv" dans
+l'autre. NOTE : Si le registre contient déjà quelque chose, ":rv!" sera
+nécessaire. Dans ce cas, toutes les informations seront remplacées par celles
+du premier programme Vim, y compris l'historique de la ligne de commande, etc.
+
+Le fichier viminfo peut aussi être édité à la main, mais nous vous conseillons
+de démarrer avec un fichier existant pour que le format soit correct. Vous
+trouverez à l'intérieur des commentaires suffisamment explicites. Cela peut
+être utile si vous souhaitez créer un second fichier, p. ex. "~/.mon_viminfo",
+qui contiendrait certaines informations dont vous voulez toujours bénéficier
+au démarrage. Par exemple, vous pouvez charger des registres contenant des
+données particulières, ou placer certaines commandes dans l'historique. Une
+ligne telle que celle-ci >
+	:rviminfo! ~/.mon_viminfo
+dans votre fichier vimrc peut être utilisée pour charger ces informations.
+Vous pourriez même charger différents fichiers viminfo selon les différents
+types de fichier (p. ex., des sources C) que vous éditez, grâce aux
+autocommandes (voir |:autocmd|).
+
+							*viminfo-errors*
+Quand Vim détecte une erreur à la lecture d'un fichier viminfo, il n'écrasera
+pas ce fichier. S'il y a plus de 10 erreurs, Vim cesse la lecture du fichier
+viminfo. Ceci a été fait afin d'éviter l'effacement accidentel d'un fichier si
+le nom du fichier viminfo est mauvais. Cela peut arriver en saisissant
+malencontreusement `vim -i fichier` au lieu de `vim -R fichier` (oui, cela est
+déjà arrivé !). Si vous voulez écraser un fichier viminfo contenant une
+erreur, vous devrez ou bien corriger l'erreur, ou bien supprimer le fichier
+(pendant que Vim est lancé, de telle sorte que la plupart des informations
+seront restaurées).
+
+					*:rv* *:rviminfo* *E195*
+:rv[iminfo][!] [fich]	Lit depuis le fichier viminfo [fich] (défaut : voir
+			ci-dessus). Si [!] est donné, toute information déjà
+			définie (registres, marques, etc.) sera écrasée.
+			{absent de Vi}
+
+					*:wv* *:wviminfo* *E137* *E138* *E574*
+:wv[iminfo][!] [fich]	Écrit le fichier viminfo [fich] (défaut : voir
+			ci-dessus). Les informations dans le fichier sont
+			d'abord lues pour fusionner les anciennes et les
+			nouvelles. Si [!] est donné, les anciennes
+			informations ne sont pas lues, seules les nouvelles
+			sont écrites. Si 'viminfo' est vide, les marques pour
+			jusqu'à 100 fichiers seront écrites. {absent de Vi}
+
+ vim:tw=78:ts=8:ft=help:norl:

@@ -1,0 +1,97 @@
+*howto.txt*	Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+Comment faire pour ... ?		*howdoi* *how-do-i* *howto* *how-to*
+
+|tutor|			débuter avec Vim
+|:quit|			quitter ? Je suis bloqué, aidez-moi !
+|initialization|	initialiser Vim
+|vimrc-intro|		écrire un fichier de script Vim (vimrc)
+|suspend|		suspendre Vim
+|usr_11.txt|		recouvrer une session après un plantage
+|07.4|			créer une sauvegarde des fichiers que je modifie
+
+|usr_07.txt|		éditer des fichiers
+|23.4|			éditer des fichiers binaires
+|usr_24.txt|		insérer du texte
+|deleting|		effacer du texte
+|usr_04.txt|		modifier du texte
+|04.5|			copier et déplacer du texte
+|usr_25.txt|		mettre en forme du texte
+|30.6|			mettre en forme des commentaires
+|30.2|			indenter des programmes C
+|25.3|			reporter automatiquement une indentation
+
+|usr_26.txt|		répéter des commandes
+|02.5|			annuler et restaurer des changements
+
+|usr_03.txt|		se déplacer dans le texte
+|word-motions|		mouvements par mots
+|left-right-motions|	mouvements gauche/droite
+|up-down-motions|	mouvements haut/bas
+|object-motions|	mouvements par objets textuels
+|various-motions|	mouvements divers
+|object-select|		sélectionner des objets textuels
+|'whichwrap'|		se déplacer sans être arrêté par les fins de lignes
+|'virtualedit'|		se déplacer à des endroits où il n'y a pas de texte
+|usr_27.txt|		spécifier un motif de recherche
+|tags-and-searches|	utiliser les recherches spéciales (marqueurs,...)
+|29.4|			rechercher dans les fichiers inclus pour trouver des
+			   variables, fonctions ou macros
+|K|			consulter les pages de manuel pour le mot-clé sous le
+			   curseur
+
+|03.7|			faire défiler l'écran
+|'sidescroll'|		faire défiler l'écran horizontalement, sur les côtés
+|'scrolloff'|		modifier les lignes visibles lors du défilement
+
+|mode-switching|	changer de mode
+|04.4|			utiliser le mode Visuel
+|'insertmode'|		lancer Vim en mode Insertion
+
+|40.1|			mapper des touches à des séquences clavier
+|24.7|			créer des abréviations
+
+|ins-expandtab|		transformer une tabulation en espaces en mode Insertion
+|i_CTRL-R|		insérer le contenu d'un registre en mode Insertion
+|24.3|			compléter des mots en mode Insertion
+|25.1|			activer la césure automatique des lignes
+
+|20.1|			éditer la ligne de commande
+|20.3|			compléter la ligne de commande
+|'cmdheight'|		augmenter la hauteur de la ligne de commande
+|10.3|			spécifier des plages en mode Ligne-de-commande
+|40.3|			lancer des commandes à exécution automatique :
+			   avant/après la lecture/écriture ou l'entrée/sortie
+			   d'un tampon/fenêtre
+
+|'autowrite'|		enregistrer automatiquement
+|30.1|			optimiser le cycle édition-compilation-correction
+			   (compilation et gestion des erreurs depuis Vim)
+
+|options|		fixer des options
+|auto-setting|		fixer automatiquement des options
+|term-dependent-settings|  fixer des options en fonction du nom du terminal
+|save-settings|		sauvegarder les paramètres courants
+|:quote|		inclure des commentaires aux fichiers exrc/vimrc/gvimrc
+|'helpheight'|		modifier la hauteur par défaut de la fenêtre d'aide
+|'highlight'|		fixer différents modes de surbrillance
+|'title'|		changer le titre de la fenêtre courante
+|'icon'|		changer le titre de l'icône courante
+|'report'|		limiter l'affichage des messages de modification
+|'shortmess'|		limiter les invites Appuyez-sur-entrée |hit-enter|
+
+|mouse-using|		utiliser la souris avec Vim
+|usr_08.txt|		gérer plusieurs tampons ou fenêtres
+|gui.txt|		utiliser l'IHM graphique
+
+|Pas (encore) prévu !|	faire faire la vaisselle à Vim
+
+|usr_06.txt|		activer la coloration syntaxique
+|2html.vim|		convertir un fichier colorisé en HTML
+|less|			utiliser Vim comme `less` ou `more` avec la coloration
+
+ vim:tw=78:ts=8:ft=help:norl:

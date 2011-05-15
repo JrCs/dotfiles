@@ -1,0 +1,699 @@
+*netbeans.txt*  Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Gordon Prieur
+
+
+						*netbeans* *netbeans-support*
+Intégration de Vim en tant qu'éditeur externe de NetBeans
+						
+ 1. Introduction					|netbeans-intro|
+ 2. Raccourcis clavier NetBeans				|netbeans-keybindings|
+ 3. Configurer Vim pour NetBeans			|netbeans-configure|
+ 4. Télécharger NetBeans				|netbeans-download|
+ 5. Préparer NetBeans pour Vim				|netbeans-preparation|
+ 6. Récupérer le module External Editor			|obtaining-exted|
+ 7. Configurer NetBeans pour fonctionner avec Vim	|netbeans-setup|
+ 8. Messages						|netbeans-messages|
+ 9. Lancer Vim depuis NetBeans				|netbeans-run|
+10. Protocole NetBeans					|netbeans-protocol|
+11. Problèmes connus					|netbeans-problems|
+
+{absent de Vi}
+{uniquement si compilé avec la fonctionnalité |+netbeans_intg|}
+
+==============================================================================
+1. Introduction						*netbeans-intro*
+
+NetBeans est un Environnement de Développement Intégré (EDI) à code ouvert
+développé conjointement par Sun Microsystems Inc. et la communauté de
+développeurs netbeans.org. Initialement prévu pour Java, NetBeans s'est vu
+ajouter le support des langages C, C++ et Fortran dans ses dernières versions.
+
+Pour plus d'informations, consultez la page d'accueil de NetBeans
+	http://www.netbeans.org
+ou le site NetBeans External Editor
+	http://externaleditor.netbeans.org.
+
+Sun Microsystems Inc. fournit également NetBeans sous le nom Sun ONE Studio.
+Consultez http://www.sun.com pour plus d'informations en ce qui concerne ce
+produit.
+
+Les versions actuelles de NetBeans supportent complètement le langage Java,
+mais ne proposent qu'un support limité pour le C, le C++ et le Fortran. Les
+versions actuelles de Sun ONE Studio proposent un support complet des langages
+Java, C, C++ et Fortran.
+
+L'interface NetBeans est également supportée par Agide, l'EDI graphique du
+projet A-A-P. Agide est très différent de NetBeans :
+- Basé sur Python plutôt que sur Java, il est bien plus compact et démarre
+  plus rapidement.
+- Agide est un environnement applicatif dans lequel de nombreux outils
+  différents peuvent collaborer.
+Consultez le site Internet de A-A-P pour plus d'informations :
+	http://www.A-A-P.org
+
+==============================================================================
+2. Raccourcis clavier NetBeans			*netbeans-keybindings*
+
+Vim reconnaît bon nombre des raccourcis exécutant les commandes NetBeans. Ce
+sont typiquement les combinaisons de touches Fonction. Pour exécuter une
+commande NetBeans, l'utilisateur doit appuyer sur la touche Pause puis sur un
+raccourci clavier NetBeans. Par exemple, pour compiler un fichier Java,
+le raccourci NetBeans est "F9". Ainsi, sous Vim, vous devrez appuyer sur
+"Pause F9" pour compiler un fichier Java. Pour placer/supprimer un point
+d'arrêt sur la ligne courante, appuyez sur "Pause MAJ F8".
+
+La touche Pause correspond à la touche Fonction 21. Si votre touche Pause ne
+fonctionne pas et que vous voulez utiliser F8 à la place, faite : >
+
+	:map <F8> <F21>
+
+Le module External Editor lit dynamiquement les raccourcis clavier NetBeans,
+ce qui devrait permettre à Vim de disposer des derniers raccourcis, même quand
+NetBeans les modifie.
+
+==============================================================================
+3. Configurer Vim pour NetBeans				*netbeans-configure*
+
+En lançant `configure` sans argument, l'interface NetBeans devrait être
+activée. C'est-à-dire qu'elle le sera si `configure` constate que votre
+système dispose de toutes les fonctionnalités requises.
+
+Dans le cas où vous ne voulez pas de l'interface NetBeans, vous pouvez la
+désactiver en décommentant la ligne contenant "--disable-netbeans" dans le
+Makefile.
+
+Actuellement, cette intégration n'est supportée que par gvim, car NetBeans n'a
+aucun moyen de fournir un émulateur de terminal à la commande `vim`. En outre,
+le support de l'IHM graphique n'est disponible que pour GTK+, GNOME et Motif.
+
+Si le support de Motif est souhaité lors de la compilation, l'utilisateur doit
+fournir les bibliothèques XPM. Pour savoir comment récupérer la dernière
+version de XPM, voir |workshop-xpm|.
+
+Pour une aide plus complète sur l'installation de Vim, lisez |usr_90.txt| dans
+le Manuel de l'utilisateur de Vim.
+
+==============================================================================
+4. Télécharger NetBeans					*netbeans-download*
+
+L'EDI NetBeans est disponible en téléchargement sur netbeans.org. Vous pouvez
+télécharger une version binaire, les sources, ou utiliser CVS pour récupérer
+la branche de développement courante. Si vous choisissez de télécharger les
+sources, suivez les instructions de netbeans.org relatives à la compilation.
+
+Selon la version que vous téléchargez, il est possible que vous ayez besoin de
+récupérer le module External Editor. Il s'agit du module permettant à NetBeans
+de fonctionner avec gvim (ou xemacs :-). Consultez
+http://externaleditor.netbeans.org pour plus de détails sur le téléchargement
+de ce module si votre version de NetBeans n'en dispose pas.
+
+Pour le support de C, C++ et Fortran, vous aurez également besoin du module
+cpp. Consultez http://cpp.netbeans.org pour plus d'informations à propos de ce
+module.
+
+Vous pouvez aussi télécharger Sun ONE Studio chez Sun Microsystems Inc. pour
+un essai gratuit de 30 jours. Consultez http://www.sun.com pour de plus amples
+informations.
+
+==============================================================================
+5. Preparer NetBeans pour Vim				*netbeans-preparation*
+
+Pour que NetBeans fonctionne avec Vim, le module External Editor de NetBeans
+doit être chargé et activé. Si vous utilisez Sun ONE Studio Enterprise
+Edition, ce module devrait être chargé et activé. Si vous disposez d'une
+version de NetBeans, il est possible qu'il vous faille trouver un autre moyen
+d'obtenir ce module à code ouvert.
+
+Vous pouvez vérifier si vous avez ce module en ouvrant le dialogue
+Tools->Options et en allant jusqu'à la liste des "Modules" (IDE
+Configuration->System->Modules). Si la liste des modules indique une entrée
+"External Editor", vous devez vous assurer que le module correspondant est
+activé (la propriété "Enabled" devrait avoir la valeur "True"). Si la liste
+des modules ne contient pas "External Editor", voir la section suivante pour
+vous le procurer |obtaining-exted|.
+
+==============================================================================
+6. Récupérer le module External Editor 			    *obtaining-exted*
+
+Il y a deux manières de récupérer le module External Editor. La plus simple
+est d'utiliser le NetBeans Update Center pour le télécharger et l'installer.
+Malheureusement, certaines versions ne disposent pas de ce module dans leur
+Update Center. Si vous ne pouvez pas le télécharger via l'Update Center, vous
+devrez télécharger les sources et compiler le module. Il est possible de
+récupérer le module disponible dans le NetBeans Update Center, ce qui rend la
+compilation superflue. Reportez-vous également à
+http://externaleditor.netbeans.org pour les autres possibilités.
+
+Pour télécharger les sources du module External Editor via CVS et le compiler
+par vous-même, consultez http://externaleditor.netbeans.org et
+http://www.netbeans.org. Malheureusement, cette procédure est loin d'être
+triviale.
+
+==============================================================================
+7. Configurer NetBeans pour fonctionner avec Vim	    *netbeans-setup*
+
+En supposant que vous avez chargé et activé le module NetBeans External Editor
+de la manière décrite dans |netbeans-preparation|, tout ce qu'il vous reste à
+faire est de vérifier que la ligne de commande gvim est convenablement
+configurée pour votre environnement.
+
+Ouvrez le dialogue Tools->Options puis ouvrez la branche Editing.
+Sélectionnez External Editor. Le panneau sur la droite devrait contenir un
+onglet Properties et un onglet Expert. Dans l'onglet Properties, assurez-vous
+que le champ "Editor Type" est bien fixé à "Vim". Dans l'onglet Expert,
+assurez-vous que le champ "Vim Command" est correct.
+
+Faites attention si vous modifiez la "Vim Command". Certaines options de la
+ligne de commande doivent être présentes pour que la connexion s'établisse
+correctement. Vous pouvez changer le nom de la commande, mais restez-en là. Si
+votre gvim se trouve dans votre $PATH alors la "Vim Command" peut commencer
+par gvim. Si vous ne voulez pas que "gvim" soit recherché dans votre $PATH,
+alors indiquez le chemin absolu dans la commande. À partir de ce moment, vous
+devriez obtenir un gvim pour chaque fichier source que vous ouvrez dans
+NetBeans.
+
+Si certains fichiers sont ouverts dans gvim et d'autres (avec une extension
+différente) avec l'éditeur par défaut de NetBeans, vous devriez vérifier le
+type MIME dans la propriété "MIME Type" de l'onglet Expert. NetBeans utilise
+MIME et le module External Editor n'ouvrira que les types spécifiés dans cette
+propriété.
+
+==============================================================================
+8. Messages						*netbeans-messages*
+
+Ces messages sont spécifiques à NetBeans :
+
+							*E463*
+  Cette zone est verrouillée et ne peut être modifiée ~
+
+NetBeans définit des zones de texte verrouillées, que vous ne pouvez pas
+modifier.
+
+==============================================================================
+9. Lancer Vim depuis NetBeans				*netbeans-run*
+
+NetBeans démarre Vim avec l'argument |-nb|. Voici sa forme complète : >
+
+	-nb:{hote}:{port}:{motpasse}
+
+{hote} désigne le nom de la machine sur laquelle NetBeans fonctionne. Quand il
+est omis, la variable d'environnement __NETBEANS_HOST est utilisée, ou alors
+"localhost".
+
+{port} désigne le numéro de port pour NetBeans. Quand il est omis, la variable
+d'environnement __NETBEANS_SOCKET est utilisée, ou alors 3219.
+
+{motpasse} désigne le mot de passe pour se connecter à NetBeans. Quand il est
+omis, la variable d'environnement __NETBEANS_VIM_PASSWORD est utilisée, ou
+alors "changeme".
+
+==============================================================================
+10. Protocole NetBeans					*netbeans-protocol*
+
+La communication entre NetBeans et Vim utilise des messages en texte brut. Ce
+protocole a été conçu à l'origine pour fonctionner avec le module External
+Editor de NetBeans (voir http://externaleditor.netbeans.org). Plus tard, il a
+été étendu pour fonctionner avec Agide (l'EDI graphique de A-A-P, voir
+http://www.a-a-p.org). Ces extensions ont été mises en place dans la 
+version 2.1.
+
+Actuellement, les messages sont transmis au travers d'une socket. Comme ils
+sont en texte UTF-8 brut, ce protocole pourrait tout aussi bien être utilisé
+avec n'importe quel autre mécanisme de communication.
+
+10.1. Types de messages		|nb-messages|
+10.2. Arguments			|nb-terms|
+10.3. Commandes			|nb-commands|
+10.4. Fonctions et Réponses	|nb-functions|
+10.5. Événements		|nb-events|
+10.6. Messages particuliers	|nb-special|
+
+	*E627* *E628* *E629* *E630* *E631* *E632* *E633* *E634* *E635* *E636*
+	*E637* *E638* *E639* *E640* *E641* *E642* *E643* *E644* *E645* *E646*
+	*E647* *E648* *E649* *E650* *E651* *E652* *E653* *E654*
+Ces erreurs se produisent quand un message transgresse le protocole.
+
+
+10.1. TYPES DE MESSAGES					*nb-messages*
+
+Il existe quatre types de messages :
+
+    TYPE	SENS		 COMMENTAIRE ~
+    Commande	EDI -> éditeur	 aucune réponse nécessaire
+    Fonction	EDI -> éditeur	 l'éditeur doit retourner une réponse
+    Réponse	éditeur -> EDI	 uniquement pour répondre à une Fonction
+    Événement	éditeur -> EDI	 aucune réponse nécessaire
+
+Un message est envoyé sous forme d'une ligne unique avec un caractère
+saut-de-ligne final. Les arguments sont séparés par un simple espace. Le
+premier élément du message dépend du type de message.
+
+    TYPE	PREMIER ÉLÉMENT		EXEMPLE ~
+    Commande	IDtamp:nom!noseq	11:showBalloon!123 "texte"
+    Fonction	IDtamp:nom/noseq	11:getLength/123
+    Réponse	noseq			123 5000
+    Événement	IDtamp:nom=noseq	11:keyCommand=123 "S-F2"
+
+
+10.2. ARGUMENTS						*nb-terms*
+
+IDtamp		Numéro de tampon. Un message peut concerner un tampon en
+		particulier ou être générique. Les messages génériques
+		utilisent un IDtamp de 0. NOTE : Cet identifiant de tampon est
+		attribué par l'EDI, il ne s'agit pas du numéro de tampon Vim.
+		Le IDtamp doit être un nombre toujours croissant, démarrant à
+		1.
+
+noseq		Numéro de séquence. L'EDI utilise un numéro de séquence pour
+		les Commandes et les Fonctions. Une Réponse doit utiliser le
+		numéro de séquence de la Fonction qui lui est associée. Le
+		numéro de séquence 0 peut être utilisé pour les Événements (le
+		noseq de la dernière Commande ou Fonction peut également être
+		utilisé).
+
+chaîne		Argument entre doubles-apostrophes. Le texte est codé en
+		UTF-8. Cela signifie que l'ASCII est transmis tel que. Les
+		caractères spéciaux sont représentés à l'aide d'une
+		contre-oblique :
+			\"	double-apostrophe
+			\n	saut-de-ligne			    ["Newline"]
+			\r	retour chariot
+			\t	tabulation (fonctionne aussi littéralement)
+			\\	contre-oblique
+		Les octets NUL ne sont pas autorisés !
+
+booléen		Argument avec deux valeurs possibles :
+			T	vrai				       ["True"]
+			F	faux
+
+nombre		Nombre décimal.
+
+nbopt		Nombre décimal, ou bien "none" (sans les doubles-apostrophes).
+
+pos		Nombre décimal indiquant une position en octets dans un
+		tampon. Le premier octet a la position 0. Les coupures de
+		lignes sont comptées selon la manière dont elles apparaissent
+		dans le fichier (CR/LF compte pour deux octets). NOTE : Les
+		caractères multi-octets sont comptés pour le nombre d'octets
+		qu'ils occupent.
+
+nol/col		Argument donnant une position avec un numéro de ligne et un
+		numéro de colonne. Les lignes commencent au numéro 1, la
+		colonne représente la position en octets, débutant à 0. NOTE :
+		Les caractères multi-octets comptent pour plusieurs colonnes.
+
+cheminfich	Argument chaîne : nom de fichier avec son chemin absolu.
+
+
+10.3. COMMANDES						*nb-commands*
+
+actionMenuItem	Non disponible.
+
+actionSensitivity
+		Non disponible.
+
+addAnno {noserie} {notype} {pos} {long}
+		Place une annotation dans le tampon.
+		Arguments :
+		   {noserie}   nombre	numéro de série de cette annotation,
+					   utile pour la retirer par la suite
+		   {notype}    nombre	numéro de séquence de l'annotation,
+					   définie avec defineAnnoType pour le
+					   tampon
+		   {pos}       nombre	position indiquant la place de
+					   l'annotation
+		   {long}      nombre	non utilisé
+		Dans la version 2.1, un argument de type nol/col peut être
+		utilisé à la place d'un nombre pour {pos}.
+
+balloonResult {texte}
+		Non disponible.
+
+close		Ferme le tampon. Cela laisse sans tampon courant, très
+		dangereux à utiliser !
+
+create		Crée un tampon sans nom. Remplace le tampon courant (il est
+		caché s'il a été modifié).
+		NetBeans l'utilise comme première commande pour un fichier en
+		cours d'ouverture. La séquence des commandes pourrait être :
+			create
+			setCaretListener	(ignorée)
+			setModified		(sans effet)
+			setContentType		(ignorée)
+			startDocumentListen
+			setTitle
+			setFullName
+
+defineAnnoType {notype} {nomtype} {bulle} {icone} {coulAV} {coulAR}
+		Définit un type d'annotation pour le tampon.
+		Arguments :
+		   {notype}    nombre	numéro de séquence (non utilisé)
+		   {nomtype}   chaîne	nom identifiant cette annotation
+		   {bulle}     chaîne	non utilisé
+		   {icone} chaîne	nom du fichier icône
+		   {coulAV}    nbopt	couleur de premier plan de la ligne
+		   {coulAR}    nbopt	couleur d'arrière-plan de la ligne
+		Vim va définir un symbole pour l'annotation.
+		Quand {coulAV} et {coulAR} sont tout deux égaux à "none",
+		aucune surbrillance n'est appliquée à la ligne (nouveauté de
+		la version 2.1).
+		Quand {icone} est vide, aucun symbole n'est utilisé (nouveauté
+		de la version 2.1). Quand il fait un ou deux caractères de
+		long, un symbole textuel est défini (nouveauté de la version
+		2.1).
+		NOTE : Les annotations sont définies séquentiellement, et le
+		numéro de séquence est ensuite utilisé avec addAnno.
+
+editFile {cheminfich}
+		Fixe le nom du tampon et édite le fichier {cheminfich},
+		argument de type chaîne.
+		Manière normale pour l'EDI de dire à l'éditeur d'éditer un
+		fichier. Si l'EDI doit passer le texte du fichier à l'éditeur,
+		utilisez plutôt ces commandes :
+			setFullName
+			insert
+			initDone
+		Nouveauté de la version 2.1.
+
+enableBalloonEval
+		Non disponible.
+
+endAtomic	Fin d'une opération atomique. Les modifications entre
+		"startAtomic" et "endAtomic" peuvent être annulées comme une
+		opération unique. Mais cela n'est pas encore disponible.
+		Rafraîchit l'affichage si nécessaire.
+
+guard {pos} {long}
+		Marque une zone du tampon comme verrouillée. Cela signifie
+		qu'elle ne peut pas être éditée. {pos} et {long} sont des
+		nombres délimitant le texte à verrouiller.
+
+initDone	Indique que le tampon est prêt. Le tampon concerné devient
+		implicitement le tampon courant. Déclenche l'événement
+		d'autocommande BufReadPost.
+
+moveAnnoToFront {noserie}
+		Non disponible.
+
+putBufferNumber {cheminfich}
+		Associe un numéro de tampon au tampon Vim correspondant grâce
+		au nom {cheminfich}, argument de type chaîne. À utiliser quand
+		l'éditeur rapporte l'édition d'un autre fichier à l'EDI et que
+		l'EDI a besoin de dire à l'éditeur quel numéro de tampon
+		utiliser pour ce fichier.
+		Indique également que le tampon est initialisé.
+		Nouveauté de la version 2.1.
+
+raise		Amène l'éditeur au premier plan.
+		Nouveauté de la version 2.1.
+
+removeAnno {noserie}
+		Retire une annotation placée dans le tampon.
+		{noserie} est le même nombre que celui utilisé dans addAnno.
+
+setAsUser	Non disponible.
+
+setBufferNumber {cheminfich}
+		Associe un numéro de tampon au tampon Vim correspondant au nom
+		{cheminfich}. À utiliser quand l'éditeur rapporte l'édition
+		d'un autre fichier à l'EDI et que l'EDI a besoin de dire à
+		l'éditeur quel numéro de tampon il utilise pour ce fichier.
+		Par effet de bord, le tampon concerné devient le tampon
+		courant.
+		Voir "putBufferNumber" pour une commande plus utile.
+
+setContentType  Non disponible.
+
+setDot {pos}	Rend courant devient le tampon concerné et place le curseur à
+		la position spécifiée.
+		Dans la version 2.1, un argument de type nol/col peut être
+		utilisé pour {pos}.
+
+setExitDelay {secondes}
+		Fixe le délai avant de sortir à {secondes}, de type nombre.
+		Ce délai est utilisé pour permettre à l'EDI de prendre les
+		choses en charge avant de sortir vraiment. Le délai par défaut
+		est de 2 secondes.
+		Nouveauté de la version 2.1.
+
+setFullName {cheminfich}
+		Fixe le nom de fichier à utiliser pour le tampon courant à
+		{cheminfich}, de type chaîne.
+		Utilisé quand l'EDI souhaite éditer un fichier sous le
+		contrôle de l'EDI. Cela fait du tampon le tampon courant, mais
+		ne lit pas le fichier. La commande "insert" doit ensuite être
+		utilisée pour obtenir le contenu.
+
+setLocAndSize	Non disponible.
+
+setMark		Non disponible.
+
+setModified {modifie}
+		Quand l'argument booléen {modifie} vaut "T", signale le tampon
+		comme modifié. Quand il vaut "F", signale le tampon comme
+		non modifié.
+
+setReadOnly	Non disponible.
+
+setStyle	Non disponible.
+
+setTitle {nom}  Fixe le titre du tampon à {nom}, de type chaîne.
+		Le titre est uniquement destiné à NetBeans, pas de Vim.
+
+setVisible {visible}
+		Quand l'argument booléen {visible} vaut "T", va au tampon.
+		Sans effet si "F".
+
+showBalloon {texte}
+		Affiche une bulle d'aide (fenêtre contextuelle) sous le
+		pointeur de la souris, contenant {texte}, de type chaîne. La
+		bulle d'aide devrait disparaître quand la souris est déplacée
+		de plus de quelques pixels. Nouveauté de la version 2.1.
+
+specialKeys	Non disponible.
+
+startAtomic	Commence une opération atomique. L'écran n'est pas rafraîchi
+		tant que "endAtomic" n'est pas appelée.
+
+startCaretListen
+		Non disponible.
+
+startDocumentListen
+		Marque un tampon pour qu'il rapporte les changements à l'EDI
+		avec les événements "insert" et "remove". Le comportement par
+		défaut est de rapporter les changements.
+
+stopCaretListen
+		Non disponible.
+
+stopDocumentListen
+		Indique au tampon d'arrêter de rapporter les changements à
+		l'EDI. Contraire de "startDocumentListen".
+
+unguard {pos} {long}
+		Contraire de "guard", retire le verrou d'une zone de texte.
+
+version		Non disponible.
+
+
+10.4. FONCTIONS ET RÉPONSES				*nb-functions*
+
+getDot		Non disponible.
+
+getCursor	Retourne le tampon courant et la position du curseur.
+		La réponse est de la forme :
+			noseq IDtamp nol col pos
+		noseq  = numéro de séquence de la fonction
+		IDtamp = identifiant du tampon courant (-1 si inconnu)
+		nol    = numéro de la ligne du curseur (1 pour la première)
+		col    = numéro de la colonne du curseur (en octets, 0 pour la
+			 première)
+		pos    = position du curseur dans le tampon (en octets)
+		Nouveauté de la version 2.1.
+
+getLength	Retourne la longueur du tampon en octets.
+		Exemple de réponse pour un tampon de 5000 octets :
+			123 5000
+		TODO : expliquer l'utilisation de la ligne partielle. XXX
+
+getMark		Non disponible.
+
+getModified	Lorsqu'un tampon est spécifié : retourne 0 si le tampon n'a
+		pas été modifié, 1 s'il a subi des modifications.
+		Lorsqu'aucun tampon n'est spécifié (tampon 0) : retourne le
+		nombre de tampons modifiés. Quand le résultat vaut 0, il est
+		parfaitement sûr de dire à Vim de quitter.
+		Nouveauté de la version 2.1.
+
+getText		Retourne le contenu d'un tampon sous la forme d'une chaîne.
+		Exemple de réponse pour un tampon contenant 2 lignes :
+			123 "première ligne\nseconde ligne\n"
+		NOTE : La documentation indique un argument de position et de
+		longueur, mais ils ne sont pas disponibles.
+
+insert {pos} {texte}
+		Insère {texte} avant la position {pos}. {texte} est une
+		chaîne et {pos} un nombre.
+		Réponses possibles :
+			123		pas de problème
+			123 !message	échec
+		NOTE : Le message de la réponse n'est pas mis entre
+		doubles-apostrophes.
+
+remove {pos} {long}
+		Supprime {long} octets de texte à la position {pos}. Ces deux
+		arguments sont des nombres.
+		Réponses possibles :
+			123		pas de problème
+			123 !message	échec
+		NOTE : Le message de la réponse n'est pas mis entre
+		doubles-apostrophes.
+
+saveAndExit	Provoque l'équivalent Vim de ":confirm qall".
+		Si aucun fichier n'est modifié ou que l'utilisateur n'annule
+		pas l'opération, Vim sort et aucune réponse n'est retournée.
+		L'EDI peut alors considérer la fermeture de la connexion
+		comme un résultat positif.
+		Si l'utilisateur annule l'opération, le nombre de tampons
+		modifiés restant est retourné et Vim ne sort pas.
+		Nouveauté de la version 2.1.
+		[N.D.T. : NetBeans prend en charge l'enregistrement du
+		fichier.]
+
+
+10.5. ÉVÉNEMENTS						*nb-events*
+
+balloonEval {pos} {long} {type}
+		Le pointeur de la souris reste sur le texte un court instant.
+		Quand {long} vaut 0, il n'y a aucune sélection et le pointeur
+		est sur la position {pos}. Quand {long} est différent de 0, le
+		texte entre les positions {pos} et {pos} + {long} est
+		sélectionné.
+		N'est envoyé qu'après que "enableBalloonEval" a été utilisé
+		pour le tampon.
+		{type} n'est pas défini actuellement.
+		Non disponible.
+
+balloonText {texte}
+		Utilisé quand 'ballooneval' est activé et que le pointeur de
+		la souris reste sur du texte pendant un moment. {texte} est
+		une chaîne, correspondant au texte sous le curseur.
+		Nouveauté de la version 2.1.
+
+fileClosed	Non disponible.
+
+fileModified	Non disponible.
+
+fileOpened {cheminfich} {ouvert} {modifie}
+		Un fichier a été ouvert par l'utilisateur.
+		Arguments :
+		    {cheminfich}    chaîne	nom du fichier
+		    {open}	    booléen	toujours "F"
+		    {modifie}	    booléen	toujours "F"
+
+geometry {col} {lignes} {X} {Y}
+		Rapporte la taille et la position de la fenêtre de l'éditeur.
+		Arguments :
+		    {col}	nombre	    nombre de colonnes de texte
+		    {lignes}	nombre	    nombre de lignes de texte
+		    {X}		nombre	    position sur l'écran en pixel 
+		    {Y}		nombre	    position sur l'écran en pixel 
+		Ne fonctionne qu'avec Motif.
+
+insert {pos} {texte}
+		Le texte {texte} a été inséré dans Vim à la position {pos}.
+		N'est envoyé que s'il est activé, voir "startDocumentListen".
+
+invokeAction	Non disponible.
+
+keyCommand {nomtouche}
+		Rapporte l'appui sur une touche spéciale en donnant son nom
+		{nomtouche}, de type chaîne.
+		Noms de touches supportés :
+			F1		touche de fonction 1
+			F2		touche de fonction 2
+				...
+			F12		touche de fonction 12
+			' '		espace (sans les apostrophes)
+			!		point d'exclamation
+				...	tout autre caractère ASCII imprimable
+			~		tilde
+			X		toute touche non reconnue
+		La touche peut être précédée par "C", "S" et/ou "M",
+		représentant les modificateurs Contrôle, Maj ["Shift"] et Méta
+		(Alt). Si un modificateur est spécifié, un tiret est utilisé
+		pour le séparer du nom de la touche. Par exemple : "C-F2".
+		Les caractères ASCII sont une nouveauté de la version 2.1.
+
+keyAtPos {nomtouche} {nol/col}
+		Comme {nomtouche}, mais rapporte aussi le numéro de la ligne
+		et la colonne du curseur.
+		Nouveauté de la version 2.1.
+
+killed		Un fichier a été fermé par l'utilisateur. Uniquement pour les
+		fichiers auxquels l'EDI a attribué un numéro.
+
+newDotAndMark {pos} {pos}
+		Rapporte la position du curseur comme étant à {pos} octets
+		dans le tampon. Envoyé uniquement avant un événement
+		"keyCommand".
+
+quit		Non disponible.
+
+remove {pos} {long}
+		Texte qui a été effacé dans Vim à la position {pos} et de
+		longueur {long}.
+		Envoyé uniquement si activé, voir "startDocumentListen".
+
+revert		Non disponible.
+
+save		Le tampon est enregistré et à présent considéré comme
+		non modifié.
+		Envoyé uniquement si activé, voir "startDocumentListen".
+
+startupDone	L'éditeur a terminé sa phase de démarrage et est prêt à éditer
+		des fichiers.
+		Nouveauté de la version 2.1.
+
+unmodified	Le tampon est à présent considéré comme non modifié.
+		Envoyé uniquement si activé, voir "startDocumentListen".
+
+version {vers}	Rapporte la version du protocole supportée. Vim rapporte "2.1"
+		(avec les doubles-apostrophes).
+
+
+10.6. MESSAGES SPÉCIAUX 				*nb-special*
+
+Ces messages ne suivent pas les règles des messages précédents. Ils se
+terminent par un caractère saut-de-ligne.
+
+ACCEPT		Non utilisé.
+
+AUTH {motpasse} Éditeur -> EDI : premier message que l'éditeur envoie à l'EDI.
+		Il doit contenir le mot de passe pour le serveur, tel qu'il
+		est spécifié dans l'argument |-nb|. Ne pas utiliser de
+		doubles-apostrophes !
+
+DISCONNECT	EDI -> éditeur : rompt la connexion. Fait quitter l'éditeur.
+		L'EDI ne doit envoyer ce message que s'il n'y a aucune
+		modification non enregistrée.
+
+DETACH		EDI -> éditeur : rompt la connexion sans provoquer la sortie
+		de l'éditeur. Utilisé lorsque l'EDI sort sans faire quitter
+		l'éditeur.
+		Nouveauté de la version 2.1.
+
+REJECT		Non utilisé.
+
+==============================================================================
+11. Problèmes connus					*netbeans-problems*
+
+Les octets NUL ne sont pas autorisés. Dans le sens éditeur -> EDI, ils
+apparaîtront comme des caractères saut-de-ligne (NL). Dans le sens EDI ->
+éditeur, il est impossible de les insérer.
+
+ vim:tw=78:ts=8:ft=help:norl:
+
+

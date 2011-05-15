@@ -1,0 +1,181 @@
+*if_ruby.txt*   Pour Vim version 6.2.  Dernière modification : 25 oct 2001
+
+
+		  MANUEL de RÉFÉRENCE VIM - par Shugo Maeda
+
+
+L'interface Ruby de Vim					*ruby* *Ruby*
+
+1. Commandes			|ruby-commands|
+2. Le module VIM		|ruby-vim|
+3. Objet VIM::Buffer		|ruby-buffer|
+4. Objet VIM::Window		|ruby-window|
+5. Variables globales		|ruby-globals|
+
+					    *E266* *E267* *E268* *E269*
+					    *E270* *E271* *E272* *E273*
+L'interface Ruby ne fonctionne que si Vim a été compilé avec la fonctionnalité
+|+ruby|.
+
+Pour MS-Windows, vous pouvez trouver la bibliothèque Ruby sur :
+
+	http://www.dm4lab.to/~usa/ruby_en.html ~
+
+{absent de Vim}
+			
+==============================================================================
+1. Commandes						*ruby-commands*
+
+							*:ruby* *:rub*
+:rub[y] {cmd}		Exécute la commmande Ruby {cmd}.
+
+:rub[y] << {motifdefin}
+{script}
+{motifdefin}
+			Exécute le script Ruby {script}.
+			{motifdefin} ne doit PAS être précédé par un
+			quelconque espace blanc. Si {motifdefin} est omis, le
+			motif par défaut est un point '.', comme pour les
+			commandes |:append| et |:insert| commands. Cette forme
+			de la commande |:ruby| est pratique pour inclure du
+			code Ruby dans les scripts Vim.
+			NOTE : cette commande ne fonctionne pas si la
+			fonctionnalité Ruby n'a pas été compilée. Pour éviter
+			des erreurs, voir |script-here|.
+
+Exemple de script Vim : >
+
+	function! PierreRouge()
+	  ruby << EOF
+	  class Grenat
+		  def initialize(s)
+			  @buffer = VIM::Buffer.current
+			  vimputs(s)
+		  end
+		  def vimputs(s)
+			  @buffer.append(@buffer.count, s)
+		  end
+	  end
+	  pierre = Grenat.new("magnifique")
+	EOF
+	endfunction
+<
+						*:rubydo* *:rubyd* *E265*
+:[plage]rubyd[o] {cmd}	Évalue la commande Ruby {cmd} pour chaque ligne de
+			[plage], avec $_ fixé au tour à tour au texte de
+			chauqe ligne, et sans <EOL> final. Fixer $_ va changer
+			le texte, mais notez qu'il est impossible d'ajouter ou
+			de supprimer des lignes en utilisant cette commande.
+			La valeur par défaut de [plage] est la totalité du
+			fichier : "1,$".
+
+							*:rubyfile* *:rubyf*
+:rubyf[ile] {fichier}	Exécute le script Ruby contenu dans {fichier}. L'effet
+			est identique à ":ruby load 'fichier'", mais permet le
+			complètement du nom de fichier.
+
+L'exécution de commandes Ruby est impossible dans le bac à sable |sandbox|.
+
+==============================================================================
+2. Le module VIM					*ruby-vim*
+
+Le code Ruby accède à toutes les fonctionnalités de vim via le module "VIM".
+
+Résumé : >
+	print "Hello"			# affiche un message
+	VIM.command(cmd)		# exécute une commande Ex
+	num = VIM::Window.count		# récupère le numéro d'une fenêtre
+	w = VIM::Window[n]		# récupère la fenêtre numérotée "n"
+	cw = VIM::Window.current	# récupère la fenêtre courante
+	num = VIM::Buffer.count		# récupère le nombre de tampons
+	b = VIM::Buffer[n]		# récupère le tampon numéroté "n"
+	cb = VIM::Buffer.current	# récupère le tampon courant
+	w.height = lines		# fixe la hauteur de la fenêtre
+	w.cursor = [row, col]		# fixe la position du curseur
+	pos = w.cursor			# récupère un tableau [ligne, colonne]
+	name = b.name			# récupère le nom de fichier du tampon
+	line = b[n]			# récupère une ligne du tampon
+	num = b.count			# récupère le nombre de lignes
+	b[n] = str			# modifie une ligne dans le tampon
+	b.delete(n)			# supprime une ligne
+	b.append(n, str)		# Ajoute une ligne après la n-ième
+<
+Fonctions du module :
+
+							*ruby-message*
+VIM::message({msg})
+	Affiche le message {msg}.
+
+							*ruby-set_option*
+VIM::set_option({arg})
+	Fixe une option Vim. {arg} peut être n'importe quel argument que la
+	commande ":set" est susceptible d'accepter. Notez que cela signifie
+	que les espaces ne sont pas autorisés dans l'argument ! Voir |:set|.
+
+							*ruby-command*
+VIM::command({cmd})
+	Exécutes la commande Ex {cmd}.
+
+							*ruby-evaluate*
+VIM::evaluate({expr})
+	Évalue {expr} en utilisant l'évaluateur d'expression interne de Vim
+	(voir |expression|). Retourne le résultat sous la forme d'une chaîne.
+
+==============================================================================
+3. Objet VIM::Buffer					*ruby-buffer*
+
+Les tampons Vim sont représentés par des objets VIM::Buffer.
+
+Méthodes de classe :
+
+current		Retourne l'objet du tampon courant.
+count		Retourne le nombre de tampons.
+self[{n}]	Retourne l'objet du tampon numéroté {n}. Le premier tampon
+		porte le numéro 0.
+
+Méthodes :
+
+name		Retourne le nom du tampon.
+number		Retourne le numéro du tampon.
+count		Retourne le nombre de lignes.
+length		Retourne le nombre de lignes.
+self[{n}]	Retourne une ligne du tampon. {n} est le numéro de la ligne.
+self[{n}] = {chaine}
+		Modifie une ligne dans le tampon. {n} est le numéro de la
+		   ligne.
+delete({n})	Supprime une ligne dans le tampon. {n} est le numéro de la
+		   ligne.
+append({n}, {chaine})
+		Ajoute une ligne après la ligne numérotée {n}.
+
+==============================================================================
+4. Objet VIM::Window					*ruby-window*
+
+Les fenêtres Vim sont représentés par des objets VIM::Window.
+
+Méthodes de classe :
+
+current		Retourne l'objet de la fenêtre courante.
+count		Retourne le nombre de fenêtres.
+self[{n}]	Retourne l'objet de la fenêtre numérotée {n}. Le première
+		fenêtre porte le numéro 0.
+
+Méthodes :
+
+buffer		Retourne le tampon affiché dans la fenêtre.
+height		Retourne le hauteur de la fenêtre.
+height = {n}	Fixe la hauteur de la fenêtre à {n}.
+cursor		Retourne un tableau [ligne, colonne] à la position du curseur.
+cursor = [{ligne}, {colonne}]
+		Fixe la position du curseur : {ligne} et {colonne}.
+
+==============================================================================
+4. Variables Globales					*ruby-globals*
+
+L'interface propose deux variables globales :
+
+$curwin		L'objet de la fenêtre courante.
+$curbuf		L'objet du tampon courant.
+
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:

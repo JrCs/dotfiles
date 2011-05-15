@@ -1,0 +1,900 @@
+*tagsrch.txt*   Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+Marqueurs et recherches spéciales			*tags-and-searches*
+
+Voir la section |29.1| du Manuel de l'utilisateur pour une introduction.
+
+1. Sauter à un marqueur				|tag-commands|
+2. Pile de marqueurs			    	|tag-stack|
+3. Liste des correspondances de marqueurs   	|tag-matchlist|
+4. Détails sur les marqueurs		    	|tag-details|
+5. Format du fichier de marqueurs	    	|tags-file-format|
+6. Recherches dans les fichiers inclus	    	|include-search|
+
+==============================================================================
+1. Sauter à un marqueur					*tag-commands*
+
+							*tag* *tags*
+Un marqueur est un identifiant qui apparaît dans un fichier de marqueurs
+(généralement nommé "tags"). C'est une sorte d'étiquette vers laquelle il est
+possible de sauter. Par exemple, dans les programmes C, chaque nom de fonction
+peut être utilisé comme un marqueur. Le fichier "tags" doit être généré par un
+programme comme `ctags` avant que les commandes de marqueurs puissent être
+utilisées.
+
+Avec la commande ":tag", le curseur sera positionné sur le marqueur. Avec la
+commande CTRL-], le mot-clé sur lequel le curseur est situé sera utilisé comme
+marqueur. Si le curseur n'est pas sur un mot-clé, le premier mot-clé à la
+droite du curseur est utilisé.
+
+La commande ":tag" fonctionne particulièrement bien pour les programmes C. Si
+vous rencontrez un appel de fonction et que vous vous demandez ce que fait
+cette fonction, placez le curseur sur son nom et frappez CTRL-]. Cela vous
+amènera à la définition de la fonction. Pour revenir en arrière, vous disposez
+de la commande CTRL-T. Vous pouvez aussi utiliser la pile de marqueurs, voir
+plus bas.
+
+						*:ta* *:tag* *E426* *E429*
+:ta[g][!] {ident}	Saute à la définition de {ident}, en utilisant
+			l'information contenue dans le(s) fichier(s) de
+			marqueurs. {ident} est placé dans la pile de
+			marqueurs. Voir |tag-!| pour [!].
+			{ident} peut être une expression rationnelle, voir
+			|tag-regexp|. En cas de correspondances multiples pour
+			{ident}, saute à la première. |:tnext|
+
+g<ClicGauche>	    ou				*g<LeftMouse>*
+<C-ClicGauche>	    ou				*<C-LeftMouse>* *CTRL-]*
+CTRL-]			Saute à la définition du mot-clé sous le curseur.
+			Comme ":tag {ident}", où {ident} serait le mot-clé
+			sous ou après le curseur.
+			{Vi : uniquement pour l'identifiant après le curseur}
+
+							*v_CTRL-]*
+{Visuel}CTRL-]		Comme ":tag {ident}", où {ident} serait le texte en
+			surbrillance. {absent de Vi}
+
+							*telnet-CTRL-]*
+CTRL-] correspond la séquence d'échappement par défaut de `telnet`. Si vous
+tapez CTRL-] pour sauter à un marqueur, vous obtiendrez l'invite de `telnet` à
+la place. La plupart des versions de `telnet` permettent de changer ou de
+désactiver la séquence d'échappement. Consultez la page de manuel de `telnet`.
+Vous pouvez utiliser `telnet -E {NomHote}` pour désactiver la séquence
+d'échappement, ou `telnet -e {SequenceEchap} {NomHote}` pour en définir une
+nouvelle. Si possible, utilisez `rsh` plutôt que `telnet` pour éviter ce
+problème.
+
+							*tag-priority*
+En cas de correspondances multiples pour un marqueur, l'ordre de priorité
+suivant est utilisé :
+1. "FSC"  marqueur Statique correspondant Entièrement XXX traduction ? pour le fichier Courant
+2. "F C"  marqueur global correspondant entièrement pour le fichier courant
+3. "F  "  marqueur global correspondant entièrement pour un autre fichier
+4. "FS "  marqueur statique correspondant entièrement pour un autre fichier
+5. " SC"  marqueur statique correspondant sans la casse pour le fichier courant
+6. "  C"  marqueur global correspondant sans la casse pour le fichier courant
+7. "   "  marqueur global correspondant sans la casse pour un autre fichier
+8. " S "  marqueur statique correspondant sans la casse pour un autre fichier
+
+NOTE : Quand le fichier courant change, la priorité dans la liste des
+correspondances est souvent inchangée, afin d'éviter toute confusion en
+utilisant ":tnext". Elle sera changée si vous utilisez ":tag {ident}".
+
+Les marqueurs correspondant sans la casse ne sont pas trouvés avec une
+commande ":tag" lorsque l'option 'ignorecase' est désactivée. Ils sont trouvés
+quand un motif est utilisé (débutant par "/") et avec ":tselect", également
+lorsque 'ignorecase' est désactivé.
+   NOTE : L'utilisation d'une recherche de marqueurs ignorant la casse
+désactive la recherche binaire dans le fichier de marqueurs, ce qui provoque
+un ralentissement. Cela peut être évité en utilisant un tri insensible à la
+casse pour le fichier de marqueurs. Voir 'tagbsearch' pour plus de détails.
+
+==============================================================================
+2. Pile de marqueurs				*tag-stack* *tagstack* *E425*
+
+Les marqueurs vers lesquels vous avez sauté sont mémorisés dans la pile de
+marqueurs, avec l'endroit d'où vous avez sauté. Les marqueurs sont empilés
+uniquement lorsque l'option 'tagstack' est activée.
+
+g<ClicDroit>	    ou				*g<RightMouse>*
+<C-ClicDroit>	    ou				*<C-RightMouse>* *CTRL-T*
+CTRL-T			Saute à la [quant]-ième plus ancienne entrée de la
+			pile de marqueurs (défaut : 1).
+			{absent de Vi}					["Tag"]
+
+						*:po* *:pop* *E555* *E556*
+:[quant]po[p][!]	Saute à la [quant]-ième plus ancienne entrée de la
+			pile de marqueurs (défaut : 1). Voir |tag-!| pour [!].
+			{absent de Vi}
+
+:[quant]ta[g][!]	Saute à la [quant]-ième plus récente entrée de la pile
+			de marqueurs (défaut : 1). Voir |tag-!| pour [!].
+			{absent de Vi}
+
+							*:tags*
+:tags			Affiche le contenu de la pile de marqueurs. L'entrée
+			active est signalée par un '>'. {absent de Vi}
+
+La sortie de ":tags" ressemble à ceci :
+
+    # TO tag      FROM line in file/line ~
+    1  1 main		  1  harddisk2:text/vim/test ~
+  > 2  2 FoncA		 58  i = FoncA(10); ~
+    3  1 FoncC	        357  harddisk2:text/vim/src/amiga.c ~
+
+Cette liste donne les marqueurs vers lesquels vous avez sauté, ainsi que la
+position courante avant ce saut. Les marqueurs les plus anciens apparaissent
+en haut de la liste, les plus récents en bas.
+
+Le '>' pointe vers l'entrée active. C'est le marqueur qui sera utilisé par la
+prochaine commande ":tag". Les commandes CTRL-T et ":pop" utiliseront la
+position au-dessus de l'entrée active.
+
+En dessous de "TO", vous pouvez lire le numéro de la correspondance courante
+dans la liste de correspondances. NOTE : Ce numéro ne change pas quand ":pop"
+ou ":tag" sont utilisés.
+
+Les numéros de ligne et nom de fichier sont mémorisés afin de pouvoir revenir
+où vous étiez avant la commande de marqueur. Le numéro de ligne restera
+correct, même après que des lignes auront été insérées/supprimées, à moins
+qu'elles ne le soient par un programme externe (par exemple, une autre
+instance de Vim).
+
+Pour le fichier courant, la colonne "file/line" montre le texte de la ligne.
+L'indentation sera supprimée et une ligne trop longue sera tronquée pour tenir
+dans la fenêtre.
+
+Vous disposez de plusieurs commandes pour revenir à des marqueurs déjà
+utilisés. Quelques exemples :
+
+	":pop" ou CTRL-T    à la position d'avant le marqueur précédent
+	{quant}CTRL-T	    à la position d'avant {quant} marqueurs précédents
+	":tag"		    au plus récent marqueur
+	":0tag"		    au dernier marqueur utilisé
+
+L'utilisation la plus commune de ceci survient lors de la navigation dans le
+graphe d'appel d'un programme. Considérez le graphe d'appel suivant :
+
+	main  --->  FoncA  --->  FoncC
+	      --->  FoncB
+
+(Explication : main appelle FoncA et FoncB ; FoncA appelle FoncC).
+Vous pouvez sauter de main à FoncA en utilisant CTRL-] sur l'appel de FoncA.
+Vous pouvez ensuite utiliser CTRL-] pour sauter à FoncC. Si vous voulez à
+présent revenir à main, saisissez CTRL-T deux fois. Vous pouvez alors faire
+CTRL-] pour sauter à FoncB.
+
+Si vous exécutez une commande ":tag {ident}" ou CTRL-], le marqueur sera
+inséré à la position courante dans la pile. Si la pile est pleine (elle peut
+contenir jusqu'à 20 entrées), l'entrée la plus ancienne est supprimée, les
+autres étant décalées d'un rang vers le haut (leurs numéros d'index sont
+décrémentés de un). Si la dernière entrée utilisée n'était pas au bas de la
+pile, les entrées situées en dessous sont supprimées. Cela signifie qu'une
+ancienne branche du graphe d'appel sera perdue. Après les commandes exposées
+ci-dessus, la pile de marqueurs ressemblera à ceci :
+
+    # TO tag	FROM line in file ~
+    1 main	       1  harddisk2:text/vim/test ~
+    2 FoncB	      59  harddisk2:text/vim/src/main.c ~
+
+							*E73*
+Si vous essayez d'utiliser la pile de marqueurs alors qu'elle est vide, vous
+obtiendrez un message d'erreur.
+
+==============================================================================
+3. Liste des correspondances de marqueurs	*tag-matchlist* *E427* *E428*
+
+Lorsque plusieurs marqueurs correspondent, les commandes suivantes peuvent
+servir à sauter de l'un à l'autre. NOTE : Ces commandes ne modifient pas la
+pile de marqueurs, elles conservent la même entrée.
+
+							*:ts* *:tselect*
+:ts[elect][!] [ident]	Liste les marqueurs qui correspondent à [ident], en
+			utilisant les informations contenues dans le(s)
+			fichier(s) de marqueurs.
+			Si [ident] n'est pas donné, le dernier nom de marqueur
+			de la pile de marqueurs est utilisé.
+			La position courante dans la liste (si elle existe)
+			est indiquée par un '>' dans la première colonne.
+			[ident] peut être un motif d'exprat, voir
+			|tag-regexp|. Voir |tag-priority| concernant les
+			priorités utilisées dans le listage. XXX indication redonnée ci-dessous. Contacter Bram ?
+			{absent de Vi}
+			Exemple de sortie :
+			   nr pri kind tag		  file ~
+			    1 F	  f    mch_delay	  os_amiga.c ~
+					  mch_delay(msec, ignoreinput) ~
+			  > 2 F	  f    mch_delay	  os_msdos.c ~
+					  mch_delay(msec, ignoreinput) ~
+			    3 F	  f    mch_delay	  os_unix.c ~
+					  mch_delay(msec, ignoreinput) ~
+			  Enter nr of choice (<CR> to abort): ~
+
+			Voir |tag-priority| pour la colonne "pri". Notez
+			qu'elle dépend du fichier courant, ainsi la saisie de
+			":tselect xxx" peut donner des résultats différents.
+			La colonne "kind" donne le type du marqueur, s'il a
+			été inclus dans le fichier de marqueurs.
+			La colonne "info" montre l'information qui peut être
+			trouvée dans le fichier de marqueurs. Elle dépend du
+			programme qui a produit le fichier de marqueurs.
+			Lorsque la liste est longue, vous pourrez obtenir une
+			invite Plus |more-prompt|. Si vous voyez déjà le
+			marqueur que vous souhaitez utiliser, vous pouvez
+			taper 'q' et entrer son numéro.
+
+							*:sts* *:stselect*
+:sts[elect][!] [ident]	Effectue ":tselect[!] [ident]" et partage la fenêtre
+			pour le marqueur sélectionné. {absent de Vi}
+
+							*g]*
+g]			Comme CTRL-], mais utilise ":tselect" au lieu de
+			":tag". {absent de Vi}
+
+							*v_g]*
+{Visuel}g]		Comme "g]", mais utilise le texte en surbrillance
+			comme identifiant. {absent de Vi}
+
+							*:tj* *:tjump*
+:tj[ump][!] [ident]	Comme ":tselect", mais saute directement au marqueur
+			quand il n'y a qu'une seule correspondance.
+			{absent de Vi}
+
+							*:stj* *:stjump*
+:stj[ump][!] [ident]	Effectue ":tjump[!] [ident]" et partage la fenêtre
+			pour le marqueur sélectionné. {absent de Vi}
+
+							*g_CTRL-]*
+g CTRL-]		Comme CTRL-], mais utilise ":tjump" au lieu de ":tag".
+			{absent de Vi}
+
+							*v_g_CTRL-]*
+{Visuel}g CTRL-]	Comme "g CTRL-]", mais utilise le texte en
+			surbrillance comme identifiant. {absent de Vi}
+
+							*:tn* *:tnext*
+:[quant]tn[ext][!]	Saute au [quant]-ième marqueur correspondant suivant
+			(défaut : 1). Voir |tag-!| pour [!]. {absent de Vi}
+
+							*:tp* *:tprevious*
+:[quant]tp[revious][!]	Saute au [quant]-ième marqueur correspondant précédent
+			(défaut : 1). Voir |tag-!| pour [!]. {absent de Vi}
+
+							*:tN* *:tNext*
+:[quant]tN[ext][!]	Comme ":tprevious". {absent de Vi}
+
+							*:tr* *:trewind*
+:[quant]tr[ewind][!]	Saute au premier marqueur correspondant. Si [quant]
+			est donné, saute au [quant]-ième marqueur
+			correspondant. Voir |tag-!| pour [!]. {absent de Vi}
+
+							*:tf* *:tfirst*
+:[quant]tf[irst][!]	Comme ":trewind". {absent de Vi}
+
+							*:tl* *:tlast*
+:tl[ast][!]		Saute au dernier marqueur correspondant. Voir |tag-!|
+			pour [!]. {absent de Vi}
+
+
+Quand il n'y a pas d'autre message, Vim indique vers quel marqueur le saut a
+été effectué et le numéro du marqueur correspondant :
+	tag 1 of 3 or more ~
+Le " or more" est utilisé pour indiquer que Vim n'a pas balayé tous les
+fichiers de marqueurs. Quand ":tnext" est utilisé un certain nombre de fois,
+ou bien avec ":tlast", un plus grand nombre de correspondances pourront être
+trouvées.
+
+Si vous ne pouvez pas voir ce message à cause d'autres messages, ou que vous
+souhaitiez simplement savoir où vous êtes, cette commande permettra de le
+réafficher (et de sauter au même marqueur que la dernière fois) : >
+	:0tn
+<
+							*tag-skip-file*
+Quand un marqueur correspondant est trouvé alors que le fichier censé le
+contenir n'existe pas, cette correspondance est sautée et le marqueur
+correspondant suivant est utilisé. Vim vous avertira que des fichiers sont
+manquants. Quand la fin de la liste des correspondances est atteinte, un
+message d'erreur est émis.
+
+La liste des correspondances de marqueurs peut aussi être utilisée dans la
+fenêtre d'aperçu. Les commandes sont identiques à celles ci-dessus, mais avec
+un 'p' préfixé.
+
+{uniquement si compilé avec la fonctionnalité |+quickfix|}
+
+							*:pts* *:ptselect*
+:pts[elect][!] [ident]	Effectue ":tselect[!] [ident]" et affiche le nouveau
+			marqueur dans la fenêtre d'aperçu. Voir |:ptag| pour
+			plus d'informations. {absent de Vi}
+
+							*:ptj* *:ptjump*
+:ptj[ump][!] [ident]	Effectue ":tjump[!] [ident]" et affiche le nouveau
+			marqueur dans la fenêtre d'aperçu. Voir |:ptag| pour
+			plus d'informations. {absent de Vi}
+
+							*:ptn* *:ptnext*
+:[quant]ptn[ext][!]	":tnext" dans la fenêtre d'aperçu. Voir |:ptag|.
+			{absent de Vi}
+
+							*:ptp* *:ptprevious*
+:[quant]ptp[revious][!]	":tprevious" dans la fenêtre d'aperçu. Voir |:ptag|.
+			{absent de Vi}
+
+							*:ptN* *:ptNext*
+:[quant]ptN[ext][!]	Comme ":ptprevious". {absent de Vi}
+
+							*:ptr* *:ptrewind*
+:[quant]ptr[ewind][!]	":trewind" dans la fenêtre d'aperçu. Voir |:ptag|.
+			{absent de Vi}
+
+							*:ptf* *:ptfirst*
+:[quant]ptf[irst][!]	Comme ":ptrewind". {absent de Vi}
+
+							*:ptl* *:ptlast*
+:ptl[ast][!]		":tlast" dans la fenêtre d'aperçu. Voir |:ptag|.
+			{absent de Vi}
+
+==============================================================================
+4. Détails sur les marqueurs				*tag-details*
+
+							*static-tag*
+Un marqueur statique est un marqueur défini pour un fichier spécifique. Dans
+un programme C, cela pourrait être une fonction statique.
+
+Dans Vi, un saut vers un marqueur fixe le motif de recherche courant. Cela
+signifie que ce ne sera pas le même motif qui sera recherché par la commande
+"n" avant ou après un saut vers un marqueur. Vim ne se comporte pas ainsi, car
+nous considérons qu'il s'agit là d'un bogue. Vous pouvez cependant toujours
+trouver le motif de recherche du marqueur dans l'historique de recherche. Si
+vous voulez vraiment utiliser l'ancien comportement de Vi, ajouter le drapeau
+'t' à l'option 'cpoptions'.
+
+							*tag-binary-search*
+Vim utilise une recherche binaire dans le fichier de marqueurs pour trouver
+rapidement le marqueur désiré (si |+tag_binary| a été inclus à la
+compilation). Mais ceci ne fonctionne que si le fichier de marqueurs a été
+trié par valeur ASCII des octets. Par conséquent, si aucune correspondance
+n'est trouvée, un autre essai est effectué avec une recherche linéaire. Si
+vous désirez simplement un recherche linéaire, désactivez l'option
+'tagbsearch'. Mais il y a mieux : triez votre fichier de marqueurs !
+
+NOTE : La recherche binaire n'est pas active quand une recherche de marqueur
+ne porte pas sur un nom bien défini. Cela se produit quand la casse est
+ignorée ou quand une expression rationnelle est utilisée qui ne débute pas par
+une chaîne fixe. La recherche de marqueurs peut alors être beaucoup plus
+lente. Cela peut être évité en utilisant un tri insensible à la casse pour le
+fichier de marqueurs. Voir 'tagbsearch' pour plus de détails.
+
+							*tag-regexp*
+Les commandes ":tag" et "tselect" acceptent une expression rationnelle en
+argument. Voir |pattern| pour les caractères spéciaux qui peuvent être
+utilisés. Lorsque l'argument débute par '/', il est traité comme un motif.
+S'il ne débute pas par '/', il est pris littéralement, comme un nom de
+marqueur entier.
+   Exemples : >
+	:tag main
+<		Saute au marqueur "main" qui possède la plus haute priorité. >
+	:tag /^somme
+<		Saute au marqueur débutant par "somme" qui possède la plus
+		haute priorité. >
+	:tag /norm
+<		Liste tous les marqueurs contenant "norm", y compris
+		"id_normal".
+Lorsqu'un argument correspond à la fois littéralement et en tant que motif
+dans une exprat, une correspondance littérale aura une priorité supérieure.
+Par exemple, ":tag /ouvrir" correspondra à "ouvrir" avant "ouvrir_fichier" et
+"fichier_ouvrir".
+
+							*tag-!*
+Si le marqueur est dans le fichier courant, les choses se dérouleront bien.
+Sinon, le déroulement des opérations dépendra : 1° de la modification
+éventuelle du fichier courant, 2° de l'ajout ou non d'un '!' après la
+commande, et 3° de l'option 'autowrite' :
+
+    MARQUEUR DANS   FICHIER	    OPTION			~
+    FICH. COURANT   CHANGÉ    !	  'autowrite'	ACTION		~
+	oui	       x      x	       x	va au marqueur
+	non	      non     x        x	lit l'autre fichier, va au
+						   marqueur
+	non	      oui    oui       x	abandonne le fichier courant,
+						   lit l'autre fichier, va au
+						   marqueur
+	non	      oui    non    activée	enregistre le fichier courant,
+						   lit l'autre fichier, va au
+						   marqueur
+	non	      oui    non   désactivée	échoue
+
+- Si le marqueur est dans le fichier courant, la commande fonctionnera
+  toujours.
+- Si le marqueur est dans un autre fichier et que le fichier courant n'a pas
+  changé, l'autre fichier deviendra le fichier courant et sera lu dans le
+  tampon courant.
+- Si le marqueur est dans un autre fichier, que le fichier courant a été
+  changé et qu'un '!' a été ajouté à la commande, les changements dans le
+  tampon courant sont perdus, l'autre fichier deviendra le fichier courant et
+  sera lu dans le tampon courant.
+- Si le marqueur est dans un autre fichier, que le fichier courant a été
+  changé et que l'option 'autowrite' est activée, le fichier courant sera
+  enregistré, l'autre fichier deviendra le fichier courant et sera lu dans le
+  tampon courant.
+- Si le marqueur est dans un autre fichier, que le fichier courant a été
+  changé et que l'option 'autowrite' est désactivée, la commande échouera. Si
+  vous voulez enregistrer les changements, utilisez la commande ":w", puis
+  utilisez ":tag" sans argument. Ceci fonctionne parce que le marqueur a
+  malgré tout été mis au sommet de la pile. Si vous ne désirez pas enregistrer
+  les changements, vous pouvez utiliser la commande ":tag!".
+
+							*tag-security*
+NOTE : Vim interdit certaines commandes, par souci de sécurité. Cela
+fonctionne comme pour l'utilisation de l'option 'secure' pour les fichiers
+exrc/vimrc dans le répertoire courant. Voir |trojan-horse| et |sandbox|.
+   Quand le champ {adressemarqueur} du fichier de marqueurs modifie un tampon,
+vous obtiendrez ce message d'avertissement :
+	WARNING: tag command changed a buffer!!! ~
+Dans une version ultérieure, la modification d'un tampon sera rendue
+impossible. Cela pour des raisons évidentes de sécurité : quelqu'un pourrait
+glisser une commande malicieuse dans le fichier de marqueurs, qui risquerait
+sans ces précautions passer inaperçue. Par exemple : >
+	:$d|/nom-du-marqueur/
+{Vi ne dispose pas de ces mesures préventives}
+
+Dans Vi, la commande ":tag" modifie le dernier motif de recherche quand un
+marqueur est recherché. Cela n'est pas le cas dans Vim, où le motif de
+recherche précédent reste en mémoire, à moins que le drapeau 't' ne soit
+inclus dans 'cpoptions'. Le motif de recherche est toujours placé dans
+l'historique de recherche, vous pouvez ainsi le modifier si la recherche
+échoue.
+
+					    *emacs-tags* *emacs_tags* *E430*
+Les fichiers de marqueurs de style Emacs sont supportés uniquement si Vim a
+été compilé avec la fonctionnalité |+emacs_tags|. Désolé, mais vous ne
+trouverez pas de détails sur les fichiers de marqueurs de style Emacs ici, ils
+ne sont supportés que pour des raisons de compatibilité ascendante :-).
+
+							*tags-option*
+L'option 'tags' est une liste de noms de fichiers. Chacun de ces fichiers est
+balayé à la recherche du marqueur. Cela peut servir pour utiliser un fichier
+de marqueurs différent du fichier "tags" par défaut. Cela peut également
+servir à accéder à un fichier de marqueurs commun.
+
+Le fichier suivant dans la liste n'est pas utilisé quand :
+- un marqueur statique correspondant a été trouvé pour le tampon courant ;
+- un marqueur global correspondant a été trouvé.
+Cela dépend également de l'option 'ignorecase'. Si elle est désactivée et que
+le fichier de marqueurs a une correspondance mais de casse différente, le
+fichier de marqueurs suivant est recherché pour une correspondance de même
+casse. Si aucun marqueur de même casse n'est trouvé, la première
+correspondance de casse différente sera utilisée. Si l'option 'ignorecase' est
+activée et qu'un marqueur global correspond, il est utilisé quelque soit sa
+casse, les fichiers de marqueurs suivants ne sont pas balayés.
+
+Quand le nom d'un fichier de marqueurs débute par "./", le '.' est remplacé
+par le chemin du fichier courant. Cela permet d'utiliser un fichier de
+marqueurs dans le répertoire du fichier courant (indépendamment du répertoire
+courant).
+   L'utilisation de "./" vous permet de définir quel fichier de marqueurs doit
+être recherché en premier : dans le répertoire courant ("tags,./tags"), ou
+dans le répertoire du fichier courant ("./tags,tags").
+   Exemple : >
+	:set tags=./tags,tags,/home/babar/marqueurs_communs
+
+Dans cet exemple, un marqueur sera recherché en premier dans le fichier "tags"
+du répertoire où est situé le fichier courant ; puis dans le fichier "tags" du
+répertoire courant ; et s'il n'est pas trouvé là, alors il est recherché dans
+le fichier "/home/babar/marqueurs_communs".
+
+Cela peut désactivé en incluant 'd' dans 'cpoptions', pour rendre le
+comportement compatible Vi. "./tags" désignera alors le fichier "tags" du
+répertoire courant, au lieu du fichier "tags" du répertoire du fichier
+courant.
+
+À la place de la virgule, un espace peut être utilisé. Une contre-oblique
+('\') sera alors nécessaire pour que l'espace soit inclus dans l'option de
+type chaîne : >
+	:set tags=tags\ /home/babar/marqueurs_communs
+
+Pour inclure un espace dans un nom de fichier, utilisez trois contre-obliques.
+Pour inclure une virgule, utilisez deux contre-obliques. Par exemple,
+saisissez >
+	:set tags=fichier\\\ tags,/home/babar/marqueurs\\,communs
+pour les fichiers "fichier tags" et "/home/babar/marqueurs,communs". L'option
+'tags' aura comme valeur : "fichier\ tags,/home/babar/marqueurs\,communs".
+
+Si l'option 'tagrelative' est activée (c'est le cas par défaut) et que vous
+utilisez un fichier de marqueurs dans un autre répertoire, les noms de
+fichiers dans ce fichier de marqueurs seront relatifs au répertoire où il est
+situé.
+
+==============================================================================
+5. Format du fichier de marqueurs		*tags-file-format* *E431*
+
+							*ctags* *jtags*
+Un fichier de marqueurs peut être créé par une commande externe, par exemple
+`ctags`. Il contiendra un marqueur pour chaque fonction. Certaines versions de
+`ctags` créeront également un marqueur pour chaque macro "#define", définition
+de type, énumérateur, etc.
+
+Ces programmes peuvent être utilisés pour générer des fichiers de marqueurs :
+
+ctags			Courant sur la plupart des systèmes Unix. Supporte
+			exclusivement le C. Ne fait que le travail de base.
+Exuberant ctags		C'est un très bon choix. Supporte le C, C++, Java,
+			Fortran, Eiffel et d'autres langages. Peut générer des
+			marqueurs pour de nombreux éléments. Voir
+			"http://ctags.sourceforge.net/".
+etags			Dépend d'Emacs. Supporte de nombreux langages.
+JTags			Pour Java, en Java. Disponible sur
+			"http://www.fleiner.com/jtags/".
+ptags.py		Pour Python, en Python. Vous le trouverez dans votre
+			répertoire source Python à "Tools/scripts/ptags.py".
+ptags			Pour Perl, en Perl. Disponible sur
+			"http://www.eleves.ens.fr:8080/home/nthiery/Tags/".
+
+
+Les lignes d'un fichier de marqueurs doivent avoir un de ces trois formats :
+
+1. {nommarqueur}		{TAB} {fichmarqueur} {TAB} {adressemarqueur}
+2. {fichmarqueur}:{nommarqueur} {TAB} {fichmarqueur} {TAB} {adressemarqueur}
+3. {nommarqueur}		{TAB} {fichmarqueur} {TAB} {adressemarqueur} {fin} {champ} ...
+
+Le premier est un marqueur normal, totalement compatible avec Vi. C'est le
+seul format produit par les versions traditionnelles de `ctags`. Il est
+souvent utilisé pour des fonctions globales, également référencées dans
+d'autres fichiers.
+
+Les lignes dans le fichier de marqueurs peuvent se terminer par <LF> ou
+<CR><LF>. Sur Macintosh, <CR> fonctionne aussi. Les caractères <CR> et <NL> ne
+peuvent pas apparaître à l'intérieur d'une ligne.
+
+							*tag-old-static*
+Le deuxième format n'est utilisé que pour les marqueurs statiques. Il est
+maintenant obsolète, remplacé par le troisième format. Il n'est supporté que
+par Elvis 1.x, Vim et certaines version de `ctags`. Un marqueur statique est
+souvent utilisé pour des fonctions locales, uniquement référencées dans le
+fichier {fichmarqueur}.
+   NOTE : Pour un marqueur statique, les deux occurrences de {fichmarqueur}
+doivent être exactement identiques. Voir aussi |tags-option| ci-dessous, sur
+l'utilisation des marqueurs statiques.
+
+Le troisième format est nouveau. Il permet d'inclure des informations
+supplémentaires dans des champs optionnels à la fin de chaque ligne. Il n'est
+supporté que par les nouvelles versions de `ctags` (comme "Exuberant ctags").
+
+{nommarqueur}	    L'identifiant. Normalement, le nom d'une fonction, mais
+		    n'importe quel identifiant peut être utilisé. Ne peut pas
+		    contenir de <Tab>.
+
+{TAB}		    Un caractère <Tab>.			*tag-any-white*
+		    NOTE : Les versions précédentes autorisaient n'importe
+		    quel espace blanc ici. Cela a été modifié pour autoriser
+		    l'emploi d'espaces dans {fichmarqueur}. Pour retrouver
+		    l'ancien comportement, la fonctionnalité |+tag_any_white|
+		    doit être activée à la compilation.
+
+{fichmarqueur}	    Le fichier qui contient la définition de {nommarqueur}.
+		    Peut avoir un chemin absolu ou relatif. Peut contenir des
+		    variables d'environnement ou des jokers (bien que
+		    l'utilisation de jokers soit douteuse). Ne peut pas
+		    contenir de <Tab>.
+
+{adressemarqueur}   La commande Ex qui place le curseur sur le marqueur.
+		    N'importe quelle commande Ex peut être employée, bien
+		    qu'il certaines restrictions s'appliquent (voir
+		    |tag-security|).
+		    Posix n'autorise que des numéros de lignes et des
+		    commandes de recherche, qui sont le plus fréquemment
+		    utilisées.
+
+{fin}		    ;" (les deux caractères deux-points et double-apostrophe).
+		    Ils sont interprétés comme le début d'un commentaire par
+		    Vi, ce qui fait ignorer la suite. Permet la compatibilité
+		    avec Vi, les champs suivants seront ignorés.
+
+{champ} ...	    Une liste de champs optionnels. Chacun est de la forme :
+
+			    <Tab>{nomchamp}:{valeur}
+
+		    {nomchamp} identifie le champ et peut contenir n'importe
+		    quel caractère alphabétique [a-zA-Z].
+		    {valeur} est une chaîne quelconque, mais ne peut pas
+		    contenir de <Tab>.
+		    Ces caractères sont spéciaux :
+			    "\t" est mis pour un <Tab>
+			    "\r" est mis pour un <CR>
+			    "\n" est mis pour un <NL>
+			    "\\" est mis pour un caractère '\' simple
+
+		    Il y a un champ qui ne contient pas de ':'. C'est le type
+		    du marqueur. Il sera traité comme s'il était précédé par
+		    "kind:". Voir la documentation de `ctags` pour les
+		    différents types de marqueurs produits.
+
+		    Le seul champ actuellement reconnu par Vim est "file:"
+		    (avec une valeur vide). Il est utilisé pour un marqueur
+		    statique.
+
+Les premières lignes d'un fichier de marqueurs peuvent parfois débuter par :
+	!_TAG_ ~
+Ces lignes sont rangées parmi les premières, seuls quelques rares marqueurs
+qui débutent par "!" peuvent être rangés avant. Vim reconnaît uniquement la
+ligne qui indique si le fichier a été trié. Si cette ligne est trouvée, Vim
+utilise la recherche binaire pour le fichier de marqueurs :
+	!_TAG_FILE_SORTED<Tab>1 ~
+
+Vous pouvez utiliser un tri insensible à la casse pour le fichier de marqueurs
+afin d'éviter une recherche linéraire lorsque 'ignorecase' est activé. Voir
+'tagbsearch' pour plus de détails. La valeur '2' doit alors être utilisée :
+	!_TAG_FILE_SORTED<Tab>2 ~
+
+							*tag-search*
+La commande peut être n'importe quelle commande Ex, mais c'est le plus souvent
+une commande de recherche. Exemples :
+	marqueur1	fichier1	/^main(argc, argv)/ ~
+	marqueur2	fichier2	108 ~
+
+La commande est toujours exécutée avec 'magic' désactivé. Les seuls caractères
+spéciaux dans un motif de recherche sont "^" (début-de-ligne) et "$"
+(fin-de-ligne). Voir |pattern|.
+   NOTE : Vous devez mettre une contre-oblique devant chaque contre-oblique
+dans le motif de recherche. Cela permet d'assurer la compatibilité avec Vi.
+
+							*E434* *E435*
+Si la commande est une commande de recherche normale (elle débute et se
+termine par "/" ou "?"), elle est traitée de façon spéciale :
+- La recherche débute à la ligne 1 du fichier. La direction de la recherche
+  est en avant pour "/" et en arrière pour "?".
+  NOTE : 'wrapscan' n'est pas pris en compte, le fichier est toujours balayé
+  en entier. {Vi utilise 'wrapscan', ce qui pose parfois problème, certains
+  marqueurs n'étant pas trouvés. En effet, Vi commence la recherche à la
+  ligne 2 d'un autre fichier : il ne peut pas trouver un marqueur à la ligne 1
+  d'un autre fichier lorsque 'wrapscan' n'est pas activé}
+- Si la recherche échoue, un autre essai est effectué en ignorant la casse. Si
+  cela échoue aussi, une recherche est effectuée sur :
+	"^nommarqueur[ \t]*("
+  (le marqueur avec '^' préfixé et "[ \t]*(" suffixé). Quand des noms de
+  fonction sont utilisés, cela trouvera la fonction quand elle est située à la
+  colonne 0. C'est utile si les arguments de la fonction ont changé depuis que
+  le fichier de marqueurs a été crée. Si cette recherche échoue à son tour,
+  une ultime tentative est faite avec :
+	"^[#a-zA-Z_].*\<nommarqueur[ \t]*("
+  Ceci signifie : une ligne débutant par '#' ou un identifiant et contenant le
+  marqueur suivi par tout espace blanc et par un '('. Cela trouvera les noms
+  de macros et de fonctions avec un type préfixé.
+  {Vi : si la recherche échoue, il n'y a pas de d'autres recherches}
+
+==============================================================================
+6. Recherches dans les fichiers inclus	 *include-search* *definition-search*
+							 *E387* *E388* *E389*
+
+Ces commandes recherchent une chaîne dans le fichier courant et dans tous les
+fichiers inclus rencontrés (récursivement). Elles peuvent être utilisées pour
+trouver la définition d'une variable, fonction ou macro. Si vous ne voulez
+chercher que dans le fichier courant, utilisez les commandes listées à
+|pattern-searches|.
+
+{uniquement si compilé avec la fonctionnalité |+find_in_path|}
+
+Quand une ligne qui inclut un autre fichier est rencontrée, ce fichier est
+balayé avant de continuer dans le tampon courant. Les fichiers inclus par des
+fichiers inclus sont également balayés. Quand un fichier inclus est
+introuvable, il est silencieusement ignoré. Utilisez la commande |:checkpath|
+pour découvrir quels fichiers n'ont pas pu être trouvés, possiblement parce
+que votre option 'path' n'est pas fixée convenablement.
+   NOTE : C'est le fichier inclus qui est balayé et non pas un tampon qui
+pourrait éditer ce fichier. Seules les lignes entrées dans le tampon du
+fichier courant sont utilisées.
+
+La chaîne peut être n'importe quel mot-clé ou macro définie. Pour le mot-clé,
+toutes les correspondances seront trouvées. Pour les macros définies, seules
+les lignes correspondant avec la valeur de l'option 'define' seront trouvées.
+La valeur par défaut est "^#\s*define" (pour les programmes C). Pour les
+autres langages, vous voudrez probablement changer cette valeur. Voir 'define'
+pour un exemple servant au C++. La chaîne ne peut pas contenir de
+fin-de-ligne, seules les correspondances à l'intérieur d'une ligne sont
+trouvées.
+
+Quand une correspondance pour une macro définie est trouvée, l'affichage des
+lignes continue par la ligne suivante lorsqu'une ligne se termine par une
+contre-oblique.
+
+Les commandes qui débutent par "[" commencent la recherche depuis le début du
+fichier courant. Celles qui débutent par "]" commencent à la position du
+curseur.
+
+L'option 'include' est utilisée pour définir une ligne qui inclut un autre
+fichier. La valeur par défaut est "\^#\s*include" (pour les programmes C).
+   NOTE : Vim ne reconnaît pas la syntaxe du C : si l'option 'include'
+correspond avec une ligne à l'intérieur d'un bloc "#ifdef/#endif" ou à
+l'intérieur d'un commentaire, elle sera utilisée malgré tout. L'option
+'isfname' permet de reconnaître le nom du fichier qui vient à la suite du
+motif de correspondance.
+
+L'option 'path' est utilisée pour trouver le répertoire des fichiers inclus
+qui n'ont pas de chemin absolu.
+
+L'option 'comments' est utilisée pour les commandes qui affichent une ligne
+simple ou sautent à une ligne. Elle définit les motifs qui peuvent débuter un
+commentaire. Ces lignes sont ignorées par la recherche, à moins que [!] ne
+soit précisé. Exception : quand la ligne correspond au motif "^# *define",
+elle n'est pas considérée comme un commentaire.
+
+Si vous voulez lister les correspondances et en choisir une vers laquelle
+sauter, vous pouvez vous servir d'un mappage qui fera cela pour vous. En voici
+un exemple : >
+    :map <F4> [I:let nb = input("Lequel : ")<Bar>exe "normal " . nb ."[\t"<CR>
+<
+
+							*[i*
+[i			Affiche la première ligne qui contient le mot-clé sous
+			le curseur. La recherche commence au début du fichier.
+			Les lignes qui ressemblent à un commentaire sont
+			ignorées (voir l'option 'comments'). Si un
+			quantificateur est donné, la [quant]-ième ligne
+			correspondante est affichée et les lignes de
+			commentaires ne sont pas ignorées. {absent de Vi}
+
+							*]i*
+]i			Comme "[i", mais commence à la position du curseur.
+			{absent de Vi}
+
+							*:is* *:isearch*
+:[plage]is[earch][!] [quant] [/]motif[/]
+			Comme "[i"  et "]i", mais recherche dans les lignes de
+			[plage] (défaut : fichier entier).
+			Voir |:search-args| pour [/] et [!]. {absent de Vi}
+
+							*[I*
+[I			Affiche tous les lignes qui contiennent le mot-clé
+			sous le curseur. Les noms de fichiers et les numéros
+			de lignes sont affichées pour les lignes trouvées. La
+			recherche commence au début du fichier. {absent de Vi}
+
+							*]I*
+]I			Comme "[I", mais commence à la position du curseur.
+			{absent de Vi}
+
+							*:il* *:ilist*
+:[plage]il[ist][!] [/]motif[/]
+			Comme "[I"  et "]I", mais recherche dans les lignes de
+			[plage] (défaut : fichier entier).
+			Voir |:search-args| pour [/] et [!]. {absent de Vi}
+
+							*[_CTRL-I*
+[ CTRL-I		Saute à la première ligne qui contient le mot-clé sous
+			le curseur. La recherche commence au début du fichier.
+			Les lignes qui ressemblent à un commentaire sont
+			ignorées (voir l'option 'comments'). Si un
+			quantificateur est donné, saute à la [quant]-ième
+			ligne correspondante, les lignes de commentaires
+			n'étant pas ignorées. {absent de Vi}
+
+							*]_CTRL-I*
+] CTRL-I		Comme "[ CTRL-I", mais commence à la position du
+			curseur. {absent de Vi}
+
+							*:ij* *:ijump*
+:[plage]ij[ump][!] [quant] [/]motif[/]
+			Comme "[ CTRL-I"  et "] CTRL-I", mais recherche dans
+			les lignes de [plage] (défaut : fichier entier).
+			Voir |:search-args| pour [/] et [!]. {absent de Vi}
+
+CTRL-W CTRL-I	    ou				*CTRL-W_CTRL-I* *CTRL-W_i*
+CTRL-W i		Ouvre une nouvelle fenêtre et saute à la première
+			ligne qui contient le mot-clé sous le curseur. La
+			recherche commence au début du fichier. Les lignes qui
+			ressemblent à un commentaire sont ignorées (voir
+			l'option 'comments'). Si un quantificateur est donné,
+			saute à la [quant]-ième ligne correspondante, les
+			lignes de commentaires n'étant pas ignorées.
+			{absent de Vi}
+
+							*:isp* *:isplit*
+:[plage]isp[lit][!] [quant] [/]motif[/]
+			Comme "CTRL-W i" et "CTRL-W CTRL-I" XXX, mais recherche
+			dans les lignes de [plage] (défaut : fichier entier).
+			Voir |:search-args| pour [/] et [!]. {absent de Vi}
+
+							*[d*
+[d			Affiche la première définition de macro qui contient
+			le mot-clé sous le curseur. La recherche commence au
+			début du fichier. Si un quantificateur est donné, la
+			[quant]-ième ligne correspondante est affichée.
+			{absent de Vi}
+
+							*]d*
+]d			Comme "[d", mais commence à la position du curseur.
+			{absent de Vi}
+
+							*:ds* *:dsearch*
+:[plage]ds[earch][!] [quant] [/]chaîne[/]
+			Comme "[d"  et "]d", mais recherche dans les lignes de
+			[plage] (défaut : fichier entier).
+			Voir |:search-args| pour [/] et [!]. {absent de Vi}
+
+							*[D*
+[D			Affiche toutes les définitions de macros qui
+			contiennent le mot-clé sous le curseur. Les noms de
+			fichiers et les numéros de lignes sont affichées pour
+			les lignes trouvées. La recherche commence au début du
+			fichier. {absent de Vi}
+
+							*]D*
+]D			Comme "[D", mais commence à la position du curseur.
+			{absent de Vi}
+
+							*:dl* *:dlist*
+:[plage]dl[ist][!] [/]chaîne[/]
+			Comme "[D"  et "]D", mais recherche dans les lignes de
+			[plage] (défaut : fichier entier).
+			Voir |:search-args| pour [/] et [!]. {absent de Vi}
+
+							*[_CTRL-D*
+[ CTRL-D		Saute à la première définition de macro qui contient
+			le mot-clé sous le curseur. La recherche commence au
+			début du fichier. Si un quantificateur est donné,
+			saute à la [quant]-ième ligne correspondante.
+			{absent de Vi}
+
+							*]_CTRL-D*
+] CTRL-D		Comme "[ CTRL-D", mais commence à la position
+			courante. {absent de Vi}
+
+							*:dj* *:djump*
+:[plage]dj[ump][!] [quant] [/]chaîne[/]
+			Comme "[ CTRL-D"  et "] CTRL-D", mais recherche dans
+			les lignes de [plage] (défaut : fichier entier).
+			Voir |:search-args| pour [/] et [!]. {absent de Vi}
+
+CTRL-W CTRL-D	    ou				*CTRL-W_CTRL-D* *CTRL-W_d*
+CTRL-W d		Ouvre une nouvelle fenêtre, saute à la première
+			définition de macro qui contient le mot-clé sous le
+			curseur. La recherche commence au début du fichier. Si
+			un quantificateur est donné, saute à la [quant]-ième
+			ligne correspondante. {absent de Vi}
+
+							*:dsp* *:dsplit*
+:[plage]dsp[lit][!] [quant] [/]chaîne[/]
+			Comme "CTRL-W d", mais recherche dans les lignes de
+			[plage] (défaut : fichier entier).
+			Voir |:search-args| pour [/] et [!]. {absent de Vi}
+
+							*:che* *:checkpath*
+:che[ckpath]		Liste tous les fichiers inclus qui n'ont pas pu être
+			trouvés. {absent de Vi}
+
+:che[ckpath]!		Liste tous les fichiers inclus. {absent de Vi}
+
+							*:search-args*
+Arguments génériques des commandes données ci-dessus :
+[!]   Si inclus, cherche des correspondances dans les lignes qui sont
+      reconnues comme commentaires.
+      Si exclu, une correspondance dans une ligne de commentaire (selon
+      'comments') sera ignorée, ou la correspondance est dans un commentaire C
+      (après "//" ou à l'intérieur de "/*...*/").
+      NOTE : Une correspondance peut être manquée si une ligne est prise pour
+      un commentaire, mais que le commentaire s'arrête au milieu de la ligne.
+      Et si la ligne est un commentaire mais n'est pas reconnue comme telle
+      (selon 'comments'), une correspondance pourra cependant être trouvée.
+      Exemple :
+	    /* commentaire ~
+	       blabla */ ~
+      Une correspondance pour "blabla" est trouvée, car cette ligne n'est pas
+      considérée comme un commentaire (même si la coloration syntaxique
+      la gère correctement).
+      NOTE : Comme une définition de macro n'a pas beaucoup de chance de
+      ressembler à un commentaire, le [!] ne fait pas de différence pour
+      ":dlist", ":dsearch" et ":djump".
+[/]   Un motif peut être encadré par '/'. Sans '/', seuls des mots entiers
+      pourront correspondre, selon le motif "\<motif\>". Une commande suivante
+      pourra être ajoutée avec '|', mais uniquement après le deuxième '/'.
+      Exemple : >
+	    :isearch /chaîne/ | echo "c'est la dernière"
+<     Pour les commandes ":djump", ":dsplit", ":dlist" et ":dsearch", le motif
+      est utilisé comme une chaîne littérale et non comme un motif de
+      recherche.
+
+ vim:tw=78:ts=8:ft=help:norl:

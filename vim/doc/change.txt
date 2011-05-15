@@ -1,0 +1,1533 @@
+*change.txt*    Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+Ce fichier décrit les commandes pour effacer ou changer du texte. Dans ce
+contexte, « changer » du texte signifie le couper et le remplacer par un autre
+texte, en utilisant une commande. Toutes ces commandes peuvent être annulées.
+Les commandes non-Ex peuvent être répétées avec la commande ".".
+
+1. Effacer du texte		    |deleting|
+2. Effacer et insérer		    |delete-insert|
+3. Changements simples		    |simple-change|	*changing*
+4. Changements complexes	    |complex-change|
+5. Copier et déplacer du texte	    |copy-move|
+6. Mettre en forme du texte	    |formatting|
+
+Pour insérer du texte, voir |insert.txt|.
+
+==============================================================================
+1. Effacer du texte					*deleting* *E470*
+
+["x]<Suppr>	ou					*<Del>* *x* *dl*
+["x]x			Coupe [quant] caractères sous et après le curseur
+			[dans le registre x] (pas par lignes). Identique à
+			"dl".
+			La touche <Suppr> n'accepte pas d'argument [quant] : à
+			la place, elle supprime le dernier caractère entré du
+			quantificateur.
+			Voir |:fixdel| si la touche <Suppr> ne se comporte pas
+			comme souhaité. Voir |'whichwrap'| pour supprimer une
+			coupure de ligne (fusionner).
+			{Vi ne supporte pas <Suppr>}
+
+							*X* *dh*
+["x]X			Coupe [quant] caractères avant le curseur [dans le
+			registre x] (pas par lignes). Identique à "dh".
+			Voir aussi |'whichwrap'|.
+
+							*d*
+["x]d{mouv}		Coupe le texte couvert par {mouv} [dans le registre x].
+			Voir ci-dessous pour les exceptions.	     ["Delete"]
+
+							*dd*
+["x]dd			Coupe [quant] lignes [dans le registre x] (par lignes).
+
+							*D*
+["x]D			Coupe les caractères sous le curseur jusqu'à la fin de
+			la ligne et de [quant] - 1 lignes supplémentaires
+			[dans le registre x]. Synonyme de "d$".
+			(Ne fonctionne pas par lignes.)
+
+{Visuel}["x]x	ou					*v_x*
+{Visuel}["x]d   ou					*v_d* *v_<Del>*
+{Visuel}["x]<Suppr>	Coupe le texte en surbrillance [dans le registre x]
+			(sur {Visuel}, voir |Visual-mode|). {absent de Vi}
+
+{Visuel}["x]CTRL-H   ou					*v_CTRL-H* *v_<BS>*
+{Visuel}["x]<RetArr>	En mode Sélection : coupe le texte en surbrillance
+			[dans le registre x].
+
+{Visuel}["x]X	ou					*v_X* *v_D* *v_b_D*
+{Visuel}["x]D		Coupe les lignes en surbrillance [dans le registre x]
+			(sur {Visuel}, voir |Visual-mode|). En mode
+			Visuel-Bloc, "D" coupe le texte en surbrillance plus
+			tout le texte jusqu'à la fin de la ligne.
+			{absent de Vi}
+
+						*:d* *:de* *:del* *:delete*
+:[plage]d[elete] [x]	Coupe les lignes de [plage] (défaut : ligne courante)
+			[dans le registre x].
+
+:[plage]d[elete] [x] {quant}
+			Coupe {quant} lignes, en commençant à [plage]
+			(défaut : ligne courante |cmdline-ranges|) [dans le
+			registre x].
+
+Toutes ces commandes coupent du texte. Vous pouvez les répéter avec la
+commande "." (sauf pour ":d"), ainsi que les annuler. Utilisez le mode Visuel
+pour couper des blocs de texte. Voir |registers| pour trouver des explications
+sur les registres.
+
+La commande "d{mouv}" présente une exception : si le mouvement n'est pas par
+lignes, que le début et la fin du mouvement ne sont pas sur la même ligne, et
+qu'il n'y a que des lignes blanches avant le début et après la fin du
+mouvement, la coupure devient par lignes. Cela signifie que sera également
+supprimée la ligne de blancs que vous aurez peut-être voulu laisser.
+
+Si vous essayez de couper une région vide de texte (p. ex., "d0" dans la
+première colonne), vous obtiendrez une erreur si 'cpoptions' contient le
+drapeau 'E'.
+
+							*J*
+J			Fusionne [quant] lignes, deux au minimum. Supprime
+			l'indentation et insère jusqu'à deux espaces (voir
+			ci-dessous).				       ["Join"]
+
+							*v_J*
+{Visuel}J		Fusionne les lignes en surbrillance, deux au minimum.
+			Supprime l'indentation et insère jusqu'à deux espaces
+			(voir ci-dessous). {absent de Vi}
+
+							*gJ*
+gJ			Fusionne [quant] lignes, deux au minimum. N'insère ni
+			ne supprime aucun espace. {absent de Vi}
+
+							*v_gJ*
+{Visuel}gJ		Fusionne les lignes en surbrillance, deux au minimum.
+			N'insère ni ne supprime aucun espace. {absent de Vi}
+
+							*:j* *:join*
+:[plage]j[oin][!]	Fusionne les lignes de [plage]. Comme "J", sauf
+			qu'avec [!] la fusion n'insère ni ne supprime aucun
+			espace.
+			Si une [plage] a les mêmes valeurs de début et de fin,
+			cette commande ne produit aucun effet. Le comportement
+			par défaut est de fusionner la ligne courante avec
+			celle du dessous. {Vi : pas de [!]}
+
+:[plage]j[oin][!] {quant}
+			Fusionne {quant} lignes, en commençant à [plage]
+			(défaut : ligne courante |cmdline-ranges|). Comme "J",
+			sauf qu'avec [!] la fusion n'insère ni ne supprime
+			aucun espace. {Vi : pas de [!]}
+
+Toutes ces commande suppriment le <EOL> (fin-de-ligne) entre deux lignes. Cela
+a pour effet de faire fusionner plusieurs lignes en une seule. Vous pouvez
+répéter ces commandes (sauf ":j") et les annuler.
+
+Ces commandes, sauf "gJ", insèrent une espace à la place de <EOL>, à moins
+qu'il n'y ait un espace blanc final avant, ou que la ligne suivante débute par
+un ')'. Ces commandes, sauf "gJ", suppriment tout espace blanc débutant la
+ligne suivante. Si l'option 'joinspaces' est activée, ces commandes insèrent
+deux espaces après un '.', '!' ou '?' (mais si 'cpoptions' contient le drapeau
+'j', elles insèrent deux espaces après un '.' uniquement).
+   Les drapeaux 'B' et 'M' de 'formatoptions' modifient le comportement pour
+insérer des espaces avant et après un caractère multi-octets |fo-table|.
+
+==============================================================================
+2. Effacer et insérer				*delete-insert* *replacing*
+
+							*R*
+R			Entre en mode Remplacement : chaque caractère que vous
+			tapez remplace un caractère existant, en débutant par
+			le caractère sous le curseur. Répète le texte entré
+			[quant] - 1 fois. Voir |Replace-mode| pour plus
+			d'informations.
+
+							*gR*
+gR			Entre en mode Remplacement Virtuel : chaque caractère
+			que vous tapez remplace des caractères existants à
+			l'écran. Ainsi, <Tab> peut remplacer plusieurs
+			caractères en une fois. Répète le texte entré
+			[quant] - 1 fois. Voir |Virtual-Replace-mode| pour
+			plus d'informations.
+			{uniquement si compilé avec la fonctionnalité
+			|+vreplace|}
+
+							*c*
+["x]c{mouv}		Coupe le texte couvert par {mouv} [dans le registre x]
+			et débute l'insertion. Si 'cpoptions' contient le
+			drapeau 'E' et qu'il n'y a pas de texte à couper
+			(p. ex., avec "cTx" quand le curseur est juste après
+			un "x"), une erreur se produit et le mode Insertion
+			n'est pas lancé (c'est compatible Vi). Si 'cpoptions'
+			ne contient pas le drapeau 'E', la commande "c" lance
+			toujours le mode Insertion, même s'il n'y a pas de
+			texte à couper.				     ["Change"]
+
+							*cc*
+["x]cc			Coupe [quant] lignes [dans le registre x] et débute
+			l'insertion (par lignes). Si 'autoindent' est activé,
+			préserve l'indentation de la première ligne.
+
+							*C*
+["x]C			Coupe depuis la position du curseur jusqu'à la fin de
+			la ligne, et [quant] - 1 lignes supplémentaires [dans
+			le registre x], puis débute l'insertion. Synonyme de
+			"c$" (pas par lignes).
+
+							*s*
+["x]s			Coupe [quant] caractères [dans le registre x] et
+			débute l'insertion. Synonyme de "cl" (pas par lignes).
+								 ["Substitute"]
+
+							*S*
+["x]S			Coupe [quant] lignes [dans le registre x] et débute
+			l'insertion. Synonyme de "cc" (par lignes).
+
+{Visuel}["x]c	ou					*v_c* *v_s*
+{Visuel}["x]s		Coupe le texte en surbrillance [dans le registre x] et
+			débute l'insertion (sur {Visuel}, voir |Visual-mode|).
+			{absent de Vi}
+
+							*v_r*
+{Visuel}["x]r{car}	Remplace tous les caractères sélectionnés par {car}.
+
+							*v_C*
+{Visuel}["x]C		Coupe les lignes en surbrillance [dans le registre x]
+			et débute l'insertion. Fonctionne différemment en mode
+			Visuel-bloc |v_b_C|. {absent de Vi}
+							*v_S*
+{Visuel}["x]S		Coupe les lignes en surbrillance [dans le registre x]
+			et débute l'insertion (sur {Visuel}, voir
+			|Visual-mode|). {absent de Vi}
+							*v_R*
+{Visuel}["x]R		Fonctionne actuellement comme "{Visuel}["x]S". Cette
+			commande pourrait fonctionner différemment dans une
+			version ultérieure. {absent de Vi}
+
+NOTES :
+- Vous pouvez quitter les modes Insertion et Remplacement avec <Echap>.
+- Consultez la section « Insertion et remplacement de texte »
+  |mode-ins-repl| pour les autres caractères spéciaux dans ces modes.
+- L'utilisation de [quant] prend effet après que Vim a quitté le mode
+  Insertion ou Remplacement.
+- Lorsque l'option 'cpoptions' contient '$' et que le changement est à
+  l'intérieur d'une ligne, Vim continue de montrer le texte à couper et pose
+  un '$' sur le dernier caractère à couper.
+
+Voir |registers| pour plus d'informations sur les registres.
+
+Le mode Remplacement est similaire au mode Insertion, sauf que chaque
+caractère que vous entrez efface un caractère existant. Si vous atteignez la
+fin d'une ligne, Vim y ajoutera tous les caractères supplémentaires (comme en
+mode Insertion). En mode Remplacement, un retour arrière restaurera le texte
+original (s'il y en avait un). (Voir la section « Insertion et remplacement de
+texte » |mode-ins-repl|.)
+
+							*cw* *cW*
+Cas particulier : "cw" et "cW" fonctionnent comme "ce" et "cE" si le curseur
+est sur un non-blanc. Cela est dû au fait que Vim interprète "cw" comme
+"Change Word" [« changer le mot »], et qu'un mot n'inclut pas l'espace blanc
+suivant. {Vi : "cw" sur un blanc suivi d'autres blancs change uniquement le
+premier blanc. C'est certainement un bogue, car "dw" supprime tous les blancs.
+Utilisez le drapeau 'w' de 'cpoptions' si vous voulez quand même conserver ce
+comportement}
+
+Si vous souhaitez que "cw" inclue l'espace final après un mot, utilisez ce
+mappage : >
+	:map cw dwi
+<
+							*:c* *:ch* *:change*
+:{plage}c[hange]	Remplace les lignes de {plage} par un autre texte.
+			Entrez une ligne contenant uniquement "." pour cesser
+			le remplacement. Sans {plage}, cette commande change
+			uniquement la ligne courante.
+
+==============================================================================
+3. Changements simples					*simple-change*
+
+							*r*
+r{car}			Remplace le caractère sous le curseur par {car}.
+			Si {car} est un <CR> ou <NL>, une coupure de ligne
+			remplace le caractère. Pour remplacer par un vrai
+			<CR>, utilisez "CTRL-V <CR>". "CTRL-V <NL>" remplace
+			par un <Nul>. {Vi : "CTRL-V <CR>" remplace toujours
+			par une coupure de ligne, et il n'est pas possible de
+			remplacer du texte par un <CR>}
+			Si [quant] est précisé, Vim remplace [quant]
+			caractères par [quant] {car}s. Si {car} est un <CR> ou
+			<NL>, Vim insère de toute façon un seul <CR> :
+			"5r<CR>" remplace cinq caractères par une seule
+			coupure de ligne.
+			Si {car} est un <CR> ou <NL>, Vim gère
+			l'auto-indentation. Cela fonctionne comme si on
+			coupait les caractères qui sont remplacés puis faisait
+			"i<CR><Echap>".
+			{car} peut être entré comme un digramme |digraph-arg|.
+			Les mappages |:lmap| s'appliquent à {car}. La commande
+			CTRL-^ en mode Insertion peut être utilisée pour
+			activer ou désactiver ce comportement |i_CTRL-^|. Voir
+			|utf-8-char-arg| pour utiliser des caractères de
+			composition lorsque 'encoding' vaut "unicode".
+
+							*gr*
+gr{car}			Remplace les caractères virtuels sous le curseur par
+			{car}. Cela remplace l'état visible à l'écran, pas
+			l'état dans le fichier.
+			Voir |gR| et |Virtual-Replace-mode| pour plus
+			d'informations. Comme pour |r|, un quantificateur peut
+			être précisé. {car} peut être entré comme avec |r|.
+			{uniquement si compilé avec la fonctionnalité
+			|+vreplace|}
+
+							*digraph-arg*
+L'argument pour les commandes du mode Normal comme |r| et |t| est un caractère
+unique. Lorsque 'cpoptions' ne contient pas le drapeau 'D', ce caractère peut
+également être entré comme un digramme |digraphs|. Tapez d'abord CTRL-K, suivi
+des deux caractères du digramme.
+{uniquement si compilé avec la fonctionnalité |+digraphs|}
+
+							*case*
+Les commandes suivantes changent la casse des lettres. Votre région
+linguistique courante (voir |locale|) est utilisée. Voir aussi |:language|. La
+valeur de LC_CTYPE est ici prise en compte.
+
+							*~*
+~			'tildeop' désactivé : inverse la casse du caractère
+			sous le curseur et déplace le curseur au caractère
+			suivant. Si [quant] est donné, applique le changement
+			à plusieurs caractères. {Vi : pas de quantificateur}
+
+~{mouv}			'tildeop' activé : inverse la casse du texte couvert
+			par la {mouv}. {Vi : le tilde ne peut pas être utilisé
+			comme un opérateur}
+
+							*g~*
+g~{mouv}		Inverse la casse du texte couvert par la {mouv}.
+			{absent de Vi}
+
+g~g~		ou					*g~g~* *g~~*
+g~~			Inverse la casse de la ligne courante. {absent de Vi}
+
+							*v_~*
+{Visuel}~		Inverse la casse du texte en surbrillance (sur
+			{Visuel}, voir |Visual-mode|). {absent de Vi}
+
+							*v_U*
+{Visuel}U		Passe le texte en surbrillance en majuscules (sur
+			{Visuel}, voir |Visual-mode|). {absent de Vi}
+								  ["Uppercase"]
+
+							*gU* *uppercase*
+gU{mouv}		Passe le texte couvert par {mouv} en majuscules.
+			{absent de Vi}
+			Exemple : >
+				:map! <C-F> <Esc>gUiw`]a
+<			Cela fonctionne en mode Insertion : pressez CTRL-F
+			pour passer le mot avant le curseur en majuscules.
+			Pratique pour taper des mots en minuscules et les
+			passer en majuscules.
+
+gUgU		ou					*gUgU* *gUU*
+gUU			Passe la ligne courante en majuscules. {absent de Vi}
+
+							*v_u*
+{Visuel}u		Passe le texte en surbrillance en minuscules (sur
+			{Visuel}, voir |Visual-mode|). {absent de Vi}
+
+							*gu* *lowercase*
+gu{mouv}		Passe le texte couvert par {mouv} en minuscules.
+			{absent de Vi}
+
+gugu		ou					*gugu* *guu*
+guu			Passe la ligne courante en minuscules. {absent de Vi}
+
+							*g?* *rot13*
+g?{mouv}		Code le texte couvert par {mouv} avec Rot13.
+			{absent de Vi}
+
+							*v_g?*
+{Visuel}g?		Code le texte en surbrillance avec Rot13 (sur
+			{Visuel}, voir |Visual-mode|). {absent de Vi}
+
+g?g?		ou					*g?g?* *g??*
+g??			Code la ligne courante avec Rot13. {absent de Vi}
+
+
+ADDITIONNER ET SOUSTRAIRE
+
+							*CTRL-A*
+CTRL-A			Ajoute [quant] au nombre ou caractère alphabétique
+			sous ou après le curseur. {absent de Vi}
+
+							*CTRL-X*
+CTRL-X			Soustrait [quant] du nombre ou caractère alphabétique
+			sous ou après le curseur. {absent de Vi}
+
+Les commandes CTRL-A et CTRL-X fonctionnent sur des nombres décimaux (signés),
+sur des nombres octaux ou hexadécimaux non-signés, et sur des caractères
+alphabétiques. Cela dépend de l'option 'nrformats'.
+- Si 'nrformats' contient "alpha", Vim modifiera le caractère alphabétique
+  sous ou après le curseur. C'est utile pour dresser une liste avec
+  numérotation alphabétique.
+- Si 'nrformats' contient "hex", Vim considère les nombres débutant par "0x"
+  ou '0X' comme hexadécimaux. La casse de la lettre la plus à droite dans le
+  nombre détermine la casse du nombre hexadécimal résultant. S'il n'y a pas de
+  lettre dans le nombre courant, Vim utilise la précédente casse détectée.
+- Si 'nrformats' contient "octal", Vim considère les nombres débutant par "0"
+  comme octaux. Les autres nombres sont décimaux et peuvent être précédés par
+  un signe moins.
+Si le curseur est sur un nombre, les commandes s'appliquent à ce nombre ;
+sinon, Vim utilise le nombre à la droite du curseur.
+
+Pour les nombres débutant par des zéros (cela inclut les nombres octaux et
+hexadécimaux), Vim essaiera de préserver le nombre de caractères lorsque ce
+sera possible. CTRL-A sur "0077" donnera "0100", CTRL-X sur "0x100" donnera
+"0x0ff".
+   NOTE : Si 'nrformats' contient "octal", il est impossible d'avoir des
+nombres décimaux débutant par des zéros car ils seraient indistinguables des
+nombres octaux.
+
+La commande CTRL-A est très utile dans une macro. Exemple : suivez le schéma
+suivant pour créer une liste numérotée.
+
+1. Créer la première entrée de la liste, en s'assurant qu'elle débute bien
+   par un nombre.
+2. qa	     - débuter l'enregistrement dans le registre 'a'
+3. Y	     - copier l'entrée
+4. p	     - coller la copie de l'entrée sous la première
+5. CTRL-A    - incrémenter la numérotation
+6. q	     - cesser l'enregistrement
+7. <quant>@a - répéter la copie, coller et incrémenter <quant> fois
+
+
+DÉCALER DES LIGNES À GAUCHE OU À DROITE			*shift-left-right*
+
+							*<*
+<{mouv}			Décale les lignes couvertes par {mouv} de 'shiftwidth'
+			à gauche.
+
+							*<<*
+<<			Décale [quant] lignes de 'shiftwidth' à gauche.
+
+							*v_<*
+{Visuel}[quant]<	Décale les lignes en surbrillance de [quant]
+			'shiftwidth' à gauche (sur {Visuel}, voir
+			|Visual-mode|). {absent de Vi}
+
+							*>*
+>{mouv}			Décale les lignes couvertes par {mouv} de 'shiftwidth'
+			à droite.
+
+							*>>*
+>>			Décale [quant] lignes de 'shiftwidth' à droite.
+
+							*v_>*
+{Visuel}[quant]>	Décale les lignes en surbrillance de [quant]
+			'shiftwidth' à droite (sur {Visuel}, voir
+			|Visual-mode|). {absent de Vi}
+
+							*:<*
+:[plage]<		Décale les lignes de [plage] de 'shiftwidth' à gauche.
+			Indiquez plusieurs '<' pour décaler de plusieurs
+			'shiftwidth'.
+
+:[plage]< {quant}	Décale {quant} lignes de 'shiftwidth' à gauche, en
+			commençant à [plage] (défaut : ligne courante
+			|cmdline-ranges|).
+			Indiquez plusieurs '<' pour décaler de plusieurs
+			'shiftwidth'.
+
+:[plage]le[ft] [indent]	Aligne à gauche les lignes de [plage]. Fixe
+			l'indentation de ces lignes à [indent] (défaut : 0).
+			{absent de Vi}
+
+							*:>*
+:[plage]>		Décale les lignes de [plage] de 'shiftwidth' à droite.
+			Indiquez plusieurs '<' pour décaler de plusieurs
+			'shiftwidth'.
+
+:[plage]> {quant}	Décale {quant} lignes de 'shiftwidth' à droite, en
+			commençant à [plage] (défaut : ligne courante
+			|cmdline-ranges|).
+			Indiquez plusieurs '<' pour décaler de plusieurs
+			'shiftwidth'.
+
+Les commandes ">" et "<" sont commodes pour modifier l'indentation à
+l'intérieur des programmes. Utilisez l'option 'shiftwidth' pour fixer la
+taille de l'espace blanc que ces commandes insèrent ou suppriment.
+Normalement, l'option 'shiftwidth' vaut 8, mais vous pouvez la fixer, par
+exemple, à 3 pour obtenir de petites indentations.
+   Le décalage à gauche cesse lorsqu'il n'y a plus d'indentation. Le décalage
+à droite n'affecte pas les lignes vides.
+
+Si l'option 'shiftround' est activée, l'indentation utilisée sera un multiple
+de 'shiftwidth'.
+
+Si l'option 'smartindent' est activée, ou que 'cindent' est activé et que
+'cinkeys' contient '#', le décalage à droite n'affectera pas les lignes
+débutant par '#' (qui sont censées être des instructions pour le préprocesseur
+C et doivent rester dans la colonne 1).
+
+Si l'option 'expandtab' est désactivée (ce qui est le cas par défaut), Vim
+utilise les <Tab>ulations autant que possible dans l'indentation. Vous pouvez
+utiliser ">><<" pour remplacer une indentation composée d'espaces par la
+même indentation composée de <Tab>ulations (plus quelques espaces si
+nécessaire). Si l'option 'expandtab' est activée, Vim utilise uniquement des
+espaces. Vous pouvez alors utiliser ">><<" pour remplacer les <Tab>ulations
+dans une indentation par des espaces (ou utiliser ":retab!").
+
+Pour décaler une ligne de plusieurs 'shiftwidth', utilisez le mode Visuel ou
+les commandes ":". Par exemple : >
+	Vjj4>	    décale 3 lignes de 4 indentations à droite
+	:<<<	    décale la ligne courante de 3 indentations à gauche
+	:>> 5	    décale 5 lignes de 2 indentations à droite
+	:5>>	    décale la ligne 5 de 2 indentations à droite
+
+==============================================================================
+4. Changements complexes				*complex-change*
+
+							*!* *filter*
+!{mouv}{filtre}		Filtre les lignes de texte couvertes par {mouv} avec
+			le programme externe {filtre}.
+
+							*!!*
+!!{filtre}		Filtre [quant] lignes avec le programme externe
+			{filtre}.
+
+							*v_!*
+{Visuel}!{filtre}	Filtre les lignes en surbrillance avec le programme
+			externe {filtre} (sur {Visuel}, voir |Visual-mode|).
+			{absent de Vi}
+
+							*:range!*
+:{plage}![!]{filtre} [!][arg]
+			Filtre les lignes de {plage} avec le programme externe
+			{filtre}. Vim remplace les points d'exclamation
+			optionnels par le dernier argument donné et ajoute
+			l'[arg] optionnel. Vim enregistre la sortie de la
+			commande de filtre dans un fichier temporaire, puis
+			lit le fichier dans le tampon. Vim utilise l'option
+			'shellredir' pour rediriger la sortie du filtre vers
+			le fichier temporaire.
+
+							*=*
+={mouv}			Filtre les lignes couvertes par {mouv} avec le
+			programme externe donné par l'option 'equalprg'.
+			Si l'option 'equalprg' est vide (ce qui est le cas par
+			défaut), la fonction interne de mise en forme est
+			utilisée |C-indenting|. Mais si 'indentexpr' est
+			non-vide, il sera utilisé à la place
+			|indent-expression|.
+
+							*==*
+==			Filtre [quant] lignes comme avec "={mouv}".
+
+							*v_=*
+{Visuel}=		Filtre les lignes en surbrillance comme avec
+			"={mouv}". {absent de Vi}
+
+Un filtre est un programme qui accepte du texte sur son entrée standard, le
+modifie d'une certaine façon et le renvoie sur sa sortie standard. Vous pouvez
+utiliser les commandes ci-dessus pour envoyer du texte à un filtre. Les
+programmes `sort` (qui trie les lignes par ordre alphabétique) et `indent`
+(qui met en forme des sources C) sont deux exemples de filtres communs (vous
+devrez utiliser une version de `indent` qui fonctionne comme un filtre, ce qui
+n'est pas le cas de toutes).
+   L'option 'shell' définit le shell utilisé par Vim pour exécuter la commande
+de filtre (voir aussi l'option 'shelltype'). Les commandes de filtres peuvent
+être répétées avec ".". Vim ne reconnaîtra pas de commentaire (débutant par
+'"') après une commande ":!".
+
+
+						    *:s* *:su* *:substitute*
+:[plage]s[ubstitute]/{motif}/{chaine}/[&][c][e][g][p][r][i][I] [quant]
+			Pour chaque ligne de [plage], remplace une
+			correspondance de {motif} par {chaine}.
+			Pour le {motif}, voir |pattern|.
+			{chaine} peut être une chaîne littérale, ou contenir
+			des caractères spéciaux. Voir |sub-replace-special|.
+			Si [plage] et [quant] sont omis, remplace dans la
+			ligne courante uniquement.
+			Si [quant] est donné, remplace dans [quant] lignes,
+			en commençant par la dernière ligne de [plage]. Si
+			[plage] est omis, commence à la ligne courante.
+			Voir aussi |cmdline-ranges|.
+			Voir |:s_flags| pour les drapeaux.
+
+:[plage]s[ubstitute] [c][e][g][p][r][i][I] [quant]
+:[plage]&[&][c][e][g][p][r][i][I] [quant]		*:&*
+			Répète le dernier ":substitute" avec le même motif de
+			recherche et la même chaîne de substitution, mais des
+			drapeaux différents. Vous pouvez ajouter des drapeaux
+			supplémentaires (voir |:s_flags|).
+			NOTE : Après ":substitute", le drapeau '&' ne peut pas
+			être utilisé car '&' sert de séparateur de motif.
+			L'espace entre ":substitute" et les drapeaux 'c', 'g'
+			et 'r' n'est pas nécessaire, mais il est plus prudent
+			de le garder dans les scripts afin d'éviter toute
+			confusion.
+
+							*:~*
+:[plage]~[&][c][e][g][p][r][i][I] [quant]
+			Répète la dernière substitution avec la même chaîne de
+			substitution mais avec le dernier motif de recherche
+			utilisé. Identique à ":&r". Voir |:s_flags| pour les
+			drapeaux.
+
+							*&*
+&			Synonyme de ":s//~/" (répète la dernière
+			substitution).
+			NOTE : Les drapeaux ne sont pas mémorisés, cette
+			commande pourrait donc en fait fonctionner
+			différemment. Vous pouvez utiliser ":&&" pour
+			conserver les drapeaux.
+
+							*g&*
+g&			Synonyme de ":%s//~/&" (répète la dernière
+			substitution sur toutes les lignes avec les mêmes
+			drapeaux).
+			{absent de Vi}			  ["Global substitute"]
+
+							*:snomagic*
+:[plage]sno[magic] ...	Comme ":substitute", mais utilise toujours 'nomagic'.
+			{absent de Vi}
+
+							*:smagic*
+:[plage]sm[agic] ...	Comme ":substitute", mais utilise toujours 'magic'.
+			{absent de Vi}
+
+							*:s_flags*
+Les drapeaux utilisables dans une commande de substitution :
+
+[&]	Doit venir en premier : conserve les drapeaux de la précédente
+	commande de substitution. Exemples : >
+		:&&
+		:s/ceci/cela/&
+<	NOTE : ":s" et ":&" ne mémorisent pas les drapeaux.
+	{absent de Vi}
+
+[c]	Confirme chaque substitution. Vim met en surbrillance la chaîne
+	correspondante (avec |hl-IncSearch|). Vous pouvez taper :
+							*:s_c*
+	    'y'	    pour remplacer cette correspondance			["Yes"]
+	    'l'	    pour remplacer cette correspondance puis quitter   ["Last"]
+	    'n'	    pour sauter cette correspondance
+	    <Echap> pour quitter la substitution
+	    'a'	    pour remplacer cette correspondance et toutes celles qui
+		       suivent {absent de Vi}				["All"]
+	    'q'	    pour quitter la substitution {absent de Vi}
+	    CTRL-E  pour faire défiler le texte vers le haut {absent de Vi}
+		       {uniquement si compilé avec la fonctionnalité
+		       |+insert_expand|}
+	    CTRL-Y  pour faire défiler le texte vers le bas {absent de Vi}
+		       {uniquement si compilé avec la fonctionnalité
+		       |+insert_expand|}
+
+	Si l'option 'edcompatible' est activée, Vim mémorise le drapeau 'c' et
+	l'utilise à chaque fois, mais le désactive si vous donnez un nouveau
+	motif de recherche.
+	{Vi : la surbrillance des correspondances et les réponses autres que
+	'y' ou 'n' sont absentes}
+
+[e]     Lorsque le motif de recherche n'est pas trouvé, n'affiche pas de
+	message d'erreur, et en particulier, termine un mappage normalement.
+	C'est surtout utile afin d'éviter qu'une erreur "No match" [« Pas de
+	correspondance »] n'interrompe un mappage. Cela ne supprime cependant
+	pas le messages d'erreurs suivants :
+		Regular expressions can't be delimited by letters ~
+		\ should be followed by /, ? or & ~
+		No previous substitute regular expression ~
+		Trailing characters ~
+		Interrupted ~
+	{absent de Vi}
+
+[g]	Remplace toutes les occurrences dans la ligne. Sans cet argument,
+	le remplacement opère uniquement sur la première occurrence dans
+	chaque ligne. Si l'option 'edcompatible' est activée, Vim mémorise ce
+	drapeau et l'utilise à chaque fois, mais le désactive si vous donnez
+	un nouveau motif de recherche. Si l'option 'gdefault' est activée, ce
+	drapeau est actif par défaut et l'argument [g] le rendra inactif.
+								     ["Global"]
+
+[i]	Ignore la casse du motif. Les options 'ignorecase' et 'smartcase' ne
+	sont pas utilisées.
+	{absent de Vi}
+
+[I]	Respecte la casse du motif. Les options 'ignorecase' et 'smartcase' ne
+	sont pas utilisées.
+	{absent de Vi}
+
+[p]	Affiche la ligne contenant la dernière substitution.	      ["Print"]
+	{absent de Vi}
+
+[r]	Utile uniquement avec ":&" ou ":s" sans autres arguments. ":&r" est
+	identique à ":~" : lorsque le motif de recherche est vide, le
+	dernier motif de recherche utilisé est pris au lieu du motif de
+	recherche de la dernière commande de substitution ou ":global". Si la
+	dernière commande de recherche était une substitution ou un ":global",
+	il ne se produit rien ; si c'était une commande comme "/", le motif de
+	cette commande est utilisé.
+	Pour ":s" avec un argument, cela se produit déjà : >
+		:s/bleu/rouge/
+		/vert
+		:s//rouge/   ou  :~   ou  :&r
+<	Les dernières commandes remplaceront "vert" par "rouge". >
+		:s/bleu/rouge/
+		/vert
+		:&
+<	La dernière commande remplacera "bleu" par "rouge".
+	{absent de Vi}
+
+NOTE : Il n'y a pas de drapeau pour changer la « magicité » du motif : une
+commande différente est utilisée à la place. La raison en est que les drapeaux
+ne peuvent être trouvés qu'après avoir passé le motif, et pour qu'on puisse le
+passer, il faut connaître sa « magicité ». On tournerait en rond !
+
+Si le {motif} de la commande de substitution est vide, la commande utilise le
+motif de la dernière commande de substitution ou ":global". Avec le drapeau
+[r], la commande utilise le motif de la dernière commande de substitution,
+":global", ou de recherche.
+
+Pour des raisons de compatibilité avec Vi, deux exceptions sont admises :
+"\/{chaine}/" et "\?{chaine}?" fonctionnent comme "//{chaine}/r".
+"\&{chaine}&" fonctionne comme "//{chaine}/".
+							*E146*
+À la place du '/' qui encadre le motif de recherche et la chaîne de
+remplacement, vous pouvez utiliser n'importe quel autre caractère sauf un
+alphanumérique, '\', '"' ou '|'. C'est utile si vous souhaitez inclure un
+'/' dans le motif de recherche ou dans la chaîne de remplacement. Exemple : >
+	:s+/+//+
+
+Pour la définition d'un motif, voir |pattern|.
+
+						*sub-replace-special*
+Lorsque la {chaine} débute par "\=", elle est évaluée en tant qu'expression.
+La signification spéciale des caractères mentionnés ci-dessous ne s'applique
+pas alors, sauf pour "<CR>", "\<CR>" et "\\". Ainsi, dans l'expression, vous
+devrez utiliser deux contre-obliques pour en obtenir une, placer une
+contre-oblique avant un <CR> que vous voulez insérer et utiliser un <CR> sans
+contre-oblique si vous souhaitez couper la ligne.
+   Le motif correspondant entier peut être spécifié par "submatch(0)" ; le
+motif correspondant dans la première paire de (), par "submatch(1)" ; et ainsi
+de suite pour les sous-correspondances suivantes dans ().
+   ATTENTION : Le caractère de séparation ne doit pas apparaître dans
+l'expression ! Utilisez plutôt un caractère comme "@" ou ":". Il n'y a pas de
+problème si le résultat de l'expression contient le caractère de séparation.
+   Exemple : >
+	:s@\n@\="\r" . expand("$HOME") . "\r"@
+Ceci remplace une fin-de-ligne par une nouvelle ligne contenant la valeur de
+$HOME.
+
+Certains caractères ont une signification spéciale pour la {chaine} :
+
+'magic'	'nomagic' ACTION			~
+  &	  \&	  remplacé par le motif correspondant entier	    *s/\&*
+ \&	   &	  remplacé par '&'
+      \0	  remplacé par le motif correspondant entier	    *\0* *s/\0*
+      \1	  remplacé par le motif correspondant dans la	    *s/\1*
+		     1ère paire de ()
+      \2	  remplacé par le motif correspondant dans la	    *s/\2*
+		     2e paire de ()
+      ...	  ...						    *s/\3*
+      \9	  remplacé par le motif correspondant dans la	    *s/\9*
+		     9e paire de ()
+  ~	  \~	  remplacé par la {chaine} de la substitution	    *s~*
+		     précédente
+ \~	   ~	  remplacé par '~'				    *s/\~*
+      \u	  le caractère suivant est mis en majuscule	    *s/\u*
+								  ["Uppercase"]
+      \U	  les caractères suivants sont mis en majuscules,   *s/\U*
+		     jusqu'à \E
+      \l	  le caractère suivant est mis en minuscule	    *s/\l*
+								  ["Lowercase"]
+      \L	  les caractères suivants sont mis en minuscules,   *s/\L*
+		     jusqu'à \E
+      \e	  fin de \u, \U, \l et \L (NOTE : ne correspond	    *s/\e*
+		     pas à <Echap> !)					["End"]
+      \E	  fin de \u, \U, \l et \L			    *s/\E*
+      <CR>	  coupe la ligne en deux à cet endroit (entrez	    *s<CR>*
+		     <CR> avec "CTRL-V <Entree>")
+      \r	  idem						    *s/\r*
+      \<CR>	  insère un retour chariot (CTRL-M) (entrez <CR>    *s/\<CR>*
+		     avec "CTRL-V <Entree>")
+      \n	  insère un <NL> (<NUL> dans le fichier)	    *s/\n*
+		     (ne coupe PAS la ligne)
+      \b	  insère un retour arrière			    *s/\b*
+								  ["Backspace"]
+      \t	  insère une tabulation				    *s/\t*
+      \\	  insère une contre-oblique simple ('\')	    *s/\\*
+      \x	  où x désigne n'importe quel caractère non
+		     mentionné ci-dessus : réservé pour une
+		     utilisation future
+
+Exemples : >
+  :s/a\|b/xxx\0xxx/g		 remplace "a b"	     par "xxxaxxx xxxbxxx"
+  :s/\([abc]\)\([efg]\)/\2\1/g	 remplace "af fa bg" par "fa fa gb"
+  :s/abcde/abc^Mde/		 remplace "abcde"    par "abc", "de" (2 lignes)
+  :s/$/\^M/			 remplace "abcde"    par "abcde^M"
+
+NOTE : Dans les versions précédentes, CTRL-V fonctionnait d'une manière
+spéciale. Comme ce comportement n'était pas compatible Vi, il a été supprimé.
+Utilisez une contre-oblique à la place.
+
+	COMMANDE	TEXTE	RÉSULTAT	~
+	:s/aa/a^Ma/	aa	a<coupure-de-ligne>a
+	:s/aa/a\^Ma/	aa	a^Ma
+	:s/aa/a\\^Ma/	aa	a\<coupure-de-ligne>a
+
+(Tapez "CTRL-V <CR>" pour obtenir un ^M ici.)
+
+La numérotation de "\1", "\2" etc. est faite selon l'ordre d'apparition des
+"\(" dans le motif (de gauche à droite). Lorsqu'un groupe entre parenthèses
+a plusieurs correspondances, c'est la dernière qui sera utilisé pour "\1",
+"\2", etc. Exemple : >
+	:s/\(\(a[a-d] \)*\)/\2/	      remplace "aa ab x" par "ab x"
+
+Si vous utilisez des "\(" en association avec des "\|", comme dans
+"\([ab]\)\|\([cd]\)", suivant que le premier ou le second motif entre
+parenthèses ne correspondra pas, alors "\1" ou "\2" sera vide. Exemple : >
+	:s/\([ab]\)\|\([cd]\)/\1x/g   remplace "a b c d" par "ax bx x x"
+<
+						*:pro* *:promptfind*
+:promptf[ind] [chaine]	Ouvre un dialogue de recherche. Si [chaine] est donné,
+			il est utilisé comme chaîne de recherche initiale.
+			{uniquement pour les IHM graphiques Win32, Motif et
+			GTK+}
+
+						*:promptr* *:promptrepl*
+:promptr[epl] [chaine]	Ouvre un dialogue de recherche/substitution. Si
+			[chaine] est donné, il est utilisé comme chaîne de
+			recherche initiale.
+			{uniquement pour les IHM graphiques Win32, Motif et
+			GTK+}
+
+						*:ret* *:retab*
+:[plage]ret[ab][!] [nv_tabstop]
+			Remplace toutes les séquences d'espaces blancs
+			contenant un <Tab> avec de nouvelles chaînes d'espaces
+			blancs utilisant la valeur de 'tabstop' donnée. Si
+			vous ne spécifiez pas de nouvelle valeur de 'tabstop',
+			ou que vous spécifiez zéro, la valeur courante est
+			utilisée. Cette valeur courante est toujours utilisée
+			pour déterminer la largeur des tabulations existantes.
+			Avec [!], Vim remplace également les chaînes composées
+			exclusivement d'espaces normaux par des tabulations
+			appropriées.
+			Si 'expandtab' est activé, Vim remplace toutes les
+			tabulations par le nombre d'espaces approprié.
+			Cette commande fixe 'tabstop' à la nouvelle valeur
+			saisie, et si elle s'exécute sur le fichier entier,
+			ce qui est le cas par défaut, elle ne devrait produire
+			aucun changement visible.
+			ATTENTION : Cette commande modifiera tous les
+			caractères <Tab> à l'intérieur des chaînes dans un
+			programme C. Utilisez "\t" pour éviter cela (c'est une
+			bonne habitude, de toute façon).
+			":retab!" peut également changer une séquence
+			d'espaces en caractères <Tab>, ce qui pourra corrompre
+			une instruction "printf()".
+			{absent de Vi} {uniquement si compilé avec la
+			fonctionnalité |+ex_extra|}
+
+							*retab-example*
+Voici un exemple pour utiliser ":retab" avec des autocommandes afin d'écrire
+un fichier avec 'tabstop' valant 8 mais de l'éditer avec 'tabstop' valant 4.
+ATTENTION : Les espaces blancs à l'intérieur des chaînes pourront être
+affectés ! Voir aussi 'softtabstop'. >
+
+	:au BufReadPost	 *.xyz	retab! 4
+	:au BufWritePre	 *.xyz	retab! 8
+	:au BufWritePost *.xyz	retab! 4
+	:au BufNewFile	 *.xyz	set ts=4
+
+==============================================================================
+5. Copier et déplacer du texte				*copy-move*
+
+							*quote*
+"{a-zA-Z0-9.%#:-"}	Utilise le registre {a-zA-Z0-9.%#:-"} pour le prochain
+			couper-copier-coller (les caractères majuscules
+			servent à ajouter avec les commandes couper et
+			copier ; les caractères {.%#:} fonctionnent uniquement
+			avec un collage).
+
+							*:reg* *:registers*
+:reg[isters]		Affiche le contenu de tous les registres numérotés et
+			nommés. {absent de Vi}
+
+:reg[isters] {arg}	Affiche le contenu de tous les registres numérotés et
+			nommés mentionnés dans {arg}. Par exemple >
+				:dis 1a
+<			affiche le contenu des registres '1' et 'a'. Les
+			espaces sont admis dans {arg}. {absent de Vi}
+
+							*:di* *:display*
+:di[splay] [arg]	Comme ":registers". {absent de Vi}
+
+							*y* *yank*
+["x]y{mouv}		Copie le texte couvert par {mouv} [dans le registre
+			x]. S'il n'y a aucun caractère à copier (p. ex., "y0"
+			dans la colonne 1), renvoie une erreur si 'cpoptions'
+			contient le drapeau 'E'.		       ["Yank"]
+
+							*yy*
+["x]yy			Copie [quant] lignes [dans le registre x] (par lignes).
+
+							*Y*
+["x]Y			Copie [quant] lignes [dans le registre x] (synonyme de
+			"yy", par lignes). Si vous préférez que "Y" fonctionne
+			depuis le curseur jusqu'à la fin de la ligne (ce qui
+			est plus logique, mais pas compatible Vi), utilisez : >
+				:map Y y$
+<
+							*v_y*
+{Visuel}["x]y		Copie le texte en surbrillance [dans le registre x]
+			(sur {Visuel}, voir |Visuel-mode|). {absent de Vi}
+
+							*v_Y*
+{Visuel}["x]Y		Copie les lignes en surbrillance [dans le registre x]
+			(sur {Visuel}, voir |Visual-mode|). {absent de Vi}
+
+							*:y* *:yank*
+:[plage]y[ank] [x]	Copie les lignes de [plage] [dans le registre x].
+
+:[plage]y[ank] [x] {quant}
+			Copie {quant} lignes, en commençant par le dernier
+			numéro de ligne dans [plage] (défaut : ligne courante
+			|cmdline-ranges|) [dans le registre x].
+
+							*p* *put* *E353*
+["x]p			Colle le texte [du registre x] après le curseur
+			[quant] fois. {Vi : pas de quantificateur}	["Put"]
+							*P*
+["x]P			Colle le texte [du registre x] avant le curseur
+			[quant] fois. {Vi : pas de quantificateur}
+
+							*<MiddleMouse>*
+["x]<ClicMilieu>	Colle le texte d'un registre avant le curseur [quant]
+			fois. Utilise le registre "*, à moins qu'un autre ne
+			soit spécifié. L'utilisation de la souris fonctionnera
+			uniquement si 'mouse' contient 'n' ou 'a'.
+			Si votre souris dispose d'une molette et que vous
+			collez souvent du texte accidentellement, vous pouvez
+			utiliser ces mappages pour désactiver le collage avec
+			le bouton du milieu : >
+				:map <MiddleMouse> <Nop>
+				:imap <MiddleMouse> <Nop>
+<			{absent de Vi}
+
+							*gp*
+["x]gp			Comme "p", mais déplace le curseur juste après le
+			nouveau texte. {absent de Vi}
+
+							*gP*
+["x]gP			Comme "P", mais déplace le curseur juste après le
+			nouveau texte. {absent de Vi}
+
+							*:pu* *:put*
+:[ligne]pu[t] [x]	Colle le texte [du registre x] après [ligne] (défaut :
+			ligne courante). Fonctionne toujours par lignes, ainsi
+			cette commande peut être utilisée pour coller un bloc
+			copié comme de nouvelles lignes.
+			Le registre peut aussi être '=', suivi par une
+			expression optionnelle. L'expression se poursuit
+			jusqu'à la fin de la commande. Vous devrez masquer '|'
+			et '"' avec un caractère d'échappement afin d'éviter
+			qu'ils ne terminent la commande. Exemple : >
+				:put ='path' . \",/test\"
+<			S'il n'y a pas d'expression après '=', Vim utilise
+			l'expression précédente. Vous pouvez la voir avec
+			":dis =".
+
+:[ligne]pu[t]! [x]	Colle le texte [du registre x] avant [ligne] (défaut :
+			ligne courante).
+
+["x]]p		    ou					*]p* *]<MiddleMouse>*
+["x]]<ClicMilieu>	Comme "p", mais ajuste l'indentation à la ligne
+			courante. L'utilisation de la souris fonctionnera
+			uniquement si 'mouse' contient 'n' ou 'a'.
+			{absent de Vi}
+
+["x][P		    ou					*[P*
+["x]]P		    ou					*]P*
+["x][p		    ou					*[p* *[<MiddleMouse>*
+["x][<ClicMilieu>	Comme "P", mais ajuste l'indentation à la ligne
+			courante. L'utilisation de la souris fonctionnera
+			uniquement si 'mouse' contient 'n' ou 'a'.
+			{absent de Vi}
+
+Vous pouvez utiliser ces commandes pour copier du texte d'un endroit vers un
+autre. Pour cela, placez d'abord le texte dans un registre avec une commande
+copier, couper ou changer, puis insérez le contenu du registre avec une
+commande coller. Vous pouvez également utiliser ces commandes pour déplacer du
+texte d'un fichier vers un autre, Vim conservant tous les registres lors d'un
+changement de tampon (la commande CTRL-^ permet de passer rapidement d'une
+fichier à l'autre).
+
+				*linewise-register* *characterwise-register*
+Vous pouvez répéter les commandes de collage avec "." (excepté ":put") et les
+annuler. Si la commande utilisée pour placer le texte dans le registre était
+par lignes, Vim insérera le texte en dessous ("p") ou au-dessus ("P") de la
+ligne courante. Sinon Vim insérera le texte après ("p") ou avant ("P") le
+curseur. Avec la commande ":put", Vim insérera toujours le texte sur la ligne
+suivante.
+   Vous pouvez permuter deux caractères avec la séquence de commandes "xp".
+Vous pouvez permuter deux lignes avec la séquence de commandes "ddp". Vous
+pouvez permuter deux mots avec la séquence de commandes "deep" (placez
+auparavant le curseur sur l'espace blanc précédent le premier mot).
+   Vous pouvez utiliser les commandes "']" ou "`]" après la commande de
+collage pour déplacer le curseur à la fin du texte inséré, ou bien "'[" ou
+"`[" pour déplacer le curseur au début.
+
+						*put-Visual-mode* *v_p* *v_P*
+Si vous utilisez une commande de collage comme |p| ou |P| en mode Visuel, Vim
+essaiera de remplacer le texte sélectionné par le contenu du registre. Cela
+fonctionne plus ou moins bien selon le type de sélection et le type de texte
+dans le registre. Avec une sélection par blocs, cela dépend en outre de la
+taille du bloc et du positionnement des coins sur un caractère existant.
+(Détail technique : cela fonctionne en fait en collant d'abord le registre
+après la sélection, puis en coupant la sélection.)
+
+							*blockwise-register*
+Si vous utilisez une commande par blocs en mode Visuel pour placer le texte
+dans le registre, le bloc de texte sera inséré avant ("P") ou après ("p") la
+colonne du curseur dans les lignes courante et suivantes. Vim fait débuter
+tout le bloc de texte dans la même colonne. Ainsi, le texte inséré a la même
+apparence que lorsqu'il avait été copié ou coupé (Vim peut pour cela remplacer
+des <Tab> par des espaces). Cependant, si la largeur du bloc n'est pas un
+multiple de la largeur d'une tabulation et que le texte après le bloc inséré
+contient des tabulations, ce texte pourra être mal aligné.
+
+NOTE : Après une commande de copie, Vim laisse le curseur sur le premier
+caractère copié qui est le plus proche du début du tampon. Cela signifie que
+"yl" ne déplace pas le curseur, mais que "yh" le déplace d'un caractère vers
+la gauche.
+
+Remarque :  Dans Vi, la commande "y" suivie par un mouvement vers l'arrière ne
+	    déplace parfois pas le curseur sur le premier caractère copié, car
+	    le rafraîchissement a été sauté. Dans Vim, elle déplace toujours
+	    sur le premier caractère, conformément aux spécifications Posix.
+
+
+LES TYPES DE REGISTRES					*registers* *E354*
+
+Il existe neuf types de registres :
+
+1. Le registre sans nom "" ;
+2. Les 10 registres numérotés de "0 à "9 ;
+3. Le registre de petit coupage "- ;
+4. Les 26 registres nommés de "a à "z ou de "A à "Z ;
+5. Les 4 registres en lecture seule ":, "., "% et "# ;
+6. Le registre d'expression "= ;
+7. Les registres de sélection et de dépôt "*, "+ et "~ ;
+8. Le registre trou noir "_ ;
+9. Le registre du dernier motif de recherche "/.
+
+1. Le registre sans nom ""			*quote_quote* *quotequote*
+--------------------------
+Vim mémorise dans ce registre le texte coupé par les commandes "d", "c", "s",
+"x", ou copié par la commande "y", si aucun registre spécifique n'a été
+utilisé (p. ex. "xdd). Le registre "_ fait exception : "_dd ne mémorise le
+texte coupé dans aucun registre. Vim utilise le contenu de ce registre pour
+toute commande de collage ("p" ou "P") qui ne spécifie aucun registre. De
+plus, vous pouvez y accéder par le nom "" (deux doubles-apostrophes). Si vous
+essayez d'écrire dans le registre "", cela écrira dans le registre "0.
+{Vi : le contenu du registre est perdu lors d'un changement de fichier ; le
+nom "" est absent}
+
+					    *quote_number* *quote0* *quote1*
+2. Les registres numérotés de "0 à "9	    *quote2* *quote3* *quote4* *quote9*
+-------------------------------------
+Vim mémorise dans ces registres le texte des commandes couper/copier.
+   Le registre "0 contient le texte de la commande de copie la plus récente,
+sauf si cette commande a spécifié un autre registre avec ["x].
+   Le registre "1 contient le texte coupé par la commande de coupage ou de
+changement la plus récente, sauf si cette commande a spécifié un autre
+registre ou que le texte fait moins d'une ligne (le registre de petit coupage
+est alors utilisé). Une exception est faite pour ces commandes : |%|, |(|,
+|)|, |`|, |/|, |?|, |n|, |N|, |{| et |}|. Le registre "1 est toujours utilisé
+alors (cela est compatible Vi). Le registre "- sera tout de même utilisé si le
+coupage est à l'intérieur d'une ligne.
+   Après tout nouveau coupage ou changement, Vim décale le précédent contenu
+du registre "1 à "2, de "2 à "3, et ainsi de suite. (Le précédent contenu du
+registre "9 est donc perdu.)
+{Vi : le contenu des registres numérotés est perdu lors d'un changement de
+fichier ; le registre "0 n'existe pas}
+
+3. Le registre de petit coupage "-			*quote_-* *quote-*
+----------------------------------
+Ce registre contient le texte de la dernière commande qui a coupé moins d'une
+ligne, sauf si cette commande a spécifié un registre avec ["x]. {absent de Vi}
+
+4. Les registres nommés de "a à "z ou "A à "Z		*quote_alpha* *quotea*
+---------------------------------------------
+Vim mémorise dans ces registres uniquement si vous le lui ordonnez. Utilisez
+les minuscules pour remplacer le contenu précédent ou les majuscules pour
+ajouter au contenu précédent.
+
+5. Les registres en lecture seule ":, "., "% et "#
+--------------------------------------------------
+Vous pouvez les utiliser avec les commandes "p", "P" et ":put" et avec CTRL-R.
+{absent de Vi}
+						*quote_.* *quote.* *E29*
+	".	Contient le dernier texte inséré (le même qui est inséré avec
+		les commandes du mode Insertion CTRL-A et CTRL-@). NOTE : Pour
+		CTRL-R à la ligne de commande, cela fonctionne un peu
+		différemment, comme une insertion de texte au lieu d'un
+		collage ('textwidth' et d'autres options affectent ce qui est
+		inséré).
+						*quote_%* *quote%*
+	"%	Contient le nom du fichier courant.
+						*quote_#* *quote#*
+	"#	Contient le nom du fichier alternatif.
+						*quote_:* *quote:* *E30*
+	":	Contient la dernière ligne de commande exécutée. Exemple :
+		Utilisez "@:" pour répéter la précédente ligne de commande. La
+		ligne de commande est mémorisée dans ce registre si au moins
+		un caractère en a été tapé. Ainsi, il reste inchangé si la
+		commande provient entièrement d'un mappage.
+		{uniquement si compilé avec la fonctionnalité |+cmdline_hist|}
+
+6. Le registre d'expression "=				*quote_=* *quote=*
+------------------------------
+Ce n'est pas vraiment un registre qui mémorise du texte, mais c'est un moyen
+pour utiliser une expression dans les commandes qui appellent un registre. Le
+registre d'expression est en lecture seule ; vous ne pouvez pas écrire dedans.
+Après le '=', le curseur se déplace sur la ligne de commande, où vous pouvez
+entrer une expression (voir |expression|). Toutes les commandes d'édition
+normales de la ligne de commande sont disponibles, avec un historique spécial
+pour les expressions.
+   Lorsque vous terminez la ligne de commande en tapant <CR>, Vim évalue le
+résultat de l'expression. Si vous la terminez avec <Echap>, Vim abandonne
+l'expression. Si vous n'entrez pas d'expression, Vim utilise l'expression
+précédente (comme avec la commande "/").
+   Si le registre "= est utilisé pour la commande "p", la chaîne est coupée
+aux caractères <NL>. Si la chaîne se termine par <NL>, le registre est
+considéré par lignes.
+{absent de Vi}
+
+7. Les registres de sélection et de dépôt "*, "+ et "~ 
+------------------------------------------------------
+Utilisez ces registres pour mémoriser une sélection dans l'IHM graphique. Voir
+|quotestar| et |quoteplus|. Lorsque le presse-papiers n'est pas disponible ou
+ne fonctionne pas, le registre sans nom est utilisé à la place. {absent de Vi}
+
+NOTE : Il existe une différence entre les registres "* et "+ uniquement pour
+les systèmes X11. Pour un détail de ces différences, voir |x11-selection|.
+Sous MS-Windows, les registres "* et "+ sont en fait synonymes et se
+rapportent au presse-papiers de l'IHM graphique |gui-clipboard|.
+
+						*quote_~* *quote~* *<Drop>*
+Le registre en lecture seule "~ mémorise le texte déposé lors de la dernière
+opération de glisser-déposer. Lorsque quelque chose est déposé dans Vim, le
+registre "~ est automatiquement rempli et la pseudo-touche <Drop> is sent for
+notification. XXX Vous pouvez remapper cette touche si vous le souhaitez ; par
+défaut (dans tous les modes), elle insère le contenu du registre "~ à
+l'emplacement du curseur. {absent de Vi}
+{uniquement si compilé avec la fonctionnalité |+dnd|, actuellement uniquement
+dans l'IHM graphique GTK+}
+
+NOTE : Le registre "~ n'est utilisé que lorsque du texte brut est déposé dans
+Vim. Le glisser-déposer de listes URI XXX est géré en interne.
+
+8. Le registre trou noir "_				*quote_*
+---------------------------
+Si vous écrivez dans ce registre, rien ne se produit. Vous pouvez l'utiliser
+pour couper du texte sans affecter les registres normaux. Si vous essayez de
+lire depuis ce registre, rien ne sera retourné. {absent de Vi}
+
+9. Le registre du dernier motif de recherche "/		*quote_/* *quote/*
+-----------------------------------------------
+Contient le motif de recherche le plus récent. Utilisé pour "n" et 'hlsearch'.
+Vous pouvez écrire dedans avec ":let" et le modifier pour que 'hlsearch' mette
+un motif en surbrillance sans que vous ne fassiez de recherche. Vous ne pouvez
+pas copier ni couper du texte dans ce registre. {absent de Vi}
+
+							*@/*
+Vous pouvez écrire dans un registre avec une commande ":let". |:let-@|
+Exemple : >
+	:let @/ = "zorglub"
+
+Si vous utilisez une commande de collage sans spécifier de registre, Vim
+utilise le dernier registre enregistré (c'est aussi le contenu du registre
+sans nom). Si vous êtes embrouillé, utilisez la commande ":dis" pour vérifier
+ce que Vim collera (cette commande affiche tous les registres nommés et
+numérotés ; le registre sans nom est représenté par '""').
+
+
+Les trois commandes suivantes fonctionnent toujours sur des lignes entières.
+
+							*:co* *:copy*
+:[plage]co[py] {adresse}
+			Copie les lignes de [plage] en dessous de la ligne
+			donnée par {adresse}.
+
+							*:t*
+:t			Synonyme de ":copy".			   ["Transfer"]
+
+						*:m* *:mo* *:move* *E134*
+:[plage]m[ove] {adresse}
+			Déplace les lignes de [plage] en dessous de la ligne
+			donnée par {adresse}.
+
+==============================================================================
+6. Mettre en forme du texte				*formatting*
+
+							*:ce* *:center*
+:[plage]ce[nter] [largeur]
+			Centre les lignes de [plage] entre [largeur] colonnes
+			(défaut : 'textwidth' ou 80 si 'textwidth' vaut 0).
+			{absent de Vi} {uniquement si compilé avec la
+			fonctionnalité |+ex_extra|}
+
+							*:ri* *:right*
+:[plage]ri[ght] [largeur]
+			Aligne à droite les lignes de [plage] sur [largeur]
+			colonnes (défaut : 'textwidth' ou 80 si 'textwidth'
+			vaut 0).
+			{absent de Vi} {uniquement si compilé avec la
+			fonctionnalité |+ex_extra|}
+
+							*:le* *:left*
+:[plage]le[ft] [indent]	Aligne à gauche les lignes de [plage]. Fixe
+			l'indentation dans la ligne à [indent] (défaut : 0).
+			{absent de Vi} {uniquement si compilé avec la
+			fonctionnalité |+ex_extra|}
+
+							*gq*
+gq{mouv}		Met en forme les lignes couvertes par {mouv}. L'option
+			'textwidth' contrôle la longueur de chaque ligne mise
+			mise en forme (voir ci-dessous). Si l'option
+			'textwidth' vaut 0, la longueur de la ligne mise en
+			forme correspond à la largeur de l'écran (avec une
+			largeur maximale de 79).
+			L'option 'formatoptions' définit le type de mise en
+			forme |fo-table|.
+			NOTE : La commande "Q" était auparavant utilisée au
+			lieu de cette commande. Si vous souhaitez continuer à
+			utiliser "Q" pour la mise en forme, essayez ce
+			mappage : >
+				:nnoremap Q gq
+<			{absent de Vi}
+
+gqgq		ou					*gqgq* *gqq*
+gqq			Met en forme la ligne courante. {absent de Vi}
+
+							*v_gq*
+{Visuel}gq		Met en forme le texte en surbrillance (sur {Visuel},
+			voir |Visual-mode|). {absent de Vi}
+
+Exemple : pour mettre en forme le paragraphe courant, utilisez : >
+	gqap
+
+La commande "gq" laisse le curseur sur la ligne où le mouvement l'avait
+trouvé. Cela vous permet de répéter des mises en forme avec ".". Cela
+fonctionne bien pour "gqj" (met en forme les lignes courante et suivante) et
+"gq}" (met en forme jusqu'à la fin du paragraphe).
+   NOTE : Si 'formatprg' est fixé, "gq" laisse le curseur sur la première
+ligne mise en forme (comme avec une commande de filtre).
+
+Si l'option 'autoindent' est activée, Vim utilise l'indentation de la première
+ligne pour les lignes suivantes.
+
+La mise en forme n'affecte pas les lignes vides (mais elle modifiera les
+lignes contenant uniquement des espaces blancs !).
+
+L'option 'joinspaces' est utilisée lorsque des lignes fusionnent ensemble.
+
+Vous pouvez fixer l'option 'formatprg' au nom du programme externe que Vim
+devra utiliser pour effectuer de la mise en forme de texte. Les options
+'textwidth' et autres n'ont pas d'effet sur la mise en forme du programme
+externe.
+
+							*right-justify*
+Il n'existe pas de commande dans Vim pour justifier du texte à droite. Vous
+pouvez utiliser une commande externe, comme `par` (p. ex., ":!}par" pour
+mettre en forme jusqu'à la fin du paragraphe), ou fixer 'formatprg' à "par".
+
+							*format-comments*
+Vim peut mettre en forme des commentaires de façon spéciale. Vim reconnaît un
+commentaire par une chaîne spécifique qui débute la ligne (les espaces blancs
+sont ignorés). Trois types de commentaires peuvent être utilisés :
+
+- une chaîne de commentaire qui se répète au début de chaque ligne (p. ex.,
+  les commentaires d'un script shell, qui débutent par "#") ;
+
+- une chaîne de commentaire qui apparaît uniquement sur la première ligne, par
+  sur les lignes suivantes (p. ex., une liste à tirets, comme ici) ;
+
+- un commentaire en trois parties, qui comprend une chaîne de début, une
+  chaîne de fin et éventuellement des lignes entre. Les chaînes pour le
+  début, le milieu et la fin sont différentes. Ce type de commentaire compte
+  notamment ceux de style C :
+	/* ~
+	 * Ceci est un commentaire C ~
+	 */ ~
+
+L'option 'comments' est une liste de parties séparées par des virgules. Chaque
+partie définit un type de chaîne de commentaire. Une partie est de forme : XXX partie/champ ?
+	{drapeaux}:{chaine}
+
+{chaine} est le texte littéral qui doit apparaître.
+
+{drapeaux} :
+  n	Commentaire encadré XXX ?. Un encadrement par plusieurs parties est
+	possible : si 'comments' vaut "n:),n:>", une ligne débutant par
+	"> ) >" est un commentaire.				       ["Nest"]
+
+  b	Un blanc (<Espace>, <Tab> ou <EOL>) est requis après la {chaine}.
+
+  f	Seule la première ligne contient une chaîne de commentaire. Ne pas
+	répéter ce commentaire sur la ligne suivante, mais préserver
+	l'indentation (pour une liste à tirets, p. ex.).	      ["First"]
+
+  s	Début d'un commentaire en trois parties.		      ["Start"]
+
+  m	Milieu d'un commentaire en trois parties.
+
+  e	Fin d'un commentaire en trois parties.				["End"]
+
+  l	Aligne à gauche le milieu avec le début ou la fin (cas par défaut).
+	Reconnu uniquement en association avec 's' ou 'e'.	       ["Left"]
+
+  r	Aligne à droite le milieu avec le début ou la fin. Reconnu uniquement
+	en association avec 's' ou 'e'.				      ["Right"]
+
+  O	Ne pas utiliser cette partie pour la commande "O".
+
+  x	Permet de finir les commentaires en trois parties en tapant juste le
+	dernier caractère de la chaîne de fin comme premier caractère d'une
+	nouvelle ligne où la chaîne de milieu a déjà été insérée
+	automatiquement. Voir plus bas pour plus de détails.
+
+  {chiffres}
+	En association avec 's' ou 'e' : ajoute une indentation supplémentaire
+	pour la partie du milieu. Cela peut être utilisé pour aligner la
+	partie du milieu à gauche avec le début ou la fin, puis ajouter un
+	décalage.
+
+  -{chiffres}
+	Comme {chiffres}, mais réduit l'indentation. Cela fonctionne
+	uniquement s'il y a une indentation pour les parties du début ou de la
+	fin qui peut être supprimée.
+
+Si une chaîne ne contient aucun des drapeaux 'f', 's', 'm' ou 'e', Vim
+considère que la chaîne de commentaire se répète au début de chaque ligne. Le
+champ {drapeaux} peut être vide.
+
+Tout espace blanc dans le texte avant ou après la {chaine} fait partie de la
+{chaine} (n'incluez pas d'espace initial ou final à moins que ceux-ci fassent
+partie de la chaîne de commentaire.)
+
+Si une chaîne de commentaire est incluse dans une autre, spécifiez le tout
+avant la partie. Par exemple, pour inclure à la fois "-" et "->", utilisez : >
+	:set comments=f:->,f:-
+
+Un commentaire en trois parties doit toujours être donné par
+"début,milieu,fin", sans autres parties intercalées. Par exemple >
+	sr:/*,mb:*,ex:*/
+pour des commentaires C. Afin d'éviter que "*ptr" ne soit reconnu comme un
+commentaire, la chaîne du milieu inclut le drapeau 'b'. Pour des commentaires
+en trois parties, Vim fouille le texte après les chaînes de début et de milieu
+à la recherche de la chaîne de fin. Si Vim trouve la chaîne de fin, alors le
+commentaire ne se poursuit pas sur la ligne suivante. Les commentaires en
+trois parties doivent posséder une chaîne de milieu, car sans cela Vim ne
+pourrait pas reconnaître les lignes du milieu.
+
+Remarquez l'utilisation du drapeau 'x' dans la définition du commentaire en
+trois parties ci-dessus. Si vous frappez <Entree> dans un commentaire C, Vim
+insérera la chaîne de milieu de commentaire sur la nouvelle ligne, p. ex.
+" * ". Pour fermer ce commentaire, vous aurez juste à saisir "/" avant d'avoir
+tapé quoi que ce soit d'autre sur la nouvelle ligne. Cela remplacera la chaîne
+de milieu de commentaire par celle de fin de commentaire, produisant " */".
+Il n'est pas nécessaire de tapez <RetArr> d'abord.
+
+Exemples :
+	"b:*"	    Inclut les lignes débutant par "*", sauf si "*" est suivi
+		    par un non-blanc. Cela évite de reconnaître des références
+		    à des pointeurs (p. ex. "*str") comme des commentaires.
+	"n:>"	    Inclut une ligne débutant par ">", ">>", ">>>", etc.
+	"fb:-"	    Permet de mettre en forme une liste débutant par "- ".
+
+Par défaut, "b:#" est inclus. Cela signifie qu'une ligne qui débute par
+"#include" n'est pas reconnue comme une ligne de commentaire ; mais une ligne
+qui débute par "# define" l'est. Il s'agit d'un compromis.
+
+Souvent l'alignement peut être changé d'un alignement à gauche en un
+alignement à droite avec un caractère additionnel. Par exemple, pour les
+commentaires Javadoc, ceci peut être utilisé (insérez une contre-oblique avant
+l'espace lors de l'utilisation de ":set") : >
+	s1:/*,mb:*,ex:*/
+NOTE : Un décalage ('1') est précisé après le début du commentaire ('s'), de
+telle sorte que la partie du milieu est d'abord alignée sur le début, puis
+qu'un décalage d'un caractère est ajouté. Cela permet d'aligner à gauche le
+début et le milieu de cette construction :
+	/** ~
+	 * commentaire ~
+	 */ ~
+
+{uniquement si compilé avec la fonctionnalité |+comments|}
+
+							*fo-table*
+Vous pouvez utiliser l'option 'formatoptions' pour définir la façon dont Vim
+mettra en forme votre texte. 'formatoptions' est une chaîne qui peut contenir
+n'importe lequel des drapeaux ci-dessous. La valeur par défaut est "tcq". Vous
+pouvez séparer les drapeaux par des virgules pour une meilleure lisibilité.
+
+DRAPEAU	 SIGNIFICATION POUR 'formatoptions'		    ~
+------------------------------------------------------------
+t	Coupure automatique du texte selon 'textwidth' (ne s'applique pas aux
+	commentaires).
+c	Coupure automatique du texte selon 'textwidth', en insérant la chaîne
+	de commentaire courante.
+r	Insertion automatique de la chaîne de commentaire courante après la
+	saisie de <Entree> en mode Insertion.
+o	Insertion automatique de la chaîne de commentaire courante après la
+	saisie de "o" ou "O" en mode Normal.
+q	Autorise la mise en forme des commentaires avec "gq".
+	NOTE : La mise en forme ne modifiera pas les lignes blanches ou les
+	lignes contenant uniquement la chaîne de commentaire. Un nouveau
+	paragraphe débute après de telles lignes, ou lorsque la chaîne de
+	commentaire change.
+w	Un espace blanc final indique qu'un paragraphe continue sur la ligne
+	suivante. Une ligne qui se termine par un caractère non-blanc marque
+	la fin d'un paragraphe.					      ["White"]
+a	Mise en forme automatique des paragraphes. Chaque fois que du texte
+	est inséré ou supprimé, le paragraphe sera remis en forme. Voir
+	|auto-format|.
+n	Lors de la mise en forme de texte, reconnaît les listes numérotées.
+	L'indentation du texte après le numéro est utilisé pour la ligne
+	suivante. Le numéro peut être optionnellement suivit par '.', ':',
+	')', ']' ou '}'.
+	NOTE : 'autoindent' doit aussi être activé.
+	Ne fonctionne pas bien si utilisé avec '2'.
+	Exemple :
+		1. Le premier item ~
+		   se finit ici ~
+		2. Le deuxième item ~
+2	Lors de la mise en forme de texte, utilise l'indentation de la
+	deuxième ligne d'un paragraphe pour le reste du paragraphe, au lieu de
+	l'indentation de la première ligne. Cela permet de gérer des
+	paragraphes composés en alinéa.
+	NOTE : 'autoindent' doit aussi être activé.
+	Exemple :
+			première ligne d'un paragraphe ~
+		deuxième ligne du même paragraphe ~
+		troisième ligne. ~
+v	Coupure automatique compatible Vi en mode Insertion : coupe une ligne
+	uniquement sur un blanc que vous avez entré à la suite de la commande
+	d'insertion courante.
+	NOTE : Cela n'est pas compatible Vi à 100 %. Vi comporte des « effets
+	indésirables » ou des bogues dans ce domaine. Il utilise la colonne
+	d'écran au lieu de la colonne de ligne.
+b	Comme 'v', mais ne coupe une ligne que si vous entrez un blanc sur ou
+	avant la marge de coupure. Si une ligne était plus longue que
+	'textwidth' lorsque l'insertion a débuté, ou que vous n'avez pas
+	entré de blanc pendant l'insertion avant d'atteindre 'textwidth', Vim
+	ne procédera pas à la coupure automatique.
+l	Les lignes longues ne sont pas coupées en mode Insertion : si une
+	ligne était plus longue que 'textwidth' lorsque la commande
+	d'insertion courante a débuté, Vim ne la mettra pas en forme pas.
+m	Autorise la coupure automatique après des caractères multi-octets
+	supérieurs à 255. Utile pour des textes asiatiques où chaque caractère
+	est un mot en soi.
+M	Lors de la fusion de lignes, n'insère pas d'espaces avant ou après un
+	caractère multi-octets. Recouvre le drapeau 'B'.
+B	Lors de la fusion de lignes, n'insère pas d'espaces entre deux
+	caractères multi-octets. Recouvert par le drapeau 'M'.	    ["Between"]
+1	Ne coupe pas une ligne après un mot d'une seule lettre ; la coupe
+	avant si possible.
+------------------------------------------------------------
+
+Avec 't' et 'c', vous pouvez spécifier quand Vim doit gérer la coupure
+automatique des lignes :
+	VALEUR  ACTION			~
+	""	pas de mise en forme automatique (utilisez "gq" pour cela)
+	"t"	mise en forme automatique du texte, mais pas des commentaires
+	"c"	mise en forme automatique des commentaires, mais pas du texte
+		   (bien pour le code C)
+	"tc"	mise en forme automatique du texte et des commentaires
+
+NOTE : Si 'textwidth' vaut 0, Vim n'effectuera de toute façon aucune mise en
+forme (mais insérera la chaîne de commentaire selon l'option 'comments').
+
+NOTE : Si 'paste' est activé, Vim n'effectuera aucune mise en forme.
+
+NOTE : 'textwidth' peut être non-nul même si Vim n'effectue aucune coupure
+automatique de ligne ; 'textwidth' est aussi utilisé avec la commande "gq".
+
+Si l'option 'comments' contient "/*", "*" et/ou "*/", alors ces commentaires
+en trois parties sont traités par Vim d'une façon un peu plus intelligente.
+   L'ouverture d'une nouvelle ligne avant ou après "/*" ou "*/" (si 'r' ou 'o'
+sont présents dans 'formatoptions') modifie automatiquement le début de chaque
+ligne pour qu'il soit correct. La même chose se produit lors de la mise en
+forme et de la coupure automatique de ligne. L'ouverture d'une ligne après une
+ligne débutant par "/*" ou "*", et contenant "*/", n'entraînera pas
+l'insertion d'une chaîne de commentaire, et l'indentation de la nouvelle ligne
+sera celle de la ligne contenant le début du commentaire. Par exemple :
+	/* ~
+	 * Un joli commentaire. ~
+	 */ ~
+	L'indentation de cette ligne est la même que celle du début du ~
+	commentaire ci-dessus. ~
+
+Toutes ces possibilités devraient être vraiment agréables, particulièrement
+en conjonction avec des autommandes pour fixer différents paramètres pour
+différents types de fichiers.
+
+Quelques exemples :
+- pour du code C (mettre en forme uniquement les commentaires) : >
+	:set fo=croq
+- pour un message électronique (tout mettre en forme, ne pas débuter de
+  commentaire après une commande "o") : >
+	:set fo=tcrq
+
+
+MISE EN FORME AUTOMATIQUE				*auto-format*
+
+Lorsque le drapeau 'a' est inclus dans 'formatoptions', le paragraphe courant
+est automatiquement mise en forme lors d'une insertion ou suppression de
+texte. C'est particulièrement commode pour éditer des paragraphes de texte.
+Quelques conseils pour bien utiliser cette fonctionnalité :
+
+- Les paragraphes doivent être bien définis. Le plus simple est que chaque
+  paragraphe soit séparé du suivant par une ligne blanche. Quand il n'y a pas
+  de ligne blanche, il est possible d'utiliser le drapeau 'w' et d'ajouter un
+  espace à la fin de chaque ligne, excepté la dernière de chaque paragraphe.
+
+- Vous pouvez fixer 'formatoptions' pour un certain type de fichier |filetype|
+  ou pour un fichier particulier |modeline|.
+
+- Fixez 'formatoptions' à "aw2tcq" pour que l'indentation du texte ressemble à
+  celle-ci :
+
+	    Blabla schtroumpf-bouchon 
+	rosa rosa rosam rosae etc.
+	    Blabla tire-bouschtroumpf 
+	rosae rosae rosas rosarum etc.
+
+Et voici quelques avertissements :
+
+- Si pour certaines parties du texte les paragraphes ne sont pas bien définis,
+  le texte sera remis en forme malgré cela quand un changement sera effectué.
+  Pour l'éviter : >
+
+	:set fo-=a
+
+- Si vous utilisez le drapeau 'w' (un espace blanc final signifie que le
+  paragraphe se poursuit) et que vous supprimiez la dernière ligne d'un
+  paragraphe avec |dd|, ce paragraphe sera fusionné avec le suivant.
+
+- Un texte changé est mémorisé pour l'annulation. La mise en forme est
+  considérée comme un changement. Ainsi, chaque action de mise en forme est
+  mémorisée pour pouvoir être annulée. Cela peut consommer beaucoup de
+  mémoire.
+
+- La mise en forme d'un paragraphe long et/ou avec une indentation complexe
+  peut être lente.
+
+ vim:tw=78:ts=8:ft=help:norl:

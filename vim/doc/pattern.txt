@@ -1,0 +1,1258 @@
+*pattern.txt*	Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+Motifs et commandes de recherche			*pattern-searches*
+
+Ce sujet est abordé succinctement dans la section |03.9| du Manuel de
+l'utilisateur. Vous trouverez un peu plus d'explications au chapitre 27
+|usr_27.txt|.
+
+1. Commandes de recherche		|search-commands|
+2. Définition d'un motif		|search-pattern|
+3. Sommaire des éléments de motif	|pattern-overview|
+4. 'Magic'				|/magic|
+5. Détails des multis			|pattern-multi-items|
+6. Détails des atomes ordinaires	|pattern-atoms|
+7. Ignorer la casse dans un motif	|/ignorecase|
+8. Comparaison avec les motifs Perl	|perl-patterns|
+9. Coloration des correspondances	|match-highlight|
+
+==============================================================================
+1. Commandes de recherche			*search-commands* *E486*
+
+							*/*
+/{motif}[/]<CR>		Recherche vers l'avant la [quant]-ième occurrence de
+			{motif} (exclusif).
+
+/{motif}/{decal}<CR>	Recherche vers l'avant la [quant]-ième occurrence de
+			{motif} et va |{decal}| lignes plus haut ou plus bas
+			(par lignes).
+
+							*/<CR>*
+/<CR>			Recherche vers l'avant le [quant]-ième dernier motif
+			utilisé |last-pattern| avec le dernier |{decal}|age
+			utilisé.
+
+//{decal}<CR>		Recherche vers l'avant le [quant]-ième dernier motif
+			utilisé |last-pattern| avec le nouveau |{decal}|age.
+			Si {decal} est vide, aucun décalage n'est utilisé.
+
+							*?*
+?{motif}[?]<CR>		Recherche vers l'arrière la [quant]-ième occurrence de
+			{motif} (exclusif).
+
+?{motif}?{decal}<CR>	Recherche vers l'arrière la [quant]-ième occurrence de
+			{motif} et va |{decal}| lignes plus haut ou plus bas
+			(par lignes).
+
+							*?<CR>*
+?<CR>			Recherche vers l'arrière le [quant]-ième dernier motif
+			utilisé |last-pattern| avec le dernier |{decal}|age
+			utilisé.
+
+??{decal}<CR>		Recherche vers l'arrière le [quant]-ième dernier motif
+			utilisé |last-pattern| avec le nouveau |{decal}|age.
+			Si {decal} est vide, aucun décalage n'est utilisé.
+
+							*n*
+n			Répète le dernier "/" ou "?" [quant] fois.
+			|last-pattern| {Vi : pas de quantificateur}    ["Next"]
+
+							*N*
+N			Répète le dernier "/" ou "?" [quant] fois dans la
+			direction opposée. |last-pattern| {Vi : pas de
+			quantificateur}
+
+							*star* *E348* *E349*
+*			Recherche vers l'avant la [quant]-ième occurrence du
+			mot le plus proche du curseur. Le mot utilisé pour la
+			recherche est le premier trouvé parmi :
+			1. Le mot-clé sous le curseur |'iskeyword'| ;
+			2. Le premier mot-clé après le curseur, dans la ligne
+			   courante ;
+			3. Le mot non-blanc sous le curseur ;
+			4. Le premier mot non-blanc après le curseur, dans la
+			   ligne courante.
+			Seuls des mots-clés entiers sont recherchés, comme
+			avec la commande "/\<motcle\>".
+			'ignorecase' est utilisé, mais pas 'smartcase'.
+			(Mouvement exclusif.) {absent de Vi}
+
+							*#*
+#			Comme "*", mais recherche vers l'arrière. Le symbole
+			livre (caractère 163) fonctionne aussi. Si la touche
+			"#" fonctionne comme retour arrière, essayez
+			d'utiliser `stty erase <RetArr>` avant de lancer Vim
+			(<RetArr> désigne CTRL-H ou un vrai retour arrière).
+			{absent de Vi}
+
+							*gstar*
+g*			Comme "*", mais sans placer "\<" et "\>" autour du
+			mot : la recherche trouvera également les
+			correspondances qui ne sont pas des mots entiers.
+			{absent de Vi}
+
+							*g#*
+g#			Comme "#", mais sans placer "\<" et "\>" autour du
+			mot : la recherche trouvera également les
+			correspondances qui ne sont pas des mots entiers.
+			{absent de Vi}
+
+							*gd*
+gd			Va à la déclaration locale. Quand le curseur est sur
+			une variable locale, cette commande sautera à sa
+			déclaration. Vim recherche d'abord le début de la
+			fonction courante, comme avec "[[". S'il n'est pas
+			trouvé, la recherche s'arrête à la ligne 1 ; s'il est
+			trouvé, Vim remonte jusqu'à ce qu'une ligne blanche
+			soit trouvée. À partir de cette position, le mot-clé
+			sous le curseur est recherché, comme avec "*",  mais
+			les lignes ressemblant à des commentaires sont
+			ignorées (voir l'option 'comments').
+			NOTE : Le résultat de cette commande n'est pas
+			garanti, Vim ne testant pas la syntaxe mais
+			recherchant seulement une correspondance avec le
+			mot-clé. Si vous souhaitez également examiner les
+			fichiers inclus, utilisez les commandes listées dans
+			|include-search|.
+			Après cette commande, |n| recherche la correspondance
+			suivante vers l'avant (et non vers l'arrière).
+			{absent de Vi}			   ["Goto Declaration"]
+
+							*gD*
+gD			Va à la déclaration globale. Quand le curseur est sur
+			une variable globale, cette commande sautera à sa
+			déclaration. Cela fonctionne exactement comme "gd",
+			sauf que la recherche du mot-clé débute toujours à la
+			ligne 1. {absent de Vi}
+
+							*CTRL-C*
+CTRL-C			Interrompt la commande (de recherche) courante.
+			Utilisez CTRL-Attn sur MS-DOS |dos-CTRL-Break|.
+			En mode Normal, toute commande en attente de saisie
+			est annulée.
+
+							*:noh* *:nohlsearch*
+:noh[lsearch]		Suspend la surbrillance de l'option 'hlsearch'.
+			Celle-ci est automatiquement réactivée quand une
+			commande de recherche est utilisée, ou quand l'option
+			'hlsearch' est activée.
+			Cette commande ne fonctionne pas dans une
+			autocommande, car l'état de la surbrillance est
+			enregistré puis restauré après l'exécution
+			d'autocommandes |autocmd-searchpat|.
+
+Pendant la saisie du motif de recherche, la correspondance courante sera
+affichée si l'option 'incsearch' est activée. Vous devrez cependant terminer
+la commande avec <CR> pour amener le curseur sur la correspondance affichée.
+Ou utiliser <Echap> pour abandonner la recherche.
+
+Toutes les correspondances du dernier motif de recherche utilisé seront mises
+en surbrillance si vous activez l'option 'hlsearch'. Pour suspendre cela,
+utilisez la commande |:nohlsearch|.
+
+					*search-offset* *{offset}* *{decal}*
+Toutes les commandes ci-dessus recherchent un motif spécifié. Avec "/" et "?",
+un décalage optionnel peut être donné. Il y a deux types de décalages : en
+lignes et en caractères. {Vi : pas de décalages en caractères}
+
+L'argument de décalage donne la position du curseur relativement à la
+correspondance trouvée :
+	ARGUMENT   POSITION DU CURSEUR		    ~
+	[nb]	   [nb] lignes plus bas, dans la colonne 1
+	+[nb]	   [nb] lignes plus bas, dans la colonne 1
+	-[nb]	   [nb] lignes plus haut, dans la colonne 1
+	e[+nb]	   [nb] caractères à droite de la fin du motif		["End"]
+	e[-nb]	   [nb] caractères à gauche de la fin du motif
+	s[+nb]	   [nb] caractères à droite du début du motif	      ["Start"]
+	s[-nb]	   [nb] caractères à gauche du début du motif
+	b[+nb]	   [nb] caractères à droite du début du motif	      ["Begin"]
+	b[-nb]	   [nb] caractères à gauche du début du motif
+
+Si un '-' ou '+' est donné mais que [nb] est omis, 1 sera utilisé par défaut.
+Lorsqu'un décalage contient l'argument 'e', la recherche devient inclusive (le
+caractère sur lequel le curseur est placé est inclus dans l'opération).
+
+Exemples : >
+	/test/+1	  une ligne en dessous de "test", dans la colonne 1
+	/test/e		  sur le dernier 't' de "test"
+	/test/s+2	  sur le 's' de "test"
+	/test/b-3	  trois caractères avant "test"
+
+Si une de ces commandes est utilisée après un opérateur, les caractères situés
+entre la position du curseur avant et après la recherche seront affectés.
+Toutefois, si un décalage en lignes est donné, les lignes entières entre les
+deux positions du curseur seront affectées.
+
+Cet exemple montre comment rechercher les correspondances d'un motif et
+changer chacune par un autre mot : >
+	/zorglub<CR>	  trouve "zorglub"
+	c//e		  change jusqu'à la fin de la correspondance
+	bulgroz<Echap>	  entre la substitution
+	//<CR>		  va au début de la correspondance suivante
+	c//e		  change jusqu'à la fin de la correspondance
+	grozbul<Echap>	  entre une autre substitution
+			  etc.
+<
+							*//;* *E386*
+L'argument ';' suivi d'une autre commande de recherche constitue un décalage
+spécial. Par exemple : >
+
+	/test 1/;/test
+	/paquet.*/+1;?age?
+
+La première ligne trouve la prochaine occurrence de "test 1", puis la première
+occurrence de "test" après cela.
+
+Cela revient à exécuter deux commandes de recherche consécutivement, sauf que :
+- cela peut être utilisé comme un mouvement simple après un opérateur ;
+- la direction pour une prochaine commande "n" ou "N" dépend de la première
+  commande de recherche ;
+- lorsqu'une erreur se produit, le curseur n'est pas déplacé du tout.
+
+							*last-pattern*
+Les derniers motif et décalage utilisés sont mémorisés. Ils peuvent être
+utilisés pour répéter la recherche, en changeant par exemple la direction, ou
+avec un autre quantificateur. NOTE : Deux motifs sont mémorisés : un pour les
+commandes de recherche « normales » et un autre pour la commande de
+substitution ":s". Chaque fois qu'un motif vide est donné, le motif
+précédemment utilisé est réemployé.
+
+La valeur de l'option 'magic' reste la même que pour le dernier motif utilisé.
+Si vous modifiez 'magic', cela ne changera pas la façon dont le dernier motif
+utilisé sera interprété.
+   L'option 'ignorecase' ne se comporte pas ainsi : lorsque 'ignorecase' est
+modifié, le motif correspondra à d'autres chaînes.
+
+Toutes les correspondances du dernier motif de recherche utilisé seront mises
+en surbrillance si vous activez l'option 'hlsearch'.
+
+Pour effacer le dernier motif de recherche utilisé : >
+	:let @/ = ""
+Cela ne fixera pas le motif à une chaîne vide, car sinon il correspondrait
+partout. Le motif est vraiment effacé, comme au lancement de Vim.
+
+La recherche saute habituellement les correspondances qui ne déplacent pas le
+curseur. La prochaine correspondance pourra être trouvée au caractère suivant
+ou après la correspondance sautée, selon la présence du drapeau 'c' dans
+'cpoptions'. Voir |cpo-c|.
+	avec le drapeau 'c' : "/..." avance de 1 à 3 caractères
+	sans le drapeau 'c' : "/..." avance de 1 caractère
+L'imprévisibilité avec le drapeau 'c' provient du début de la recherche sur
+la première colonne, sautant les correspondances jusqu'à ce qu'une soit
+trouvée après la position du curseur. XXX
+
+Dans Vi, la commande ":tag" modifie le dernier motif de recherche quand le
+marqueur est recherché. Dans Vim ce n'est pas le cas, le motif de recherche
+précédent est toujours mémorisé, à moins que le drapeau 't' ne soit inclus
+dans 'cpoptions'. Le motif de recherche est toujours placé dans l'historique
+des recherches.
+
+Si l'option 'wrapscan' est activée (c'est le cas par défaut), la recherche
+boucle aux limites du tampon. Si 'wrapscan' n'est pas activé, la recherche
+vers l'arrière s'arrête au début du tampon et celle vers l'avant à la fin. Si
+'wrapscan' est activé et que le motif n'a pas été trouvé, le message "pattern
+not found" est émis et le curseur ne bougera pas. Si 'wrapscan' n'est pas
+activé, le message émis devient "search hit BOTTOM without match" en cas de
+recherche vers l'avant, et "search hit TOP without match" pour une recherche
+vers l'arrière. Si 'wrapscan' est activé et que la recherche boucle aux
+limites du tampon, le message "search hit TOP, continuing at BOTTOM" ou
+"search hit BOTTOM, continuing at TOP" sera donné pour une recherche vers
+l'arrière (resp. l'avant). Cela peut être annulé en incluant le drapeau 's'
+dans l'option 'shortmess'. Le message est mis en surbrillance selon l'entrée
+'w' de l'option 'highlight' (défaut : surligné).
+
+							*search-range*
+Vous ne pouvez pas limiter la commande de recherche "/" à une certaine plage
+de lignes. Pour effectuer une telle action malgré tout, vous pouvez utiliser
+la commande ":substitute" avec le drapeau 'c'. Par exemple >
+	:.,300s/Motif//gc
+recherchera "Motif" depuis la position du curseur jusqu'à la ligne 300. À
+chaque correspondance, une invite vous demandera d'entrer un caractère. Tapez
+'q' pour vous arrêter à cette correspondance, 'n' pour aller à la suivante.
+
+Les commande "*", "#", "g*" et "g#" cherchent un mot situé près du curseur
+dans cet ordre (le premier trouvé est utilisé) :
+- le mot-clé actuellement sous le curseur ;
+- le premier mot-clé à droite du curseur, dans la même ligne ;
+- le MOT actuellement sous le curseur ;
+- le premier MOT à droite du curseur, dans la même ligne ;
+Le mot-clé ne peut être composé que de lettres et caractères contenus dans
+'iskeyword'. Le MOT peut contenir n'importe quel caractère non-blanc (<Tab>
+et/ou <Espace>).
+   NOTE : Si vous tapez avec vos dix doigts, ces caractères sont faciles à
+mémoriser : le '#' est sous votre majeur gauche (recherche vers la gauche et
+l'arrière), le '*' est sous votre majeur droit (recherche vers la droite et le
+bas). (Cela dépend toutefois de la disposition de votre clavier.)
+
+==============================================================================
+2. Définition d'un motif	*Pattern* *pattern* *[pattern]* *{motif}*
+				*regular-expression* *regexp* *search-pattern*
+				*E76* *E361* *E363* *E383* *E476*
+
+Pour une introduction sur le sujet, lisez le chapitre 27 du Manuel de
+l'utilisateur |usr_27.txt|.
+
+						*/bar* */\bar* */pattern*
+1. Un motif est constitué d'une ou plusieurs branches, séparées par "\|". Cela
+   correspond à tout ce qui correspond à une des branches. Exemple :
+   "toto\|titi" correspond à "toto" et à "titi". Si plusieurs branches
+   correspondent, la première est utilisée.
+
+   motif   ::=	    branche
+		ou  branche \| branche
+		ou  branche \| branche \| branche
+		etc.
+
+						*/branch* */\&*
+2. Une branche est constituée d'un ou plusieurs concats, séparés par "\&".
+   Cela correspond au dernier concat, mais uniquement si tous les concats
+   précédents correspondent aussi à la même position. Exemples :
+   - "zorglub\&...." correspond à "zorg" dans "zorglub" ;
+   - ".*Jules\&.*Jim" correspond dans une ligne qui contient à la fois "Jules"
+     et "Jim".
+
+   branche ::=	    concat
+		ou  concat \& concat
+		ou  concat \& concat \& concat
+		etc.
+
+						*/concat*
+3. Un concat est constitué d'une ou plusieurs pièces concaténées. Cela
+   correspond à une correspondance pour la première pièce, suivie par une
+   correspondance pour la deuxième pièce, etc. Exemple : "f[0-9]b" correspond
+   d'abord à "f", puis à un chiffre, puis à "b".
+
+   concat  ::=	    pièce
+		ou  pièce pièce
+		ou  pièce pièce pièce
+		etc.
+
+						*/piece*
+4. Une pièce est constituée d'un atome, éventuellement suivi d'un multi (une
+   indication du nombre de fois où l'atome peut correspondre). Exemple : "a*"
+   correspond à n'importe quelle séquence de caractères "a" : "", "a", "aa",
+   etc. Voir |/multi|.
+
+   pièce   ::=	    atome
+		ou  atome multi
+
+						*/atom*
+5. Un atome peut correspondre à n'importe quel élément dans une liste
+   d'éléments. De nombreux atomes correspondent à un caractère dans le texte.
+   Il s'agit souvent d'un caractère ordinaire, ou d'une classe de caractères.
+   Des parenthèses peuvent être utilisées pour créer un motif dans un atome.
+   La construction "\z(\)" sert uniquement pour la coloration syntaxique.
+
+   atome   ::=	    atome ordinaire		|/ordinary-atom|
+		ou  \( motif \)			|/\(|
+		ou  \%( motif \)		|/\%(|
+		ou  \z( motif \)		|/\z(|
+
+==============================================================================
+3. Sommaire des éléments de motif		*pattern-overview*
+
+SOMMAIRE DES MULTIS				*/multi* *E61* *E62* *E64*
+
+Plus de détails et d'exemples ci-dessous, suivez les liens.
+
+      MULTI	       ~
+     'magic' 'nomagic'	CORRESPONDANCES DE L'ATOME PRÉCÉDENT  ~
+|/star|	*	\*	0 ou plus	autant que possible
+|/\+|	\+	\+	1 ou plus	autant que possible (*)
+|/\=|	\=	\=	0 ou 1		autant que possible (*)
+|/\?|	\?	\?	0 ou 1		autant que possible (*)
+
+|/\{|	\{n,m}	\{n,m}	n à m		autant que possible (*)
+	\{n}	\{n}	n		exactement (*)
+	\{n,}	\{n,}	au moins n	autant que possible (*)
+	\{,m}	\{,m}	0 à m		autant que possible (*)
+	\{}	\{}	0 ou plus	autant que possible (comme "*") (*)
+
+|/\{-|	\{-n,m}	\{-n,m}	n à m		aussi peu que possible (*)
+	\{-n}	\{-n}	n		exactement (*)
+	\{-n,}	\{-n,}	au moins n	aussi peu que possible (*)
+	\{-,m}	\{-,m}	0 à m		aussi peu que possible (*)
+	\{-}	\{-}	0 ou plus	aussi peu que possible (*)
+
+							*E59*
+|/\@>|	\@>	\@>	1, comme une correspondance du motif entier (*)
+|/\@=|	\@=	\@=	rien, requiert une correspondance |/zero-width| (*)
+|/\@!|	\@!	\@!	rien, requiert AUCUNE correspondance |/zero-width| (*)
+|/\@<=|	\@<=	\@<=	comme "\@=", mais derrière
+|/\@<!|	\@<!	\@<!	comme "\@!", mais derrière
+
+(*) {absent de Vi}
+
+
+SOMMAIRE DES ATOMES ORDINAIRES				*/ordinary-atom*
+
+Plus de détails et d'exemples ci-dessous, suivez les liens.
+
+      ATOME ORDINAIRE  ~
+     'magic' 'nomagic'	CORRESPONDANCE		    ~
+|/^|	^	^	début-de-ligne (au début d'un motif) |/zero-width|
+|/\^|	\^	\^	'^' littéral
+|/\_^|	\_^	\_^	début-de-ligne (utilisé n'importe où) |/zero-width|
+|/$|	$	$	fin-de-ligne (à la fin d'un motif) |/zero-width|
+|/\$|	\$	\$	'$' littéral
+|/\_$|	\_$	\_$	fin-de-ligne (utilisé n'importe où) |/zero-width|
+|/.|	.	\.	n'importe quel caractère simple (sauf fin-de-ligne)
+|/\_.|	\_.	\_.	n'importe quel caractère simple ou fin-de-ligne
+|/\<|	\<	\<	début d'un mot |/zero-width|
+|/\>|	\>	\>	fin d'un mot |/zero-width|
+|/\zs|	\zs	\zs	n'importe quoi, fixe le début d'un motif
+|/\ze|	\ze	\ze	n'importe quoi, fixe la fin d'un motif
+|/\%^|	\%^	\%^	début d'un fichier |/zero-width|	*E71*
+|/\%$|	\%$	\%$	fin d'un fichier |/zero-width|
+|/\%#|	\%#	\%#	position du curseur |/zero-width|
+|/\%l|	\%23l	\%23l	dans la ligne 23 |/zero-width|
+|/\%c|	\%23c	\%23c	dans la colonne 23 |/zero-width|
+|/\%v|	\%23v	\%23v	dans la colonne virtuelle 23 |/zero-width|
+
+Classes de caractères {absent de Vi} :
+|/\i|	\i	\i	caractère d'identifiant (voir l'option 'isident')
+|/\I|	\I	\I	comme "\i", mais en excluant les chiffres
+|/\k|	\k	\k	caractère de mot-clé (voir l'option 'iskeyword')
+|/\K|	\K	\K	comme "\k", mais en excluant les chiffres
+|/\f|	\f	\f	caractère de nom de fichier (voir l'option 'isfname')
+|/\F|	\F	\F	comme "\f", mais en excluant les chiffres
+|/\p|	\p	\p	caractère imprimable (voir l'option 'isprint')
+|/\P|	\P	\P	comme "\p", mais en excluant les chiffres
+|/\s|	\s	\s	caractère d'espace blanc : <Espace> ou <Tab>
+|/\S|	\S	\S	caractère non-blanc ; contraire de "\s"
+|/\d|	\d	\d	chiffre :			    [0-9]
+|/\D|	\D	\D	non-chiffre :			    [^0-9]
+|/\x|	\x	\x	chiffre hexa :			    [0-9A-Fa-f]
+|/\X|	\X	\X	non-chiffre hexa :   		    [^0-9A-Fa-f]
+|/\o|	\o	\o	chiffre octal :			    [0-7]
+|/\O|	\O	\O	non-chiffre octal :		    [^0-7]
+|/\w|	\w	\w	caractère de mot :  		    [0-9A-Za-z_]
+|/\W|	\W	\W	caractère de non-mot :		    [^0-9A-Za-z_]
+|/\h|	\h	\h	tête d'un caractère de mot :	    [A-Za-z_]
+|/\H|	\H	\H	non-tête d'un caractère de mot :    [^A-Za-z_]
+|/\a|	\a	\a	caractère alphabétique :	    [A-Za-z]
+|/\A|	\A	\A	caractère non-alphabétique :	    [^A-Za-z]
+|/\l|	\l	\l	caractère minuscule :		    [a-z]
+|/\L|	\L	\L	caractère non-minuscule :	    [^a-z]
+|/\u|	\u	\u	caractère majuscule :		    [A-Z]
+|/\U|	\U	\U	caractère non-majuscule :	    [^A-Z]
+|/\_|	\_x	\_x	où 'x' désigne n'importe quel caractère ci-dessus :
+			   classe de caractère incluant fin-de-ligne
+(fin des classes de caractères)
+
+|/\e|	\e	\e	<Echap>
+|/\t|	\t	\t	<Tab>
+|/\r|	\r	\r	<CR>
+|/\b|	\b	\b	<RetArr>
+|/\n|	\n	\n	fin-de-ligne
+|/~|	~	\~	dernière chaîne de substitution donnée
+|/\1|	\1	\1	chaîne correspondant au premier "\(\)" {absent de Vi}
+|/\2|	\2	\2	comme "\1", mais utilise le deuxième "\(\)"
+	   ...
+|/\9|	\9	\9	comme "\1", mais utilise le neuvième "\(\)"
+								*E68*
+|/\z1|	\z1	\z1	uniquement pour la coloration syntaxique, voir
+			   |:syn-ext-match|
+	   ...
+|/\z1|	\z9	\z9	uniquement pour la coloration syntaxique, voir
+			   |:syn-ext-match|
+
+	x	x	un caractère sans signification spéciale correspond à
+			   lui-même
+
+|/[]|	[]	\[]	n'importe quel caractère entre "[]"
+|/\%[]| \%[]	\%[]	une liste d'atomes correspondant optionnellement
+
+|/\c|	\c	\c	ignore la casse
+|/\C|	\C	\C	respecte la casse
+|/\m|	\m	\m	'magic' activé pour les caractères suivants du motif
+|/\M|	\M	\M	'magic' désactivé pour les cars suivants du motif
+|/\v|	\v	\v	les cars suivants du motif sont « très 'magic' »
+|/\V|	\V	\V	les cars suivants du motif sont « très 'nomagic' »
+|/\Z|	\Z	\Z	ignore les différences dans les « caractères de
+			composition » Unicode. Utile pour la recherche des
+			textes hébreux ou arabes vocalisés.
+
+
+	EXEMPLE			CORRESPONDANCE	    ~
+	\<\I\i*		ou
+	\<\h\w*		ou
+	\<[a-zA-Z_][a-zA-Z0-9_]*
+				Un identifiant (p. ex., dans un programme C).
+
+	\(\.$\|\. \)		Un point suivi par <EOL> ou par un espace.
+
+	[.!?][])"']*\($\|[ ]\)	Un motif de recherche qui trouve la fin d'une
+				phrase, avec presque la même définition que la
+				commande ")".
+
+	chat\Z			Aussi bien "chat" que "chaÌ€t" ('a' suivi de
+				0x0300). Ne correspond pas à "chÃ t"
+				(caractère 0x00e0), même s'il paraît lui
+				ressembler.
+
+==============================================================================
+4. 'Magic'						*/magic*
+
+Certains caractères dans le motif sont traités littéralement. Ils
+correspondent avec le même caractère dans le texte. Mais lorsqu'ils sont
+précédés par une contre-oblique, ces caractères prennent une signification
+spéciale.
+
+D'autres caractères ont une signification spéciale sans contre-oblique. Ils
+doivent être précédés par une contre-oblique pour correspondre littéralement.
+
+L'interprétation littérale ou non d'un caractère dépend de l'option 'magic' et
+des éléments mentionnés ci-dessous.
+							*/\m* */\M*
+L'utilisation de "\m" fait interpréter le motif qui le suit comme si 'magic'
+était activé, en ignorant sa valeur actuelle.
+   L'utilisation de "\M" fait interpréter le motif qui le suit comme si
+'nomagic' était utilisé.
+							*/\v* */\V*
+L'utilisation de "\v" signifie que dans le motif qui suit, tous les caractères
+ASCII sauf '0'-'9', 'a'-'z', 'A'-'Z' et '_' ont une signification spéciale.
+							       ["Very 'magic'"]
+L'utilisation de "\V" signifie que dans le motif qui suit, seule la
+contre-oblique ('\') a une signification spéciale.	     ["Very 'nomagic'"]
+
+Exemples :
+APRÈS :	  \v	  \m	    \M	     \V		CORRESPOND À  ~
+		'magic'  'nomagic'
+	  $	  $	    $	     \$		une fin-de-ligne
+	  .	  .	    \.	     \.		n'importe quel caractère
+	  *	  *	    \*	     \*		tout nombre du précédent atome
+	  ()	  \(\)      \(\)     \(\)	grouper dans un atome
+	  |	  \|	    \|	     \|		séparer des alternatives
+	  \a	  \a	    \a	     \a		un caractère alphabétique
+	  \\	  \\	    \\	     \\		une contre-oblique littérale
+	  \.	  \.	    .	     .		un point littéral
+	  \{	  {	    {	     {		un '{' littéral
+	  a	  a	    a	     a		un 'a' littéral
+
+{Vim est le seul à supporter "\m", "\M", "\v" et "\V"}
+
+Il est recommandé de toujours laisser l'option 'magic' à sa valeur par défaut,
+qui est 'magic'. Cela évite des problèmes de portabilité. Pour rendre un motif
+indépendant de la valeur de l'option 'magic', placez "\m" ou "\M" au début du
+motif.
+
+==============================================================================
+5. Détail des multis					*pattern-multi-items*
+
+Un atome peut être suivi d'une indication du nombre de fois où l'atome peut
+correspondre et de quelle façon. On appelle cela un multi. Voir |/multi| pour
+un sommaire.
+
+Il n'est pas possible d'utiliser un multi qui peut correspondre à plus d'une
+fois après un atome qui peut correspondre à une chaîne vide. En effet, cela
+pourrait provoquer une boucle sans fin. Si vous essayez, vous obtiendrez ce
+message d'erreur :
+	*, \+ or \{ operand could be empty ~
+
+							*/star* */\star* *E56*
+*	(Utilisez "\*" avec 'nomagic'.)
+	Correspond 0 fois ou plus à l'atome précédent, autant que possible.
+		EXEMPLE   'nomagic'   CORRESPONDANCE	    ~
+		a*	   a\*	      "", "a", "aa", "aaa", etc.
+		.*	   \.\*	      n'importe quoi (y compris une chaîne
+					 vide), sauf une fin-de-ligne
+		\_.*	   \_.\*      n'importe quoi jusqu'à la fin du tampon
+		\_.*FIN	   \_.\*FIN   n'importe quoi jusqu'au dernier "FIN"
+					 (inclus) du tampon
+
+	Exception : lorsque "*" est utilisé au début d'un motif ou juste après
+	"^", il correspond au caractère étoile.
+
+	Soyez conscient que la répétition de "\_." peut correspondre à
+	beaucoup de texte et prendre un temps important. Par exemple,
+	"\_.*FIN" correspond à tout le texte depuis la position courante
+	jusqu'à la dernière occurrence de "FIN" dans le fichier. Comme le "*"
+	correspond au plus long texte possible, cet exemple saute jusqu'à la
+	fin du fichier puis essaie de trouver "FIN", en revenant en arrière
+	caractère par caractère.
+
+							*/\+* *E57*
+\+	Correspond 1 fois ou plus à l'atome précédent, autant que possible.
+	{absent de Vi}
+		EXEMPLE   CORRESPONDANCE  ~
+		^.\+$	  n'importe quelle ligne non vide
+		\s\+	  un espace blanc d'au moins un caractère
+
+							*/\=*
+\=	Correspond 0 ou 1 fois à l'atome précédent, autant que possible.
+	{absent de Vi}
+		EXEMPLE   CORRESPONDANCE  ~
+		toto\=	  "tot" et "toto"
+
+							*/\?*
+\?	Exactement comme "\=". Ne peut pas être utilisé lors d'une recherche
+	vers l'arrière avec la commande "?". {absent de Vi}
+
+						*/\{* *E58* *E60* *E554*
+\{n,m}	Correspond n à m fois à l'atome précédent, autant que possible.
+\{n}	Correspond n fois à l'atome précédent.
+\{n,}	Correspond au moins n fois à l'atome précédent, autant que possible.
+\{,m}	Correspond 0 à m fois à l'atome précédent, autant que possible.
+\{}	Correspond 0 fois ou plus à l'atome précédent, autant que possible
+	(comme "*").
+							*/\{-*
+\{-n,m}	Correspond n à m fois à l'atome précédent, aussi peu que possible.
+\{-n}	Correspond n fois à l'atome précédent.
+\{-n,}	Correspond au moins n fois à l'atome précédent, aussi peu que possible.
+\{-,m}	Correspond 0 à m fois à l'atome précédent, aussi peu que possible.
+\{-}	Correspond 0 fois ou plus à l'atome précédent, aussi peu que possible.
+	{Vi ne supporte aucun de ces multis}
+
+	n et m sont des nombres décimaux positifs.
+
+	Si un '-' apparaît immédiatement après le '{', alors l'algorithme
+	utilisé recherchera la plus courte correspondance possible (voir
+	l'exemple ci-dessous). En particulier, "\{-}" est identique à "*",
+	mais utilise l'algorithme de plus courte correspondance possible.
+	MAIS : Une correspondance qui débute plus tôt est préférée à une
+	correspondance plus courte : "a\{-}b" correspond à "aaab" dans
+	"xaaab".
+
+		EXEMPLE		 CORRESPONDANCE  ~
+		ab\{2,3}c	 "abbc" ou "abbbc"
+		a\{5}		 "aaaaa".
+		ab\{2,}c	 "abbc", "abbbc", "abbbbc", etc
+		ab\{,3}c	 "ac", "abc", "abbc" ou "abbbc".
+		a[bc]\{3}d	 "abbbd", "abbcd", "acbcd", "acccd", etc.
+		a\(bc\)\{1,2}d	 "abcd" ou "abcbcd"
+		a[bc]\{-}[cd]	 "abc" dans "abcd"
+		a[bc]*[cd]	 "abcd" dans "abcd"
+
+	Le '}' peut éventuellement être précédé par une contre-oblique :
+	"\{n,m\}".
+
+							*/\@=*
+\@=	Correspond à l'atome précédent avec une largeur nulle. {absent de Vi}
+	Comme "(?=motif)" en Perl.
+		EXEMPLE		     CORRESPONDANCE  ~
+		zorg\(lub\)\@=	     "zorg" dans "zorglub"
+		zorg\(lub\)\@=zorg   rien
+							*/zero-width*
+	Avec l'utilisation de "\@=" (ou "^", "$", "\<", "\>"), aucun caractère
+	n'est inclus dans la correspondance. Ces éléments sont utilisés
+	uniquement pour tester si une correspondance peut être faite. C'est
+	assez délicat, notamment pour effectuer une correspondance avec les
+	éléments suivants à la même position. Dans le dernier exemple
+	ci-dessus, "zorglubzorg" ne correspondra pas, car "zorg" essaie de
+	correspondre à la même position où "lub" correspondait.
+
+	NOTE : L'utilisation de "\&" fonctionne comme celle de "\@=" :
+	"toto\&.." est identique à "\(toto\)\@=..". Mais il est plus simple de
+	taper "\&", les parenthèses sont superflues.
+
+							*/\@!*
+\@!	Correspond avec une largeur nulle si l'atome précédent ne correspond
+	PAS à la position courante. |/zero-width| {absent de Vi}
+	Comme "(?!motif)" en Perl.
+		EXEMPLE		 CORRESPONDANCE  ~
+		zorg\(lub\)\@!	 tout "zorg" non suivi par "lub"
+		a.\{-}p\@!	 "a", "ap", "app", etc. non suivi par "p"
+
+	L'utilisation de "\@!" est souvent délicate, car il y a de nombreux
+	endroits où un motif ne correspond pas. "a.*p\@!" correspondra depuis
+	un 'a' jusqu'à la fin de la ligne, car ".*" peut correspondre à tous
+	les caractères dans la ligne et le 'p' ne correspond pas à la fin de
+	la ligne. "a.\{-}p\@!" correspondra à n'importe quel "a", "ap", "aap",
+	etc. qui n'est pas suivi par un 'p', car si le "." peut correspondre à
+	un 'p', alors le "p\@!" ne correspondra à plus rien après cela.
+
+	Vous ne pouvez pas utiliser "\@!" pour rechercher une
+	non-correspondance avant la position correspondante : "\(zorg\)\@!lub"
+	correspondra à "lub" dans "zorglub", car à la position où "lub"
+	correspond, "zorg" ne correspond pas. Pour éviter de correspondre à
+	"zorglub", vous pourriez utiliser "\(zorg\)\@!....lub", mais cela ne
+	correspondrait pas un "lub" en début de ligne. Utilisez
+	"\(zorg\)\@<!lub".
+
+							*/\@<=*
+\@<=	Correspond avec une largeur nulle si l'atome précédent correspond
+	juste avant ce qui suit. |/zero-width| {absent de Vi}
+	Comme "(?<=motif)" en Perl, mais Vim autorise les motifs à largeur non
+	fixe.
+		EXEMPLE			 CORRESPONDANCE  ~
+		\(un\_s\+\)\@<=fichier	 "fichier" après "un" et un espace
+					    blanc ou une fin-de-ligne
+
+	Pour une plus grande vitesse, il est souvent bien mieux d'éviter ce
+	multi. Essayez d'utiliser "\zs" à la place |/\zs|. Pour obtenir la
+	même correspondance que dans l'exemple précédent :
+		un\_s\+\zsfichier
+
+	"\@<=" et "\@<!" testent des correspondances juste avant ce qui suit.
+	Théoriquement, ces correspondances devraient pouvoir débuter n'importe
+	où avant cette position. Mais afin de limiter le temps nécessaire,
+	seule la ligne où ce qui suit correspond est testée, avec la ligne la
+	précédant (s'il y en a une). Cela devrait être suffisant pour
+	effectuer la plupart des correspondances, sans être trop lent.
+	La partie du motif après "\@<=" ou "\@<!" est d'abord testée pour une
+	correspondance, ainsi les post-références telles que "\1" sont
+	inutilisables pour référencer \(\) dans l'atome précédent. Cela marche
+	de façon inverse :
+		EXEMPLE		     CORRESPONDANCE  ~
+		\1\@<=,\([a-z]\+\)   ",abc" dans "abc,abc"
+
+							*/\@<!*
+\@<!	Correspond avec une largeur nulle si l'atome précédent ne correspond
+	PAS juste avant ce qui suit. Ainsi, cela correspond s'il n'y a pas de
+	position dans la ligne courante ou précédente où l'atome corresponde
+	de telle manière qu'il se termine juste avant ce qui suit.
+	|/zero-width| {absent de Vi}
+	Comme "(?<!motif)" en Perl, mais Vim autorise les motifs à largeur
+	non fixe.
+	La correspondance avec l'atome précédent est effectuée pour se
+	terminer juste avant la correspondance avec ce qui suit, ainsi, un
+	atome se terminant par ".*" fonctionnera.
+	Attention : Cela peut être lent (car de nombreuses positions doivent
+	être testées pour une correspondance).
+		EXEMPLE		      CORRESPONDANCE  ~
+		\(zorg\)\@<!lub	      tout "lub" qui n'est pas dans "zorglub"
+		\(\/\/.*\)\@\<!dans   "dans" qui ne vient pas après "//"
+
+							*/\@>*
+\@>	Correspond à l'atome précédent comme à un motif entier. {absent de Vi}
+	Comme "(?>motif)" en Perl.
+		EXEMPLE	     CORRESPONDANCE  ~
+		\(a*\)\@>a   rien (le "a*" prend tous les 'a', il ne pourra
+				pas y en avoir de suivants)
+
+	Cela correspond à l'atome précédent comme s'il était un motif entier
+	par lui-même. Si cela ne correspond pas, il n'y a pas de nouvel essai
+	avec des sous-correspondances plus courtes, ou autres. Notez bien
+	cette différence : "a*b" et "a*ab" correspondent tous deux à "aaab",
+	mais dans le second cas "a*" correspond uniquement aux deux premiers
+	'a'. "\(a*\)\@>ab" ne correspondra pas à "aaab", car "a*" correspond à
+	"aaa" (autant de 'a' que possible), ainsi "ab" ne pourra pas
+	correspondre.
+
+==============================================================================
+6. Détail des atomes ordinaires				*pattern-atoms*
+
+Les atomes ordinaires peuvent être :
+
+							*/^*
+^	Au début d'un motif ou après "\|", "\(", "\%(" ou "\n" : correspond à
+	un début-de-ligne ; aux autres positions, correspond à un '^'
+	littéral. |/zero-width|
+		EXEMPLE	  CORRESPONDANCE  ~
+		^toto(	  le début de la fonction C "toto" (probablement)
+
+							*/\^*
+\^	Correspond à un '^' littéral. Peut être utilisé à n'importe quelle
+	position dans le motif.
+
+							*/\_^*
+\_^	Correspond à un début-de-ligne. Peut être utilisé à n'importe quelle
+	position dans le motif. |/zero-width|
+		EXEMPLE	      CORRESPONDANCE  ~
+		\_s*\_^toto   des espaces blancs et des lignes blanches, puis
+				 "toto" en début de ligne
+
+							*/$*
+$	À la fin d'un motif ou avant "\|" ou "\)" ("|" ou ")" après "\v") :
+	correspond à une fin-de-ligne <EOL> ; aux autres positions, correspond
+	à un '$' littéral. |/zero-width|
+
+							*/\$*
+\$	Correspond à un '$' littéral. Peut être utilisé à n'importe quelle
+	position dans le motif.
+
+							*/\_$*
+\_$	Correspond à une fin-de-ligne. Peut être utilisé à n'importe quelle
+	position dans le motif. |/zero-width|
+		EXEMPLE	      CORRESPONDANCE  ~
+		toto\_$\_s*   "toto" en fin de ligne, puis des espaces blancs
+				 et des lignes blanches
+
+							*/.* */\.*
+.	(Utilisez "\." avec 'nomagic'.)
+	Correspond à n'importe quel caractère simple, sauf à une fin-de-ligne.
+
+							*/\_.*
+\_.	Correspond à n'importe quel caractère simple ou fin-de-ligne.
+	Attention : "\_.*" correspondra à tout le texte jusqu'à la fin du
+	tampon !
+
+							*/\<*
+\<	Correspond au début d'un mot : le caractère suivant est le premier
+	caractère d'un mot. L'option 'iskeyword' spécifie ce qu'est un
+	caractère de mot. |/zero-width|
+
+							*/\>*
+\>	Correspond à la fin d'un mot : le caractère précédent est le dernier
+	caractère d'un mot. L'option 'iskeyword' spécifie ce qu'est un
+	caractère de mot. |/zero-width|
+
+							*/\zs*
+\zs	Correspond à n'importe quelle position et y fixe le début de la
+	correspondance : le caractère suivant est le premier du motif entier.
+	|/zero-width|
+	Peut être spécifié plusieurs fois, la dernière où il apparaît dans une
+	branche correspondante est utilisée.
+	Exemple : "^\s*\zsif" correspond à un "if" au début d'une ligne, en
+	ignorant les espaces blancs.
+	{absent de Vi} {uniquement si compilé avec la fonctionnalité
+	|+syntax|}						      ["Start"]
+
+							*/\ze*
+\ze	Correspond à n'importe quelle position et y fixe la fin de la
+	correspondance : le caractère précédent est le dernier du motif
+	entier. |/zero-width|
+	Peut être spécifié plusieurs fois, la dernière où il apparaît dans une
+	branche correspondante est utilisée.
+	Exemple : "end\ze\(if\|for\)" correspond au "end" dans "endif" et
+	"endfor".
+	{absent de Vi} {uniquement si compilé avec la fonctionnalité
+	|+syntax|}							["End"]
+
+						*/\%^* *start-of-file*
+\%^	Correspond au début du fichier. Lors d'une correspondance avec une
+	chaîne, correspond au début de la chaîne. {absent de Vi}
+	Par exemple, pour trouver le premier "VIM" dans un fichier : >
+		/\%^\_.\{-}\zsVIM
+<
+						*/\%$* *end-of-file*
+\%$	Correspond à la fin du fichier. Lors d'une correspondance avec une
+	chaîne, correspond à la fin de la chaîne. {absent de Vi}
+	NOTE : Ceci ne trouvera PAS le dernier "VIM" dans un fichier : >
+		/VIM\_.\{-}\%$
+<	Ceci trouvera le "VIM" suivant, car la partie du motif après "VIM"
+	correspondra toujours. Pour trouver le dernier "VIM" dans un fichier,
+	faites : >
+		/VIM\ze\(\(VIM\)\@!\_.\)*\%$
+<	Ceci utilise |/\@!| pour être certain que "VIM" ne correspondra PAS à
+	n'importe quelle position après le premier "VIM".
+	Une recherche vers l'arrière depuis la fin du fichier est plus facile !
+
+						*/\%#* *cursor-position*
+\%#	Correspond à la position du curseur. Fonctionne uniquement pour une
+	correspondance dans un tampon affiché dans une fenêtre. {absent de Vi}
+	ATTENTION : Si le curseur est déplacé après l'utilisation du motif, le
+	résultat devient invalide. Vim ne met pas automatiquement à jour les
+	correspondances. C'est particulièrement sensible pour la coloration
+	syntaxique et 'hlsearch'.
+	En d'autres termes : quand le curseur est déplacé, l'affichage n'est
+	pas mis à jour pour ce changement. Une mise à jour est faite pour les
+	lignes qui sont changées (la ligne entière est mise à jour), ou avec
+	la commande |CTRL-L| (l'écran entier est mis à jour). Par exemple,
+	pour mettre en surbrillance le mot sous le curseur : >
+		/\k*\%#\k*
+<	Lorsque 'hlsearch' est activé, si vous déplacez le curseur autour et
+	faites des changements, vous verrez clairement quand la correspondance
+	est mise à jour ou non.
+
+						*/\%l* */\%>l* */\%<l*
+\%23l	Correspond dans une ligne spécifique.
+\%<23l	Correspond au-dessus d'une ligne spécifique.
+\%>23l	Correspond en dessous d'une ligne spécifique.
+	Ces trois atomes peuvent être utilisés pour correspondre avec des
+	lignes spécifiques dans un tampon. "23" peut être remplacé par
+	n'importe quel numéro de ligne. La première ligne vaut "1".
+	{absent de Vi}
+	ATTENTION : Lors de l'insertion ou de la suppression de lignes, Vim ne
+	met pas automatiquement à jour les correspondances. Cela signifie que
+	la coloration syntaxique peut rapidement devenir erronée.
+	Par exemple, pour mettre en surbrillance la ligne où le curseur est
+	actuellement positionné : >
+		:exe '/\%' . line(".") . 'l.*'
+<	Lorsque 'hlsearch' est activé, si vous déplacez le curseur autour et
+	faites des changements, vous verrez clairement quand la correspondance
+	est mise à jour ou non.
+
+						*/\%c* */\%>c* */\%<c*
+\%23c	Correspond dans une colonne spécifique.
+\%<23c	Correspond avant une colonne spécifique.
+\%>23c	Correspond après une colonne spécifique.
+	Ces trois atomes peuvent être utilisés pour correspondre avec des
+	colonnes spécifiques dans un tampon ou une chaîne. "23" peut être
+	remplacé par n'importe quel numéro de colonne. La première colonne
+	vaut "1". En réalité, numéro de colonne fait référence au numéro de
+	l'octet (ce qui n'est pas identique pour les caractères multi-octets).
+	{absent de Vi}
+	ATTENTION : Lors de l'insertion ou de la suppression de lignes, Vim ne
+	met pas automatiquement à jour les correspondances. Cela signifie que
+	la coloration syntaxique peut rapidement devenir erronée.
+	Par exemple, pour mettre en surbrillance la colonne où le curseur est
+	actuellement positionné : >
+		:exe '/\%' . col(".") . 'c'
+<	Lorsque 'hlsearch' est activé, si vous déplacez le curseur autour et
+	faites des changements, vous verrez clairement quand la correspondance
+	est mise à jour ou non.
+
+						*/\%v* */\%>v* */\%<v*
+\%23v	Correspond dans une colonne virtuelle spécifique.
+\%<23v	Correspond avant une colonne virtuelle spécifique.
+\%>23v	Correspond après une colonne virtuelle spécifique.
+	Ces trois atomes peuvent être utilisés pour correspondre avec des
+	colonnes virtuelles spécifiques dans un tampon ou une chaîne. Si la
+	correspondance n'est pas dans un tampon affiché dans une fenêtre, les
+	valeurs d'options de la fenêtre courante sont utilisées (p. ex.,
+	'tabstop').
+	"23" peut être remplacé par n'importe quel numéro de colonne. La
+	première colonne vaut "1". {absent de Vi}
+	NOTE : Certaines positions de colonnes virtuelles ne correspondront
+	jamais, car elles tombent en plein milieu d'une tabulation ou autres
+	caractères qui occupent plus d'un caractère d'écran.
+	ATTENTION : Lors de l'insertion ou de la suppression de lignes, Vim ne
+	met pas automatiquement à jour les correspondances. Cela signifie que
+	la coloration syntaxique peut rapidement devenir erronée.
+	Par exemple, pour mettre en surbrillance tous les caractères après la
+	colonne virtuelle 72 : >
+		/\%>72v.*
+<	Lorsque 'hlsearch' est activé, si vous déplacez le curseur autour et
+	faites des changements, vous verrez clairement quand la correspondance
+	est mise à jour ou non.
+	Pour correspondre au texte jusqu'à la colonne 17 : >
+		/.*\%17v
+<	La colonne 17 n'est pas incluse, car c'est la position où "\%17v"
+	correspond et que c'est une correspondance de largeur nulle
+	|/zero-width|. Ceci est identique : >
+		/.*\%<18v
+
+
+CLASSES DE CARACTÈRES ({absent de Vi})
+
+\i	caractère d'identifiant (voir 'isident')    	*/\i*
+\I	comme "\i", mais en excluant les chiffres	*/\I*
+\k	caractère de mot-clé (voir 'iskeyword')		*/\k*	    ["Keyword"]
+\K	comme "\k", mais en excluant les chiffres	*/\K*
+\f	caractère de nom de fichier (voir 'isfname')	*/\f*
+\F	comme "\f", mais en excluant les chiffres	*/\F*
+\p	caractère imprimable (voir 'isprint')		*/\p*	  ["Printable"]
+\P	comme "\p", mais en excluant les chiffres	*/\P*
+
+NOTE : Les classes ci-dessus fonctionnent également pour les caractères
+multi-octets. Celles ci-dessous ne correspondent qu'avec des caractères ASCII,
+comme indiqué par les plages.
+
+						*whitespace* *white-space*
+\s	caractère d'espace blanc : <Espace> ou <Tab>	*/\s*	      ["Space"]
+\S	caractère non-blanc ; contraire de "\s"		*/\S*
+\d	chiffre :			 [0-9]		*/\d*	      ["Digit"]
+\D	non-chiffre :			 [^0-9]		*/\D*
+\x	chiffre hexa :			 [0-9A-Fa-f]	*/\x*
+\X	non-chiffre hexa :   		 [^0-9A-Fa-f]   */\X*
+\o	chiffre octal :			 [0-7]		*/\o*
+\O	non-chiffre octal :		 [^0-7]		*/\O*
+\w	caractère de mot :  		 [0-9A-Za-z_]   */\w*	       ["Word"]
+\W	caractère de non-mot :		 [^0-9A-Za-z_]  */\W*
+\h	tête d'un caractère de mot :	 [A-Za-z_]	*/\h*	       ["Head"]
+\H	non-tête d'un caractère de mot : [^A-Za-z_]	*/\H*
+\a	caractère alphabétique :	 [A-Za-z]	*/\a*
+\A	caractère non-alphabétique :	 [^A-Za-z]	*/\A*
+\l	caractère minuscule :		 [a-z]		*/\l*	  ["Lowercase"]
+\L	caractère non-minuscule :	 [^a-z]		*/\L*
+\u	caractère majuscule :		 [A-Z]		*/\u*	  ["Uppercase"]
+\U	caractère non-majuscule :	 [^A-Z]		*/\U*
+
+	NOTE : L'utilisation d'un atome est plus rapide que la forme [].
+
+	NOTE : 'ignorecase', "\c" et "\C" ne sont pas utilisés par les classes
+	de caractères.
+
+							*/\_* *E63*
+\_x	où 'x' désigne n'importe quel caractère ci-dessus : la classe de
+	   caractère incluant fin-de-ligne
+
+(fin des classes de caractères)
+
+
+\e	Correspond à <Echap>.				*/\e*
+\t	Correspond à <Tab>.				*/\t*
+\r	Correspond à <CR>.				*/\r*	     ["Return"]
+\b	Correspond à <RetArr>.				*/\b*	  ["Backspace"]
+\n	Correspond à une fin-de-ligne.			*/\n*	    ["Newline"]
+	Lors d'une correspondance dans une chaîne plutôt que dans un tampon,
+	"\n" correspond à un caractère saut-de-ligne littéral.
+
+							*/~* */\~*
+~	Correspond à la dernière chaîne de substitution donnée.
+
+					*/\(* */\(\)* */\)* *E51* *E54* *E55*
+\(\)	Un motif encadré par des parenthèses protégées. Par exemple, "\(^a\)"
+	correspond à un 'a' en début de ligne.
+
+							*/\1* *E65*
+\1      Correspond à la même chaîne que celle qui correspondait à la première
+	sous-expression entre "\(" et "\)".
+	Exemple : "\([a-z]\).\1" correspond à "ata", "ehe", "tot", etc.
+	{absent de Vi}
+							*/\2*
+\2      Comme "\1", mais utilise la deuxième sous-expression.
+   ...							*/\3*
+							*/\9*
+\9      Comme "\1", mais utilise la neuvième sous-expression.
+	NOTE : La numérotation des groupes est faite selon le "\(" qui
+	apparaît en premier dans le motif (de gauche en droite), et non PAS
+	selon celui qui correspond en premier.
+
+							*/\%(\)* */\%(* *E53*
+\%(\)	Un motif encadré par des parenthèses protégées. Identique à "\(\)",
+	mais sans être compté comme une sous-expression. Cela permet
+	d'utiliser plus de groupes, et c'est un peu plus rapide.
+	{absent de Vi}
+
+x	Un caractère simple, sans signification spéciale (correspond à
+	lui-même).
+
+							*/\* */\\*
+\x	Une contre-oblique suivie par un caractère simple, sans signification
+	spéciale, est réservée pour des extensions ultérieures.
+
+					*/[]* */\[]* */\_[]* */collection*
+[]	(Utilisez "\[]" avec 'nomagic'.)
+\_[]
+	Une collection. C'est une séquence de caractères encadrés par des
+	crochets : elle correspond à n'importe quel caractère simple dans la
+	collection.
+		EXEMPLE	    CORRESPONDANCE  ~
+		[xyz]	    n'importe quel 'x', 'y' ou 'z'
+		[a-zA-Z]$   n'importe quel caractère alphabétique à la fin
+			       d'une ligne
+		\c[a-z]$    idem
+
+	Avec "\_" préfixé, la collection inclut la fin-de-ligne. Cela peut
+	également être obtenu en incluant "\n" dans la collection. La
+	fin-de-ligne est aussi cherchée quand la collection débute par '^' !
+	Ainsi, "\_[^ab]" correspond à une fin-de-ligne ou à n'importe quel
+	caractère excepté 'a' et 'b'. Cela est compatible Vi : sans le "\_" ou
+	"\n", la collection ne pourrait correspondre à une fin-de-ligne.
+
+	- Si la séquence débute par '^', elle correspond à n'importe quel
+	  caractère NON inclus dans la collection : "[^xyz]" correspond à
+	  n'importe quel caractère simple sauf 'x', 'y' et 'z'.
+	- Si deux caractères dans la séquence sont séparés par '-', cela
+	  désigne la liste complète des caractères ASCII entre eux. P. ex.,
+	  "[0-9]" correspond à n'importe quel chiffre décimal.
+	- Une expression de classe de caractères est évaluée au jeu de
+	  caractères appartenant à cette classe. Les classes de caractères
+	  suivantes sont supportées :
+	  NOM		CONTENU	    ~
+	  [:alnum:]	lettres et chiffres			*[:alnum:]*
+	  [:alpha:]	lettres                                 *[:alpha:]*
+	  [:blank:]	caractères espace et tabulation         *[:blank:]*
+	  [:cntrl:]	caractères de contrôle                  *[:cntrl:]*
+	  [:digit:]	chiffres décimaux                       *[:digit:]*
+	  [:graph:]	caractères imprimables (espace exclu)   *[:graph:]*
+	  [:lower:]	lettres minuscules (toutes les lettres  *[:lower:]*
+			   si 'ignorecase' est activé)
+	  [:print:]	caractères imprimables (espace inclus)  *[:print:]*
+	  [:punct:]	caractères de ponctuation               *[:punct:]*
+	  [:space:]	caractères espaces blancs               *[:space:]*
+	  [:upper:]	lettres majuscules (toutes les lettres  *[:upper:]*
+			   si 'ignorecase' est activé)
+	  [:xdigit:]	chiffres hexadécimaux                   *[:xdigit:]*
+	  [:return:]	le caractère <CR>                       *[:return:]*
+	  [:tab:]	le caractère <Tab>                      *[:tab:]*
+	  [:escape:]	le caractère <Echap>                    *[:escape:]*
+	  [:backspace:]	le caractère <RetArr>                   *[:backspace:]*
+	  Les crochets dans les expressions de classes de caractères sont à
+	  ajouter à ceux délimitant une collection. Par exemple, le motif
+	  suivant est plausible pour un nom de fichier Unix :
+	  "[-./[:alnum:]_~]\+". Cela correspond à une liste d'au moins un
+	  caractère parmi '-', '.', '/', les lettres, les chiffres, '_' ou
+	  '~'.
+	  Ces éléments fonctionnent uniquement pour les caractères 8-bits.
+							  */\]*
+	- Pour inclure un ']', '^', '-' ou '\' littéral dans la collection,
+	  faites-le précéder par une contre-oblique : "[xyz\]]", "[\^xyz]",
+	  "[xy\-z]" et "[xyz\\]". (NOTE : Posix ne supporte pas une telle
+	  utilisation de la contre-oblique.)
+	  Pour ']', vous pouvez aussi le placer en première position (après un
+	  éventuel '^') : "[]xyz]" ou "[^]xyz]". {absent de Vi}
+	  Pour '-', vous pouvez aussi le placer en première ou en dernière
+	  position : "[-xyz]", "[^-xyz]" ou "[xyz-]".
+	  Pour '\', vous pouvez aussi le laisser suivre par n'importe quel
+	  caractère exceptés "^]-\bertn". "[\xyz]" correspond à '\', 'x',
+	  'y' et 'z'. Il est cependant préférable d'utiliser "\\", car des
+	  extensions ultérieures pourraient utiliser d'autres caractères après
+	  '\'.
+	- Les traductions suivantes sont acceptées quand le drapeau 'l' n'est
+	  pas inclus dans 'cpoptions'. {absent de Vi}
+		\e	<Echap>
+		\t	<Tab>
+		\r	<CR>	(PAS fin-de-ligne !)
+		\b	<RetArr>
+	  NOTE : Les autres codes avec contre-oblique mentionnés ci-dessus ne
+	  fonctionnent pas entre [] !
+	- La correspondance avec une collection peut être lente, car chaque
+	  caractère dans le texte est comparé à chaque caractère de la
+	  collection. Utilisez un des autres atomes donnés ci-dessus quand
+	  vous pouvez. Exemple : "\d" est bien plus rapide que "[0-9]" et
+	  correspond aux même caractères.
+
+						*/\%[]* *E69* *E70* *E369*
+\%[]	Une liste d'atomes correspondant optionnellement. Cela correspond
+	toujours.
+	Correspond à autant d'atomes contenus entre [] que possible. Ainsi,
+	cela s'arrête au premier atome qui ne correspond pas. Par exemple >
+		/f\%[ils]
+<	correspond à "f", "fi", "fil" ou "fils". La plus longue correspondance
+	est utilisée.
+	Pour correspondre à la commande Ex "function", où "fu" est obligatoire
+	et "nction" est optionnel, ceci pourrait convenir : >
+		/\<fu\%[nction]\>
+<	L'atome de fin de mot "\>" est utilisé pour éviter de correspondre à
+	"fu" dans "futur".
+	Cela devient plus compliqué quand les atomes ne sont pas des
+	caractères ordinaires. Le cas est plutôt rare, mais vous pourrez le
+	rencontrer. Par exemple >
+		/\<f\%[[io]ls]\>
+<	correspond aux mots "f", "fi", "fo", "fil", "fol", "fils" et "fols".
+	{uniquement si compilé avec la fonctionnalité |+syntax|}
+
+==============================================================================
+7. Ignorer la casse dans un motif			*/ignorecase*
+
+Si l'option 'ignorecase' est activée, la casse des lettres normales est
+ignorée. 'smartcase' peut être activé pour ignorer la casse quand le motif
+contient des lettres minuscules uniquement.
+							*/\c* */\C*
+Lorsque "\c" apparaît quelque part dans le motif, le motif entier est
+interprété comme si 'ignorecase' était activé. La valeur courante de
+'ignorecase' et 'smartcase' est ignorée. "\C" donne le contraire : oblige à
+respecter la casse dans le motif entier.
+{Vim est le seul à supporter "\c" et "\C"}
+
+NOTE : 'ignorecase', "\c" et "\C" ne sont pas utilisés pour les classes de
+caractères.
+
+Exemples :
+	MOTIF	'ignorecase'  'smartcase'   CORRESPONDANCE  ~
+	toto	 désactivé	  -	    toto
+	toto	  activé	  -	    toto Toto TOTO
+	Toto	  activé       désactivé    toto Toto TOTO
+	Toto	  activé	activé		 Toto
+	\ctoto	    -		  -	    toto Toto TOTO
+	toto\C	    -		  -	    toto
+
+							*/\Z*
+Quand "\Z" apparaît quelque part dans le motif, les caractères de composition
+sont ignorés. Ainsi, seuls les caractères de base doivent correspondre, les
+caractères de composition peuvent être différents et leur nombre variable.
+Cela n'est pertinent que si 'encoding' vaut "utf-8".
+
+Détails techniques :					*NL-used-for-Nul*
+	Les caractères <Nul> dans le fichier sont enregistrés comme <NL> en
+	mémoire. Sur l'affichage, ils sont représentés par "^@". La traduction
+	est faite lors de la lecture et de l'écriture des fichiers. Pour qu'un
+	motif de recherche corresponde à un <Nul>, vous pouvez entrer
+	simplement CTRL-@, ou "CTRL-V 000". C'est probablement ce à quoi vous
+	vous attendez. En interne, le caractère sera remplacé par un <NL> dans
+	le motif de recherche. Mais la saisie de "CTRL-V CTRL-J" insère
+	également un <NL>, qui est par conséquent recherché comme un <Nul>
+	dans le fichier. {Vi n'est pas capable prendre en compte les
+	caractères <Nul> du fichier}
+
+							*CR-used-for-NL*
+Si 'fileformat' vaut "mac", les caractères <NL> dans le fichier sont
+enregistrés comme des caractères <CR> en interne. Sur l'affichage, ils sont
+représentés par "^M". Sinon, cela marche comme pour l'utilisation de <NL> pour
+<Nul>.
+
+Quand vous travaillez avec une évaluation d'expression, un caractère <NL> dans
+le motif correspond à un <NL> dans la chaîne. L'utilisation de "\n"
+(contre-oblique 'n') pour correspondre à un <NL> ne marche pas ici, cela
+fonctionne uniquement pour une correspondance de texte dans le tampon.
+
+							*pattern-multi-byte*
+Les motifs fonctionnent également avec les caractères multi-octets, comme vous
+pouvez vous y attendre pour l'essentiel. Mais les octets invalides risquent de
+poser problème, un motif avec un octet invalide ne correspondra sans doute
+jamais.
+
+==============================================================================
+8. Comparaison avec les motifs Perl			*perl-patterns*
+
+Les expressions rationnelles de Vim sont très semblables à celles de Perl en
+termes de fonctionnalités. La principale différence réside dans la notation.
+En voici un court comparatif :
+
+FONCTIONNALITÉ					 EN VIMIEM   EN PERLIEN  ~
+force l'insensibilité à la casse		 \c	     (?i)
+force la sensibilité à la casse			 \C	     (?-i)
+groupe non post-référencé			 \%(atome)   (?:atome)
+conservative quantifiers XXX			 \{-n,m}     *?, +?, ??, {}?
+correspondance de largeur nulle			 atome\@=    (?=atome)
+non-correspondance de largeur nulle 		 atome\@!    (?!atome)
+correspondance antérieure de largeur nulle	 atome\@<=   (?<=atome)
+non-correspondance antérieure de largeur nulle	 atome\@<!   (?<!atome)
+match without retry XXX				 atome\@>    (?>atome)
+
+Vim et Perl gèrent différemment les sauts-de-lignes à l'intérieur d'une
+chaîne :
+
+En Perl, "^" et "$" correspondent uniquement au tout début et à la toute fin
+du texte par défaut, mais vous pouvez positionner le drapeau 'm', qui XXX
+default, but you can set the 'm' flag, which lets them match at embedded
+newlines as well.  You can also set the 's' flag, which causes a "." to match
+newlines as well.  (Both these flags can be changed inside a pattern using the
+same syntax used for the 'i' flag above, BTW.)
+
+On the other hand, Vim's "^" and "$" always match at embedded newlines, and
+you get two separate atoms, "\%^" and "\%$", which only match at the very
+start and end of the text, respectively.  Vim solves the second problem by
+giving you le « modificateur » "\_" : put it in front of a "." or a character
+class, and they will match newlines as well. XXX
+
+Enfin, ces constructions sont propres à Perl...
+- exécution de code arbitraire dans l'exprat : (?{code Perl}) ;
+- expressions conditionnelles : (?(condition)expr-vrai|expr-faux) ;
+
+... et celles-ci sont propres à Vim :
+- changement de la « magicité » d'un motif : "\v", "\V", "\m" et "\M" (très
+  utile pour éviter backslashitis) XXX;
+- listes d'atomes correspondant optionnellement : "\%[atomes]" ;
+- "\&" (qui est à "\|" ce que le ET est au OU ; il oblige plusieurs branches à
+  correspondre au même endroit) ;
+- correspondance par numéro de ligne/colonne : "\%5l", "\%5c", "\%5v" ;
+- limitation de la « valeur de retour » d'une exprat : "\zs" et "\ze".
+
+==============================================================================
+9. Coloration des correspondances			*match-highlight*
+
+							*:mat* *:match*
+:mat[ch] {groupe} /{motif}/
+		Définit un motif à mettre en surbrillance dans la fenêtre
+		courante. Le {groupe} de surbrillance sera utilisé. Exemple : >
+			:highlight MonGroupe ctermbg=green guibg=green
+			:match MonGroupe /TODO/
+<		À la place de '/', n'importe quel caractère peut être utilisé
+		pour marquer le début et la fin de {motif}. Prenez garde lors
+		de l'utilisation de caractères spéciaux tels que '"' ou '|'.
+		{groupe} doit exister au moment où cette commande est
+		exécutée.
+		La correspondance recouvre la surbrillance de 'hlsearch'.
+		'ignorecase' ne s'applique pas ici, utilisez |/\c| dans le
+		motif pour ignorer la casse. Sinon, la casse est prise en
+		compte.
+		NOTE : La surbrillance du dernier motif de recherche utilisé
+		avec 'hlsearch' est effectuée dans toutes les fenêtres, alors
+		que le motif défini avec ":match" n'existe que dans la fenêtre
+		courante. Il sera conservé si vous basculez vers un autre
+		tampon.
+		Un autre exemple, qui met en surbrillance tous les caractères
+		dans les colonnes virtuelles 72 et plus : >
+			:highlight MargeDroite term=bold ctermfg=red guifg=red
+			:match MargeDroite /.\%>72v/
+<		Pour mettre en surbrillance tous les caractères dans la
+		colonne virtuelle 7 : >
+			:highlight Col8 ctermbg=grey guibg=grey
+			:match Col8 /\%<8v.\%>7v/
+<		Remarquez que deux éléments sont utilisés, pour correspondre
+		également avec un caractère qui occupe plus d'une colonne
+		virtuelle, comme une tabulation.
+
+:mat[ch]
+:mat[ch] none	Efface un motif de correspondance précédemment défini.
+
+ vim:tw=78:ts=8:ft=help:norl:

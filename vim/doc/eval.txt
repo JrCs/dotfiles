@@ -1,0 +1,4892 @@
+*eval.txt*      Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+Évaluation d'expressions		    *expression* *expr* *E15* *eval*
+
+L'utilisation des expressions est abordée dans le chapitre 41 du Manuel de
+l'utilisateur |usr_41.txt|.
+
+ 1. Variables			    |variables|
+ 2. Syntaxe des expressions	    |expression-syntax|
+ 3. Variables internes		    |internal-variables|
+ 4. Fonctions internes		    |functions|
+ 5. Définir des fonctions	    |user-functions|
+ 6. Noms entre accolades	    |curly-braces-names|
+ 7. Commandes			    |expression-commands|
+ 8. Gestion des exceptions	    |exception-handling|
+ 9. Exemples			    |eval-examples|
+10. Fonctionnalité +eval absente    |no-eval-feature|
+11. Le bac à sable		    |eval-sandbox|
+
+{absent de Vi}
+{uniquement si compilé avec la fonctionnalité |+eval| ; voir aussi la section
+|no-eval-feature| plus bas}
+
+==============================================================================
+1. Variables						*variables*
+
+Il existe deux types de variables :
+
+Nombre		un nombre sur 32 bits signé.
+Chaîne		chaîne de caractères sur 8 bits non signés terminée par NUL.
+
+La conversion entre ces deux types est automatique, en fonction de leur
+contexte d'utilisation.
+
+La conversion d'un Nombre en Chaîne se fait en donnant une représentation
+ASCII du Nombre. Exemples :
+	Nombre 123	    -->	    Chaîne "123"
+	Nombre 0	    -->	    Chaîne "0"
+	Nombre -1	    -->	    Chaîne "-1"
+
+La conversion d'une Chaîne en Nombre se fait en convertissant les premiers
+chiffres en nombre. Les nombres hexadécimaux ("0xf9") et octaux ("017") sont
+reconnus. Si la Chaîne ne débute pas par des chiffres, le résultat vaut zéro.
+Exemples :
+	Chaîne "456"	    -->	    Nombre 456
+	Chaîne "6navets"    -->	    Nombre 6
+	Chaîne "toto"	    -->	    Nombre 0
+	Chaîne "0xf1"	    -->	    Nombre 241
+	Chaîne "0100"	    -->	    Nombre 64
+
+Pour forcer la conversion d'une Chaîne en Nombre, ajoutez-lui zéro : >
+	:echo "0100" + 0
+
+Les opérateurs booléens sont représentés par des Nombres. Un zéro est FAUX, un
+non-nul est VRAI.
+
+NOTE : Dans la commande >
+	:if "toto"
+"toto" est converti en 0, ce qui signifie FAUX. Pour tester si une chaîne est
+non-vide, utilisez strlen() : >
+	:if strlen("toto")
+
+Pour connaître le type d'une variable ou d'une expression, utilisez la
+fonction |type()|.
+
+Lorsque le drapeau '!' est inclus dans l'option 'viminfo', les variables
+globales qui débutent par une lettre majuscule et ne contiennent pas de
+lettres minuscules sont enregistrées dans le fichier viminfo |viminfo-file|.
+
+Lorsque l'option 'sessionoptions' contient "global", les variables globales
+qui débutent par une lettre majuscule et contiennent au moins une lettre
+minuscule sont enregistrées dans le fichier de session |session-file|.
+
+	NOM DE VARIABLE	  PEUT ÊTRE ENREGISTRÉE...  ~
+	    ma_var_6	  nulle part
+	    Ma_Var_6	  dans le fichier de session
+	    MA_VAR_6	  dans le fichier viminfo
+
+
+Il est possible de former un nom de variable avec des accolades, voir
+|curly-braces-names|.
+
+==============================================================================
+2. Syntaxe des expressions				*expression-syntax*
+
+Sommaire des syntaxes d'expressions, par ordre croissant de priorité :
+
+|expr1| expr2 ? expr1 : expr1	structure "if/then/else"
+
+|expr2|	expr3 || expr3 ..	OU logique
+
+|expr3|	expr4 && expr4 ..	ET logique
+
+|expr4|	expr5 == expr5		égal
+expr5 != expr5		non égal
+expr5 >	 expr5		supérieur à
+expr5 >= expr5		supérieur ou égal
+expr5 <	 expr5		inférieur à
+expr5 <= expr5		inférieur ou égal
+expr5 =~ expr5		correspondance de motif
+expr5 !~ expr5		non correspondance de motif
+expr5 ==? expr5		égal, sans correspondance de casse
+expr5 ==# expr5		égal, avec correspondance de casse
+etc. (comme ci-dessus, préfixez '?' pour ignorer la casse, '#' pour la
+respecter)
+
+|expr5|	expr6 +	expr6 ..	somme arithmétique
+expr6 - expr6 ..	différence arithmétique
+expr6 . expr6 ..	concaténation de chaînes
+
+|expr6|	expr7 *	expr7 ..	produit arithmétique
+expr7 /	expr7 ..	quotient arithmétique
+expr7 %	expr7 ..	modulo arithmétique
+
+|expr7|	! expr7			NON logique
+- expr7			moins unaire
++ expr7			plus unaire
+expr8
+
+|expr8|	expr9[expr1]		index dans une Chaîne
+
+|expr9|	nombre			constante numérique
+"chaîne"		constante de type chaîne
+'chaîne'		constante de type chaîne littérale
+&option			valeur d'option
+(expr1)			expression imbriquée
+variable		variable interne
+va{ria}ble		variable interne avec des accolades
+$VAR			variable d'environnement
+@r			contenu du registre 'r'
+fonction(expr1, ...)	appel de fonction
+fonc{ti}on(expr1, ...)	appel de fonction avec des accolades
+
+
+".." indique que les opérations de ce niveau peuvent être concaténées.
+Exemple : >
+	&nu || &list && &shell == "csh"
+
+Toutes les expressions au sein d'un même niveau sont analysées de gauche à
+droite.
+
+
+EXPR1							*expr1* *E109*
+
+expr2 ? expr1 : expr1
+
+L'expression avant le '?' est évaluée en tant que nombre. Si elle vaut un
+non-nul, le résultat est la valeur de l'expression entre '?' et ':', sinon, le
+résultat est la valeur de l'expression après ':'. Exemple : >
+	:echo lnum == 1 ? "haut" : lnum
+
+Comme la première expression est une "expr2", elle ne peut pas contenir
+une autre structure "?:". Les deux autres expressions le peuvent, ce qui
+autorise une utilisation récursive de "?:". Exemple : >
+	:echo lnum == 1 ? "haut" : lnum == 1000 ? "bas" : lnum
+
+Pour que cela reste lisible, il est conseillé d'utiliser des continuations de
+lignes |line-continuation| : >
+	:echo lnum == 1
+	:\	? "haut"
+	:\	: lnum == 1000
+	:\		? "bas"
+	:\		: lnum
+
+
+EXPR2 ET EXPR3						*expr2* *expr3*
+
+	    					*expr-barbar* *expr-&&*
+Les opérateurs "||" et "&&" admettent un argument de chaque côté. Les
+arguments sont des Nombres (ou ils sont convertis). Le résultat est :
+
+	ENTRÉE			SORTIE		     ~
+	n1	  n2		n1 || n2   n1 && n2  ~
+	zéro	  zéro		zéro	   zéro
+	zéro	  non-nul	non-nul    zéro
+	non-nul   zéro		non-nul    zéro
+	non-nul   non-nul	non-nul    non-nul
+
+Les opérateurs peuvent être concaténés, par exemple : >
+
+	&nu || &list && &shell == "csh"
+
+NOTE : "&&" est prioritaire sur "||", l'exemple précédent revient donc à : >
+
+	&nu || (&list && &shell == "csh")
+
+Dès que le résultat est connu, l'expression est « court-circuitée »,
+c'est-à-dire que ses arguments suivants ne seront pas évalués. Ce comportement
+est le même qu'en C. Par exemple >
+
+	:let a = 1
+	:echo a || b
+
+est valide même s'il n'existe pas de variable nommée "b", car "a" est non-nul
+et le résultat sera donc non-nul. De la même façon >
+
+	:echo exists("b") && b == "oui"
+
+est valide que "b" ait été défini ou non. La deuxième clause ne sera évaluée
+que si "b" a été défini.
+
+
+EXPR4							*expr4*
+
+expr5 {cmp} expr5
+
+Compare deux expressions expr5, et retourne 0 si FAUX ou 1 si VRAI.
+
+				*expr-==*  *expr-!=*  *expr->*   *expr->=*
+				*expr-<*   *expr-<=*  *expr-=~*  *expr-!~*
+				*expr-==#* *expr-!=#* *expr->#*  *expr->=#*
+				*expr-<#*  *expr-<=#* *expr-=~#* *expr-!~#*
+				*expr-==?* *expr-!=?* *expr->?*  *expr->=?*
+				*expr-<?*  *expr-<=?* *expr-=~?* *expr-!~?*
+		     UTILISE 'ignorecase'   CASSE RESPECTÉE   CASSE IGNORÉE  ~
+égal			      ==		  ==#		   ==?
+non égal		      !=		  !=#		   !=?
+supérieur à		      >			  ># 		   >?
+supérieur ou égal	      >=		  >=#		   >=?
+inférieur à		      <			  <# 		   <?
+inférieur ou égal	      <=		  <=#		   <=?
+correspondance d'exprat	      =~		  =~#		   =~?
+non-correspondance d'exprat   !~		  !~#		   !~?
+
+Exemples :
+"abc" ==# "Abc"		est évalué à 0
+"abc" ==? "Abc"		est évalué à 1
+"abc" == "Abc"		est évalué à 1 si 'ignorecase' est activé, 0 sinon
+
+Lorsqu'une Chaîne est comparée à un Nombre, la Chaîne est convertie en Nombre
+et la comparaison est effectuée sur les Nombres. Ainsi, "0 == 'x'"  est VRAI,
+car 'x' converti en Nombre vaut zéro.
+
+Lorsque deux Chaînes sont comparées, strcmp() ou stricmp() sont utilisées.
+Cela a pour effet d'opérer sur la différence mathématique (en comparant la
+valeur des octets), qui n'est pas forcément identique à la différence
+alphabétique pour une langue donnée.
+
+Quand les opérateurs avec un '#' final sont utilisés, ou sans terminaison avec
+'ignorecase' désactivé, la comparaison est effectuée avec strcmp().
+
+Quand les opérateurs avec un '?' final sont utilisés, ou sans terminaison avec
+'ignorecase' activé, la comparaison est effectuée avec stricmp().
+
+Les opérateurs "=~" et "!~" essaient de faire correspondre l'argument du côté
+gauche avec celui du côté droit, qui est utilisé en tant que motif. Voir
+|pattern| pour la définition d'un motif. Cette correspondance est toujours
+effectuée comme si 'magic' était activé et 'cpoptions' vide, indépendamment
+des valeurs courantes de 'magic' et 'cpoptions'. Cela permet d'écrire des
+scripts portables. Pour éviter d'avoir à doubler les contre-obliques dans le
+motif d'exprat, utilisez une chaîne entre apostrophes simples, voir
+|literal-string|.
+   Comme une chaîne est censée être une ligne simple, un motif multi-lignes
+(contenant "\n", « contre-oblique + n ») ne correspondra pas. Cependant, un
+caractère <NL> littéral peut correspondre en tant que caractère ordinaire.
+Exemples :
+"toto\ntiti" =~ "\n"	est évalué à 1
+"toto\ntiti" =~ "\\n"	est évalué à 0
+
+
+EXPR5 ET EXPR6						*expr5* *expr6*
+
+expr6 +	expr6 ..	somme arithmétique		*expr-+*
+expr6 -	expr6 ..	différence arithmétique		*expr--*
+expr6 .	expr6 ..	concaténation de chaînes	*expr-.*
+
+expr7 *	expr7 ..	produit arithmétique		*expr-star*
+expr7 /	expr7 ..	quotient arithmétique		*expr-/*
+expr7 %	expr7 ..	modulo arithmétique		*expr-%*
+
+Pour tous ces opérateurs, "." excepté, les Chaînes sont converties en Nombres.
+
+Notez bien la différence entre "+" et "." :
+"123" + "456" = 579
+"123" . "456" = "123456"
+
+Quand le côté droit de "/" vaut zéro, le résultat vaut 0x7fffffff.
+Quand le côté droit de "%" vaut zéro, le résultat vaut 0.
+
+
+EXPR7							*expr7*
+
+! expr7			NON logique			*expr-!*
+- expr7			moins unaire			*expr-unary--*
++ expr7			plus unaire			*expr-unary-+*
+
+Avec "!", un non-nul devient zéro, zéro devient un.
+Avec "-", le signe du nombre est inversé.
+Avec "+", le nombre n'est pas modifié.
+
+Une Chaîne sera d'abord convertie en Nombre.
+
+Ces trois opérateurs peuvent être répétés et mélangés. Exemples :
+!-1	    == 0
+!!8	    == 1
+--9	    == 9
+
+
+EXPR8							*expr8*
+
+expr9[expr1]		index dans une Chaîne		*expr-[]* *E111*
+
+Cette expression donne une chaîne qui contient le expr1-ième caractère simple
+de expr9. expr9 est utilisé en tant que Chaîne, expr1 en tant que Nombre.
+
+NOTE : L'index zéro correspond au premier caractère. Cela fonctionne comme en
+C. Attention cependant : les numéros des colonnes de texte commencent à un !
+Par exemple, pour obtenir le caractère sous le curseur : >
+	:let c = getline(line("."))[col(".") - 1]
+
+Si la longueur de la Chaîne est inférieure à l'index, une Chaîne vide est
+renvoyée.
+
+
+							*expr9*
+NOMBRE
+
+nombre			constante numérique		*expr-number*
+
+Elle peut être décimale, hexadécimale (si elle débute par "0x" ou "0X"), ou
+octale (si elle débute par "0").
+
+
+CHAÎNE							*expr-string* *E114*
+
+"chaîne"		constante de type chaîne	*expr-quote*
+
+NOTE : Remarquez bien l'utilisation des doubles-apostrophes.
+
+Une constante de type chaîne accepte ces caractères spéciaux :
+\...	un nombre octal de trois chiffres (p. ex., "\316")
+\..	un nombre octal de deux chiffres (doit être suivi par un non-chiffre)
+\.	un nombre octal d'un chiffre (doit être suivi par un non-chiffre)
+\x..	octet décrit par deux nombres hexa (p. ex., "\x1f")
+\x.	octet décrit par un nombre hexa (doit être suivi par un caractère
+	   non-hexa)
+\X..	identique à \x..
+\X.	identique à \x.
+\u....	caractère décrit par un nombre hexa d'au plus 4 caractères, codé en
+	   fonction de la valeur courante de 'encoding' (p. ex., "\u02a4")
+\U....	identique à \u....
+\b	retour arrière <RetArr>
+\e	échappement <Echap>
+\f	saut-de-page <FF>
+\n	saut-de-ligne <NL>
+\r	retour chariot <CR>
+\t	tabulation <Tab>
+\\	contre-oblique
+\"	double-apostrophe
+\<xxx>	séquence spéciale nommée "xxx" (p. ex., "\<C-W>" pour CTRL-W)
+
+NOTE : "\000" et "\x00" forcent la fin de la chaîne.
+
+
+CHAÎNE LITTÉRALE				*literal-string* *E115*
+
+'chaîne'		constante de type chaîne littérale	*expr-'*
+
+NOTE : Remarquez bien l'utilisation des apostrophes simples.
+
+Cette chaîne est interprétée littéralement. Aucune contre-oblique n'est
+supprimée ni ne possède de signification spéciale. Une chaîne littérale ne
+peut pas contenir d'apostrophes simples. Utilisez une chaîne normale pour
+cela.
+
+
+OPTION						*expr-option* *E112* *E113*
+
+&option			valeur d'option, valeur locale si possible
+&g:option		valeur globale d'option
+&l:option		valeur locale d'option
+
+Exemples : >
+	:echo "tabstop vaut " . &tabstop
+	:if &insertmode
+
+N'importe quel nom d'option peut être utilisé. Voir |options|. Quand vous
+demandez une valeur locale et qu'il n'y a pas de valeur locale de tampon ni de
+fenêtre, la valeur globale est utilisée à la place.
+
+
+REGISTRE						*expr-register*
+
+@r			contenu du registre 'r'
+
+Cette expression donne le contenu du registre nommé correspondant, en tant que
+chaîne simple. Des sauts-de-lignes sont insérés aux endroits où c'est
+nécessaire. Pour obtenir le contenu du registre sans nom, utilisez "@@". Le
+registre '=' ne peut pas être utilisé ici. Voir |registers| pour le détail des
+registres disponibles.
+
+
+IMBRICATION						*expr-nesting* *E110*
+
+(expr1)			expression imbriquée
+
+
+VARIABLE D'ENVIRONNEMENT				*expr-env*
+
+$VAR			variable d'environnement
+
+La valeur de n'importe quelle variable d'environnement en tant que Chaîne.
+Quand elle n'est pas définie, cette expression renvoie une chaîne vide.
+							*expr-env-expand*
+NOTE : Il y a une différence entre l'utilisation directe de $VAR et celle de
+expand("$VAR"). L'utilisation directe étendra uniquement les variables
+d'environnement qui sont connues à l'intérieur de la session Vim courante.
+L'utilisation de expand() procédera de même en premier lieu. Mais si cela
+échoue, un shell sera utilisé pour étendre la variable. Ceci peut être lent,
+mais étendra toutes les variables connues par le shell. Exemple : >
+	:echo $version
+	:echo expand("$version")
+La première commande ne renverra probablement rien, tandis que la seconde
+renverra la valeur de la variable $version (si votre shell la supporte).
+
+
+VARIABLE INTERNE					*expr-variable*
+
+variable		variable interne
+
+Voir |internal-variables| ci-dessous.
+
+
+APPEL DE FONCTION	    *expr-function* *E116* *E117* *E118* *E119* *E120*
+
+fonction(expr1, ...)	appel de fonction
+
+Voir |functions| plus bas.
+
+==============================================================================
+3. Variables internes			    *internal-variables* *E121* *E461*
+
+Un nom de variable interne peut être composé de lettres, de chiffres et de
+'_'. Mais il ne peut pas débuter par un chiffre. Il est en outre possible
+d'utiliser des accolades, voir |curly-braces-names|.
+
+Une variable interne est créée par la commande ":let" |:let|. Elle est
+supprimée par la commande ":unlet" |:unlet|.
+   L'utilisation d'un nom ne correspondant pas à une variable interne -- ou
+correspondant à une variable supprimée -- produit une erreur.
+
+Il existe plusieurs espaces de nommage pour les variables. Celui utilisé
+dépend du préfixe employé :
+
+		  (aucun) Dans une fonction : locale à la fonction ; sinon :
+			     globale
+|buffer-variable|    b:	  Locale au tampon courant		     ["Buffer"]
+|window-variable|    w:	  Locale à la fenêtre courante		     ["Window"]
+|global-variable|    g:	  Globale
+|local-variable|     l:	  Locale à une fonction
+|script-variable|    s:	  Locale à un script Vim sourcé |:source|
+|function-argument|  a:	  Argument de fonction (uniquement dans une fonction)
+|vim-variable|       v:	  Globale, prédéfinie par Vim
+
+						*buffer-variable* *b:var*
+Un nom de variable précédé par "b:" est local au tampon courant. Ainsi, vous
+pouvez avoir plusieurs variables "b:toto", une pour chaque tampon.
+   Ce type de variable est supprimé lorsque le tampon est déchargé. Si vous
+voulez la conserver, faites en sorte que le tampon ne soit pas déchargé
+(p. ex., en activant l'option 'hidden').
+
+Il existe une variable locale de tampon prédéfinie :
+					*b:changedtick-variable* *changetick*
+b:changedtick	Le nombre total de modifications faites dans le tampon
+		courant. Ce nombre est incrémenté à chaque modification. Une
+		commande d'annulation comptera aussi pour une modification
+		dans ce contexte. Cette variable peut être utilisée pour
+		effectuer une action uniquement si le tampon a été modifié.
+		Exemple : >
+			:if mon_changedtick != b:changedtick
+			:  let mon_changedtick = b:changedtick
+			:  call Ma_MiseAJour()
+			:endif
+<
+						*window-variable* *w:var*
+Une variable dont le nom est précédé par "w:" est locale à la fenêtre
+courante. Elle est supprimée lorsque la fenêtre est fermée.
+
+						*global-variable* *g:var*
+Dans une fonction, utilisez "g:" pour accéder aux variables globales. Sans
+cela, vous accéderez aux variables locales à la fonction. Mais vous pouvez
+aussi utiliser "g:" à n'importe quel autre endroit si vous voulez.
+
+						*local-variable* *l:var*
+Dans une fonction, vous pouvez accéder aux variables locales sans aucun
+préfixe. Mais vous pouvez aussi préfixer "l:" si vous voulez.
+
+						*script-variable* *s:var*
+Dans un script Vim, des variables débutant par "s:" peuvent être utilisées.
+Vous ne pourrez pas y accéder en dehors du script, car elles sont locales au
+script.
+
+Elles peuvent être utilisées dans :
+- les commandes exécutées lors du sourcement du script ;
+- les fonctions définies dans le script ;
+- les autocommandes définies dans le script ;
+- les fonctions et les autocommandes définies dans les fonctions et les
+  autocommandes qui ont été définies dans le script (récursivement) ;
+- les commandes utilisateur définies dans le script.
+Mais pas dans :
+- les autres scripts sourcés depuis le script courant ;
+- les mappages ;
+- etc.
+
+Les variables de script peuvent être utilisées pour éviter des conflits avec
+des noms de variables globales. Par exemple, ceci fonctionne : >
+
+	let s:compteur = 0
+	function MonCompteur()
+	  let s:compteur = s:compteur + 1
+	  echo s:compteur
+	endfunction
+	command Plus call MonCompteur()
+
+Mais ceci ne fonctionne PAS : >
+
+	let s:compteur = 0
+	command Plus let s:compteur = s:compteur + 1 | echo s:compteur
+
+Quand la commande ":Plus" est exécutée en dehors du script, la variable
+"s:compteur" ne sera pas disponible. Dans l'exemple précédent, l'appel de la
+fonction MonCompteur() fixait le contexte pour les variables de script où la
+fonction avait été définie, ainsi "s:compteur" pouvait être utilisé.
+   Les variables de script sont également disponibles quand une fonction est
+définie dans une fonction qui est définie dans un script. Exemple : >
+
+	let s:compteur = 0
+	function DebutCompteur(incr)
+	  if a:incr
+	    function MonCompteur()
+	      let s:compteur = s:compteur + 1
+	    endfunction
+	  else
+	    function MonCompteur()
+	      let s:compteur = s:compteur - 1
+	    endfunction
+	  endif
+	endfunction
+
+Ceci définit la fonction MonCompteur() pour soit incrémenter soit décrémenter
+"s:compteur" à l'appel de DebutCompteur(). Cela reste indépendant de l'endroit
+où DebutCompteur() est appelé, la variable "s:compteur" étant accessible dans
+MonCompteur().
+
+Quand un script est sourcé une nouvelle fois, il utilisera les mêmes variables
+de script. Elles resteront valides tant que Vim ne sera pas quitté. Cela peut
+servir à tenir un compteur : >
+
+	if !exists("s:compteur")
+	  let s:compteur = 1
+	  echo "script exécuté pour la première fois"
+	else
+	  let s:compteur = s:compteur + 1
+	  echo "script exécuté " . s:compteur . " fois maintenant"
+	endif
+
+NOTE : Ceci implique que les greffons de types de fichiers n'utilisent pas
+différents jeux de variables de script pour chaque tampon. Utilisez des
+variables locales de tampon à la place |b:var|.
+
+
+VARIABLES VIM PRÉDÉFINIES			*vim-variable* *v:var*
+
+			    *v:charconvert_from* *charconvert_from-variable*
+v:charconvert_from
+		Le nom de l'encodage de caractères d'un fichier à convertir.
+		Uniquement valide lors de l'évaluation de l'option
+		'charconvert'.
+
+			    *v:charconvert_to* *charconvert_to-variable*
+v:charconvert_to
+		Le nom de l'encodage de caractères d'un fichier après la
+		conversion. Uniquement valide lors de l'évaluation de l'option
+		'charconvert'.
+
+					*v:cmdarg* *cmdarg-variable*
+v:cmdarg	Cette variable est utilisée de deux façons :
+		1. Elle contient les arguments supplémentaires donnés à une
+		   commande de lecture/écriture de fichier. Actuellement, ce
+		   sont "++enc=" et "++ff=". Cette variable est fixée avant
+		   qu'un événement d'autocommande pour la lecture/écriture de
+		   fichier n'ait été déclenché. Il y a un espace blanc
+		   initial, afin de permettre l'ajout de cette variable
+		   directement après la commande de lecture/écriture. NOTE :
+		   L'argument "+cmd" n'est pas inclus ici, car il sera de
+		   toute façon exécuté.
+		2. Quand un fichier PostScript est imprimé avec ":hardcopy",
+		   elle correspond à l'argument de la commande ":hardcopy".
+		   Cela peut servir pour 'printexpr'.
+
+					*v:count* *count-variable*
+v:count		Le quantificateur donné pour la dernière commande en mode
+		Normal. Peut servir à utiliser le quantificateur dans un
+		mappage. En lecture seule. Exemple : >
+			:map _x :<C-U>echo "le quantificateur vaut" v:count<CR>
+<		NOTE : Le <C-U> est nécessaire pour effacer la plage de lignes
+		que vous obtenez quand vous tapez ':' après un quantificateur.
+		"count" marche aussi, pour compatibilité ascendante.
+
+					*v:count1* *count1-variable*
+v:count1	Comme "v:count", mais vaut un par défaut quand aucun
+		quantificateur n'a été utilisé.
+
+					*v:ctype* *ctype-variable*
+v:ctype		La valeur de la région linguistique courante pour les
+		caractères de l'environnement de support. Cela permet aux
+		scripts Vim d'être renseignés sur l'encodage de la région
+		linguistique courante. Détail technique : elle correspond à
+		la valeur de LC_CTYPE.
+		Cette variable ne peut pas être fixée directement, utilisez la
+		commande |:language|.
+		Normalement, elle est équivalente 'encoding', mais pas
+		toujours...
+		Voir |multi-lang|.
+
+					*v:dying* *dying-variable*
+v:dying		Normalement zéro. Lorsqu'un signal d'interruption est reçu,
+		cette variable est fixée à un. Ce nombre augmente si plusieurs
+		signaux sont reçus.
+		Peut être utilisé dans une autocommande pour vérifier si Vim
+		s'est terminé normalement. {uniquement sur Unix}
+		Exemple : >
+			:au VimLeave * if v:dying |
+			 \ echo "\nAAAAAAAaaaaahhhhh !!\n" | endif
+<
+					*v:errmsg* *errmsg-variable*
+v:errmsg	Dernier message d'erreur émis. Il est possible de fixer cette
+		variable. Exemple : >
+			:let v:errmsg = ""
+			:silent! next
+			:if v:errmsg != ""
+			:  ... traitement de l'erreur
+<		"errmsg" marche aussi, pour compatibilité ascendante.
+
+					*v:exception* *exception-variable*
+v:exception	La valeur de l'exception la plus récemment interceptée et non
+		terminée. Voir aussi |v:throwpoint| et |throw-variables|.
+		Exemple : >
+			:try
+			:  throw "oups"
+			:catch /.*/
+			:  echo v:exception "intercepté"
+			:endtry
+<		Résultat : "oups intercepté".
+
+					*v:fname_in* *fname_in-variable*
+v:fname_in	Le nom du fichier d'entrée. Uniquement valide lors de
+		l'évaluation :
+			OPTION		UTILISÉE POUR	~
+			'charconvert'	le fichier à convertir
+			'diffexpr'	le fichier original
+			'patchexpr'	le fichier original
+			'printexpr'	le fichier à imprimer
+
+					*v:fname_out* *fname_out-variable*
+v:fname_out	Le nom du fichier de sortie. Uniquement valide lors de
+		l'évaluation :
+			OPTION		UTILISÉE POUR	~
+			'charconvert'	le fichier converti produit (*)
+			'diffexpr'	la sortie de `diff`
+			'patchexpr'	le fichier rustine produit
+		(*) Lors de la conversion pour une commande d'écriture
+		(p. ex., ":w fichier"), il sera identique à v:fname_in. Lors
+		de la conversion pour une commande de lecture (p. ex., ":e
+		fichier"), il s'agira d'un fichier temporaire différent de
+		v:fname_in.
+
+					*v:fname_new* *fname_new-variable*
+v:fname_new	Le nom de la nouvelle version du fichier. Uniquement valide
+		lors de l'évaluation de 'diffexpr'.
+
+					*v:fname_diff* *fname_diff-variable*
+v:fname_diff	Le nom du fichier diff (rustine). Uniquement valide lors de
+		l'évaluation de 'patchexpr'.
+
+					*v:folddashes* *folddashes-variable*
+v:folddashes	Utilisé pour 'foldtext' : les tirets représentant le niveau de
+		repli d'un repli fermé.
+		En lecture seule. |fold-foldtext|
+
+					*v:foldlevel* *foldlevel-variable*
+v:foldlevel	Utilisé pour 'foldtext' : niveau de repli d'un repli fermé.
+		En lecture seule. |fold-foldtext|
+
+					*v:foldend* *foldend-variable*
+v:foldend	Utilisé pour 'foldtext' : dernière ligne d'un repli fermé.
+		En lecture seule. |fold-foldtext|
+
+					*v:foldstart* *foldstart-variable*
+v:foldstart	Utilisé pour 'foldtext' : première ligne d'un repli fermé.
+		En lecture seule. |fold-foldtext|
+
+					*v:lang* *lang-variable*
+v:lang		La valeur de la région linguistique courante pour les
+		messages de l'environnement de support. Cela permet aux
+		scripts Vim d'être renseignés sur la langue courante. Détail
+		technique : elle correspond à la valeur de LC_MESSSAGE.
+		Cette variable ne peut pas être fixée directement, utilisez la
+		commande |:language|.
+		Elle peut être différente de |v:ctype| quand les messages sont
+		demandés dans une langue différente de celle utilisée pour
+		l'encodage de caractères. Voir |multi-lang|.
+
+					*v:lc_time* *lc_time-variable*
+v:lc_time	La valeur de la région linguistique courante pour les
+		messages de date de l'environnement de support. Cela permet
+		aux scripts Vim d'être renseignés sur la langue courante.
+		Détail technique : elle correspond à la valeur de LC_TIME.
+		Cette variable ne peut pas être fixée directement, utilisez la
+		commande |:language|. Voir |multi-lang|.
+
+					*v:lnum* *lnum-variable*
+v:lnum		Le numéro de ligne pour les expressions 'foldexpr' et
+		'indentexpr'. Uniquement valide lors de l'évaluation d'une de
+		ces expressions.
+		En lecture seule. |fold-expr| |'indentexpr'|
+
+					*v:prevcount* *prevcount-variable*
+v:prevcount	Le quantificateur donné pour l'avant-dernière commande en mode
+		Normal. Il s'agit de la valeur v:count de la commande
+		précédente. Utile si vous souhaitez quitter le mode Visuel
+		puis utiliser le quantificateur. >
+			:vmap % <Esc>:call MonFiltre(v:prevcount)<CR>
+<		En lecture seule.
+
+					*v:progname* *progname-variable*
+v:progname	Contient le nom (le chemin d'accès est supprimé) par lequel
+		Vim a été invoqué. Permet de réaliser des initialisations
+		spéciales pour `view`, `evim`, etc., ou n'importe quel nom de
+		lien symbolique que vous avez pu créer pour Vim.
+		En lecture seule.
+
+					*v:register* *register-variable*
+v:register	Le nom du registre fourni à la dernière commande en mode
+		Normal. Vide si aucun registre n'a été fourni. |getreg()|
+		|setreg()|
+
+					*v:servername* *servername-variable*
+v:servername	Le nom enregistré par une IHM graphique Vim sur le serveur X
+		s'il y en a un. |x11-clientserver|
+		En lecture seule.
+
+					*v:shell_error* *shell_error-variable*
+v:shell_error	Résultat de la dernière commande shell. Si non-nul, la
+		dernière commande shell s'est soldée par une erreur. Si nul,
+		il n'y a pas eu de problème. Cela ne marche que quand le shell
+		retourne son code d'erreur à Vim.
+		La valeur -1 est souvent utilisée quand la commande n'a pas pu
+		être exécutée. En lecture seule.
+		Exemple : >
+			:!mv toto titi
+			:if v:shell_error
+			:  echo 'Impossible de renommer « toto » en « titi » !'
+			:endif
+<		"shell_error" marche aussi, pour compatibilité ascendante.
+
+					*v:statusmsg* *statusmsg-variable*
+v:statusmsg	Dernier message d'état émis. Il est possible de fixer cette
+		variable.
+
+				*v:termresponse* *termresponse-variable*
+v:termresponse	La séquence d'échappement retournée par le terminal pour
+		l'entrée termcap |t_RV|. Cette variable est fixée quand Vim
+		reçoit une séquence d'échappement qui débute par « Échap '[' »
+		ou CSI, et se termine par un 'c', avec entre les deux
+		uniquement des chiffres, ';' et '.'.
+		Quand cette variable est fixée, l'événement d'autocommande
+		TermResponse est déclenché, afin que vous puissiez réagir à la
+		réponse du terminal.
+		La réponse donnée par le nouveau xterm est : "<Echap>[ Pp ;
+		Pv ; Pc c". Pp définit le type du terminal : 0 pour vt100 et 1
+		pour vt220. Pv définit le niveau de rustine (comme ceci a été
+		introduit dans la rustine 95, il vaut toujours 95 ou plus). Pc
+		vaut toujours zéro.
+		{uniquement si compilé avec la fonctionnalité |+termresponse|}
+
+				*v:this_session* *this_session-variable*
+v:this_session	Nom de fichier complet du dernier fichier de session chargé ou
+		enregistré |:mksession|. Il est possible de fixer cette
+		variable. Si aucun fichier de session n'a été enregistré,
+		cette variable est vide.
+		"this_session" marche aussi, pour compatibilité ascendante.
+
+					*v:throwpoint* *throwpoint-variable*
+v:throwpoint	L'endroit où l'exception la plus récemment interceptée et non
+		terminée a été émise. Non fixé lorsque les commandes sont
+		tapées directement. Voir aussi |v:exception| et
+		|throw-variables|.
+		Exemple : >
+			:try
+			:  throw "oups"
+			:catch /.*/
+			:  echo "Exception dans" v:throwpoint
+			:endtry
+<		Sortie : "Exception dans test.vim, ligne 2".
+
+					*v:version* *version-variable*
+v:version	Numéro de version de Vim : numéro de version majeur fois 100
+		plus numéro de version mineur. Ainsi, la version 5.0
+		correspond à 500 ; la version 5.1 (5.01) à 501. En lecture
+		seule.
+		"version" marche aussi, pour compatibilité ascendante.
+		Utilisez |has()| pour vérifier si une certaine rustine a été
+		incluse, p. ex. : >
+			if has("patch123")
+<		NOTE : Les numéros de rustines sont spécifiques à chaque
+		version, ainsi, les versions 5.0 et 5.1 peuvent avoir toutes
+		deux une rustine 123, mais qui sera totalement différente.
+
+					*v:warningmsg* *warningmsg-variable*
+v:warningmsg	Dernier message d'avertissement émis. Il est possible de fixer
+		cette variable.
+
+==============================================================================
+4. Fonctions internes					*functions*
+
+Voir |function-list| pour un index thématique de ces fonctions.
+
+(Utilisez CTRL-] sur le nom d'une fonction pour sauter jusqu'à son explication
+détaillée.)
+
+USAGE			      RÉSULTAT	DESCRIPTION	    ~
+------------------------------------------------------------
+append( {nol}, {chaine})	Nombre	ajoute {chaine} sous la ligne {nol}
+argc()				Nombre	nb. de fichiers dans la liste des arg.
+argidx()			Nombre	index courant dans la liste des arg.
+argv( {no})			Chaîne	entrée {no} de la liste des arg.
+browse( {enreg}, {titre}, {repinit}, {defaut})
+				Chaîne	ouvre un sélecteur de fichier
+bufexists( {expr})		Nombre	VRAI si le tampon {expr} existe
+buflisted( {expr})		Nombre	VRAI si le tampon {expr} est listé
+bufloaded( {expr})		Nombre	VRAI si le tampon {expr} est chargé
+bufname( {expr})		Chaîne	nom du tampon {expr}
+bufnr( {expr})			Nombre	numéro du tampon {expr}
+bufwinnr( {expr})		Nombre	numéro de la fenêtre du tampon {expr}
+byte2line( {octet})		Nombre	n° de ligne correspondant à l'{octet}
+char2nr( {expr})		Nombre	valeur ASCII du premier car. de {expr}
+cindent( {nol})			Nombre	indentation C pour la ligne {nol}
+col( {expr})			Nombre	n° de colonne à la position {expr}
+confirm( {msg} [, {choix} [, {defaut} [, {type}]]])
+				Nombre	offre plusieurs choix à l'utilisateur
+cscope_connection( [{nb} , {cheminBD} [, {prefixe}]])
+				Nombre	teste si une connexion cscope existe
+cursor( {nol}, {col})		Nombre	place le curseur sur {nol} et {col}
+delete( {nomfich})		Nombre	supprime le fichier {nomfich}
+did_filetype()			Nombre	VRAI si événement FileType utilisé
+escape( {chaine}, {cars})	Chaîne	protège {cars} dans {chaine} par '\'
+eventhandler()			Nombre	VRAI ds 1 routine de traitement d'évén.
+executable( {expr})		Nombre	1 si l'exécutable {expr} existe
+exists( {var})			Nombre	VRAI si {var} existe XXX {expr}
+expand( {expr})			Chaîne	étend les mots-clés spéciaux ds {expr}
+filereadable( {fich})		Nombre	VRAI si {fich} peut être lu
+filewritable( {fich})		Nombre	VRAI si {fich} peut être écrit
+fnamemodify( {nomfich}, {mods})	Chaîne	modifie le nom du fichier
+foldclosed( {nol})		Nombre	première l. du repli sur {nol} si fermé
+foldclosedend( {nol})		Nombre	dernière l. du repli sur {nol} si fermé
+foldlevel( {nol})		Nombre	niveau de repli sur {nol}
+foldtext()			Chaîne	ligne affichée pour un repli fermé
+foreground()			Nombre	met la fenêtre Vim au premier plan
+getchar( [expr])		Nombre	attend un caractère de l'utilisateur
+getcharmod()			Nombre	modificateurs pour le dernier car entré
+getbufvar( {expr}, {nomvar})		variable {nomvar} du tampon {expr}
+getcwd()			Chaîne	le répertoire courant
+getfsize( {nomfich})		Nombre	taille en octets du fichier
+getftime( {nomfich})		Nombre	date de dernière modification du fich.
+getline( {nol})			Chaîne	ligne {nol} du tampon courant
+getreg( [{nomreg}])		Chaîne	contenu du registre
+getregtype( [{nomreg}])		Chaîne	type du registre
+getwinposx()			Nombre	coord X (pixels) de la fenêtre IHMg Vim
+getwinposy()			Nombre	coord Y (pixels) de la fenêtre IHMg Vim
+getwinvar( {no}, {nomvar})		variable {nomvar} de la fenêtre {no}
+glob( {expr})			Chaîne	étend les car. d'englobement de {expr}
+globpath( {chemin}, {expr})	Chaîne	glob({expr}) pour les rép. de {chemin}
+has( {fctalite})		Nombre	VRAI si la {fctalite} est supportée
+hasmapto( {qqc} [, {mode}])	Nombre	VRAI si un mappage à {qqc} existe
+histadd( {histo}, {elem})	Chaîne	ajoute un élément à un historique
+histdel( {histo} [, {elem}])	Chaîne	supprime un élément d'un historique
+histget( {histo} [, {index}])	Chaîne	donne l'élément {index} d'un historique
+histnr( {histo})		Nombre	index le plus élevé d'un historique
+hlexists( {nom})		Nombre	VRAI si le grp surbrillance existe
+hlID( {nom})			Nombre	donne l'ID du grp de surbrillance {nom}
+hostname()			Chaîne	nom de la machine où Vim s'exécute
+iconv( {expr}, {de}, {a})	Chaîne	convertit l'encodage de {expr}
+indent( {nol})			Nombre	indentation de la ligne {nol}
+input( {invite} [, {texte}])	Chaîne	attend une entrée de l'utilisateur
+inputdialog({invite} [, {texte} [, {retourannul}]])
+				Chaîne	comme input() mais ds un dialogue IHMg
+inputrestore()			Nombre	restaure une saisie sauvegardée
+inputsave()			Nombre	sauvegarde la saisie et l'efface
+inputsecret( {invite} [, {texte}])
+				Chaîne	comme input() mais masque la saisie
+isdirectory( {repertoire})	Nombre	VRAI si {repertoire} est un répertoire
+libcall( {bib}, {fonc}, {arg})	Chaîne	appelle {fonc} dans {bib} avec {arg}
+libcallnr( {bib}, {fonc}, {arg})
+				Nombre	idem, mais retourne un Nombre
+line( {expr})			Nombre	n° de ligne à la position {expr}
+line2byte( {nol})		Nombre	numéro d'octet correspondant à {nol}
+lispindent( {nol})		Nombre	indentation Lisp pour la ligne {nol}
+localtime()			Nombre	date courante
+maparg( {nom} [, {mode}])	Chaîne	ctg du mappage {nom} en mode {mode}
+mapcheck( {nom} [, {mode}])	Chaîne	si des mappages correspondent à {nom}
+match( {expr}, {mtf} [, {debut}])
+				Nombre	position où {mtf} correspond ds {expr}
+matchend( {expr}, {mtf} [, {debut})
+				Nombre	position où {mtf} se termine ds {expr}
+matchstr( {expr}, {mtf} [, {debut}])
+				Chaîne	correspondance de {mtf} dans {expr}
+mode()				Chaîne	mode d'édition courant
+nextnonblank( {nol})		Nombre	n° de ligne de la ligne non-vide suiv.
+nr2char( {expr})		Chaîne	caractère simple de valeur ASCII {expr}
+prevnonblank( {nol})		Nombre	n° de ligne de la ligne non-vide préc.
+remote_expr( {serveur}, {chaine} [, {varID}])
+				Chaîne	envoie une expression
+remote_foreground( {serveur})	Nombre	met le serveur Vim au premier plan
+remote_peek( {IDserveur} [, {varretour}])
+				Nombre	teste s'il y a des chaînes de réponses
+remote_read( {IDserveur})	Chaîne	lit une chaîne de réponse
+remote_send( {serveur}, {chaine} [, {varID}])
+				Chaîne	envoie une séquence de touches
+rename( {de}, {a})		Nombre	renomme (déplace) le fich. {de} en {a}
+resolve( {nomfich})		Chaîne	fichier vers lequel pointe un raccourci
+search( {mtf} [, {drapeaux}])	Nombre	recherche {mtf}
+searchpair( {debut}, {milieu}, {fin} [, {drapeaux} [, {ignore}]])
+				Nombre	trouve l'autre fin d'1 couple début/fin
+server2client( {IDclient}, {chaine})
+				Nombre	envoie une chaîne de réponse
+serverlist()			Chaîne	donne la liste des serveurs disponibles
+setbufvar( {expr}, {nomvar}, {val})	fixe {nomvar} ds le tamp {expr} à {val}
+setline( {nol}, {ligne})	Nombre	remplace la ligne {nol} par {ligne}
+setreg( {reg}, {val} [, {opt}])	Nombre	fixe la valeur et le type du registre
+setwinvar( {no}, {nomvar}, {val})	fixe {nomvar} ds fenêtre {no} à {val}
+strftime( {format} [, {date}])	Chaîne	date dans le format spécifié
+stridx( {foin}, {aiguille})	Nombre	premier index de {aiguille} dans {foin}
+strlen( {expr})			Nombre	longueur de la chaîne {expr}
+strpart( {src}, {debut} [, {long}])
+				Chaîne	{long} car. de {src} depuis {debut}
+strridx( {foin}, {aiguille})	Nombre	dernier index de {aiguille} dans {foin}
+strtrans( {expr})		Chaîne	{expr} traduite pour être imprimable
+submatch( {no})			Chaîne	corres. spécifique dans ":substitute"
+substitute( {expr}, {mtf}, {sub}, {drapeaux})
+				Chaîne	les {mtf} de {expr} remplacés par {sub}
+synID( {ligne}, {col}, {trans})	Nombre	ID de syntaxe à la {ligne} et {col}
+synIDattr( {IDsyn}, {qqc} [, {mode}])
+				Chaîne	attribut {qqc} de l'ID syntaxe {IDsyn}
+synIDtrans( {IDsyn})		Nombre	ID de syntaxe traduit de {IDsyn}
+system( {expr})			Chaîne	sortie d'une commande shell {expr}
+tempname()			Chaîne	donne un nom pour un fichier temporaire
+tolower( {expr})		Chaîne	la chaîne {expr} passée en minuscules
+toupper( {expr})		Chaîne	la chaîne {expr} passée en majuscules
+type( {nom})			Nombre	type de la variable {nom}
+virtcol( {expr})		Nombre	colonne d'écran à la position {expr}
+visualmode( [expr])		Chaîne	dernier mode Visuel utilisé
+winbufnr( {no})			Nombre	numéro de tampon de la fenêtre {no}
+wincol()			Nombre	colonne de fenêtre du curseur
+winheight( {no})		Nombre	hauteur de la fenêtre {no}
+winline()			Nombre	ligne de fenêtre du curseur
+winnr()				Nombre	numéro de la fenêtre courante
+winwidth( {no})			Nombre	largeur de la fenêtre {no}
+------------------------------------------------------------
+
+					    		*append()*
+append({nol}, {chaine})
+		Ajoute le texte {chaine} après la ligne {nol} dans le tampon
+		courant. {nol} peut être nul, ce qui permet d'insérer un ligne
+		avant la première. Retourne 1 en cas d'échec ({nol} est hors
+		limites) ou 0 en cas de succès.
+
+							*argc()*
+argc()		Renvoie le nombre de fichiers dans la liste des arguments de
+		la fenêtre courante. Voir |arglist|.
+
+							*argidx()*
+argidx()	Renvoie l'index courant dans la liste des arguments. 0 désigne
+		le premier fichier ; "argc() - 1" désigne le dernier. Voir
+		|arglist|.
+
+							*argv()*
+argv({no})	Renvoie le {no}-ième fichier dans la liste des arguments de la
+		fenêtre courante. Voir |arglist|. "argv(0)" fait référence au
+		premier fichier. Exemple : >
+			:let i = 0
+			:while i < argc()
+			:  let f = escape(argv(i), '. ')
+			:  exe 'amenu Arg.' . f . ' :e ' . f . '<CR>'
+			:  let i = i + 1
+			:endwhile
+<
+							*browse()*
+browse({enreg}, {titre}, {repinit}, {defaut})
+		Ouvre un sélecteur de fichier. Cela ne fonctionne que lorsque
+		"has("browse")" retourne un non-nul (uniquement pour certaines
+		versions IHM graphiques). Les arguments sont :
+		    {enreg}	si non-nul, spécifie un fichier à enregistrer
+		    {titre}	titre pour le sélecteur
+		    {repinit}   répertoire où commencer la navigation
+		    {defaut}    nom de fichier par défaut
+		Quand le bouton "Cancel" est pressé, que quelque chose tourne
+		mal, ou que la navigation n'est pas possible, une chaîne vide
+		est renvoyée.
+
+							*bufexists()*
+bufexists({expr})
+		Renvoie un Nombre, qui est non-nul si un tampon nommé {expr}
+		existe.
+		Si l'argument {expr} est une chaîne, elle doit correspondre
+		exactement au nom d'un tampon.
+		Si l'argument {expr} est un nombre, les numéros de tampons
+		sont utilisés.
+		Les tampons non listés seront trouvés.
+		NOTE : Les fichiers d'aide sont listés par leur nom court dans
+		la sortie de |:buffers|, mais bufexists() a besoin d'utiliser
+		leur nom long pour pouvoir les trouver.
+		Utilisez "bufexists(0)" pour tester s'il existe un nom de
+		fichier alternatif.
+							*buffer_exists()*
+		Nom obsolète : buffer_exists().
+
+							*buflisted()*
+buflisted({expr})
+		Renvoie un Nombre, qui est non-nul si un tampon nommé {expr}
+		existe et est listé (son option 'buflisted' est activée).
+		L'argument {expr} est utilisé comme avec bufexists().
+
+							*bufloaded()*
+bufloaded({expr})
+		Renvoie un Nombre, qui est non-nul si un tampon nommé {expr}
+		existe et est chargé (il est visible dans une fenêtre ou
+		caché).
+		L'argument {expr} est utilisé comme avec bufexists().
+
+							*bufname()*
+bufname({expr})	Renvoie le nom d'un tampon, tel qu'il est donné par la
+		commande ":ls".
+		Si {expr} est un Nombre, le nom du tampon portant ce numéro
+		est donné. Zéro correspond au tampon alternatif pour la
+		fenêtre courante.
+		Si {expr} est une Chaîne, elle est utilisée comme un motif
+		d'exprat pour correspondre avec les noms des tampons. Cette
+		correspondance est toujours établie comme si 'magic' était
+		activée et 'cpoptions' vide. Quand il y a plus d'une
+		correspondance, une chaîne vide est retournée.
+		"" ou "%" peuvent être utilisés pour le tampon courant, "#"
+		pour le tampon alternatif.
+		Une correspondance entière sera privilégiée, sinon une
+		correspondance au début, à la fin, ou au milieu du nom du
+		tampon sera acceptée.
+		Les tampons listés sont trouvés en premier. S'il existe une
+		correspondance unique avec un tampon listé, celui-ci est
+		retourné. Sinon, la recherche s'effectuera ensuite sur les
+		tampons non listés.
+		Si {expr} est une Chaîne, mais que vous souhaitez l'utiliser
+		comme un numéro de tampon, forcez sa conversion en Nombre en
+		lui ajoutant zéro : >
+			:echo bufname("3" + 0)
+<		Si le tampon n'existe pas, ou ne porte pas de nom, une chaîne
+		vide est retournée. >
+			bufname("#")	    nom du tampon alternatif
+			bufname(3)	    nom du tampon n° 3
+			bufname("%")	    nom du tampon courant
+			bufname("fich2")    nom du tampon où "fich2" correspond
+<							*buffer_name()*
+		Nom obsolète : buffer_name().
+
+							*bufnr()*
+bufnr({expr})	Renvoie le numéro d'un tampon, tel qu'il est donné par la
+		commande ":ls".
+		Sur l'utilisation de {expr}, voir |bufname()| ci-dessus. Si le
+		tampon n'existe pas, -1 est retourné. bufnr("$") désigne le
+		dernier tampon : >
+			:let dernier_tampon = bufnr("$")
+<		Ceci renvoie un nombre, qui est le numéro de tampon le plus
+		élevé des tampons existants. NOTE : Tous les tampons portant
+		un numéro inférieur n'existent pas forcément, car ":bwipeout"
+		peut en avoir liquidé certains. Utilisez bufexists() pour
+		tester l'existence d'un tampon.
+							*buffer_number()*
+		Nom obsolète : buffer_number().
+							*last_buffer_nr()*
+		Nom obsolète pour bufnr("$") : last_buffer_nr().
+
+							*bufwinnr()*
+bufwinnr({expr})
+		Renvoie un Nombre, qui est le numéro de la première fenêtre
+		associée au tampon {expr}.
+		Sur l'usage de {expr}, voir |bufname()| ci-dessus. Si le
+		tampon n'existe pas ou n'a pas de fenêtre associée, -1 est
+		retourné. Exemple : >
+			:echo "La fenêtre" (bufwinnr(1)) "contient le tampon 1"
+<
+							*byte2line()*
+byte2line({octet})
+		Renvoie le numéro de ligne qui contient le caractère
+		correspondant au numéro d'octet {octet} dans le tampon
+		courant. Cela inclut le caractère fin-de-ligne, selon la
+		valeur de l'option 'fileformat' pour le tampon courant. Le
+		premier caractère porte le numéro un.
+		Voir aussi |line2byte()|, |go| et |:goto|.
+		{uniquement si compilé avec la fonctionnalité |+byte_offset|}
+
+							*char2nr()*
+char2nr({expr})	Renvoie un Nombre, correspondant à la valeur ASCII du premier
+		caractère dans {expr}. Exemples : >
+			char2nr(" ")		retourne 32
+			char2nr("ABC")		retourne 65
+<		La valeur courante de 'encoding' est utilisée. Par exemple,
+		pour "utf-8" : >
+			char2nr("á")		retourne 225
+			char2nr("á"[0])		retourne 195
+<
+							*cindent()*
+cindent({nol})	Renvoie un Nombre, correspondant à l'indentation de la ligne
+		{nol} selon les règles d'indentation du C, comme avec
+		'cindent'. L'indentation est comptée en espaces, la valeur de
+		'tabstop' est prise en compte. {nol} est traitée comme dans
+		|getline()|.
+		Si {nol} est invalide ou que Vim n'a pas été compilé avec la
+		fonctionnalité |+cindent|, renvoie -1.
+
+							*col()*
+col({expr})	Renvoie un Nombre, correspondant à la colonne dont la position
+		dans le fichier est donnée par {expr}. Les positions acceptées
+		sont :
+		    .	    la position du curseur
+		    $	    la fin de la ligne du curseur (retourne le nombre
+			       de caractères dans la ligne du curseur plus un)
+		    'x	    la position de la marque x (si la marque n'est pas
+			       fixée, 0 est retourné)
+		NOTE : Seules les marques dans le fichier courant peuvent être
+		utilisées. Exemples : >
+			col(".")	       colonne du curseur
+			col("$")	       longueur de la ligne du curseur
+						  plus un
+			col("'t")	       colonne de la marque 't'
+			col("'" . nommarque)   colonne de la marque nommarque
+<		1 désigne la première colonne. En cas d'erreur, renvoie 0.
+		Pour la position du curseur, quand 'virtualedit' est fixé, le
+		numéro de colonne est supérieur de un si le curseur est à la
+		fin de la ligne. Ceci peut être utilisé pour obtenir le numéro
+		de colonne en mode Insertion : >
+			:imap <F2> <C-O>:let ve_sauv = &ve<CR>
+				 \ <C-O>:set ve=all<CR>
+				 \ <C-O>:echo col(".") . "\n" <Bar>
+				 \ let &ve = ve_sauv<CR>
+<
+							*confirm()*
+confirm({msg} [, {choix} [, {defaut} [, {type}]]])
+		confirm() offre un dialogue à l'utilisateur, où un choix peut
+		être fait. Le numéro du choix est renvoyé. 1 désigne le
+		premier choix.
+		NOTE : confirm() est supporté uniquement si Vim a été compilé
+		avec le support des dialogues, voir |+dialog_con| et
+		|+dialog_gui|.
+		{msg} est affiché dans un |dialog|ue, avec {choix} comme
+		alternatives. Si {choix} est absent ou vide, "&OK" est utilisé
+		(et traduit).
+		{msg} est une Chaîne, utilisez "\n" pour inclure un
+		saut-de-ligne. La chaîne n'est enroulée quand elle dépasse du
+		dialogue que sur certains systèmes.
+		{choix} est une Chaîne, contenant l'ensemble des alternatives
+		séparées par "\n", p. ex. : >
+			confirm("Écrire le tampon ?", "&Oui\n&Non\n&Annuler")
+<		La lettre après un '&' est le raccourci pour ce choix. Ainsi,
+		vous pouvez tapez 'a' pour choisir « Annuler ». Le raccourci
+		peut porter sur n'importe quelle lettre : >
+			confirm("Tampon modifié", "&Ecrire\nEcrire &Tous")
+<		Pour la console, la première lettre de chaque choix est
+		utilisée comme raccourci par défaut.
+		L'argument optionnel {defaut} donne le numéro du choix retenu
+		si l'utilisateur frappe <CR>. Entrez 1 pour utiliser le
+		premier choix par défaut. Entrez 0 pour ne pas utiliser de
+		défaut. Si {defaut} est omis, 0 est utilisé.
+		L'argument optionnel {type} donne le type du dialogue. Cela
+		sert uniquement pour l'icône de l'IHM graphique Win32. Il peut
+		prendre une des valeurs suivantes : "Error", "Question",
+		"Info", "Warning" ou "Generic". Seul le premier caractère est
+		pris en compte. Si {type} est omis, "Generic" est utilisé.
+		Si l'utilisateur fait avorter le dialogue en pressant <Echap>,
+		CTRL-C, ou une autre touche d'interruption valide, confirm()
+		retourne 0.
+
+		Un exemple : >
+			:let choix = confirm("Et pour le dessert ?",
+				     \ "&Pommes\n&Bananes\n&Oranges", 2)
+			:if choix == 0
+			:  echo "Les fruits sont bons pour la santé !"
+			:elseif choix == 3
+			:  echo "Excellent choix."
+			:else
+			:  echo "Je préfère les oranges pour ma part."
+			:endif
+<		Dans un dialogue IHM graphique, des boutons sont utilisés. La
+		disposition des boutons dépend du drapeau 'v' de 'guioptions'.
+		S'il est inclus, les boutons sont toujours placés
+		verticalement. Sinon, confirm() essaie de placer les boutons
+		alignés horizontalement. S'il dépassent, la disposition
+		verticale est utilisée quand même. Sur certains systèmes, la
+		disposition horizontale est toujours utilisée.
+
+							*cscope_connection()*
+cscope_connection([{nb} , {cheminBD} [, {prefixe}]])
+		Teste l'existence d'une connexion |cscope|. Si aucun argument
+		n'est donné, cette fonction renvoie :
+		    0	si cscope n'est pas disponible (fonctionnalité absente)
+			   ou s'il n'existe pas de connexions cscope ;
+		    1	s'il existe au moins une connexion cscope.
+
+		Si des arguments sont donnés, la valeur de {nb} détermine
+		alors la façon dont une connexion cscope sera testée :
+
+		    NB	 DESCRIPTION DU TEST D'EXISTENCE  ~
+		    0	 Comme sans arguments (p. ex., "cscope_connection()").
+		    1	 Ignore {prefixe} et utilise des correspondances de
+			 chaînes partielles pour {cheminBD}.
+		    2	 Ignore {prefixe} et utilise des correspondances de
+			 chaînes exactes pour {cheminBD}.
+		    3	 Utilise {prefixe} et utilise des correspondances de
+			 chaînes partielles pour {cheminBD} et {prefixe}.
+		    4	 Utilise {prefixe} et utilise des correspondances de
+			 chaînes exactes pour {cheminBD} et {prefixe}.
+
+		NOTE : Toutes les comparaisons de chaînes sont sensibles à la
+		casse !
+
+		Exemple : supposons que vous obteniez la sortie suivante (avec
+		":cs show") :
+
+		    # pid    database name			prepend path ~
+		    0 27664  cscope.out				/usr/local ~
+
+		    INVOCATION				   VAL. DE RETOUR  ~
+		    cscope_connection()					1
+		    cscope_connection(1, "out")				1
+		    cscope_connection(2, "out")				0
+		    cscope_connection(3, "out")				0
+		    cscope_connection(3, "out", "local")		1
+		    cscope_connection(4, "out")				0
+		    cscope_connection(4, "out", "local")		0
+		    cscope_connection(4, "cscope.out", "/usr/local")	1
+
+							*cursor()*
+cursor({nol}, {col})
+		Place le curseur à la colonne {col} de la ligne {nol}. Ne
+		modifie pas la liste des sauts.
+		Si {nol} est supérieur au nombre de lignes du tampon, le
+		curseur sera placé sur la dernière ligne du tampon. Si {nol}
+		vaut zéro, le curseur restera dans la ligne courante.
+		Si {col} est supérieur au nombre de caractères dans la ligne,
+		le curseur sera placé sur le dernier caractère de la ligne. Si
+		{col} vaut zéro, le curseur restera dans la colonne courante.
+
+							*delete()*
+delete({nomfich})
+		Supprime le fichier de nom {nomfich}. Cette fonction renvoie
+		un Nombre, qui vaut 0 si le fichier a été supprimé avec
+		succès, un non-nul si la suppression a échoué.
+
+							*did_filetype()*
+did_filetype()	Renvoie un non-nul lorsque des autocommandes ont été exécutées
+		et que l'événement FileType a été déclenché au moins une fois.
+		Peut être utilisé afin d'éviter un nouveau déclenchement de
+		l'événement FileType dans les scripts qui détectent le type de
+		fichier. |FileType|
+		Lorsque vous éditez un autre fichier, le compteur est
+		désactivé, ainsi le test vérifie si l'événement FileType a été
+		réellement déclenché pour le tampon courant. Ceci permet à une
+		autocommande qui commence l'édition d'un autre tampon de fixer
+		'filetype' et de charger un fichier de syntaxe.
+
+							*escape()*
+escape({chaine}, {cars})
+		Protège les caractères simples {cars} qui apparaissent dans
+		{chaine} par une contre-oblique. Exemple : >
+			:echo escape('c:\program files\vim', ' \')
+<		Ceci retourne :
+			c:\\program\ files\\vim ~
+
+							*eventhandler()*
+eventhandler()	Retourne 1 si à l'intérieur d'une routine de traitement
+		d'événement. Cela signifie que vous ne pourrez pas utiliser de
+		commandes interactives. Sinon, 0 est retourné.
+
+							*executable()*
+executable({expr})
+		Cette fonction teste si un exécutable nommé {expr} existe.
+		{expr} doit correspondre au nom du programme sans aucun
+		argument. executable() utilise la variable $PATH normale.
+		Renvoie un Nombre :
+		     1	    existe
+		     0	    n'existe pas
+		    -1	    non disponible sur ce système
+
+							*exists()*
+exists({expr})	Renvoie un nombre, qui est non-nul si {expr} existe, nul
+		sinon. L'argument {expr} est une chaîne, qui peut contenir un
+		de ces éléments :
+		    &nomoption	  option Vim (teste seulement si elle existe,
+				     pas si elle fonctionne)
+		    +nomoption	  option Vim qui fonctionne
+		    $NOMVARENV	  variable d'environnement (peut également
+				     être comparée avec une chaîne vide)
+		    *nomfonc	  fonction interne (voir |functions|) ou
+				     fonction utilisateur (voir
+				     |user-functions|)
+		    nomvar	  variable interne |internal-variables| ; ne
+				     fonctionne pas pour les noms entre
+				     accolades |curly-braces-names|
+		    :nomcmd	  commande Ex (les commandes internes comme
+				     les commandes utilisateur |:command|) ;
+				     retourne les valeurs suivantes :
+				     1 - correspond avec le début d'une cmd
+				     2 - correspond en entier avec une commande
+				     3 - correspond à plusieurs cmd utilisateur
+		    #évén	  autocommande définie pour cet événement
+		    #évén#motif	  autocommande définie pour ces événement et
+				     motif (le motif est pris littéralement et
+				     comparé aux motifs des autocommandes
+				     caractère par caractère)
+
+		Exemples : >
+			exists("&shortname")
+			exists("$HOSTNAME")
+			exists("*strftime")
+			exists("*s:MaFonc")
+			exists("notamp")
+			exists(":Make")
+			exists("#CursorHold");
+			exists("#BufReadPre#*.gz")
+<		Il ne doit pas y avoir d'espace entre le symbole ('&'/'$'/'*'/
+		'#') et le nom.
+		NOTE : L'argument doit être une chaîne, pas le nom de la
+		variable elle-même ! Par exemple : >
+			exists(notamp)
+<		Ceci ne teste pas l'existence de la variable "notamp", mais
+		recherche le contenu de "notamp", et teste si cela existe.
+
+							*expand()*
+expand({expr} [, {drapeau}])
+		Étend les jokers et autres mots-clés spéciaux dans {expr}.
+		Renvoie une Chaîne.
+
+		Lorsqu'il existe plusieurs correspondances, elles sont
+		séparées par des caractères <NL>. [NOTE : Dans la version 5.0,
+		un espace était utilisé, ce qui posait des problèmes quand un
+		nom de fichier contenait un espace.]
+
+		Si l'expansion échoue, la fonction renvoie une chaîne vide. Le
+		nom d'un fichier inexistant n'est pas inclus.
+
+		Quand {expr} débute par '%', '#' ou '<', l'expansion est
+		effectuée comme pour les variables spéciales Ex
+		|cmdline-special|, avec leurs modificateurs associés. En voici
+		un survol :
+			%	    nom du fichier courant
+		    	#	    nom du fichier alternatif
+		    	#n	    nom du fichier alternatif n
+		    	<cfile>	    nom du fichier sous le curseur
+		    	<afile>	    nom de fichier dans une autocommande
+		    	<abuf>	    numéro de tampon dans une autocommande
+				       (en tant que Chaîne !)
+		    	<amatch>    nom de la correspondance d'une autocommande
+		    	<sfile>	    nom de fichier du script sourcé
+		    	<cword>	    mot sous le curseur
+		    	<cWORD>	    MOT sous le curseur
+		    	<client>    l'{IDclient} du dernier message reçu
+				       |server2client()|
+		Modificateurs :
+			:p	    étend le chemin complet	       ["Path"]
+		    	:h	    tête (dernier segment supprimé)    ["Head"]
+		    	:t	    queue (dernier segment seul)       ["Tail"]
+		    	:r	    racine (une extension supprimée)
+		    	:e	    extension uniquement
+
+		Exemple : >
+			:let &tags = expand("%:p:h") . "/tags"
+<		NOTE : Lors de l'expansion d'une chaîne qui débute par '%',
+		'#' ou '<', tout texte supplémentaire est ignoré. Ceci ne
+		fonctionne PAS : >
+			:let nefonctionnepas = expand("%:h.sauv")
+<		Utilisez ceci : >
+			:let fonctionne = expand("%:h") . ".sauv"
+<
+		NOTE : L'expansion de "<cfile>" et autres chaîne spéciales
+		retourne simplement le nom du fichier référencé, sans autre
+		expansion. Si "<cfile>" vaut "~/.cshrc", vous devrez effectuer
+		un autre expand() pour que "~/" soit étendu en chemin du
+		répertoire personnel : >
+			:echo expand(expand("<cfile>"))
+<
+		Il ne doit pas y avoir d'espaces blancs entre les variables et
+		les modificateurs qui suivent. La fonction |fnamemodify()|
+		peut être utilisée pour modifier les noms de fichiers normaux.
+
+		Si '%' ou '#' sont spécifiés alors que les noms des fichiers
+		courant ou alternatif ne sont pas définis, une chaîne vide est
+		utilisée. L'utilisation de "%:p" dans un tampon sans nom
+		renvoie le répertoire courant, avec un '/' ajouté.
+
+		Quand {expr} ne débute pas par '%', '#' ou '<', il est étendu
+		comme l'est un nom de fichier sur la ligne de commande.
+		'suffixes' et 'wildignore' sont utilisés, à moins que
+		l'argument optionnel {drapeau} soit donné et soit non-nul. Les
+		noms de fichiers inexistants sont inclus.
+
+		expand() peut aussi être utilisé pour étendre des variables et
+		des variables d'environnement qui ne sont connues que du
+		shell. Mais cela peut être lent, car un shell doit être lancé.
+		Voir |expr-env-expand|.
+		La variable étendue est encore traitée comme une liste de noms
+		de fichiers.
+
+		Voir |glob()| pour trouver des fichiers existants. Voir
+		|system()| pour obtenir la sortie brute d'une commande
+		externe.
+
+							*filereadable()*
+filereadable({fichier})
+		Renvoie un Nombre, qui est VRAI si un fichier nommé {fichier}
+		existe et peut être lu. Si {fichier} n'existe pas ou est un
+		répertoire, renvoie un Nombre FAUX. {fichier} est une
+		expression, qui est utilisée comme une Chaîne.
+							*file_readable()*
+		Nom obsolète : file_readable().
+
+							*filewritable()*
+filewritable({fichier})
+		Renvoie un Nombre, qui vaut 1 si un fichier nommé {fichier}
+		existe et peut être enregistré. Si {fichier} n'existe pas ou
+		n'est pas accessible en écriture, renvoie 0. Si {fichier} est
+		un répertoire accessible en écriture, renvoie 2.
+
+							*fnamemodify()*
+fnamemodify({nomfich}, {mods})
+		Modifie le nom du fichier {nomfich} selon {mods}. {mods} est
+		une chaîne de caractères comme celles utilisées pour les noms
+		de fichiers sur la ligne de commande. |filename-modifiers|
+		Par exemple >
+			:echo fnamemodify("main.c", ":p:h")
+<		retourne :
+			/home/mool/vim/vim/src ~
+		NOTE : Les variables d'environnement et "~" ne sont pas
+		reconnus dans {nomfich}, utilisez d'abord |expand()|.
+
+							*foldclosed()*
+foldclosed({nol})
+		Renvoie un Nombre. Si la ligne {nol} est dans un repli fermé,
+		renvoie le numéro de la première ligne de ce repli. Si la
+		ligne {nol} n'est pas dans un repli fermé, renvoie -1.
+
+							*foldclosedend()*
+foldclosedend({nol})
+		Renvoie un Nombre. Si la ligne {nol} est dans un repli fermé,
+		renvoie le numéro de la dernière ligne de ce repli. Si la
+		ligne {nol} n'est pas dans un repli fermé, renvoie -1.
+
+							*foldlevel()*
+foldlevel({nol})
+		Renvoie un Nombre, qui correspond au niveau de repli de la
+		ligne {nol} dans le tampon courant. Pour des replis imbriqués,
+		renvoie le niveau le plus profond. S'il n'y a pas de repli à
+		la ligne {nol}, renvoie zéro. Les replis peuvent être
+		indépendamment fermés ou ouverts.
+		Quand elle est utilisée lors de la mise à jour des replis
+		(depuis 'foldexpr'), cette fonction renvoie -1 pour les lignes
+		où les replis doivent encore être mis à jour et où le niveau
+		de repli est inconnu.
+
+							*foldtext()*
+foldtext()	Renvoie une Chaîne, utilisée pour représenter un repli fermé.
+		Cette fonction est utilisée par défaut pour l'option
+		'foldtext', elle ne devrait normalement être appelée que lors
+		de l'évaluation de cette option. Elle utilise les variables
+		|v:foldstart|, |v:foldend| et |v:folddashes|.
+		La chaîne retournée ressemble à ceci :
+			+-- 45 lignes: abcdef ~
+		Le nombre de tirets dépend du niveau du repli. "45" est le
+		nombre de lignes dans le repli. "abcdef" est le texte de la
+		première ligne non blanche du repli (les espaces blancs
+		initiaux, "//" ou "/*" et le texte des options 'foldmarker' et
+		'commentstring' sont supprimés).
+		{uniquement si compilé avec la fonctionnalité |+folding|}
+
+							*foreground()*
+foreground()	Met la fenêtre Vim au premier plan. Utile pour envoyer d'un
+		client à un serveur Vim. |remote_send()|
+		Cela peut ne pas marcher sur des systèmes Win32, le SE
+		n'autorisant pas toujours une fenêtre à passer d'elle-même au
+		premier plan. Utilisez |remote_foreground()| à la place.
+		{uniquement dans les versions IHM graphiques Win32, Athena,
+		Motif et GTK+, ainsi que dans la version console Win32}
+
+							*getchar()*
+getchar([expr])	Attend un caractère simple de l'utilisateur. Si c'est un
+		caractère 8-bits, cette fonction renvoie un Nombre. Sinon,
+		elle renvoie une Chaîne égale au caractère donné. Pour une
+		touche spéciale, il s'agit d'une séquence d'octets débutant
+		par 0x80 (128 en décimal).
+		- Si [expr] est omis, attend jusqu'à ce qu'un caractère soit
+		  disponible.
+		- Si [expr] vaut 0, ne prend un caractère que s'il y en a un
+		  de disponible.
+		- Si [expr] vaut 1, teste uniquement si un caractère est
+		  disponible, mais ne le consomme pas. Si un caractère normal
+		  est disponible, il est renvoyé ; sinon, une valeur non-nulle
+		  est renvoyée.
+		Si un caractère est disponible, il est retourné en tant que
+		Nombre. Utilisez nr2char() pour le convertir en Chaîne.
+		Inversement, pour transformer une Chaîne multi-octets en
+		Nombre, utilisez ceci : >
+			:let c = getchar()
+			:if c == 0
+			:  let c = char2nr(c)
+			:endif
+<		La valeur retournée est négative pour les touches spéciales.
+		La valeur retournée est nulle si aucun caractère n'est
+		disponible.
+		Il n'y a pas d'invite, vous devrez donc faire apparaître
+		clairement à l'utilisateur qu'un caractère doit être entré.
+		Aucun mappage ne sera effectué pour le caractère.
+		Les codes clavier sont remplacés : quand l'utilisateur presse
+		la touche <Suppr>, le code de la touche <Suppr> est renvoyé,
+		et non la séquence clavier brute. Exemples : >
+			getchar() == "\<Del>"
+			getchar() == "\<S-Left>"
+<		Cet exemple redéfinit "f" pour ignorer la casse : >
+			:nmap f :call ChercheCar()<CR>
+			:function ChercheCar()
+			:  let c = nr2char(getchar())
+			:  while col('.') < col('$') - 1
+			:    normal l
+			:    if getline('.')[col('.') - 1] ==? c
+			:      break
+			:    endif
+			:  endwhile
+			:endfunction
+<
+							*getcharmod()*
+getcharmod()	Renvoie un Nombre, qui donne l'état des modificateurs pour le
+		dernier caractère obtenu avec getchar() ou d'une autre
+		manière. Ces valeurs sont ajoutées :
+			2	maj
+			4	contrôle
+			8	alt (méta)
+			16	double clic de la souris
+			32	triple clic de la souris
+			64	quadruple clic de la souris
+			128	Macintosh uniquement : commande
+		Seuls les modificateurs qui n'ont pas été inclus dans le
+		caractère lui-même peuvent être obtenus. Par exemple, Maj + a
+		donne 'A', sans modificateur.
+
+							*getbufvar()*
+getbufvar({expr}, {nomvar})
+		Renvoie la valeur de l'option ou de la variable locale de
+		tampon {nomvar} dans le tampon {expr}. NOTE : Le nom sans "b:"
+		doit être utilisé.
+		Cela marche aussi pour une option globale ou locale de
+		fenêtre, mais pas pour une variable globale ou locale de
+		fenêtre.
+		Sur l'utilisation de {expr}, voir |bufname()| plus haut.
+		Si le tampon ou la variable n'existe pas, renvoie une chaîne
+		vide, sans émettre de message d'erreur.
+		Exemples : >
+			:let tamponmodif = getbufvar(1, "&mod")
+			:echo "nomfich mavar =" getbufvar("nomfich", "mavar")
+<
+							*getcwd()*
+getcwd()	Renvoie une Chaîne, qui correspond au nom du répertoire de
+		travail courant.
+
+							*getfsize()*
+getfsize({nomfich})
+		Renvoie un Nombre, qui correspond à la taille en octets du
+		fichier {nomfich}.
+		Si {nomfich} est un répertoire, renvoie 0.
+		Si le fichier {nomfich} ne peut pas être trouvé, renvoie -1.
+
+							*getftime()*
+getftime({nomfich})
+		Renvoie un Nombre, qui correspond à la date de dernière
+		modification du fichier {nomfich}. La valeur est mesurée en
+		secondes écoulées depuis le 1er janvier 1970, et peut être
+		passée à strftime(). Voir aussi |localtime()| et |strftime()|.
+		Si le fichier {nomfich} ne peut pas être trouvé, renvoie -1.
+
+							*getline()*
+getline({nol})  Renvoie une Chaîne, correspondant à la ligne {nol} du tampon
+		courant. Exemple : >
+			getline(1)
+<		Si {nol} est une Chaîne qui ne débute pas par un chiffre,
+		line() est appelée pour traduire la Chaîne en Nombre.
+		Pour obtenir la ligne sous le curseur : >
+			getline(".")
+<		Si {nol} est inférieur à 1 ou supérieur au nombre de lignes du
+		tampon, renvoie une chaîne vide.
+
+							*getreg()*
+getreg([{nomreg}]
+		Renvoie une Chaîne, correspondant au contenu du registre
+		{nomreg}. Exemple : >
+			:let textepp = getreg('*')
+<		getreg('=') renvoie la dernière valeur évaluée du registre
+		d'expression (utile dans les mappages).
+		Si {nomreg} n'est pas spécifié, |v:register| est utilisé.
+
+							*getregtype()*
+getregtype([{nomreg}])
+		Renvoie une Chaîne, correspondant au type du registre
+		{nomreg}. Les valeurs possibles sont :
+		    "v"		pour du texte par caractères |characterwise|
+		    "V"		pour du texte par lignes |linewise|
+		    "<CTRL-V>{larg}"
+				pour du texte par blocs |blockwise-visual|
+		    0		pour un registre vide ou inconnu
+		<CTRL-V> désigne un caractère unique, de valeur 0x16.
+		Si {nomreg} n'est pas spécifié, |v:register| est utilisé.
+
+							*getwinposx()*
+getwinposx()	Renvoie un Nombre, correspondant à la coordonnée X en pixels
+		du côté gauche de la fenêtre IHM graphique Vim.
+		Si l'information n'est pas disponible, renvoie -1.
+
+							*getwinposy()*
+getwinposy()	Renvoie un Nombre, correspondant à la coordonnée Y en pixels
+		du sommet de la fenêtre IHM graphique Vim.
+		Si l'information n'est pas disponible, renvoie -1.
+
+							*getwinvar()*
+getwinvar({no}, {nomvar})
+		Renvoie la valeur de l'option ou de la variable locale de
+		fenêtre {nomvar} dans la fenêtre {no}.
+		Cela marche aussi pour une option globale ou locale de tampon,
+		mais pas pour une variable globale ou locale de tampon.
+		NOTE : Le nom sans "w:" doit être utilisé.
+		Exemples : >
+			:let list_est_actif = getwinvar(2, '&list')
+			:echo "mavar = " . getwinvar(1, 'mavar')
+<
+							*glob()*
+glob({expr})	Étend les caractères d'englobement dans {expr}. Renvoie une
+		Chaîne.
+		S'il y a des correspondances multiples, elles sont séparées
+		par des caractères <NL>.
+		Si l'expansion échoue, renvoie une chaîne vide.
+		Un nom de fichier inexistant n'est pas inclus.
+
+		Sur la plupart des systèmes, des contre-apostrophes peuvent
+		être utilisées pour obtenir des noms de fichiers depuis une
+		commande externe. Exemple : >
+			:let fichmarqueur = glob("`find . -name tags -print`")
+			:let &tags = substitute(fichmarqueur, "\n", ",", "g")
+<		La sortie du programme entre contre-apostrophes doit contenir
+		un seul élément par ligne. Les espaces sont autorisés dans un
+		élément.
+
+		Voir |expand()| pour étendre des variables spéciales de Vim.
+		Voir |system()| pour récupérer la sortie brute d'une commande
+		externe.
+
+							*globpath()*
+globpath({chemin}, {expr})
+		Effectue glob() dans tous les répertoires de {chemin} et
+		concatène le résultat. Exemple : >
+			:echo globpath(&rtp, "syntax/c.vim")
+<		{chemin} est une liste de noms de répertoires séparés par des
+		virgules. Chaque nom de répertoire est préfixé à {expr} et
+		étendu comme avec glob(). Un séparateur de chemin est ajouté
+		si nécessaire.
+		Si l'expansion échoue pour un des répertoires, il n'y a pas de
+		message d'erreur.
+		L'option 'wildignore' s'applique : les noms correspondant à un
+		des motifs de 'wildignore' seront sautés.
+
+							*has()*
+has({fctalite})	Renvoie un Nombre, qui vaut 1 si la fonctionnalité {fctalite}
+		est supportée, zéro sinon. L'argument {fctalite} est une
+		chaîne. Voir |feature-list| ci-dessous.
+
+							*hasmapto()*
+hasmapto({qqc} [, {mode}])
+		Renvoie un Nombre, qui vaut 1 s'il existe un mappage qui
+		contient {qqc} quelque part dans son côté droit (ce à quoi une
+		séquence est mappée) et que ce mappage existe dans un des
+		modes donnés par {mode}.
+		Cette fonction teste les mappages globaux comme les mappages
+		locaux au tampon courant.
+		Si aucun mappage correspondant n'est trouvé, renvoie 0.
+		Les caractères suivants sont reconnus dans {mode} :
+			n	mode Normal
+			v	mode Visuel
+			o	mode Opérateur-en-cours
+			i	mode Insertion
+			l	mode Arg-lang ("r", "f", "t", etc.)
+			c	mode Ligne-de-commande
+		Si {mode} est omis, "nvo" est utilisé.
+
+		Cette fonction est utile pour tester si un mappage à une
+		fonction existe déjà dans un script Vim. Exemple : >
+			:if !hasmapto('\Choseafaire')
+			:  map <Leader>d \Choseafaire
+			:endif
+<		Ceci installe un mappage à "\Choseafaire" uniquement s'il
+		n'existe pas déjà de mappage à "\Choseafaire".
+
+							*histadd()*
+histadd({histo}, {elem})
+		Ajoute la Chaîne {elem} à l'historique {histo} qui peut
+		prendre une des valeurs suivantes :
+							*hist-names*
+		    "cmd"    ou ":"	historique de la ligne de commande
+		    "search" ou "/"	historique de la chaîne de recherche
+		    "expr"   ou "="	historique du registre d'expression
+		    "input"  ou "@"	historique de la ligne d'entrée
+		Si {elem} existe déjà dans l'historique, il sera repositionné
+		pour devenir l'entrée la plus récente.
+		Renvoie un Nombre : 1 si l'opération s'est déroulée avec
+		succès, 0 sinon.
+
+		Exemple : >
+			:call histadd("input", strftime("%d %b %Y"))
+			:let date = input("Entrez la date : ")
+<		Cette fonction n'est pas disponible dans le bac à sable
+		|sandbox|.
+
+							*histdel()*
+histdel({histo} [, {elem}])
+		Efface {histo}, c.-à-d. supprime toutes ses entrées. Voir
+		|hist-names| pour les valeurs possibles de {histo}.
+
+		Si l'argument {elem} est donné comme une Chaîne, il est
+		traité en tant qu'expression rationnelle. Toutes les entrées
+		correspondant à cette expression (s'il y en a) seront
+		supprimées de l'historique. La casse doit correspondre, à
+		moins que "\c" ne soit utilisé |/\c|.
+		Si {elem} est un Nombre, il sera interprété comme un index,
+		voir |:history-indexing|. L'entrée correspondante sera
+		supprimée si elle existe.
+
+		Renvoie un Nombre : 1 si l'opération s'est déroulée avec
+		succès, 0 sinon.
+
+		Exemples : >
+			:call histdel("expr")
+<				Efface l'historique du registre d'expression. >
+			:call histdel("/", '^\*')
+<				Supprime toutes les entrées débutant par "*"
+				de l'historique de recherche. >
+			:call histdel("search", histnr("search"))
+			:call histdel("search", -1)
+			:call histdel("search", '^'.histget("search", -1).'$')
+<				Ces trois commandes sont équivalentes. >
+			:call histdel("search", -1)
+			:let @/ = histget("search", -1)
+<				Supprime le dernier motif de recherche et
+				utilise l'avant-dernier pour la commande "n"
+				et 'hlsearch'.
+
+							*histget()*
+histget({histo} [, {index}])
+		Renvoie une Chaîne, correspondant à l'entrée de numéro {index}
+		dans {histo}. Voir |hist-names| pour les valeurs possibles de
+		{histo} et |:history-indexing| pour {index}. S'il n'existe
+		pas d'entrée correspondante, renvoie une Chaîne vide. Quand
+		{index} est omis, l'élément le plus récent de l'historique est
+		utilisé.
+
+		Exemples : >
+			:execute '/' . histget("search", -2)
+<				Restaure l'avant-dernière recherche effectuée
+				selon l'historique. >
+			:command -nargs=1 H execute histget("cmd", 0+<args>)
+<				Définit une commande Ex ":H {no}" qui effectue
+				la réexécution de la {no}-ième entrée de la
+				sortie de |:history|.
+
+							*histnr()*
+histnr({histo}) Renvoie un Nombre, qui correspond à l'entrée courante dans
+		{histo}. Voir |hist-names| pour les valeurs possibles de
+		{histo}.
+		Si une erreur se produit, renvoie -1.
+
+		Exemple : >
+			:let index_entr = histnr("expr")
+<
+							*hlexists()*
+hlexists({nom})	Renvoie un Nombre, qui est non-nul si un groupe de
+		surbrillance nommé {nom} existe. Ce groupe doit avoir été
+		défini d'une façon ou d'une autre (pas uniquement quand une
+		surbrillance a été définie pour lui, mais aussi quand il a été
+		utilisé pour un élément de syntaxe).
+							*highlight_exists()*
+		Nom obsolète : highlight_exists().
+
+							*hlID()*
+hlID({nom})	Renvoie un Nombre, correspondant à l'ID du groupe de
+		surbrillance de nom {nom}. Lorsque le groupe de surbrillance
+		n'existe pas, renvoie zéro.
+		Cela peut être utilisé pour extraire une information sur le
+		groupe de surbrillance. Par exemple, pour obtenir la couleur
+		de fond du groupe "Comment" : >
+			:echo synIDattr(synIDtrans(hlID("Comment")), "bg")
+<							*highlightID()*
+		Nom obsolète : highlightID().
+
+							*hostname()*
+hostname()	Renvoie une Chaîne, qui correspond au nom de la machine sur
+		laquelle Vim s'exécute actuellement. Les noms de machines
+		d'une longueur supérieure à 256 caractères sont tronqués.
+
+							*iconv()*
+iconv({expr}, {de}, {a})
+		Renvoie une Chaîne, qui correspond au texte {expr} converti de
+		l'encodage {de} à l'encodage {a}.
+		Quand la conversion échoue, renvoie une chaîne vide.
+		Les noms d'encodages peuvent prendre toutes les valeurs
+		acceptées par la fonction de bibliothèque iconv(), voir ":!man
+		3 iconv".
+		La plupart des conversions requièrent que Vim ait été compilé
+		avec la fonctionnalité |+iconv|. Sans cela, seule la
+		conversion UTF-8 -> Latin-1 et son contraire peuvent être
+		effectuées.
+		Cela peut être utilisé pour afficher des messages avec des
+		caractères spéciaux, indépendamment de la valeur de
+		'encoding'. Écrivez le message en UTF-8 et utilisez : >
+			:echo iconv(chaine_utf8, "utf-8", &enc)
+<		NOTE : Vim utilise UTF-8 pour tous les encodages Unicode, la
+		conversion de/en UCS-2 est automatiquement changée pour
+		utiliser UTF-8. Vous ne pouvez pas utiliser UCS-2 dans une
+		chaîne de toute façon, à cause des octets NUL.
+		{uniquement si compilé avec la fonctionnalité |+multi_byte|}
+
+							*indent()*
+indent({nol})	Renvoie un Nombre, correspondant à l'indentation de la ligne
+		{nol} dans le tampon courant. L'indentation est comptée en
+		espaces, la valeur de 'tabstop' est prise en compte. {nol} est
+		traitée comme dans |getline()|.
+		Si {nol} est invalide, renvoie -1.
+
+							*input()*
+input({invite} [, {texte}])
+		Renvoie une Chaîne, qui correspond à tout ce que l'utilisateur
+		peut saisir sur la ligne de commande. {invite} peut être soit
+		une chaîne d'invite, soit une chaîne blanche (pas d'invite).
+		"\n" peut être utilisé dans l'invite pour débuter une nouvelle
+		ligne. La surbrillance fixée par |:echohl| est utilisée pour
+		l'invite. La saisie est entrée exactement comme une ligne de
+		commande, avec les mêmes commandes d'édition et mappages. Il
+		existe un historique séparé pour les lignes tapées pour
+		input().
+		Si le {texte} optionnel est présent, il est utilisé comme
+		réponse par défaut, comme si l'utilisateur l'avait saisi.
+		NOTE : Cela ne doit pas être utilisé dans un fichier de
+		démarrage, pour les versions qui fonctionnent uniquement en
+		mode IHM graphique (p. ex., l'IHM graphique Win32).
+		NOTE : Quand input() est appelé depuis un mappage, il
+		consommera tous les caractères jusqu'à la fin du mappage, car
+		un mappage est traité comme si les caractères étaient saisis.
+		Utilisez |inputsave()| avant input() et |inputrestore()| après
+		input() pour éviter cela. Une autre solution consiste à éviter
+		que des caractères additionnels ne suivent dans le mappage,
+		p. ex., en utilisant |:execute| ou |:normal|.
+
+		Exemple : >
+			:if input("Bière ou café ? ") == "bière"
+			:  echo "À votre santé !"
+			:endif
+<		Exemple avec un texte par défaut : >
+			:let couleur = input("Couleur ? ", "blanc")
+<		Exemple avec un mappage : >
+			:nmap \x :call DonneMTF()<CR>:exe "/" . MTF<CR>
+			:function DonneMTF()
+			:  call inputsave()
+			:  let g:MTF = input("Entrez un motif de recherche : ")
+			:  call inputrestore()
+			:endfunction
+<
+							*inputdialog()*
+inputdialog({invite} [, {texte} [, {retourannul}]])
+		Comme input(), mais lorsque l'IHM graphique est lancée et que
+		les dialogues de texte sont supportés, une boîte de dialogue
+		apparaît pour la saisie du texte.
+		Exemple : >
+			:let n = inputdialog("valeur de shiftwidth", &sw)
+			:if n != ""
+			:  let &sw = n
+			:endif
+<		Retourne {retourannul} quant le dialogue est annulé. Retourne
+		une chaîne vide quand il est ignoré.
+		Taper <Entree> revient à presser le bouton "OK". Taper <Echap>
+		revient à presser le bouton "Cancel".
+
+							*inputrestore()*
+inputrestore()	Restaure une saisie antérieure sauvegardée à l'aide de
+		inputsave(). Devrait être appelé autant de fois que
+		inputsave() l'a été. Si cependant vous l'appelez un plus grand
+		nombre de fois, cela sera sans conséquence.
+		Retourne 1 quand il n'y a rien à restaurer, 0 sinon.
+
+							*inputsave()*
+inputsave()	Sauvegarde la saisie courante (mappages inclus) et l'efface
+		afin qu'une nouvelle invite attende une saisie ultérieure de
+		l'utilisateur. Devrait être suivi par un inputrestore()
+		correspondant après l'invite. Peut être utilisé plusieurs
+		fois, auquel cas il faut utiliser un nombre équivalent
+		d'appels à inputrestore().
+		Retourne 1 si la mémoire est insuffisante, 0 sinon.
+
+							*inputsecret()*
+inputsecret({invite} [, {texte}])
+		Cette fonction se comporte comme la fonction |input()|, à deux
+		exceptions près :
+		1° La réponse de l'utilisateur sera affichée comme une
+		   séquence d'étoiles ('*') afin de garder la saisie secrète ;
+		2° La réponse de l'utilisateur ne sera pas enregistrée dans
+		   l'historique de la ligne d'entrée |history|.
+		Renvoie une Chaîne, qui correspond à tout ce que l'utilisateur
+		a saisi sur la ligne de commande à la suite de l'invite
+		proposée.
+
+							*isdirectory()*
+isdirectory({repertoire})
+		Renvoie un Nombre, qui est non-nul quand un répertoire de
+		nom {repertoire} existe. Si {repertoire} n'existe pas, ou
+		n'est pas un répertoire, renvoie FAUX. {repertoire} peut être
+		une expression quelconque, qui est utilisée en tant que
+		Chaîne.
+
+						*libcall()* *E364* *E368*
+libcall({nombib}, {nomfonc}, {argument})
+		Appelle la fonction {nomfonc} dans la bibliothèque de support
+		{nombib} avec l'argument simple {argument}.
+		C'est utile pour appeler les fonctions d'une bibliothèque que
+		vous avez créée spécialement pour utiliser avec Vim. Comme un
+		seul argument est autorisé, l'appel de fonctions de la
+		bibliothèque standard est plutôt limité.
+		Renvoie la Chaîne retournée par la fonction. Si la fonction
+		retourne NUL, cela apparaîtra comme une chaîne vide "" pour
+		Vim.
+		Si la fonction retourne un Nombre, utilisez libcallnr() !
+		Si {argument} est un Nombre, il est passé à la fonction en
+		tant qu'entier ; si {argument} est une Chaîne, il est passé à
+		la fonction en tant que chaîne terminée par NUL.
+		Cette fonction échouera en mode restreint |restricted-mode|.
+
+		libcall() vous permet d'écrire vos propres extensions à
+		« greffer » dans Vim sans avoir à recompiler le programme. Il
+		n'est PAS conçu pour appeler des fonctions système ! Si vous
+		essayez malgré tout, Vim plantera très probablement.
+
+		Pour Win32, les fonctions que vous écrivez doivent être
+		placées dans un DLL et utiliser les conventions d'appel
+		normales du C (PAS de Pascal, qui est utilisé dans les DLL
+		système de Windows). La fonction doit accepter exactement un
+		un paramètre, soit un pointeur de caractère, soit un entier
+		long, et doit retourner un pointeur de caractère ou NUL. Le
+		pointeur de caractère retourné doit pointer sur une zone de la
+		mémoire qui restera valide après le retour de la fonction
+		(p. ex., des données statiques dans le DLL). S'il pointe sur
+		une zone de mémoire déjà allouée, une fuite de mémoire en
+		découlera. L'utilisation d'un tampon statique dans la fonction
+		devrait fonctionner, celui-ci est ensuite libéré lorsque le
+		DLL est déchargé.
+
+		ATTENTION ! Si la fonction retourne un pointeur non valide,
+		Vim peut planter ! De même si la fonction retourne un Nombre,
+		car Vim croit qu'il s'agit d'un pointeur.
+		Pour les systèmes Win32, {nombib} devrait être le nom du
+		fichier DLL sans le suffixe ".DLL". Le chemin complet n'est
+		nécessaire que si le DLL n'est pas trouvé aux endroits
+		habituels.
+		Pour Unix : lorsque vous compilez vos propres greffons,
+		n'oubliez pas que le code objet doit être compilé comme
+		indépendant de la position ("PIC").
+		{uniquement dans Win32 et sur certaines versions Unix, lorsque
+		la fonctionnalité |+libcall| est présente}
+		Exemples : >
+			:echo libcall("libc.so", "getenv", "HOME")
+			:echo libcallnr("/usr/lib/libc.so", "getpid", "")
+<
+							*libcallnr()*
+libcallnr({nombib}, {nomfonc}, {argument})
+		Exactement comme libcall(), mais utilisé pour une fonction qui
+		retourne un entier au lieu d'une chaîne.
+		{uniquement dans Win32 et sur certaines versions Unix, lorsque
+		la fonctionnalité |+libcall| est présente}
+		Exemples (pas très utiles...) : >
+			:call libcallnr("libc.so", "printf", "Bonjour monde\n")
+			:call libcallnr("libc.so", "sleep", 10)
+<
+							*line()*
+line({expr})	Renvoie un Nombre, correspondant au numéro de ligne de la
+		position dans le fichier donnée par {expr}. Les positions
+		acceptées sont :
+		    .	    la position du curseur
+		    $	    la dernière ligne du tampon courant
+		    'x	    la position de la marque x (si la marque n'est pas
+			       fixée, 0 est renvoyé)
+		NOTE : Seules les marques dans le fichier courant peuvent être
+		utilisées. Exemples : >
+			line(".")		ligne du curseur
+			line("'t")		ligne de la marque t
+			line("'" . nommarque)	ligne de la marque nommarque
+<							*last-position-jump*
+		Cette autocommande saute à la dernière position connue dans un
+		fichier juste après son ouverture, quand la marque '" est
+		fixée : >
+			:au BufReadPost *
+			 \ if line("'\"") > 0 && line("'\"") <= line("$") |
+			 \   exe "normal g'\"" |
+			 \ endif
+<
+							*line2byte()*
+line2byte({nol})
+		Renvoie le numéro d'octet depuis le début du tampon de la
+		ligne {nol}. Cela inclut le caractère fin-de-ligne, selon la
+		valeur de l'option 'fileformat' pour le tampon courant. La
+		première ligne renvoie 1.
+		Cela peut aussi servir à obtenir le numéro d'octet de la ligne
+		située juste en dessous de la dernière : >
+			line2byte(line("$") + 1)
+<		Ceci correspond à la taille du fichier plus un.
+		Si {nol} est invalide ou que Vim n'a pas été compilé avec la
+		fonctionnalité |+byte_offset|, renvoie -1.
+		Voir aussi |byte2line()|, |go| et |:goto|.
+
+							*lispindent()*
+lispindent({nol})
+		Renvoie un Nombre, correspondant à l'indentation de la ligne
+		{nol} selon les règles d'indentation Lisp, comme avec 'lisp'.
+		L'indentation est comptée en espaces, la valeur de 'tabstop'
+		est prise en compte. {nol} est traitée comme dans |getline()|.
+		Si {nol} est invalide ou que Vim n'a pas été compilé avec la
+		fonctionnalité |+lispindent|, renvoie -1.
+
+							*localtime()*
+localtime()	Renvoie la date courante, mesurée en secondes écoulées depuis
+		le 1er janvier 1970. Voir aussi |strftime()| et |getftime()|.
+
+							*maparg()*
+maparg({nom} [, {mode}])
+		Renvoie le côté droit du mappage {nom} en mode {mode}. Quand
+		il n'y a pas de mappage pour {nom}, renvoie une Chaîne vide.
+		Les caractères suivants sont reconnus dans {mode} :
+			n	mode Normal
+			v	mode Visuel
+			o	mode Opérateur-en-cours
+			i	mode Insertion
+			c	mode Ligne-de-commande
+			l	mode Arg-lang |language-mapping|
+			""	modes Normal, Visuel et Opérateur-en-cours
+		Si {mode} est omis, "nvo" est utilisé.
+		Le {nom} peut comporter des noms de touches spéciales, comme
+		dans la commande ":map". La Chaîne retournée voit ses
+		caractères spéciaux traduits comme dans la sortie du listage
+		de la commande ":map".
+		Les mappages locaux au tampon courant sont testés les
+		premiers, puis les mappages globaux.
+
+							*mapcheck()*
+mapcheck({nom} [, {mode}])
+		Teste si un mappage correspond à {nom} en mode {mode}. Voir
+		|maparg()| pour {mode} et les noms spéciaux dans {nom}.
+		La correspondance est établie quand un mappage débute par
+		{nom} et quand un mappage est égal au début de {nom}.
+
+		    CORRESPOND AU MAPPAGE   "a"   "ab"   "abc"  ~
+		    mapcheck("a")	    oui	   oui	  oui
+		    mapcheck("abc")	    oui	   oui	  oui
+		    mapcheck("ax")	    oui	   non	  non
+		    mapcheck("b")	    non	   non	  non
+
+		La différence avec maparg() est que mapcheck() trouve un
+		mappage qui correspond à {nom}, tandis que maparg() ne trouve
+		de mappage que pour {nom} exactement.
+		Quand il n'y a pas de mappage débutant par {nom}, une Chaîne
+		vide est retournée. S'il y en a un, le côté droit de ce
+		mappage est retourné. S'il y en a plusieurs, le côté droit de
+		l'un d'eux est retourné.
+		Les mappages locaux au tampon courant sont testés les
+		premiers, puis les mappages globaux.
+		Cette fonction peut être utilisée pour tester si un mappage
+		peut être ajouté sans être ambigu. Exemple : >
+			:if mapcheck("_vv") == ""
+			:  map _vv :set guifont=7x13<CR>
+			:endif
+<		Cela évite d'ajouter le mappage "_vv" quand il existe déjà un
+		mappage pour "_v" ou pour "_vvv".
+
+							*match()*
+match({expr}, {motif} [, {debut}])
+		Renvoie un Nombre, qui donne l'index dans {expr} où {motif}
+		correspond. Une correspondance au premier caractère renvoie
+		zéro. S'il n'y a pas de correspondance, -1 est renvoyé.
+		Exemple : >
+			:echo match("testeur", "eur")
+<		Ceci retourne "4".
+		Voir |string-match| pour l'utilisation de {motif}.
+		Si {debut} est donné, la recherche commence à partir du
+		caractère {debut}. La fonction renvoie cependant toujours
+		l'index compté depuis le premier caractère. Exemple : >
+			:echo match("testeur", "eur", 2)
+<		Ceci retourne toujours "4". >
+			:echo match("testeur", "eur", 4)
+<		Ceci retourne toujours "4". >
+			:echo match("testeur", "t", 2)
+<		Ceci retourne "3".
+		Si {debut} < 0, il sera fixé à 0.
+		Si {debut} > strlen({expr}), - 1 est retourné.
+		Voir |pattern| pour les motifs qui sont acceptés.
+		L'option 'ignorecase' est utilisée pour définir la sensibilité
+		du motif à la casse. 'smartcase' n'est PAS utilisé. La
+		correspondance est toujours établie comme si 'magic' était
+		activée et 'cpoptions' vide.
+
+							*matchend()*
+matchend({expr}, {motif} [, {debut}])
+		Comme match(), mais renvoie l'index du premier caractère après
+		la correspondance. Exemple : >
+			:echo matchend("testeur", "eur")
+<		Ceci renvoie "7".
+		Si {debut} est donné, il a la même signification que pour
+		match(). >
+			:echo matchend("testeur", "eur", 2)
+<		Ceci renvoie "7". >
+			:echo matchend("testeur", "eur", 5)
+<		Ceci renvoie "-1".
+
+							*matchstr()*
+matchstr({expr}, {motif} [, {debut}])
+		Comme match(), mais renvoie la chaîne qui correspond.
+		Exemple : >
+			:echo matchstr("testeur", "eur")
+<		Ceci renvoie "eur".
+		Quand il n'y a pas de correspondance, renvoie "".
+		Si {debut} est donné, il a la même signification que pour
+		match(). >
+			:echo matchstr("testeur", "eur", 2)
+<		Ceci renvoie "eur". >
+			:echo matchstr("testeur", "eur", 5)
+<		Ceci renvoie "".
+
+							*mode()*
+mode()		Renvoie une Chaîne qui indique le mode courant :
+			n	Normal
+			v	Visuel par caractères
+			V	Visuel par lignes
+			CTRL-V	Visuel par blocs
+			s	Sélection par caractères
+			S	Sélection par lignes
+			CTRL-S	Sélection par blocs
+			i	Insertion
+			R	Remplacement
+			c	Ligne-de-commande
+			r	invite Appuyez-sur-entrée
+		C'est utile dans l'option 'statusline'. Dans la plupart des
+		autres endroits, cela renvoie toujours "c" ou "n".
+
+							*nextnonblank()*
+nextnonblank({nol})
+		Renvoie le numéro de la première ligne non-blanche à ou en
+		dessous de {nol}. Exemple : >
+			:if getline(nextnonblank(1)) =~ "Java"
+<		Si {nol} est invalide ou si aucune ligne non-blanche n'est
+		trouvée, renvoie zéro.
+		Voir aussi |prevnonblank()|.
+
+							*nr2char()*
+nr2char({expr})	Renvoie une Chaîne avec un caractère simple, de valeur
+		numérique {expr}. Exemples : >
+			nr2char(64)	    retourne "@"
+			nr2char(32)	    retourne " "
+<		La valeur courante de 'encoding' est utilisée. Pour "utf-8"
+		par exemple : >
+			nr2char(300)	    retourne un 'I' surmonté d'un arc
+<
+							*prevnonblank()*
+prevnonblank({nol})
+		Renvoie le numéro de la première ligne non-blanche à ou
+		au-dessus de {nol}. Exemple : >
+			:let ind = indent(prevnonblank(v:lnum - 1))
+<		Si {nol} est invalide ou si aucune ligne non-blanche n'est
+		trouvée, renvoie zéro.
+		Voir aussi |nextnonblank()|.
+
+							*remote_expr()* *E449*
+remote_expr({serveur}, {chaine} [, {varID}])
+		Envoie la {chaine} au {serveur}. La chaîne est envoyée en tant
+		qu'expression, et le résultat est retourné après évaluation.
+		Si {varID} est présent, il est interprété comme le nom d'une
+		variable, dans laquelle un {IDserveur} est alors écrit pour
+		une utilisation ultérieure avec remote_read().
+		Voir aussi |clientserver| et |RemoteReply|.
+		Cette fonction n'est pas disponible dans le bac à sable
+		|sandbox|.
+		{uniquement si compilé avec la fonctionnalité |+clientserver|}
+		NOTE : En cas d'erreur, un message d'erreur local sera émis et
+		la fonction renverra une chaîne vide.
+		Exemples : >
+			:echo remote_expr("gvim", "2+2")
+			:echo remote_expr("gvim1", "b:current_syntax")
+<
+							*remote_foreground()*
+remote_foreground({serveur})
+		Met le serveur Vim de nom {serveur} au premier plan. C'est
+		identique à >
+			remote_expr({serveur}, "foreground()")
+<		sauf que sur les systèmes Win32, c'est le client qui effectue
+		le travail, pour passer outre le fait que le SE n'autorise pas
+		toujours le serveur à se mettre lui-même au premier plan.
+		Cette fonction n'est pas disponible dans le bac à sable
+		|sandbox|.
+		{uniquement dans les versions IHM graphiques Win32, Athena,
+		Motif et GTK+, ainsi que dans la version console Win32}
+
+							*remote_peek()*
+remote_peek({IDserveur} [, {varretour}])
+		Renvoie un Nombre positif s'il existe des chaînes disponibles
+		depuis {IDserveur}. Copie toute chaîne de réponse dans la
+		variable {varretour} si spécifiée. {varretour} doit être une
+		chaîne portant le nom d'une variable.
+		Renvoie zéro si aucune chaîne n'est disponible.
+		Renvoie -1 si quelque chose se passe mal.
+		Voir aussi |clientserver|.
+		Cette fonction n'est pas disponible dans le bac à sable
+		|sandbox|.
+		{uniquement si compilé avec la fonctionnalité |+clientserver|}
+		Exemples : >
+			:let reponse = ""
+			:echo "RÉPONSE : " . remote_peek(id, "reponse") .
+			 \ " : " . reponse
+<
+							*remote_read()*
+remote_read({IDserveur})
+		Retourne la plus ancienne réponse disponible depuis
+		{IDserveur} et la consomme. Bloque jusqu'à ce qu'une réponse
+		soit disponible.
+		Voir aussi |clientserver|.
+		Cette fonction n'est pas disponible dans le bac à sable
+		|sandbox|.
+		{uniquement si compilé avec la fonctionnalité |+clientserver|}
+		Exemple : >
+			:echo remote_read(id)
+<
+							*remote_send()* *E241*
+remote_send({serveur}, {chaine} [, {varID}])
+		Envoie la {chaine} au {serveur}. La chaîne est envoyée comme
+		si elle avait été tapée et le retour de la fonction est
+		immédiat.
+		Si {varID} est spécifié, il est interprété comme le nom d'une
+		variable ; un {IDserveur} y est alors mémorisé pour une
+		lecture ultérieure avec remote_read().
+		Voir aussi |clientserver| et |RemoteReply|.
+		Cette fonction n'est pas disponible dans le bac à sable
+		|sandbox|.
+		{uniquement si compilé avec la fonctionnalité |+clientserver|}
+		NOTE : Toutes les erreurs seront reportées au serveur et
+		risquent de salir l'affichage.
+		Exemples : >
+			:echo remote_send("gvim", ":DropEtRepond " . fichier,
+			 \ "idserveur") . remote_read(idserveur)
+
+			:autocmd NONE RemoteReply *
+			 \ echo remote_read(expand("<amatch>"))
+			:echo remote_send("gvim", ":sleep 10 | echo " .
+			 \ 'server2client(expand("<client>"), "SALUT")<CR>')
+<
+							*rename()*
+rename({de}, {a})
+		Renomme le fichier de nom {de} en nom {a}. Cela devrait
+		également fonctionner pour déplacer les fichiers d'un système
+		de fichiers à un autre.
+		Renvoie un Nombre : 0 si l'opération s'est déroulée avec
+		succès, un non-nul sinon.
+		Cette fonction n'est pas disponible dans le bac à sable
+		|sandbox|.
+
+							*resolve()*
+resolve({nomfich})
+		Sur MS-Windows, quand {nomfich} est un raccourci (un fichier
+		".lnk"), renvoie le chemin vers lequel ce raccourci pointe.
+		Sur Unix, quand {nomfich} est un lien symbolique, renvoie le
+		chemin vers lequel ce lien pointe. Cela n'est effectué qu'une
+		seule fois, le chemin retourné peut être un lien symbolique à
+		son tour.
+		Sinon, renvoie {nomfich}.
+
+							*search()*
+search({motif} [, {drapeaux}])
+		Recherche le motif d'exprat {motif}. La recherche commence à
+		la position du curseur.
+		{drapeaux} est une Chaîne, qui peut contenir les caractères
+		suivants :
+			'b'	recherche vers l'arrière au lieu de l'avant
+								  ["Backwards"]
+			'w'	boucle à la fin du fichier	       ["Wrap"]
+			'W'	ne boucle pas à la fin du fichier
+		Si ni 'w' ni 'W' n'est donné, l'option 'wrapscan' s'applique.
+
+		Lorsqu'une correspondance a été trouvée, son numéro de ligne
+		est renvoyé et le curseur est positionné sur cette
+		correspondance. S'il n'y a pas de correspondance, 0 est
+		renvoyé et le curseur reste en place. Aucun message d'erreur
+		n'est donné.
+
+		Exemple (agit sur tous les fichiers de la liste des
+		arguments) : >
+			:let n = 1
+		    	:while n <= argc()	" Parcourt la liste des arg.
+		    	:  exe "argument " . n
+		    	:  " Commence au dernier car dans le fichier et boucle
+			:  " au premier pour trouver une correspondance au
+			:  " début du fichier
+		    	:  normal G$
+		    	:  let drapeaux = "w"
+		    	:  while search("toto", drapeaux) > 0
+		    	:    s/toto/titi/g
+		    	:	 let drapeaux = "W"
+		    	:  endwhile
+		    	:  update		" Enregistre si modifié
+		    	:  let n = n + 1
+		    	:endwhile
+<
+							*searchpair()*
+searchpair({debut}, {milieu}, {fin} [, {drapeaux} [, {ignore}]])
+		Recherche la correspondance d'un couple imbriqué début/fin.
+		Cela peut servir à trouver le "endif" qui correspond à un
+		"if", tandis que les autres couples "if"/"endif" entre seront
+		ignorés.
+		La recherche commence à la position du curseur. Lorsqu'une
+		correspondance est trouvée, son numéro de ligne est renvoyé,
+		et le curseur est positionné sur cette correspondance. S'il
+		n'y a pas de correspondance, 0 ou -1 est renvoyé et le curseur
+		reste en place. Aucun message d'erreur n'est donné.
+
+		{debut}, {milieu} et {fin} sont des motifs, voir |pattern|.
+		Ils ne doivent pas contenir de paires \( \). L'utilisation de
+		\%( \) est autorisée. Lorsque {milieu} est non vide, il est
+		trouvé quel que soit le sens de la recherche, mais pas dans
+		une paire imbriquée début-fin. Exemple typique : >
+			searchpair('\<if\>', '\<else\>', '\<endif\>')
+<		En laissant {milieu} vide, le "else" aurait été sauté.
+
+		Les {drapeaux} sont les mêmes que pour |search()|, avec en
+		supplément :
+			'n'	Ne déplace pas le curseur.		["Not"]
+			'r'	Répète jusqu'à ce qu'il n'y ait plus de
+				correspondances trouvées ; trouvera le couple
+				extérieur.
+			'm'	Renvoie le nombre de correspondances au lieu
+				du numéro de ligne de la correspondance ; > 1
+				uniquement quand 'r' est spécifié.    ["Match"]
+
+		Lorsqu'une correspondance pour {debut}, {milieu} ou {fin} est
+		trouvée, l'expression {ignore} est évaluée avec le curseur
+		positionné au début de la correspondance. Il devrait retourner
+		un non-nul si cette correspondance doit être sautée (parce
+		qu'elle est à l'intérieur d'un commentaire ou d'une chaîne,
+		p. ex.).
+		Quand {ignore} est omis ou vide, chaque correspondance est
+		acceptée. Quand l'évaluation de {ignore} provoque une erreur,
+		la recherche est avortée et -1 est retourné.
+
+		La valeur de 'ignorecase' est utilisée. 'magic' est ignoré,
+		les motifs sont interprétés comme s'il était activé.
+
+		La recherche commence exactement à la position du curseur. Une
+		correspondance avec {debut}, {milieu} ou {fin} au caractère
+		suivant, dans la direction de la recherche, sera la première
+		trouvée. Exemple :
+			if 1 ~
+			  if 2 ~
+			  endif 2 ~
+			endif 1 ~
+		Si vous commencez au "if 2", avec le curseur sur le 'i', et en
+		recherchant vers l'avant, "endif 2" est trouvé. Si vous
+		commencez au caractère juste avant le "if 2", le "endif 1"
+		sera trouvé. En effet, le "if 2" sera trouvé en premier et
+		sera considéré comme un couple "if"/"endif" imbriqué depuis
+		"if 2" jusqu'à "endif 2".
+
+		Exemple (trouve la commande "endif" dans un script Vim) : >
+			:echo searchpair('\<if\>', '\<el\%[seif]\>',
+			 \ '\<en\%[dif]\>', 'W', 'getline(".") =~ "^\\s*\""')
+<		Ceci fonctionne quand le curseur est sur ou après le "if" dont
+		la correspondance doit être trouvée. NOTE : Des chaînes entre
+		apostrophes simples sont utilisées afin d'éviter d'avoir à
+		doubler les contre-obliques. L'expression {ignore} ne décèlera
+		les commentaires qu'en début de ligne, pas à la suite d'une
+		commande. De plus, un mot "en" ou "if" au sein d'une ligne
+		sera considéré comme une correspondance.
+
+		Un autre exemple (recherche le '{' apparié à un '}') : >
+			:echo searchpair('{', '', '}', 'bW')
+<		Ceci fonctionne quand le curseur est sur ou avant le '}' dont
+		la correspondance doit être trouvée. Pour rejeter les
+		correspondances que la coloration syntaxique reconnaît comme
+		des chaînes : >
+			:echo searchpair('{', '', '}', 'bW',
+			 \ 'synIDattr(synID(line("."), col("."), 0), "name")
+			 \ =~? "string"')
+<
+							*server2client()*
+server2client({IDclient}, {chaine})
+		Envoie une chaîne de réponse à {IDclient}. L'{IDclient} le
+		plus récent qui avait envoyé une chaîne peut être obtenu avec
+		expand("<client>").
+		{uniquement si compilé avec la fonctionnalité |+clientserver|}
+		NOTE : Cet ID doit être enregistré avant que la commande
+		suivante ne puisse être reçue. C'est-à-dire avant le retour de
+		la commande reçue et avant l'appel de toute commande qui
+		attendrait une saisie.
+		Voir aussi |clientserver|.
+		Exemple : >
+			:echo server2client(expand("<client>"), "SALUT")
+<
+							*serverlist()*
+serverlist()	Renvoie une liste des noms de serveurs disponibles, un par
+		ligne. Quand il n'y a pas de serveurs, renvoie une chaîne
+		vide.
+		Voir aussi |clientserver|.
+		{uniquement si compilé avec la fonctionnalité |+clientserver|}
+		Exemple : >
+			:echo serverlist()
+<
+							*setbufvar()*
+setbufvar({expr}, {nomvar}, {val})
+		Fixe l'option ou la variable locale {nomvar} dans le tampon
+		{expr} à {val}.
+		Cela marche aussi pour une option globale ou locale de
+		fenêtre, mais pas pour une variable globale ou locale de
+		fenêtre.
+		Pour une option locale de fenêtre, la valeur globale est
+		inchangée.
+		Sur l'utilisation de {expr}, voir |bufname()| plus haut.
+		NOTE : Le nom de variable sans "b:" doit être utilisé.
+		Exemples : >
+			:call setbufvar(1, "&mod", 1)
+			:call setbufvar("nomfich", "mavar", "blabla")
+<		Cette fonction n'est pas disponible dans le bac à sable
+		|sandbox|.
+
+							*setline()*
+setline({nol}, {ligne})
+		Fixe la ligne {nol} du tampon courant à {ligne}. Si cela
+		réussit, renvoie 0. Si cela échoue (souvent parce que {nol}
+		est invalide), renvoie 1. Exemple : >
+			:call setline(5, strftime("%c"))
+<		NOTE : Les marques '[ et '] ne sont pas fixées.
+
+							*setreg()*
+setreg({nomreg}, {valeur} [, {options}])
+		Fixe le registre {nomreg} à {valeur}.
+		Si {options} contient un 'a' ou si {nomreg} est en majuscules,
+		la valeur est simplement ajoutée.
+		{options} peut aussi contenir une spécification du type du
+		registre :
+		    "c" ou "v"		mode par caractères |characterwise|
+		    "l" ou "V"		mode par lignes |linewise|
+		    "b" ou "<CTRL-V>"	mode par blocs |blockwise-visual|
+		Si un nombre suit immédiatement "b" ou "<CTRL-V>", il est
+		utilisé comme largeur de la sélection. Sinon, la largeur du
+		bloc est fixée au nombre de caractères de la ligne la plus
+		longue (en comptant <Tab> comme un seul caractère).
+
+		Si {options} ne contient aucun paramètre de registre, le mode
+		par caractères est utilisé par défaut, sauf si {valeur} se
+		termine par <NL>.
+		Il n'est pas possible de fixer le contenu du registre '='.
+		Retourne 0 en cas de succès et un non-nul en cas d'échec.
+
+		Exemples : >
+			:call setreg(v:register, @*)
+			:call setreg('*', @%, 'ac')
+			:call setreg('a', "1\n2\n3", 'b5')
+<
+		L'exemple suivant montre l'utilisation des fonctions de
+		sauvegarde et de restauration de registre : >
+			:let var_a = getreg('a')
+			:let modevar_a = getregtype('a')
+			 ...
+			:call setreg('a', var_a, modevar_a)
+<
+		Vous pouvez également changer le type d'un registre en y
+		ajoutant une chaîne vide : >
+			:call setreg('a', '', 'al')
+<
+							*setwinvar()*
+setwinvar({no}, {nomvar}, {val})
+		Fixe l'option ou la variable locale {nomvar} dans la fenêtre
+		{expr} à {val}.
+		Cela marche aussi pour une option globale ou locale de tampon,
+		mais pas pour une variable globale ou locale de tampon.
+		Pour une option locale de tampon, la valeur globale est
+		inchangée.
+		NOTE : Le nom de variable sans "w:" doit être utilisé.
+		Exemples : >
+			:call setwinvar(1, "&list", 0)
+			:call setwinvar(2, "mavar", "blabla")
+<		Cette fonction n'est pas disponible dans le bac à sable
+		|sandbox|.
+
+							*strftime()*
+strftime({format} [, {date}])
+		Renvoie une Chaîne, qui correspond aux date et heure mises en
+		forme comme spécifié par la chaîne {format}. La {date} donnée
+		est utilisée, ou la date courante si aucune n'est donnée. Le
+		{format} accepté dépend de votre système, cette fonction n'est
+		donc pas portable ! Voir la page de manuel de la fonction C
+		strftime() pour le format. La longueur maximale de la chaîne
+		retournée est de 80 caractères.
+		Voir aussi |localtime()| et |getftime()|.
+		La langue peut être modifiée avec la commande |:language|.
+		Exemples : >
+		    :echo strftime("%c")	    dim 27 avr 1997 11:49:23
+		    :echo strftime("%Y %d %b %X")   1997 27 avr 11:53:25
+		    :echo strftime("%d%m%y %T")	    270497 11:53:55
+		    :echo strftime("%H:%M")	    11:55
+		    :echo strftime("%c", getftime("fichier"))
+						    date de modif de "fichier"
+<
+							*stridx()*
+stridx({bottedefoin}, {aiguille})
+		Renvoie un Nombre, qui donne l'index dans {bottedefoin} de
+		la première occurrence de la Chaîne {aiguille} dans la Chaîne
+		{bottedefoin}. La recherche est sensible à la casse. Utilisez
+		|match()| pour des recherches avancées.
+		Renvoie -1 si {aiguille} n'a pas d'occurrence dans
+		{bottedefoin}. Voir aussi |strridx()|.
+		Exemples : >
+			:echo stridx("Un Exemple", "Exemple")		3
+			:echo stridx("Point initial", "Point")	    	0
+			:echo stridx("Point initial", "point")	       -1
+<
+							*strlen()*
+strlen({expr})	Renvoie un Nombre, qui correspond à la longueur de la Chaîne
+		{expr} en octets. Si vous voulez compter le nombre de
+		caractères multi-octets, utilisez quelque chose comme ceci : >
+			:let longeur = strlen(substitute(chn, ".", "x", "g"))
+<		Les caractères de composition ne sont pas comptés.
+
+							*strpart()*
+strpart({src}, {debut} [, {long}])
+		Renvoie une Chaîne, qui correspond à une partie de {src},
+		débutant au caractère {debut} et de longueur {long}.
+		Si des caractères inexistants sont inclus, cela ne produit pas
+		d'erreur, les caractères sont simplement omis.
+		Si {long} est omis, la copie s'étend de {debut} jusqu'à la fin
+		de {src}. >
+			strpart("abcdefg", 3, 2)    == "de"
+			strpart("abcdefg", -2, 4)   == "ab"
+			strpart("abcdefg", 5, 4)    == "fg"
+			strpart("abcdefg", 3)       == "defg"
+<		NOTE : Pour inclure le premier caractère, {debut} doit valoir
+		0. Par exemple, pour obtenir trois caractères sous et après le
+		curseur : >
+			strpart(getline(line(".")), col(".") - 1, 3)
+<
+							*strridx()*
+strridx({bottedefoin}, {aiguille})
+		Renvoie un Nombre, qui donne l'index dans {bottedefoin} de la
+		dernière occurrence de la Chaîne {aiguille} dans la Chaîne
+		{bottedefoin}. La recherche est sensible à la casse. Utilisez
+		|match()| pour des recherches avancées.
+		Renvoie -1 si {aiguille} n'a pas d'occurrence dans
+		{bottedefoin}. Voir aussi |stridx()|.
+		Exemples : >
+			:echo strridx("Pantagruel et Panurge", "Pan")	14
+<
+							*strtrans()*
+strtrans({expr})
+		Renvoie une Chaîne, qui correspond à {expr} avec tous les
+		caractères non-imprimables traduits en caractères imprimables
+		|'isprint'|, tels qu'ils sont affichés dans une fenêtre.
+		Exemple : >
+			:echo strtrans(@a)
+<		Ceci affiche un saut-de-ligne dans le registre 'a' comme "^@"
+		au lieu de commencer une nouvelle ligne.
+
+							*submatch()*
+submatch({no})	Uniquement pour une expression dans une commande
+		|:substitute|. Renvoie la {no}-ième sous-correspondance du
+		texte correspondant. Si {no} vaut 0, le texte correspondant
+		est renvoyé en entier.
+		Exemple : >
+			:s/\d\+/\=submatch(0) + 1/
+<		Ceci recherche le premier nombre dans la ligne et y ajoute un.
+		Les coupures de lignes sont incluses comme des caractères
+		saut-de-ligne.
+
+							*substitute()*
+substitute({expr}, {motif}, {sub}, {drapeaux})
+		Renvoie une Chaîne, qui correspond à une copie de {expr}, dans
+		laquelle la première correspondance de {motif} est remplacée
+		par {sub}. Cela marche comme la commande ":substitute" (sans
+		drapeaux). Mais la correspondance avec {motif} est toujours
+		effectuée comme si l'option 'magic' était activée et
+		'cpoptions' vide (pour la portabilité des scripts).
+		Voir |string-match| pour l'utilisation de {motif}.
+		Un '~' dans {sub} n'est pas remplacé par le {sub} précédent.
+		NOTE : Certains codes dans {sub} ont une signification
+		spéciale |sub-replace-special|. Par exemple, pour remplacer
+		quelque chose par un "\n" littéral, utilisez "\\\\n" ou '\\n'.
+		Quand {motif} ne correspond pas dans {expr}, {expr} est
+		retourné non modifié.
+		Quand {drapeaux} vaut "g", toutes les correspondances de
+		{motif} dans {expr} sont remplacées. Sinon, {drapeaux} devrait
+		valoir "".
+		Exemples : >
+			:let &path = substitute(&path, ",\\=[^,]*$", "", "")
+<		Ceci supprime le dernier segment de l'option 'path'. >
+			:echo substitute("toto", ".*", "\\U\\0", "")
+<		Ceci renvoie "TOTO".
+
+							*synID()*
+synID({ligne}, {col}, {trans})
+		Renvoie un Nombre, correspondant à l'ID de syntaxe à la
+		position {ligne} et {col} dans la fenêtre courante.
+		L'ID de syntaxe peut être utilisée avec |synIDattr()| et
+		|synIDtrans()| pour obtenir une information sur la syntaxe du
+		texte.
+		{col} vaut 1 pour la colonne la plus à gauche, {ligne} vaut 1
+		pour la première ligne.
+		Quand {trans} est non-nul, les éléments transparents sont
+		réduits à l'élément qu'ils révèlent. C'est utile quand vous
+		désirez connaître la surbrillance effective. Quand {trans}
+		vaut zéro, l'élément transparent est renvoyé. C'est utile
+		quand vous désirez connaître l'élément de syntaxe effectif
+		(dans des parenthèses, p. ex.).
+		Avertissement : cette fonction peut être très lente. Le mieux
+		est de parcourir le fichier d'arrière en avant.
+
+		Exemple (affiche le nom de l'élément de syntaxe sous le
+		curseur) : >
+			:echo synIDattr(synID(line("."), col("."), 1), "name")
+<
+							*synIDattr()*
+synIDattr({IDsyn}, {qqc} [, {mode}])
+		Renvoie une Chaîne, correspondant à l'attribut {qqc} de l'ID
+		de syntaxe {IDsyn}. Cela peut être utilisé pour obtenir une
+		information sur un élément de syntaxe.
+		{mode} peut valoir "gui", "cterm" ou "term", pour obtenir
+		l'attribut pour ce mode. Quand {mode} est omis, ou qu'une
+		valeur invalide est utilisée, les attributs pour la
+		surbrillance actuellement active sont utilisés (gui, cterm ou
+		term).
+		Utilisez |synIDtrans()| pour suivre les liens des groupes de
+		surbrillance.
+		    {qqc}	  RENVOIE  ~
+		    "name"	  le nom de l'élément de syntaxe
+		    "fg"	  la couleur de premier plan (IHM graphique :
+				     nom de la couleur utilisé pour fixer la
+				     couleur ; cterm : numéro de la couleur en
+				     tant que chaîne ; term : chaîne vide)
+		    "bg"	  la couleur de fond (comme "fg")
+		    "fg#"	  comme "fg" mais pour l'IHM graphique qui
+				     utilise un nom de la forme "#RRVVBB"
+		    "bg#"	  comme "fg#" pour "bg"
+		    "bold"	  "1" si gras
+		    "italic"	  "1" si italique
+		    "reverse"	  "1" si inverse
+		    "inverse"	  "1" si inverse (comme "reverse")
+		    "underline"	  "1" si souligné
+
+		Exemple (affiche la couleur de l'élément de syntaxe sous le
+		curseur) : >
+			:echo synIDattr(synIDtrans(synID(line("."), col("."), 1)), "fg")
+<
+							*synIDtrans()*
+synIDtrans({IDsyn})
+		Renvoie un Nombre, correspondant à l'ID de syntaxe traduit de
+		{IDsyn}. C'est l'ID du groupe de syntaxe utilisé pour mettre
+		en surbrillance le caractère. Les liens de surbrillance donnés
+		avec ":highlight link" sont suivis.
+
+							*system()*
+system({expr})	Renvoie une Chaîne, qui correspond à la sortie de la commande
+		shell {expr}. NOTE : Les sauts-de-lignes dans {expr} peuvent
+		provoquer l'échec de la commande. Les caractères dans
+		'shellquote' et 'shellxquote' peuvent également créer des
+		problèmes.
+		Cette fonction n'est pas destinée à être utilisée avec des
+		commandes interactives.
+		Exemple : >
+			:let fichiers = system("ls")
+<		Afin de rendre le résultat plus indépendant du système, la
+		sortie du shell est filtrée pour remplacer <CR> par <NL> sur
+		Macintosh, et <CR><NL> par <NL> sur les systèmes DOS et
+		apparentés.
+		La commande exécutée est construite en utilisant plusieurs
+		options :
+			'shell' 'shellcmdflag' 'shellxquote' {expr} 'shellredir' {tmp} 'shellxquote'
+		({tmp} désigne un nom de fichier généré automatiquement.)
+		Pour Unix et OS/2, des parenthèses servent à encadrer {expr},
+		afin de permettre la concaténation de commandes.
+
+		Le code d'erreur produit est enregistré dans |v:shell_error|.
+		Cette fonction échouera en mode restreint |restricted-mode|.
+		Contrairement à ":!cmd", il n'y a pas de vérification
+		automatique pour les fichiers modifiés. Utilisez |:checktime|
+		pour forcer la vérification.
+
+						*tempname()* *temp-file-name*
+tempname()	Renvoie une Chaîne, qui donne le nom d'un fichier qui n'existe
+		pas. Cela peut être utilisé pour un fichier temporaire. Le nom
+		est différent pour au moins 256 appels consécutifs. Exemple : >
+			:let fichtmp = tempname()
+			:exe "redir > " . fichtmp
+<		Pour Unix, le fichier sera placé dans un répertoire privé
+		(uniquement accessible à l'utilisateur courant), afin d'éviter
+		des problèmes de sécurité (p. ex., une attaque par lien
+		symbolique, ou une tierce personne qui lirait votre fichier).
+		Quand Vim sort du répertoire, tous les fichiers qu'il contient
+		sont supprimés.
+		Pour MS-Windows, des obliques simples sont utilisées lorsque
+		l'option 'shellslash' est activée ou lorsque 'shellcmdflag'
+		débute par '-'.
+
+							*tolower()*
+tolower({expr})	Renvoie une copie de la Chaîne donnée, avec tous les
+		caractères majuscules passés en minuscules (comme si |gu|
+		était appliqué à la chaîne).
+
+							*toupper()*
+toupper({expr})	Renvoie une copie de la Chaîne donnée, avec tous les
+		caractères minuscules passés en majuscules (comme si |gU|
+		était appliqué à la chaîne).
+
+							*type()*
+type({expr})	Renvoie une Nombre :
+			0 si {expr} est de type Nombre,
+			1 si {expr} est de type Chaîne.
+
+							*virtcol()*
+virtcol({expr})	Renvoie un Nombre, correspondant à la colonne d'écran à la
+		position dans le fichier donnée par {expr}. C'est-à-dire, à la
+		dernière position occupée à l'écran par le caractère à la
+		position indiquée, si l'écran était d'une largeur illimitée.
+		Quand il y a un <Tab> à la position, le Nombre retourné sera
+		la colonne à la fin du <Tab>. Par exemple, pour un <Tab> dans
+		la colonne 1, avec 'ts' fixé à 8, 8 est renvoyé.
+		Lorsque l'édition virtuelle est active dans le mode courant,
+		une position située après la fin de la ligne peut être
+		retournée. |'virtualedit'|
+		Les positions acceptées sont :
+		    .	    la position du curseur
+		    $	    la fin de la ligne du curseur (retourne le nombre
+			       de caractères affichés dans la ligne du curseur
+			       plus un)
+		    'x	    la position de la marque x (si la marque n'est pas
+			       fixée, 0 est retourné)
+		NOTE : Seules les marques dans le fichier courant peuvent être
+		utilisées. Exemples : >
+			virtcol(".")	    retourne 4 avec le texte "to^Lto",
+					       avec le curseur sur le "^L"
+			virtcol("$")	    retourne 7 avec le texte "to^Lto"
+			virtcol("'t")	    retourne 6 avec le texte
+						"    toto", avec 't sur le 'o'
+<		1 désigne la première colonne. En cas d'erreur, renvoie 0.
+
+							*visualmode()*
+visualmode([expr])
+		Renvoie une Chaîne, qui décrit le dernier mode Visuel utilisé.
+		Initialement, cela renvoie une chaîne vide, mais quand le mode
+		Visuel a été utilisé, cela renvoie "v", "V", ou "<CTRL-V>" (un
+		caractère CTRL-V simple) pour les modes Visuel par caractères,
+		par lignes, ou par blocs respectivement.
+		Exemple : >
+			:exe "normal " . visualmode()
+<		Ceci entre dans le même mode Visuel qu'auparavant. Cela peut
+		aussi servir dans des scripts si vous souhaitez agir de façon
+		différenciée selon le mode Visuel qui vient d'être utilisé.
+
+		Si une expression est fournie qui renvoie un nombre non-nul ou
+		une chaîne non-vide, le mode Visuel sera effacé et l'ancienne
+		valeur est retournée. NOTE : " " et "0" sont également des
+		chaînes non-vides, et provoquent l'effacement du mode.
+
+							*winbufnr()*
+winbufnr({no})	Renvoie un Nombre, qui correspond au numéro du tampon associé
+		à la fenêtre {no}. Si {no} vaut zéro, renvoie le numéro du
+		tampon dans la fenêtre courante. Si la fenêtre {no} n'existe
+		pas, renvoie -1.
+		Exemple : >
+			:echo "Le fichier dans la fenêtre courante est " .
+			 \ bufname(winbufnr(0))
+<
+							*wincol()*
+wincol()	Renvoie un Nombre, qui correspond à la colonne virtuelle du
+		curseur dans la fenêtre. Cela compte les colonnes d'écran
+		depuis le bord gauche de la fenêtre. 1 désigne la colonne la
+		plus à gauche.
+
+							*winheight()*
+winheight({no})	Renvoie un Nombre, qui correspond à la hauteur de la fenêtre
+		{no}. Si {no} vaut zéro, renvoie la hauteur de la fenêtre
+		courante. Si la fenêtre {no} n'existe pas, renvoie -1.
+		Une fenêtre existante a toujours une hauteur supérieure ou
+		égale à zéro.
+		Exemples : >
+			:echo "La fenêtre courante a" winheight(0) "lignes."
+<
+							*winline()*
+winline()	Renvoie un Nombre, qui correspond à la ligne d'écran du
+		curseur dans la fenêtre. Cette fonction compte les lignes
+		d'écran depuis le haut de la fenêtre. La première ligne vaut
+		un.
+
+							*winnr()*
+winnr()		Renvoie un Nombre, qui correspond au numéro de la fenêtre
+		courante. La fenêtre au sommet porte le numéro 1.
+
+							*winwidth()*
+winwidth({no})	Renvoie un Nombre, qui correspond à la larguer de la fenêtre
+		{no}. Si {no} vaut zéro, renvoie la largeur de la fenêtre
+		courante. Si la fenêtre {no} n'existe pas, renvoie -1.
+		Une fenêtre existante a toujours une largeur supérieure ou
+		égale à zéro.
+		Exemples : >
+			:echo "La fenêtre courante a" winwidth(0) "colonnes."
+			:if winwidth(0) <= 50
+			:  exe "normal 50\<C-W>|"
+			:endif
+
+
+LISTE DES FONCTIONNALITÉS				*feature-list*
+
+Il existe trois types de fonctionnalités :
+1. Les fonctionnalités qui ne sont supportées que quand elles ont été
+   activées à la compilation |+feature-list|. Exemple : >
+	:if has("cindent")
+2. Les fonctionnalités qui ne sont supportées que lorsque certaines conditions
+   sont remplies. Exemple : >
+	:if has("gui_running")
+3. Les rustines incluses. Reportez-vous d'abord à |v:version| pour la version
+   de Vim. Ensuite, la fonctionnalité "patch123" signifie que la rustine 123 a
+   été incluse pour cette version.
+
+all_builtin_terms	compilé avec tous les terminaux internes activés
+amiga			version Amiga de Vim
+arabic			compilé avec le support pour l'arabe |Arabic|
+arp			compilé avec le support pour ARP (Amiga)
+autocmd			compilé avec le support des autocommandes
+balloon_eval		compilé avec le support pour l'évaluation par bulles
+			   |balloon-eval|
+beos			version BeOS de Vim
+browse			compilé avec le support pour |:browse|, et browse()
+			   fonctionnera
+builtin_terms		compilé avec une partie des terminaux internes
+byte_offset		compilé avec le support pour 'o' dans 'statusline'
+cindent			compilé avec le support pour 'cindent'
+clientserver		compilé avec le support pour l'invocation distante
+			   |clientserver|
+clipboard		compilé avec le support pour 'clipboard'
+cmdline_compl		compilé avec le support pour le complètement en ligne
+			   de commande |cmdline-completion|
+cmdline_hist		compilé avec le support pour l'historique de la ligne
+			   de commande |cmdline-history|
+cmdline_info		compilé avec le support pour 'showcmd' et 'ruler'
+comments		compilé avec le support pour 'comments'
+cryptv			compilé avec le support du chiffrement |encryption|
+cscope			compilé avec le support pour |cscope|
+compatible		compilé pour être fortement compatible Vi
+debug			compilé avec "DEBUG" défini
+dialog_con		compilé avec le support des dialogues console
+dialog_gui		compilé avec le support des dialogues IHM graphique
+diff			compilé avec le support pour |vimdiff| et 'diff'
+digraphs		compilé avec le support des digrammes
+dnd			compilé avec le support du registre "~ |quote_~|
+dos32			version DOS 32 bits (DJGPP) de Vim
+dos16			version DOS 16 bits de Vim
+ebcdic			compilé sur une machine utilisant un jeu de caractères
+			   EBCDIC
+emacs_tags		compilé avec le support des marqueurs Emacs
+eval			compilé avec le support de l'évaluation d'expressions ;
+			   toujours VRAI, évidemment !
+ex_extra		compilé avec les commandes Ex supplémentaires
+			   |+ex_extra|
+extra_search		compilé avec le support pour 'incsearch' et 'hlsearch'
+farsi			compilé avec le support pour le |farsi|
+file_in_path		compilé avec le support pour |gf| et |<cfile>|
+find_in_path		compilé avec le support pour la recherche dans les
+			   fichiers inclus |+find_in_path|
+fname_case		casse respectée dans les noms de fichiers (absent pour
+			   Amiga, MS-DOS et Windows)
+folding			compilé avec le support des replis |folding|
+footer			compilé avec le support des barres de messages pour
+			   l'IHM graphique |gui-footer|
+fork			compilé pour utiliser fork()/exec() au lieu de system()
+gettext			compilé avec la traduction des messages |multi-lang|
+gui			compilé avec l'IHM graphique active
+gui_athena		compilé avec l'IHM graphique Athena
+gui_beos		compilé avec l'IHM graphique BeOS
+gui_gtk			compilé avec l'IHM graphique GTK+ (n'importe quelle
+			   version)
+gui_gtk2		compilé avec l'IHM graphique GTK+ 2 ("gui_gtk" est
+			   également défini)
+gui_mac			compilé avec l'IHM graphique Macintosh
+gui_motif		compilé avec l'IHM graphique Motif
+gui_photon		compilé avec l'IHM graphique Photon
+gui_win32		compilé avec l'IHM graphique MS-Windows Win32
+gui_win32s		idem, et le système Win32s est utilisé (Windows 3.1)
+gui_running		Vim utilise l'IHM graphique, ou est prêt de l'utiliser
+hangul_input		compilé avec le support pour l'entrée |hangul|
+iconv			peut utiliser iconv() pour les conversions
+insert_expand		compilé avec le support des commandes de complètement
+			   CTRL-X en mode Insertion
+jumplist		compilé avec le support pour la liste des sauts
+			   |jumplist|
+keymap			compilé avec le support pour 'keymap'
+langmap			compilé avec le support pour 'langmap' support
+libcall			compilé avec le support pour |libcall()|
+linebreak		compilé avec le support pour 'linebreak', 'breakat' et
+			   'showbreak'
+lispindent		compilé avec le support pour l'indentation Lisp
+listcmds		compilé avec les commandes pour la liste des tampons
+			   |:files| et la liste des arguments |arglist|
+localmap		compilé avec les mappages et abréviations locales
+			   |:map-local|
+mac			version Macintosh de Vim
+macunix			version Macintosh de Vim, utilisant des fichiers Unix
+			   (Mac OS X)
+menu			compilé avec le support pour |:menu|.
+mksession		compilé avec le support pour |:mksession|.
+modify_fname		compilé avec les modificateurs de nom de fichier
+			   |filename-modifiers|
+mouse			compilé avec le support de la souris
+mouseshape		compilé avec le support pour 'mouseshape'.
+mouse_dec		compilé avec le support pour la souris dans les
+			   terminaux Dec
+mouse_gpm		compilé avec le support pour gpm (souris dans la
+			   console Linux)
+mouse_netterm		compilé avec le support pour la souris netterm
+mouse_pterm		compilé avec le support pour la souris pterm QNX
+mouse_xterm		compilé avec le support pour la souris xterm
+multi_byte		compilé avec le support pour éditer du coréen et autres
+multi_byte_ime		compilé avec le support pour la méthode de saisie IME
+multi_lang		compilé avec le support pour plusieurs langues
+netbeans_intg		compilé avec le support pour |netbeans|
+ole			compilé avec le support de l'automation OLE pour Win32
+os2			version OS/2 de Vim
+osfiletype		compilé avec le support pour les types de fichiers du
+			   SE |+osfiletype|
+path_extra		compilé avec la recherche ascendante/descendante dans
+			   'path' et 'tags'
+perl			compilé avec l'interface Perl
+postscript		compilé avec l'impression des fichiers PostScript
+printer			compilé avec le support pour |:hardcopy|
+python			compilé avec l'interface Python
+qnx			version QNX de Vim
+quickfix		compilé avec le support pour le mode mise-au-point
+			   |quickfix|
+rightleft		compilé avec le support pour 'rightleft'
+ruby			compilé avec l'interface Ruby |ruby|
+scrollbind		compilé avec le support pour 'scrollbind'
+showcmd			compilé avec le support pour 'showcmd'
+signs			compilé avec le support pour |:sign|
+smartindent		compilé avec le support pour 'smartindent'
+sniff			compilé avec le support de l'interface SNiFF+
+statusline		compilé avec le support pour 'statusline',
+			   'rulerformat' et les formats spéciaux de
+			   'titlestring' et 'iconstring'
+sun_workshop		compilé avec le support pour Sun |workshop|
+syntax			compilé avec le support de la coloration syntaxique
+syntax_items		il existe des éléments de syntaxe actifs pour le
+			   tampon courant
+system			compilé pour utiliser system() au lieu de fork()/exec()
+tag_binary		compilé avec la recherche binaire dans les fichiers de
+			   marqueurs |tag-binary-search|
+tag_old_static		compilé avec le support des anciens marqueurs statiques
+			   |tag-old-static|
+tag_any_white		compilé avec le support pour des espacements blancs
+			   quelconques dans les fichiers de marqueurs
+			   |tag-any-white|
+tcl			compilé avec l'interface Tcl
+terminfo		compilé avec terminfo au lieu de termcap
+termresponse		compilé avec le support pour |t_RV| et |v:termresponse|
+textobjects		compilé avec le support des objets textuels
+			   |text-objects|
+tgetent			compilé avec le support tgetent, capable d'utiliser un
+			   fichier termcap ou terminfo
+title			compilé avec le support pour le titre de la fenêtre
+			   |'title'|
+toolbar			compilé avec le support pour la barre d'outils de
+			   l'IHM graphique |gui-toolbar|
+unix			version Unix de Vim
+user_commands		commandes utilisateur
+viminfo			compilé avec le support pour viminfo
+vim_starting		VRAI lors des sourcements de l'initialisation
+vertsplit		compilé avec le partage vertical des fenêtres |:vsplit|
+virtualedit		compilé avec l'option 'virtualedit'
+visual			compilé avec le mode Visuel
+visualextra		compilé avec les commandes supplémentaires du mode
+			   Visuel |blockwise-operators|
+vms			version VMS de Vim
+vreplace		compilé avec les commandes |gR| et |gr|
+wildignore		compilé avec l'option 'wildignore'
+wildmenu		compilé avec l'option 'wildmenu'
+windows			compilé avec le support du multi-fenêtrage
+winaltkeys		compilé avec l'option 'winaltkeys'
+win16			version Win16 de Vim (MS-Windows 3.1)
+win32			version Win32 de Vim (MS-Windows 95/98/ME/NT/2000/XP)
+win32unix		version Win32 de Vim, utilisant des fichiers Unix
+			   (Cygwin)
+win95			version Win32 pour MS-Windows 95/98/ME
+writebackup		compilé avec 'writebackup' activé par défaut
+xfontset		compilé avec le support du jeu de polices X |xfontset|
+xim			compilé avec le support de la méthode de saisie X |xim|
+xsmp			compilé avec le support XSMP (protocole de gestion de
+			   session X)
+xsmp_interact		compilé avec le support XSMP interactif
+xterm_clipboard		compilé avec le support du presse-papiers xterm
+xterm_save		compilé avec le support pour sauver et restaurer
+			   l'écran xterm
+x11			compilé avec le support X11
+
+
+CORRESPONDANCE D'UN MOTIF DANS UNE CHAÎNE		*string-match*
+
+Normalement, un motif d'exprat (tel que défini à |pattern|) est utilisé pour
+trouver une correspondance dans les lignes d'un tampon. Quand un motif est
+utilisé pour trouver une correspondance dans une Chaîne, cela marche de la
+même façon. La différence est qu'une Chaîne est traitée comme s'il s'agissait
+d'une seule ligne. Quand elle contient un caractère "\n", celui-ci n'est pas
+considéré comme une coupure de ligne pour le motif. Il peut correspondre avec
+un "\n" dans le motif, ou avec ".".
+   Exemple : >
+	:let chaine = "aaaa\nxxxx"
+	:echo matchstr(chaine, "..\n..")
+	aa
+	xx
+	:echo matchstr(chaine, "a.x")
+	a
+	x
+
+N'oubliez pas que "^" correspondra uniquement s'il est le premier caractère de
+la Chaîne, et "$" le dernier caractère de la Chaîne. Ils ne correspondront pas
+avant ou après un "\n".
+
+==============================================================================
+5. Définir des fonctions				*user-functions*
+
+De nouvelles fonctions peuvent être définies. Elles peuvent être appelées
+exactement comme les fonctions internes. Une fonction exécute une séquence de
+commande Ex. Les commandes du mode Normal peuvent être exécutées via la
+commande |:normal|.
+
+Le nom de la fonction doit débuter par une lettre majuscule, afin d'éviter la
+confusion avec les fonctions internes. Évitez aussi les noms courts ou peu
+explicites, vous risqueriez d'utiliser les même noms dans différents scripts.
+Par exemple, prenez la bonne habitude de reporter le nom du script au début du
+nom de la fonction ("HTMLAttr()",...).
+
+Il est également possible d'utiliser des accolades dans les noms, voir
+|curly-braces-names|.
+
+							*local-function*
+Une fonction locale à un script doit débuter par "s:". Une fonction locale de
+script ne peut être appelée que depuis le script et depuis les fonctions,
+commandes utilisateur et autocommandes définies dans le script. Il est aussi
+possible d'appeler la fonction depuis un mappage défini dans le script, mais
+alors |<SID>| doit être utilisé à la place de "s:" quand le mappage est étendu
+en dehors du script.
+
+					*:fu* *:function* *E128* *E129* *E123*
+:fu[nction]		Liste toutes les fonctions et leurs arguments.
+
+:fu[nction] {nom}	Liste la fonction {nom}.
+							*E124* *E125*
+:fu[nction][!] {nom}([arguments]) [range] [abort]
+			Définit un nouvelle fonction nommée {nom}. Le nom doit
+			être composé de caractères alphanumériques et '_', et
+			doit débuter par une majuscule ou par "s:" (voir
+			ci-dessus).
+						*function-argument* *a:var*
+			Un argument peut être défini en donnant son nom. Dans
+			la fonction, il pourra ensuite être utilisé avec
+			"a:nom" ("a:" pour argument).
+			Il est possible de donner jusqu'à 20 arguments,
+			séparés par des virgules. En final, un argument
+			"..." peut être spécifié, qui signifie que d'autres
+			arguments peuvent suivre. Dans la fonction, ils
+			peuvent ensuite être utilisés avec "a:1", "a:2", etc.
+			"a:0" est fixé au nombre d'arguments supplémentaires
+			(qui peut être nul).
+			Quand "..." n'est pas utilisé, le nombre d'arguments
+			dans un appel de fonction doit être égal au nombre
+			d'arguments nommés. Quand "..." est donné, le nombre
+			d'arguments peut être supérieur.
+			Il est également possible de définir une fonction sans
+			aucun argument. Vous devrez cependant toujours fournir
+			les parenthèses () de la fonction.
+			Le corps de la fonction se poursuit sur les lignes
+			suivantes, jusqu'au |:endfunction| correspondant. Vous
+			êtes autorisé à définir une autre fonction dans le
+			corps d'une fonction.
+							*E127* *E122*
+			Lorsqu'une fonction du même nom existe déjà et que [!]
+			n'est pas utilisé, un message d'erreur est émis. Quand
+			[!] est utilisé, une fonction déjà existante sera
+			remplacée silencieusement.
+						*a:firstline* *a:lastline*
+			Quand l'argument [range] est ajouté, la fonction est
+			censée gérer une plage de lignes elle-même. La plage
+			est passée en tant que "a:firstline" et "a:lastline".
+			Si [range] est exclu, ":{plage}call" appellera la
+			fonction pour chaque ligne de {plage}, avec le curseur
+			au début de chaque ligne. Voir
+			|function-range-example|.
+			Quand l'argument [abort] est ajouté, la fonction
+			avortera aussitôt qu'une erreur sera détectée.
+			Le dernier motif de recherche utilisé et la commande
+			de restauration "." ne seront pas modifiés par la
+			fonction.
+
+					*:endf* *:endfunction* *E126* *E193*
+:endf[unction]		Marque la fin de la définition d'une fonction. Doit
+			être seul sur une ligne, sans autres commandes.
+
+					*:delf* *:delfunction* *E130* *E131*
+:delf[unction] {nom}	Supprime la fonction {nom}.
+
+						*:retu* *:return* *E133*
+:retu[rn] [expr]	Retour d'une fonction. Si [expr] est donné, il est
+			évalué et retourné comme le résultat de la fonction.
+			Si [expr] n'est pas donné, le nombre 0 est retourné.
+			Quand une fonction se termine sans instruction
+			":return" explicite, le nombre 0 est retourné.
+			NOTE : Il n'y a pas de vérification des lignes non
+			atteignables dans le code d'une fonction, donc aucun
+			avertissement n'est donné si des commandes suivent
+			":return".
+
+			Si ":return" est utilisé après un |:try| mais avant le
+			|:finally| correspondant (s'il existe), les commandes
+			qui suivent le ":finally" jusqu'au |:endtry|
+			correspondant sont exécutées en premier. Ceci
+			s'applique à tous les ":try" imbriqués dans la
+			fonction, qui donne sa valeur de retour après le
+			":endtry" le plus extérieur.
+
+
+À l'intérieur d'une fonction, des variables peuvent être utilisées. Ce sont
+des variables locales, qui disparaîtront lors du retour de la fonction. Pour
+accéder aux variables globales, utilisez "g:".
+
+Exemple : >
+	:function Tableau(titre, ...)
+	:  echohl Title
+	:  echo a:titre
+	:  echohl None
+	:  let idx = 1
+	:  while idx <= a:0
+	:    exe "echo a:" . idx
+	:    let idx = idx + 1
+	:  endwhile
+	:  return idx
+	:endfunction
+
+Cette fonction peut ensuite être appelée avec : >
+	:let lignes = Tableau("Tableau", "ligne1", "ligne2")
+	:let lignes = Tableau("Tableau Vide")
+
+Pour retourner plus d'une valeur, passez le nom d'une variable globale : >
+	:function Calculer(n1, n2, nomdiv)
+	:  if a:n2 == 0
+	:    return "échec"
+	:  endif
+	:  exe "let g:" . a:nomdiv . " = ". a:n1 / a:n2
+	:  return "OK"
+	:endfunction
+
+Cette fonction peut ensuite être appelée avec : >
+	:let succes = Calculer(13, 1324, "div")
+	:if succes == "OK"
+	:  echo div
+	:endif
+
+Une autre façon de procéder est de retourner une commande qui peut être
+exécutée. Cela marche aussi avec des variables locales dans un appel de
+fonction. Exemple : >
+	:function Toto()
+	:  execute Titi()
+	:  echo "ligne " . nol . " colonne " . col
+	:endfunction
+
+	:function Titi()
+	:  return "let nol = " . line(".") . " | let col = " . col(".")
+	:endfunction
+
+Les noms "nol" et "col" auraient aussi pu être passés en arguments à Titi(),
+afin de permettre à la fonction d'appel de fixer les noms.
+
+							*:cal* *:call* *E107*
+:[plage]cal[l] {nom}([arguments])
+			Appelle une fonction. Le nom de la fonction et ses
+			arguments sont comme dans |:function|. Il est possible
+			d'avoir jusqu'à 20 arguments.
+			Sans plage et pour les fonctions qui acceptent une
+			plage, la fonction est appelée aussitôt. Quand une
+			plage est donnée, le curseur est placé au début de la
+			première ligne avant l'exécution de la fonction.
+			Quand une plage est donnée et que la fonction n'en
+			supporte pas par elle-même, elle est exécutée pour
+			chaque ligne de la plage, avec le curseur dans la
+			première colonne. Le curseur est laissé sur la
+			dernière ligne (possiblement déplacé par le dernier
+			appel de fonction). Les arguments sont réévalués pour
+			chaque ligne. Ainsi, ceci fonctionne :
+				    		*function-range-example*  >
+				:function MonNumero(arg)
+				:  echo line(".") . " " . a:arg
+				:endfunction
+				:1,5call MonNumero(getline("."))
+<
+			Les variables "a:firstline" et "a:lastline" sont
+			toujours définies, elles peuvent être utilisées pour
+			faire quelque chose de différent au début ou à la fin
+			de la plage.
+
+			Exemple d'une fonction qui gère la plage elle-même : >
+
+				:function Continuation() range
+				:  execute (a:firstline + 1) . "," . a:lastline . 's/^/\t\\ '
+				:endfunction
+				:4,8call Continuation()
+<
+			Cette fonction insère le caractère de continuation '\'
+			au début de chaque ligne dans la plage, excepté la
+			première.
+
+							*E132*
+La récursivité des fonctions utilisateur est limitée par l'option
+|'maxfuncdepth'|.
+
+							*autoload-functions*
+Si vous utilisez de nombreuses fonctions ou des fonctions très longues, il est
+possible de ne les définir automatiquement que lorsqu'elles sont utilisées.
+Exemple : >
+
+	:au FuncUndefined TampRezo* source ~/vim/tamprezo_fonc.vim
+
+Le fichier "~/vim/tamprezo_fonc.vim" devrait alors définir des fonctions qui
+débutent par "TampRezo". Voir aussi |FuncUndefined|.
+
+==============================================================================
+6. Noms entre accolades					*curly-braces-names*
+
+Partout où vous pouvez utiliser une variable, vous pouvez utiliser un « nom
+entre accolades » pour votre variable. C'est un nom de variable classique avec
+une ou plusieurs expressions encadrées par des accolades {}, comme ceci : >
+	ma_{adjectif}_variable
+
+Lorsque Vim rencontre un nom de ce type, il évalue l'expression entre les
+accolades, remplace l'expression par son résultat et réinterprète le tout en
+tant que nom de variable. Ainsi, dans l'exemple précédent, si la variable
+"adjectif" était fixée à "vieille", la référence se ferait à
+"ma_vieille_variable", alors que si "adjectif" était fixée à "nouvelle", ce
+serait à "ma_nouvelle_variable".
+
+À partir de ceci, vous pouvez créer un ensemble de variables gouvernées par
+la valeur d'un option. Par exemple, l'instruction >
+	:echo mon_message_pour_{&background}
+affichera la sortie de "mon_message_pour_dark" ou "mon_message_pour_light"
+selon la valeur courante 'background'.
+
+Il vous est possible d'utiliser plusieurs paires d'accolades >
+	:echo mon_{adverbe}_{adjectif}_message
+ou même de les imbriquer : >
+	:echo mon_{ad{fin_du_mot}}_message
+Ici, "fin_du_mot" vaut soit "verbe" soit "jectif".
+
+Néanmoins, l'expression entre les accolades doit être évaluée comme un nom
+valide de variable simple. P. ex., ceci est invalide >
+	:let toto='a + b'
+	:echo c{toto}d
+car le résultat de l'expansion est "ca + bd", qui n'est pas un nom de
+variable.
+
+						*curly-braces-function-names*
+Vous pouvez appeler et définir des fonctions en ayant recours à un mécanisme
+similaire. Exemple : >
+	:let fin_fonc='bis'
+	:call ma_fonc_{fin_fonc}(argument)
+
+Ceci appellera la fonction "ma_fonc_bis(argument)".
+
+==============================================================================
+7. Commandes						*expression-commands*
+
+					    		*:let* *E18*
+:let {nomvar} = {expr1} Fixe la variable interne {nomvar} au résultat de
+			l'expression {expr1}. La variable prendra le type de
+			{expr}. Si {nomvar} n'existe pas encore, elle sera
+			créée.
+
+						*:let-environment* *:let-$*
+:let ${nomvarenv} = {expr1}
+			Fixe la variable d'environnement {nomvarenv} au
+			résultat de l'expression {expr1}. Toujours de type
+			Chaîne.
+
+						*:let-register* *:let-@*
+:let @{nomreg} = {expr1}
+			Écrit le résultat de l'expression {expr1} dans le
+			registre {nomreg}. {nomreg} doit se composer d'une
+			seule lettre et doit être le nom d'un registre
+			accessible en écriture (voir |registers|). "@@" peut
+			être utilisé pour le registre sans nom, "@/" pour le
+			motif de recherche.
+			Si le résultat de {expr1} se termine par <CR> ou <NL>,
+			le registre sera par lignes, sinon il sera par
+			caractères.
+			Cela peut être utilisé pour effacer le dernier motif
+			de recherche : >
+				:let @/ = ""
+<			Ce n'est pas la même chose que de rechercher une
+			chaîne vide, qui correspondrait partout.
+
+						*:let-option* *:let-star*
+:let &{nomoption} = {expr1}
+			Fixe l'option {nomoption} au résultat de l'expression
+			{expr1}. La valeur est toujours convertie au type de
+			l'option.
+			Pour une option locale à une fenêtre ou un tampon,
+			l'effet est le même qu'avec la commande |:set| : les
+			valeurs locale ET globale sont modifiées.
+
+:let &l:{nomoption} = {expr1}
+			Comme ci-dessus, mais fixe uniquement la valeur locale
+			d'une option (s'il y en a une). Fonctionne comme
+			|:setlocal|.
+
+:let &g:{nomoption} = {expr1}
+			Comme ci-dessus, mais fixe uniquement la valeur
+			globale d'une option (s'il y en a une). Fonctionne
+			comme |:setglobal|.
+
+							*E106*
+:let {nomvar} ...	Liste la valeur de la variable {nomvar}. Plusieurs
+			noms de variables peuvent être donnés.
+
+:let			Liste les valeurs de toutes les variables.
+
+							*:unlet* *:unl* *E108*
+:unl[et][!] {nomvar} ...
+			Supprime la variable interne {nomvar}. Plusieurs
+			noms de variables peuvent être donnés, ils seront tous
+			supprimés. Avec [!], aucun message d'erreur n'est émis
+			pour les variables inexistantes.
+
+:if {expr1}			*:if* *:endif* *:en* *E171* *E579* *E580*
+:en[dif]		Exécute les commandes jusqu'au ":else" correspondant
+			suivant, ou ":endif" si {expr1} est évalué comme
+			non-nul.
+
+			Entre les versions 4.5 et 5.0 de Vim, toutes les
+			commandes Ex entre le ":if" et le ":endif" étaient
+			ignorées. Ces deux commandes servaient simplement à
+			autoriser les extensions futures en permettant ainsi
+			la compatibilité ascendante. L'imbrication était
+			autorisée. NOTE : Les ":else" ou ":elseif" étaient
+			ignorés, la partie "else" n'était pas non plus
+			exécutée.
+
+			Vous pouvez utiliser ceci pour rester compatible avec
+			des versions plus anciennes : >
+				:if version >= 500
+				:  " commandes spécifiques à la version 5
+				:endif
+<			Les commandes doivent cependant être analysées pour
+			trouver le "endif". Il arrive qu'une version plus
+			ancienne de Vim rencontre des problèmes avec une
+			commande récente. Par exemple, ":silent" est reconnu
+			comme une commande ":substitute". Dans ce cas,
+			utilisez ":execute" pour éviter ces problèmes : >
+				:if version >= 600
+				:  execute "silent 1,$delete"
+				:endif
+<
+			NOTE : Les commandes ":append" et ":insert" ne
+			fonctionnent pas correctement entre ":if" et ":endif".
+
+						*:else* *:el* *E581* *E583*
+:el[se]			Exécute les commandes jusqu'au ":else" correspondant
+			suivant, ou ":endif" si elles n'ont pas déjà été
+			exécutées.
+
+					*:elseif* *:elsei* *E582* *E584*
+:elsei[f] {expr1}	Raccourci pour ":else" ":if", avec l'avantage qu'il
+			n'est pas besoin d'avoir de ":endif" supplémentaire.
+
+					*:while* *:endwhile* *:wh* *:endw*
+:wh[ile] {expr1}			*E170* *E585* *E588*
+:endw[hile]		Répète les commandes entre ":while" et ":endwhile",
+			aussi longtemps que {expr1} est évalué comme non-nul.
+			Quand une erreur est détectée depuis une commande dans
+			la boucle, l'exécution continue après le ":endwhile".
+
+			NOTE : Les commandes ":append" et ":insert" ne
+			fonctionnent pas correctement dans une boucle
+			":while".
+
+						*:continue* *:con* *E586*
+:con[tinue]		Utilisé dans une boucle ":while", fait revenir à
+			l'instruction ":while".
+			Si utilisé après un |:try| à l'intérieur du ":while"
+			mais avant le |:finally| correspondant (s'il existe),
+			les commandes qui suivent le ":finally" jusqu'au
+			|:endtry| correspondant sont exécutées en premier.
+			Ceci s'applique à tous les ":try" imbriqués dans le
+			":while". Après le ":endtry" le plus extérieur,
+			revient au ":while".
+
+						*:break* *:brea* *E587*
+:brea[k]		Utilisé dans une boucle ":while", saute à la commande
+			après le ":endwhile" correspondant.
+			Si utilisé après un |:try| à l'intérieur du ":while"
+			mais avant le |:finally| correspondant (s'il existe),
+			les commandes qui suivent le ":finally" jusqu'au
+			|:endtry| correspondant sont exécutées en premier.
+			Ceci s'applique à tous les ":try" imbriqués dans le
+			":while". Après le ":endtry" le plus extérieur, saute
+			à la commande suivant le ":endwhile".
+
+:try				*:try* *:endt* *:endtry* *E600* *E601* *E602*
+:endt[ry]		Modifie la gestion des erreurs pour les commandes
+			entre le ":try" et le ":endtry", y compris tout ce qui
+			est exécuté à travers des commandes ":source", des
+			appels de fonction ou des invocations d'autocommandes.
+
+			Si une erreur ou une interruption est détectée et
+			qu'une commande |:finally| suit, l'exécution se
+			poursuit après le ":finally". Sinon, ou si le
+			":endtry" est atteint par la suite, un ":finally" est
+			recherché dans le prochain ":try" (dynamiquement)
+			englobant, et ainsi de suite. Le traitement du script
+			est ensuite arrêté. (Que la définition d'une fonction
+			provoque l'annulation ou pas est sans importance.)
+			Exemple : >
+				:try
+				:  edit beaucoup trop
+				:finally
+				:  echo "nettoyage"
+				:endtry
+				:echo "impossible"  " Jamais atteint, le script
+						    " est terminé ci-dessus
+<
+			De plus, une erreur ou une interruption (dynamique) à
+			l'intérieur d'un ":try"/":endtry" est convertie en
+			exception. Elle peut être interceptée comme si elle
+			avait été émise par une commande |:throw| (voir
+			|:catch|). Dans ce cas, le traitement du script n'est
+			pas arrêté.
+
+			La valeur "Vim:Interrupt" est utilisée pour une
+			exception sur interruption. Une erreur dans une
+			commande Vim est convertie en valeur de la forme
+			"Vim:({commande}):{msgerr}", les autres erreurs sont
+			converties en valeurs de la forme "Vim:{msgerr}".
+			{commande} désigne le nom complet de la commande et
+			{msgerr} le message qui est affiché si l'exception
+			n'est pas interceptée, débutant toujours par le numéro
+			de l'erreur. Exemples : >
+				:try
+				:  sleep 100
+				:catch /^Vim:Interrupt$/
+				:endtry
+
+				:try
+				:  edit
+				:catch /^Vim(edit):E\d\+/
+				:  echo "erreur"
+				:endtry
+<
+					*:cat* *:catch* *E603* *E604* *E605*
+:cat[ch] /{motif}/	Les commandes suivantes jusqu'au prochain ":catch",
+			|:finally| ou |:endtry| appartenant au même bloc
+			|:try| que le ":catch" sont exécutées lorsqu'une
+			exception correspondant à {motif} a été émise et n'a
+			pas encore été interceptée par un ":catch" précédent.
+			Sinon, ces commandes sont ignorées.
+			Lorsque {motif} est omis, toutes les erreurs sont
+			interceptées.
+			Exemples : >
+			    :catch /^Vim:Interrupt$/
+<				Intercepte les interruptions (CTRL-C). >
+			    :catch /^Vim\%((\a\+)\)\=:E/
+<				Intercepte toutes les erreurs de Vim. >
+			    :catch /^Vim\%((\a\+)\)\=:/
+<				Intercepte toutes les erreurs et les
+				   interruptions. >
+			    :catch /^Vim(write):/
+<				Intercepte toutes les erreurs dans ":write". >
+			    :catch /^Vim\%((\a\+)\)\=:E123/
+<				Intercepte l'erreur E123. >
+			    :catch /mon-exception/
+<				Intercepte une exception de l'utilisateur. >
+			    :catch /.*/
+<				Intercepte tout. >
+			    :catch
+<				Identique à "/.*/".
+
+			Un autre caractère peut être utilisé à la place de '/'
+			pour encadrer le {motif}, du moment qu'il n'a pas de
+			signification spéciale (p. ex., '|' ou '"') et
+			n'apparaît pas dans le {motif}.
+			NOTE : L'interception d'une exception basée sur le
+			TEXTE d'un message d'erreur n'est pas fiable, car
+			celui-ci peut varier selon les paramètres
+			linguistiques.
+
+					*:fina* *:finally* *E606* *E607*
+:fina[lly]		Les commandes qui suivent jusqu'au |:endtry|
+			correspondant sont exécutées, quelle que soit la
+			manière dont la partie entre le |:try| correspondant
+			et le ":finally" est quittée -- soit en parcourant
+			toutes les commandes jusqu'au ":finally", soit par un
+			|:continue|, |:break|, |:finish| ou |:return|, soit
+			par une erreur, une interruption ou une exception
+			(voir |:throw|).
+
+							*:th* *:throw* *E608*
+:th[row] {expr1}	L'expression {expr1} est évaluée et émise en tant
+			qu'exception.
+			Si le ":throw" est utilisé après un |:try| mais avant
+			le premier |:catch| correspondant, les commandes sont
+			sautées jusqu'à ce que le premier ":catch"
+			correspondant à {expr1} soit atteint. S'il n'y a pas
+			de tel ":catch" ou si le ":throw" est utilisé après un
+			":catch" mais avant le |:finally|, les commandes
+			suivant le ":finally" (si présent) jusqu'au |:endtry|
+			correspondant sont exécutées. Si le ":throw" est après
+			le ":finally", les commandes jusqu'au ":endtry" sont
+			sont sautées. Arrivé au ":endtry", ce processus se
+			poursuit dans le prochain ":try" dynamiquement
+			englobant (qui peut être trouvé dans une fonction
+			appelante ou un script sourçant), jusqu'à ce qu'un
+			":catch" correspondant soit trouvé.
+			Si l'exception n'est pas interceptée, le traitement
+			des commandes s'achève.
+			Exemple : >
+				:try
+				:  throw "oups"
+				:catch /^ou/
+				:  echo "intercepté"
+				:endtry
+<
+							*:ec* *:echo*
+:ec[ho] {expr1} ...	Retourne en écho chaque {expr1}, avec un espace entre
+			chaque et un <EOL> final. Voir aussi |:comment|.
+			Utilisez "\n" pour commencer une nouvelle ligne.
+			Utilisez "\r" pour amener le curseur à la première
+			colonne.
+			Utilise la surbrillance fixée par la commande
+			|:echohl|. Ne peut pas être suivi par un commentaire.
+			Exemple : >
+				:echo "l'option 'shell' vaut" &shell
+<			Un rafraîchissement ultérieur pourra effacer le
+			message. Pour éviter qu'une commande lancée avant le
+			":echo" ne provoque un rafraîchissement après coup (le
+			rafraîchissement est souvent différé jusqu'à ce que
+			vous saisissiez quelque chose), utilisez un
+			rafraîchissement forcé avec la commande |:redraw|.
+			Exemple : >
+				:new | redraw
+				:echo "Il y a une nouvelle fenêtre"
+<
+							*:echon*
+:echon {expr1} ...	Retourne en écho chaque {expr1}, sans rien ajouter.
+			Voir aussi |:comment|.
+			Utilise la surbrillance fixée par la commande
+			|:echohl|. Ne peut pas être suivi par un commentaire.
+			Exemple : >
+				:echon "l'option 'shell' vaut" &shell
+<
+			NOTE : Remarquez bien la différence entre ":echo", qui
+			est une commande de Vim et ":!echo", qui est une
+			commande externe du shell : >
+				:!echo %	    --> nomfich
+<			Les arguments de ":!" sont étendus, voir |:_%|. >
+				:!echo "%"	    --> nomfich ou "nomfich"
+<			Comme l'exemple précédent. La présence ou non des
+			doubles-apostrophes dépend de votre 'shell'. >
+				:echo %		    --> rien
+<			Le '%' est un caractère illégal dans une expression. >
+				:echo "%"	    --> %
+<			Ceci retourne juste le caractère '%'. >
+				:echo expand("%")   --> nomfich
+<			Ceci appelle la fonction expand() pour étendre le '%'.
+
+							*:echoh* *:echohl*
+:echoh[l] {nom}		Utilise le groupe de surbrillance {nom} pour les
+			commandes |:echo|, |:echon| et |:echomsg| suivantes.
+			Également utilisé pour l'invite de |input()|.
+			Exemple : >
+				:echohl WarningMsg
+				:echo "Pas de panique !"
+				:echohl None
+<			N'oubliez pas de fixer à nouveau le groupe à "None",
+			sinon tous les échos suivants seront mis en
+			surbrillance.
+
+							*:echom* *:echomsg*
+:echom[sg] {expr1} ...	Retourne en écho chaque {expr1} comme un vrai message,
+			et le mémorise dans l'historique des messages
+			|message-history|.
+			Des espaces sont insérés entre les arguments comme
+			avec la commande |:echo|.
+			Utilise la surbrillance fixée par la commande
+			|:echohl|.
+			Exemple : >
+				:echomsg "Bourbacage d'encornure médicieuse, ou quelque chose comme ça."
+<
+							*:echoe* *:echoerr*
+:echoe[rr] {expr1} ...	Retourne en écho chaque {expr1} comme un message
+			d'erreur et le mémorise dans l'historique des
+			messages |message-history|. Si utilisé dans un script
+			ou une fonction, le numéro de ligne sera ajouté.
+			Des espaces sont insérés entre les arguments comme
+			avec la commande |:echo|. Si utilisé dans une
+			conditionnelle try, le message sera alors émis en tant
+			qu'exception sur erreur (voir |try-echoerr|).
+			Exemple : >
+				:echoerr "Échec du script !"
+<			Utilise la surbrillance fixée par la commande
+			|:echohl|. Pour émettre un bip : >
+				:exe "normal \<Esc>"
+<
+							*:exe* *:execute*
+:exe[cute] {expr1} ...	Exécute la chaîne renvoyée par l'évaluation de {expr1}
+			en tant que commande Ex. Concatène des arguments
+			multiples, avec un espace entre chaque. {expr1} est
+			traitée comme la commande à exécuter, les touches
+			d'édition en ligne de commande ne sont pas reconnues.
+			Ne peut pas être suivi par un commentaire.
+			Exemples : >
+				:execute "buffer " tampsuiv
+				:execute "normal " quant . "w"
+<
+			":execute" peut être utilisé pour ajouter une commande
+			à la suite des commandes qui n'acceptent pas de '|'.
+			Exemple : >
+				:execute '!ls' | echo "FIN"
+<
+			":execute" permet également d'éviter d'avoir à saisir
+			des caractères de contrôle pour une commande ":normal"
+			dans un script Vim : >
+				:execute "normal ixxx\<Esc>"
+<			Cette commande inclut un caractère <Esc>, voir
+			|expr-string|.
+
+			NOTE : La chaîne exécutée peut être n'importe quelle
+			ligne de commande, mais vous ne pouvez pas commencer
+			ou terminer une commande ":while" ou ":if". Par
+			exemple, ceci est illégal : >
+				:execute 'while i > 5'
+				:execute 'echo "test" | break'
+<
+			Il est permis d'avoir une commande ":while" ou ":if"
+			entièrement dans la chaîne exécutée : >
+				:execute 'while i < 5 | echo i |
+				 \ let i = i + 1 | endwhile'
+<
+
+							*:comment*
+			":execute", ":echo" et ":echon" ne peuvent pas être
+			suivis directement par un commentaire, car ils
+			interprètent le caractère '"' comme un début de
+			chaîne. Mais vous pouvez utiliser '|' suivi d'un
+			commentaire. Exemple : >
+				:echo "toto" | "ceci est un commentaire
+
+==============================================================================
+8. Gestion des exceptions				*exception-handling*
+
+Le langage de script de Vim offre la possibilité de gérer les exceptions.
+Cette section explique comment elle peut être utilisée dans un script Vim.
+
+Des exceptions peuvent être émises par Vim lors d'une erreur ou d'une
+interruption. Voir |catch-errors| et |catch-interrupt|. Il est également
+possible d'en émettre explicitement en utilisant la commande ":throw", voir
+|throw-catch|.
+
+
+CONDITIONNELLES TRY					*try-conditionals*
+
+Les exceptions peuvent être interceptées ou provoquer l'exécution d'un code de
+nettoyage. Vous pouvez utiliser une conditionnelle try pour spécifier des
+clauses d'interception (qui intercepteront les exceptions) et/ou une clause
+finale (à exécuter pour le nettoyage).
+   Une conditionnelle try commence par une commande |:try| et se termine à la
+commande |:endtry| correspondante. À l'intérieur, vous pouvez utiliser la
+commande |:catch| pour débuter une clause d'interception, ou une commande
+|:finally| pour débuter une clause finale. Il peut y avoir plusieurs clauses
+d'interception ou aucune, mais il ne peut n'y avoir au plus qu'une seule
+clause finale, qui ne doit être suivie par aucune clause d'interception. Les
+lignes précédant les clauses d'interception et la clause finale sont désignées
+par le terme « bloc try ». >
+
+	:try
+	:  ...
+	:  ...				BLOC TRY
+	:  ...
+	:catch /{motif}/
+	:  ...
+	:  ...				CLAUSE D'INTERCEPTION
+	:  ...
+	:catch /{motif}/
+	:  ...
+	:  ...				CLAUSE D'INTERCEPTION
+	:  ...
+	:finally
+	:  ...
+	:  ...				CLAUSE FINALE
+	:  ...
+	:endtry
+
+Une conditionnelle try permet de surveiller une portion de code et de prendre
+les mesures appropriées lorsqu'une exception survient dans ledit code. Les
+exceptions d'un bloc try peuvent être interceptées ; avec les clauses
+d'interceptions peuvent déclencher des actions de nettoyage.
+   Si aucune exception n'est émise durant l'exécution d'un bloc try, la clause
+finale est directement exécutée, si elle existe. Le script poursuit ensuite
+son exécution à la ligne suivant le ":endtry".
+   Si une exception est émise durant l'exécution d'un bloc try, le reste des
+lignes du bloc try est sauté. L'exception est comparée aux motifs spécifiés
+en arguments dans les commandes ":catch". La clause d'interception suivant la
+première commande ":catch" qui correspond est choisie, les autres ne sont pas
+exécutées. La clause d'interception prend fin quand la prochaine commande
+":catch", ":finally" ou ":endtry" -- quelle qu'elle soit -- est atteinte. La
+clause finale est ensuite exécutée (si elle existe). Quand le ":endtry" est
+atteint, l'exécution du script continue sur la ligne suivante, comme
+d'habitude.
+   Quand une exception qui ne correspond avec aucun des motifs spécifiés dans
+les commandes ":catch" est émise dans un bloc try, l'exception n'est pas
+interceptée dans la conditionnelle try et aucune des clauses d'interception
+n'est exécutée. Seule la clause finale, si elle existe, est prise en compte.
+L'exception est en attente pendant l'exécution de la clause finale. Son
+traitement reprend au ":endtry", ce qui fait que les commandes situées après
+le ":endtry" ne sont pas exécutées et que l'exception peut être interceptée
+ailleurs, voir |try-nesting|.
+   Si une exception est émise durant l'exécution d'une clause d'interception
+d'une première exception, les lignes restantes de cette clause ne sont pas
+exécutées. La nouvelle exception n'est comparée à aucun des motifs des
+commandes ":catch" de la conditionnelle try en cours (aucune de ses clauses
+d'interception n'est retenue). Si toutefois une clause finale existe, elle est
+exécutée et l'exception est mise en attente. Les commandes situées après le
+":endtry" ne sont pas exécutées. La nouvelle exception peut être interceptée
+autre part, voir |try-nesting|.
+   Si une exception est émise durant l'exécution d'une clause finale, les
+lignes restantes de la clause sont ignorées. Si la clause finale est exécutée
+à cause d'une exception émise depuis le bloc try ou l'une des clauses
+d'interception, la première exception (en attente) est abandonnée. Les
+commandes situées après le ":endtry" ne sont pas exécutées, l'exception émise
+dans la clause finale est propagée et peut être interceptée autre part, voir
+|try-nesting|.
+
+La clause finale est également exécutée quand un ":break" ou un ":continue"
+d'une boucle ":while" englobant complètement la conditionnelle try est
+exécuté dans le bloc try ou une clause d'interception. Ou quand un ":return"
+ou un ":finish" est exécuté dans un bloc try ou une clause d'interception
+d'une conditionnelle try située, respectivement, dans une fonction ou un
+script sourcé. Les ":break", ":continue", ":return" et ":finish" sont mis en
+attente pendant l'exécution de la clause finale, puis reprennent dès que le
+":endtry" est atteint. Toutefois, ils sont abandonnés si une exception est
+émise dans la clause finale.
+   Quand un ":break" ou un ":continue" d'une boucle ":while" englobant
+complètement la conditionnelle try ou quand un ":return" ou un ":finish" est
+atteint dans la clause finale, le reste de la clause est ignorée et les
+":break", ":continue", ":return" ou ":finish" sont exécutés normalement. Si la
+clause finale est exécutée à la suite d'une exception ou d'un ":break",
+":continue", ":return" ou ":finish" précédent depuis le bloc try ou une clause
+d'interception, cette exception ou commande en attente est abandonnée.
+
+Voir |throw-catch| et |try-finally| pour des exemples.
+
+
+IMBRICATION DES CONDITIONNELLES TRY			*try-nesting*
+
+Les conditionnelles try peuvent être imbriquées arbitrairement. C'est-à-dire
+qu'une conditionnelle try complète peut se trouver dans le bloc try, une
+clause d'interception ou la clause finale d'une autre conditionnelle try. Si
+la conditionnelle try interne n'intercepte pas une exception émise dans son
+bloc try ou émet une nouvelle exception dans l'une de ses clauses
+d'interception ou sa clause finale, la conditionnelle externe est traitée
+selon les règles énoncées plus haut. Si la conditionnelle try interne se situe
+dans le bloc try de la conditionnelle externe, ses clauses d'interception sont
+traitées, mais sinon, seule la clause finale est exécutée.
+   Que la conditionnelle try interne soit directement contenue dans la
+conditionnelle try externe ou que cette dernière source un script ou appelle
+une fonction contenant la conditionnelle try interne ne fait aucune
+différence.
+
+Quand aucune des conditionnelles try n'intercepte d'exception, seules leurs
+clauses finales sont exécutées. Après quoi l'exécution du script prend fin. Un
+message d'erreur est affiché dans le cas où une exception explicitement émise
+par une commande ":throw" n'a pas été interceptée. Dans le cas d'une exception
+non interceptée émise par Vim suite à une erreur ou une interruption, le(s)
+message(s) d'erreur(s) ou d'interruption(s) sont affichés de manière
+habituelle.
+
+Voir |throw-catch| pour des exemples.
+
+
+EXAMEN DU CODE DE GESTION DES EXCEPTIONS		*except-examine*
+
+Le code de gestion des exceptions peut devenir très délicat. Si vous êtes
+perplexe à propos de ce qui se passe, fixez 'verbose' à 13 ou utilisez la
+commande ":13verbose" lors du sourcement de votre fichier de script. Vous
+pourrez alors voir quand une exception est émise, abandonnée, interceptée ou
+terminée. Lorsque la verbosité est fixée à 14 ou plus, les éléments en
+attente dans les clauses finales sont également indiqués. Ces informations
+sont aussi données dans le mode débogage (voir |debug-scripts|).
+
+
+ÉMETTRE ET INTERCEPTER DES EXCEPTIONS			*throw-catch*
+
+Vous pouvez émettre n'importe quel nombre ou chaîne comme exception. Utilisez
+la commande |:throw| et passez la valeur à émettre en argument : >
+	:throw 4711
+	:throw "chaîne"
+<							*throw-expression*
+Vous pouvez également spécifier une expression comme argument. L'expression
+est d'abord évaluée, puis le résultat est émis : >
+	:throw 4705 + strlen("chaîne")
+	:throw strpart("chaînes", 0, 6)
+
+Une exception pourrait être émise durant l'évaluation de l'argument de la
+commande ":throw". À moins qu'elle ne soit interceptée ici, l'évaluation de
+l'expression est abandonnée. La commande ":throw" n'émet pas de nouvelle
+exception.
+   Exemple : >
+
+	:function! Zorg(arg)
+	:  try
+	:    throw a:arg
+	:  catch /zorg/
+	:  endtry
+	:  return 1
+	:endfunction
+	:
+	:function! Lub()
+	:  echo "dans Lub"
+	:  return 4710
+	:endfunction
+	:
+	:throw Zorg("arrgh") + Lub()
+
+"arrgh" est émis et "dans Lub" n'est pas affiché puisque Lub() n'est pas
+exécuté. >
+	:throw Zorg("zorg") + Lub()
+affiche toutefois "dans Lub" et émet 4711.
+
+Toute autre commande prenant une expression comme argument pourrait également
+être abandonnée à cause d'une exception (non interceptée) durant l'évaluation
+de l'expression. L'exception est alors remontée vers l'appelant de la
+commande.
+   Exemple : >
+
+	:if Zorg("arrgh")
+	:  echo "alors"
+	:else
+	:  echo "ou bien"
+	:endif
+
+Ici, ni "alors" ni "ou bien" n'est affiché.
+
+							*catch-order*
+Les exceptions peuvent être interceptées par une conditionnelle try pourvue
+d'une ou plusieurs commandes |:catch|, voir |try-conditionals|. Les valeurs à
+intercepter sont spécifiées sous la forme de motifs. Lorsqu'une exception
+correspond à un motif, la clause d'interception qui suit est interceptée.
+   Exemple : >
+
+	:function! Zorg(valeur)
+	:  try
+	:    throw a:valeur
+	:  catch /^\d\+$/
+	:    echo "Nombre émis"
+	:  catch /.*/
+	:    echo "Chaîne émise"
+	:  endtry
+	:endfunction
+	:
+	:call Zorg(0x1267)
+	:call Zorg('chaîne')
+
+Le premier appel à Zorg() affiche "Nombre émis", le second affiche "Chaîne
+émise". Une exception est comparée aux commandes ":catch" dans l'ordre où
+elles sont données. Seule la première correspondance importe. De fait, vous
+devez placer les commandes ":catch" les plus spécifiques en premier. L'ordre
+suivant n'a pas de sens : >
+
+	:  catch /.*/
+	:    echo "Chaîne émise"
+	:  catch /^\d\+$/
+	:    echo "Nombre émis"
+
+Ici, le premier ":catch" correspond toujours, ce qui fait que la seconde
+clause d'interception n'est jamais atteinte.
+
+							*throw-variables*
+Si vous interceptez une exception avec un motif générique, vous pouvez accéder
+à sa valeur exacte avec la variable |v:exception| : >
+
+	:  catch /^\d\+$/
+	:    echo "Nombre intercepté. Sa valeur est" v:exception
+
+Vous pourriez également être intéressé par l'endroit d'où une exception a été
+émise. Cette information est stockée dans la variable |v:throwpoint|. NOTE :
+"v:exception" et "v:throwpoint" sont valides pour la dernière exception
+interceptée aussi longtemps qu'elle n'est pas terminée.
+   Exemple : >
+
+	:function! Interception()
+	:  if v:exception != ""
+	:    echo 'Interception de "' . v:exception . '" dans ' . v:throwpoint
+	:  else
+	:    echo 'Aucune exception interceptée'
+	:  endif
+	:endfunction
+	:
+	:function! Zorg()
+	:  try
+	:    try
+	:      try
+	:	 throw 4711
+	:      finally
+	:	 call Interception()
+	:      endtry
+	:    catch /.*/
+	:      call Interception()
+	:      throw "oups"
+	:    endtry
+	:  catch /.*/
+	:    call Interception()
+	:  finally
+	:    call Interception()
+	:  endtry
+	:endfunction
+	:
+	:call Zorg()
+
+Ceci affiche :
+
+	Aucune exception interceptée ~
+	Interception de "4711" dans function Zorg, line 4 ~
+	Interception de "oups" dans function Zorg, line 10 ~
+	Aucune exception interceptée ~
+
+Exemple pratique : la commande ":NoLigne" suivante affiche le numéro de la
+ligne dans le script ou la fonction depuis lequel elle a été appelée : >
+
+	:function! NoLigne()
+	:  return substitute(v:throwpoint, '.*\D\(\d\+\).*', '\1', "")
+	:endfunction
+	:command! NoLigne try | throw "" | catch | echo NoLigne() | endtry
+<
+							*try-nested*
+Une exception qui n'est pas interceptée par une conditionnelle try peut l'être
+par une conditionnelle try englobante : >
+
+	:try
+	:  try
+	:    throw "zorg"
+	:  catch /zorglub/
+	:    echo "zorglub"
+	:  finally
+	:    echo "clause finale interne"
+	:  endtry
+	:catch /zorg/
+	:  echo "zorg"
+	:endtry
+
+La conditionnelle try interne n'intercepte pas l'exception, seule la clause
+finale est exécutée. L'exception est ensuite interceptée par la conditionnelle
+try externe. Cet exemple affiche donc "clause finale interne" puis "zorg".
+
+							*throw-from-catch*
+Vous pouvez intercepter une exception puis en émettre une nouvelle pour
+qu'elle soit interceptée autre part que dans la clause d'interception
+actuelle : >
+
+	:function! Zorg()
+	:  throw "zorg"
+	:endfunction
+	:
+	:function! Lub()
+	:  try
+	:    call Zorg()
+	:  catch /zorg/
+	:    echo "zorg intercepté, émission de lub"
+	:    throw "lub"
+	:  endtry
+	:endfunction
+	:
+	:try
+	:  call Lub()
+	:catch /.*/
+	:  echo "Interception de" v:exception
+	:endtry
+
+Ceci affiche "zorg intercepté, émission de lub" puis "Interception de lub".
+
+							*rethrow*
+Il n'existe pas de vraie réémission dans le langage de script de Vim, mais
+vous pouvez émettre "v:exception" à la place : >
+
+	:function! Lub()
+	:  try
+	:    call Zorg()
+	:  catch /.*/
+	:    echo "Réémission de" v:exception
+	:    throw v:exception
+	:  endtry
+	:endfunction
+<							*try-echoerr*
+NOTE : Cette méthode ne peut pas être employée pour « réémettre » des
+exceptions dues à des erreurs Vim ou des interruptions, parce qu'il n'est pas
+possible de contrefaire les exceptions internes de Vim. Si vous essayez, vous
+obtiendrez une exception sur erreur. Vous devriez plutôt émettre votre propre
+exception décrivant la situation. Si vous souhaitez provoquer une exception
+sur erreur Vim contenant la valeur de l'exception sur erreur originale, vous
+pouvez utiliser la commande |:echoerr| : >
+
+	:try
+	:  try
+	:    azerty
+	:  catch /.*/
+	:    echoerr v:exception
+	:  endtry
+	:catch /.*/
+	:  echo v:exception
+	:endtry
+
+Cet exemple affiche :
+
+	Vim(echoerr):Vim:E492: Pas une commande de l'éditeur: azerty ~
+
+
+CODE DE NETTOYAGE					*try-finally*
+
+Les scripts modifient souvent des paramètres globaux, et les rétablissent
+lorsqu'ils se terminent. Toutefois, si l'utilisateur interrompt le script en
+appuyant sur CTRL-C, les réglages restent dans un état incohérent. La même
+chose peut se produire pendant la phase de développement d'un script, quand
+une erreur survient ou que vous émettez explicitement une exception sans
+l'intercepter. Vous pouvez résoudre ce problème en utilisant une
+conditionnelle try avec une clause finale rétablissant les réglages. Son
+exécution est garantie en fonctionnement normal, en cas d'erreur, en cas de
+":throw" explicite et d'interruption. (NOTE : Les erreurs et les interruptions
+à l'intérieur d'une conditionnelle try sont converties en exceptions. Si elles
+ne sont pas interceptées, elles terminent le script après que la clause finale
+a été exécutée.)
+   Exemple : >
+
+	:try
+	:  let s:ts_sauv = &ts
+	:  set ts=17
+	:
+	:  " la tâche principale a lieu ici
+	:
+	:finally
+	:  let &ts = s:ts_sauv
+	:  unlet s:ts_sauv
+	:endtry
+
+Cette méthode devrait être employée localement à chaque fois qu'une fonction
+ou qu'une portion de script modifie un réglage global devant être rétabli
+lors de la sortie normale ou exceptionnelle de la fonction ou du script.
+
+							*break-finally*
+Le code de nettoyage fonctionne également quand un bloc try ou une clause
+d'interception est quitté suite à un ":continue", ":break", ":return" ou
+":finish".
+   Exemple : >
+
+	:let premier = 1
+	:while 1
+	:  try
+	:    if premier
+	:      echo "premier"
+	:      let premier = 0
+	:      continue
+	:    else
+	:      throw "second"
+	:    endif
+	:  catch /.*/
+	:    echo v:exception
+	:    break
+	:  finally
+	:    echo "nettoyage"
+	:  endtry
+	:  echo "toujours dans le while"
+	:endwhile
+	:echo "fin"
+
+Ceci affiche "premier", "nettoyage", "second", "nettoyage" puis "fin". >
+
+	:function! Zorg()
+	:  try
+	:    return 4711
+	:  finally
+	:    echo "nettoyage\n"
+	:  endtry
+	:  echo "Zorg toujours actif"
+	:endfunction
+	:
+	:echo Zorg() "retourné par Zorg"
+
+Ceci affiche "nettoyage" puis "4711 retourné par Zorg". Il n'est pas
+nécessaire d'ajouter un ":return" supplémentaire dans la clause finale
+(d'autant que cela recouvrirait la valeur de retour.)
+
+							*except-from-finally*
+Il est possible d'utiliser ":continue", ":break", ":return", ":finish" ou
+":throw" dans une clause finale, mais cela n'est pas recommandé puisque cela
+provoque l'abandon des actions de nettoyage de la conditionnelle try. Mais des
+interruptions ou des erreurs peuvent évidemment se produire dans une clause
+finale.
+   Exemple dans lequel une erreur dans la clause finale empêche une
+interruption de fonctionner normalement : >
+
+	:try
+	:  try
+	:    echo "Appuyez sur CTRL-C pour interrompre"
+	:    while 1
+	:    endwhile
+	:  finally
+	:    unlet pasvar
+	:  endtry
+	:catch /pasvar/
+	:endtry
+	:echo "Script toujours en exécution"
+	:sleep 1
+
+Si vous devez employer des commandes qui peuvent générer des erreurs dans une
+clause finale, vous devriez réfléchir à la manière d'intercepter ou d'ignorer
+ces erreurs, voir |catch-errors| et |ignore-errors|.
+
+
+INTERCEPTER DES ERREURS					*catch-errors*
+
+Pour intercepter des erreurs particulières, il vous suffit de mettre le code à
+surveiller dans un bloc try et d'ajouter une clause d'interception pour ce
+message d'erreur. La présence d'une conditionnelle try entraîne la conversion
+de toutes les erreurs en exceptions. Aucun message d'erreur n'est alors
+affiché, et |v:errmsg| n'est pas fixé. Pour déterminer le motif approprié pour
+la commande ":catch", vous devez connaître la forme des exceptions sur erreur.
+   Les exceptions sur erreur sont de la forme :
+
+	Vim({nomcmd}):{msgerr} ~
+Ou :
+	Vim:{msgerr} ~
+
+{nomcmd} désigne le nom de la commande ayant échoué ; la seconde forme est
+employée quand le nom de la commande est inconnu. {msgerr} désigne le message
+d'erreur habituellement émis lorsque l'erreur se produit hors d'une
+conditionnelle try. Il commence toujours par un 'E' majuscule, suivi par deux
+ou trois chiffres constituant le numéro d'erreur, deux-points puis un espace.
+
+Exemples :
+
+La commande >
+	:unlet pasvar
+produit normalement le message d'erreur
+	E108: Variable inexistante: pasvar ~
+qui, à l'intérieur d'une conditionnelle try, est converti en exception :
+	Vim(unlet):E108: Variable inexistante: pasvar ~
+
+La commande >
+	:dwim
+produit normalement le message d'erreur
+	E492: Pas une commande de l'éditeur: dwim ~
+qui, à l'intérieur d'une conditionnelle try, est converti en exception :
+	Vim:E492: Pas une commande de l'éditeur: dwim ~
+
+Vous pouvez intercepter toutes les erreurs ":unlet" avec >
+	:catch /^Vim(unlet):/
+ou toutes les erreurs dues à des noms de commandes mal tapés avec : >
+	:catch /^Vim:E492:/
+
+Certains messages d'erreurs peuvent être produits par des commandes
+différentes. Ainsi >
+	:function pasfonc
+et >
+	:delfunction pasfonc
+produisent ce même message
+	E128: pasfonc ne commence pas par une majuscule ~
+qui, à l'intérieur d'une conditionnelle try, est converti en exception
+	Vim(function):E128: pasfonc ne commence pas par une majuscule ~
+ou
+	Vim(delfunction):E128: pasfonc ne commence pas par une majuscule ~
+respectivement. Vous pouvez intercepter cette erreur par son numéro,
+indépendamment de la commande qui l'a provoquée, en utilisant le motif
+suivant : >
+	:catch /^Vim(\a\+):E128:/
+
+Certaines commandes, telles que >
+	:let x = pasvar
+produisent plusieurs messages d'erreurs ; dans le cas présent :
+	E121: Variable indéfinie: pasvar ~
+	E15: Expression indéfinie: pasvar ~
+Seul le premier est utilisé pour la valeur de l'exception, puisqu'il s'agit
+du plus précis (voir |except-several-errors|). Vous pouvez donc
+l'intercepter avec : >
+	:catch /^Vim(\a\+):E121:/
+
+Vous pouvez intercepter toutes les erreurs relatives au nom "pasfonc" avec : >
+	:catch /\<pasfonc\>/
+
+Vous pouvez intercepter toutes les erreurs Vim sur les commandes ":write" et
+":read" avec : >
+	:catch /^Vim(\(write\|read\)):E\d\+:/
+
+Vous pouvez intercepter toutes les erreurs Vim avec ce motif : >
+	:catch /^Vim\((\a\+)\)\=:E\d\+:/
+<
+							*catch-text*
+NOTE : Vous ne devriez jamais essayer d'intercepter une erreur d'après le
+texte de son message : >
+	:catch /Variable inexistante/
+ne fonctionne que pour la langue française, mais pas si l'utilisateur a
+sélectionné une langue différente avec la commande |:language|. Néanmoins, il
+peut être utile de citer le texte du message d'erreur dans un commentaire : >
+	:catch /^Vim(\a\+):E108:/   " Variable inexistante
+
+
+IGNORER LES ERREURS					*ignore-errors*
+
+Vous pouvez ignorer les erreurs d'une commande Vim particulière en les
+interceptant localement : >
+
+	:try
+	:  write
+	:catch
+	:endtry
+
+Mais vous êtes vivement encouragé à ne PAS utiliser cette forme simpliste, car
+cela pourrait intercepter bien plus que vous ne le voudriez. Avec la commande
+":write", certaines autocommandes pourraient être exécutées et provoquer des
+erreurs sans rapport avec l'enregistrement. Par exemple : >
+
+	:au BufWritePre * unlet pasvar
+
+Vous pourriez également être indirectement responsable d'erreurs de ce type si
+vous créez un script : un utilisateur de ce script pourrait fort bien avoir
+défini de telles autocommandes. Vous lui cacheriez alors cette erreur.
+   Il est préférable d'utiliser >
+
+	:try
+	:  write
+	:catch /^Vim(write):/
+	:endtry
+
+qui n'intercepte que des erreurs réellement liées à l'enregistrement. Par
+conséquent, prenez soin de n'intercepter que ce que vous souhaitez ignorer
+intentionnellement.
+
+Pour une commande simple qui ne déclenche l'exécution d'aucune autocommande,
+vous pourriez même supprimer la conversion de l'erreur en exception avec la
+commande ":silent!" : >
+	:silent! nunmap k
+Cela fonctionne aussi dans une conditionnelle try active.
+
+
+INTERCEPTER LES INTERRUPTIONS				*catch-interrupt*
+
+À l'intérieur d'une conditionnelle try active, une interruption (CTRL-C) est
+convertie en une exception "Vim:Interrupt". Vous pouvez l'intercepter comme
+toute autre exception. Le script n'est alors pas interrompu.
+   Exemple : >
+
+	:function! TACHE1()
+	:  sleep 10
+	:endfunction
+
+	:function! TACHE2()
+	:  sleep 20
+	:endfunction
+
+	:while 1
+	:  let commande = input("Tapez une commande : ")
+	:  try
+	:    if commande == ""
+	:      continue
+	:    elseif commande == "FIN"
+	:      break
+	:    elseif commande == "TACHE1"
+	:      call TACHE1()
+	:    elseif commande == "TACHE2"
+	:      call TACHE2()
+	:    else
+	:      echo "\nCommande invalide :" commande
+	:      continue
+	:    endif
+	:  catch /^Vim:Interrupt$/
+	:    echo "\nCommande interrompue"
+	:    " Interception de l'interruption. Reprise à l'invite.
+	:  endtry
+	:endwhile
+
+Ici, vous pouvez interrompre une tâche en pressant CTRL-C ; le script demande
+alors une nouvelle commande. Si vous pressez CTRL-C lors de cette invite, le
+script se termine.
+
+Pour tester ce qui se passe quand CTRL-C est pressé sur une ligne particulière
+de votre script, utilisez le mode débogage et exécutez les commandes |>quit|
+et |>interrupt| sur cette ligne. Voir |debug-scripts|.
+
+
+TOUT INTERCEPTER					*catch-all*
+
+Les commandes >
+
+	:catch /.*/
+	:catch //
+	:catch
+
+interceptent tout, les exceptions sur erreur, les exceptions sur interruption
+et les exceptions émises explicitement avec la commande |:throw|. C'est utile
+pour intercepter les événements inattendus au niveau le plus haut d'un script.
+   Exemple : >
+
+	:try
+	:
+	:  " la tâche principale a lieu ici
+	:
+	:catch /MonException/
+	:
+	:  " les problèmes connus sont traités ici
+	:
+	:catch /^Vim:Interrupt$/
+	:  echo "Script interrompu"
+	:catch /.*/
+	:  echo "Erreur interne (" . v:exception . ")"
+	:  echo " -- émise dans " . v:throwpoint
+	:endtry
+	:" fin du script
+
+NOTE : Tout intercepter pourrait intercepter plus de choses que vous ne le
+voudriez. De fait, vous êtes fortement encouragé à n'intercepter que ce que
+les exceptions que vous êtes en mesure de prendre en compte en spécifiant un
+motif ciblé en argument de la commande ":catch".
+   Par exemple, tout intercepter rendrait un tel script a peu près impossible
+à interrompre en pressant CTRL-C : >
+
+	:while 1
+	:  try
+	:    sleep 1
+	:  catch
+	:  endtry
+	:endwhile
+
+
+EXCEPTIONS ET AUTOCOMMANDES				*except-autocmd*
+
+Les exceptions peuvent être utilisées pendant l'exécution d'autocommandes.
+Exemple : >
+
+	:autocmd User x try
+	:autocmd User x   throw "Oups !"
+	:autocmd User x catch
+	:autocmd User x   echo v:exception
+	:autocmd User x endtry
+	:autocmd User x throw "Arrgh !"
+	:autocmd User x echo "Ne devrait pas être affiché"
+	:
+	:try
+	:  doautocmd User x
+	:catch
+	:  echo v:exception
+	:endtry
+
+Ceci affiche "Oups !" et "Arrgh !".
+
+							*except-autocmd-Pre*
+Pour certaines commandes, les autocommandes sont exécutées avant l'action
+principale de la commande. Si une exception est émise et non interceptée dans
+la séquence d'autocommandes, cette séquence et la commande l'ayant déclenchée
+sont abandonnées, et l'exception est propagée vers l'appelant de la commande.
+   Exemple : >
+
+	:autocmd BufWritePre * throw "ÉCHEC"
+	:autocmd BufWritePre * echo "Ne devrait pas être affiché"
+	:
+	:try
+	:  write
+	:catch
+	:  echo "Interception :" v:exception "dans" v:throwpoint
+	:endtry
+
+Ici, la commande ":write" n'enregistre pas le fichier en cours d'édition (vous
+pouvez vous en assurer en consultant 'modified'), car l'exception de
+l'autocommande BufWritePre abandonne le ":write". L'exception est alors
+interceptée et le script affiche :
+
+	Interception : ÉCHEC dans BufWrite Auto commands for "*" ~
+
+							*except-autocmd-Post*
+Pour certaines commandes, les autocommandes sont exécutées après l'action
+principale de la commande. Si l'action principale échoue et que la commande
+est dans une conditionnelle try active, les autocommandes sont ignorées et une
+exception sur erreur est émise, pouvant être interceptée par l'appelant de la
+commande.
+   Exemple : >
+
+	:autocmd BufWritePost * echo "Fichier enregistré avec succès !"
+	:
+	:try
+	:  write /i/m/p/o/s/s/i/b/l/e
+	:catch
+	:  echo v:exception
+	:endtry
+
+Ceci affiche simplement :
+
+	Vim(write):E212: Peut pas ouvrir le fichier pour y écrire (/i/m/p/o/s/s/i/b/l/e) ~
+
+Si vous devez absolument exécuter l'autocommande même quand l'action
+principale a échoué, vous pouvez déclencher l'événement dans la clause
+d'interception.
+   Exemple : >
+
+	:autocmd BufWritePre  * set noreadonly
+	:autocmd BufWritePost * set readonly
+	:
+	:try
+	:  write /i/m/p/o/s/s/i/b/l/e
+	:catch
+	:  doautocmd BufWritePost /i/m/p/o/s/s/i/b/l/e
+	:endtry
+
+Vous pouvez aussi utiliser ":silent!" : >
+
+	:let x = "ok"
+	:let v:errmsg = ""
+	:autocmd BufWritePost * if v:errmsg != ""
+	:autocmd BufWritePost *   let x = "échec après l'enregistrement"
+	:autocmd BufWritePost * endif
+	:try
+	:  silent! write /i/m/p/o/s/s/i/b/l/e
+	:catch
+	:endtry
+	:echo x
+
+Ceci affiche "échec après l'enregistrement".
+
+Si l'action principale de la commande n'échoue pas, les exceptions émises
+depuis les autocommandes pourront être interceptées par l'appelant de la
+commande : >
+
+	:autocmd BufWritePost * throw ":-("
+	:autocmd BufWritePost * echo "Ne devrait pas être affiché"
+	:
+	:try
+	:  write
+	:catch
+	:  echo v:exception
+	:endtry
+<
+							*except-autocmd-Cmd*
+Pour certaines commandes, l'action normale peut être remplacée par une
+séquence d'autocommandes. Les exceptions émises depuis cette séquence pourront
+être interceptées par l'appellent de la commande.
+   Exemple : pour la commande ":write", l'appelant ne peut pas savoir si le
+fichier a vraiment été enregistré quand l'exception se produit. Vous devez le
+lui faire savoir d'une manière ou d'une autre. >
+
+	:if !exists("cpt")
+	:  let cpt = 0
+	:
+	:  autocmd BufWriteCmd * if &modified
+	:  autocmd BufWriteCmd *   let cpt = cpt + 1
+	:  autocmd BufWriteCmd *   if cpt % 3 == 2
+	:  autocmd BufWriteCmd *     throw "ErreurBufWriteCmd"
+	:  autocmd BufWriteCmd *   endif
+	:  autocmd BufWriteCmd *   write | set nomodified
+	:  autocmd BufWriteCmd *   if cpt % 3 == 0
+	:  autocmd BufWriteCmd *     throw "ErreurBufWriteCmd"
+	:  autocmd BufWriteCmd *   endif
+	:  autocmd BufWriteCmd *   echo "Fichier enregistré avec succès !"
+	:  autocmd BufWriteCmd * endif
+	:endif
+	:
+	:try
+	:  write
+	:catch /^ErreurBufWriteCmd$/
+	:  if &modified
+	:    echo "Erreur durant l'enregistrement (contenu du fichier inchangé)"
+	:  else
+	:    echo "Erreur après l'enregistrement"
+	:  endif
+	:catch /^Vim(write):/
+	:  echo "Erreur durant l'enregistrement"
+	:endtry
+
+Quand ce script est sourcé plusieurs fois après avoir fait des modifications,
+il affiche d'abord
+	Fichier enregistré avec succès ! ~
+puis
+	Erreur durant l'enregistrement (contenu du fichier inchangé) ~
+puis
+	Erreur après l'enregistrement ~
+etc.
+
+							*except-autocmd-ill*
+Il est impossible d'étaler une conditionnelle try sur plusieurs autocommandes
+concernant différents événements. Le code suivant n'est pas correct : >
+
+	:autocmd BufWritePre  * try
+	:
+	:autocmd BufWritePost * catch
+	:autocmd BufWritePost *   echo v:exception
+	:autocmd BufWritePost * endtry
+	:
+	:write
+
+
+HIÉRARCHIE DES EXCEPTIONS ET EXCEPTIONS PARAMÉTRÉES	*except-hier-param*
+
+Certains langages de programmation permettent l'utilisation de hiérarchies de
+classes d'exceptions ou le passage d'informations supplémentaires avec
+l'instance d'une classe d'exceptions. Vous pouvez faire des choses similaires
+dans Vim.
+   Afin d'émettre une exception depuis une hiérarchie, émettez simplement le
+nom complet de la classe avec les composantes séparées par des ':'. Par
+exemple, émettez la chaîne "EXCEPTION:ERRMATH:DEBORDEMENT" pour un débordement
+dans une bibliothèque mathématique.
+   Lorsque vous souhaitez passer des informations supplémentaires avec votre
+exception, ajoutez-les entre parenthèses ; émettez par exemple la chaîne
+"EXCEPTION:ES:ERRECRITURE(monfichier)" pour une erreur se produisant à
+l'enregistrement du fichier "monfichier".
+   Avec les motifs appropriés dans les commandes ":catch", vous pouvez
+intercepter les classes de base ou les classes dérivées de votre hiérarchie.
+Les informations supplémentaires entre parenthèses peuvent être récupérées
+depuis |v:exception| à l'aide de la commande ":substitute".
+   Exemple : >
+
+	:function! VerifierPlage(a, fonc)
+	:  if a:a < 0
+	:    throw "EXCEPTION:ERRMATH:PLAGE(" . a:fonc . ")"
+	:  endif
+	:endfunction
+	:
+	:function! Ajouter(a, b)
+	:  call VerifierPlage(a:a, "Ajouter")
+	:  call VerifierPlage(a:b, "Ajouter")
+	:  let c = a:a + a:b
+	:  if c < 0
+	:    throw "EXCEPTION:ERRMATH:DEBORDEMENT"
+	:  endif
+	:  return c
+	:endfunction
+	:
+	:function! Diviser(a, b)
+	:  call VerifierPlage(a:a, "Diviser")
+	:  call VerifierPlage(a:b, "Diviser")
+	:  if (a:b == 0)
+	:    throw "EXCEPTION:ERRMATH:DIVPARZERO"
+	:  endif
+	:  return a:a / a:b
+	:endfunction
+	:
+	:function! Enregistrer(fich)
+	:  try
+	:    execute "write" a:fich
+	:  catch /^Vim(write):/
+	:    throw "EXCEPTION:ES(" . getcwd() . ", " . a:fich . "):ERRECRITURE"
+	:  endtry
+	:endfunction
+	:
+	:try
+	:
+	:  " des commandes avec de l'arithmétique et des E/S
+	:
+	:catch /^EXCEPTION:ERRMATH:PLAGE/
+	:  let fonc = substitute(v:exception, '.*(\(\a\+\)).*', '\1', "")
+	:  echo "Erreur de plage dans" fonc
+	:
+	:catch /^EXCEPTION:ERRMATH/	" intercepte DEBORDEMENT et DIVPARZERO
+	:  echo "Erreur mathématique"
+	:
+	:catch /^EXCEPTION:ES/
+	:  let rep = substitute(v:exception, '.*(\(.\+\),\s*.\+).*', '\1', "")
+	:  let fich = substitute(v:exception, '.*(.\+,\s*\(.\+\)).*', '\1', "")
+	:  if fich !~ '^/'
+	:    let fich = rep . "/" . fich
+	:  endif
+	:  echo 'Erreur d'E/S pour "' . fich . '"'
+	:
+	:catch /^EXCEPTION/
+	:  echo "Erreur non identifiée"
+	:
+	:endtry
+
+Les exceptions émises par Vim lui-même (suite à une erreur ou lors de l'appui
+sur CTRL-C) possèdent une hiérarchie horizontale : elle appartiennent toutes à
+la classe "Vim". Il ne vous est pas possible d'émettre des exceptions avec le
+préfixe "Vim" ; elles sont réservées à l'éditeur.
+   Les exceptions Vim sur erreur sont paramétrées avec le nom de la commande
+ayant échoué, s'il est connu. Voir |catch-errors|.
+
+
+POINTS PARTICULIERS
+							*except-compat*
+Le mécanisme de gestion des exceptions nécessite que la séquence de commandes
+responsable d'une exception soit immédiatement abandonnée et que le contrôle
+soit transféré aux clauses finales et/ou à une clause d'interception.
+
+Dans le langage de script de Vim, il existe des cas où les scripts et les
+fonctions se poursuivent après une erreur : dans les fonctions sans le drapeau
+"abort" ou dans les commandes précédées de ":silent!", le contrôle revient à
+la ligne suivant le ":endwhile" ou le ":endif" le plus extérieur. D'un autre
+côté, les erreurs devraient pouvoir être interceptées en tant qu'exceptions
+(et de fait, nécessiteraient un abandon immédiat).
+
+Ce problème est résolu en convertissant les erreurs en exceptions et en
+utilisant l'abandon immédiat (s'il n'est pas désactivé par ":silent!")
+seulement quand une conditionnelle try est active. Cette conversion n'amène
+aucune restriction puisqu'une exception (sur erreur) ne peut être interceptée
+que depuis une conditionnelle try active. Si vous voulez une terminaison
+immédiate sans intercepter l'erreur, utilisez simplement une conditionnelle
+try sans clause d'interception. (Il vous est possible de provoquer l'exécution
+d'un code de nettoyage avant la terminaison en spécifiant une clause finale.)
+
+Lorsque aucune conditionnelle try n'est active, le comportement habituel
+d'abandon ou de continuation est utilisé au lieu de l'abandon immédiat. Ceci
+assure la compatibilité avec les scripts écrits pour Vim 6.1 et antérieurs.
+
+Toutefois, quand vous sourcez un script existant qui n'utilise pas les
+commandes de gestion des exceptions (ou quand vous appelez l'une de ses
+fonctions) depuis la conditionnelle try active d'un nouveau script, vous
+risquez de changer le contrôle de l'exécution du script existant lors d'une
+erreur. Vous obtenez alors un abandon immédiat et vous pouvez intercepter
+l'erreur dans le nouveau script. Si toutefois le script sourcé supprime les
+messages d'erreurs en utilisant la commande ":silent!" (il lui reste possible
+de vérifier la bonne marche de l'exécution en accédant à la variable
+|v:errmsg| au besoin), son fil d'exécution reste inchangé. L'erreur n'est pas
+convertie en exception. (Voir |:silent|.) Par conséquent, les seuls cas où le
+fil d'exécution d'un script existant peut être modifié par la gestion des
+exceptions d'un autre script qui le source sont dûs aux scripts existants qui
+ne font pas attention aux erreurs ou qui produisent des messages d'erreurs.
+Vous avez tout intérêt à éviter d'utiliser un tel code dans vos nouveaux
+scripts.
+
+							*except-syntax-err*
+Les erreurs de syntaxe dans les commandes de gestion des exceptions ne sont
+jamais interceptées par les commandes ":catch" de la conditionnelle try à
+laquelle elles appartiennent. La clause finale est toutefois exécutée.
+   Exemple : >
+
+	:try
+	:  try
+	:    throw 4711
+	:  catch /\(/
+	:    echo "catch avec une erreur de syntaxe"
+	:  catch
+	:    echo "catch interne interceptant tout"
+	:  finally
+	:    echo "finally interne"
+	:  endtry
+	:catch
+	:  echo 'catch externe interceptant tout : "' . v:exception . '"'
+	:  finally
+	:    echo "finally externe"
+	:endtry
+
+Ceci affiche :
+	finally interne ~
+	catch externe interceptant tout : "Vim(catch):E54: Pas de correspondance pour \(" ~
+	finally externe ~
+L'exception originelle est abandonnée et une exception sur erreur est émise à
+la place.
+
+							*except-single-line*
+Les commandes ":try", ":catch", ":finally" et ":endtry" peuvent être placées
+sur une seule ligne, mais dans ce cas les erreurs de syntaxe rendent difficile
+la détermination de la ligne correspondant à l'interception. Par conséquent,
+vous devriez éviter ce genre de choses.
+   Exemple : >
+	:try | unlet! zorg # | catch | endtry
+Ceci émet une exception sur erreur à cause des caractères supplémentaires
+après l'argument de ":unlet!", mais ne reconnaît pas les commandes ":catch" et
+":endtry", ce qui provoque l'abandon de l'exception sur erreur et l'affichage
+du message "E488: Caractères surnuméraires".
+
+							*except-several-errors*
+Quand plusieurs erreurs apparaissent dans une seule ligne de commande, le
+premier message d'erreur est en général le plus spécifique, et par conséquent
+celui qui est converti en exception sur erreur.
+   Exemple : >
+	:echo pasvar
+Ceci provoque :
+	E121: Variable indéfinie: pasvar ~
+	E15: Expression invalide: pasvar ~
+La valeur de l'exception sur erreur dans la conditionnelle try est :
+	Vim(echo):E121: Variable indéfinie: pasvar ~
+							*except-syntax-error*
+Mais quand une erreur de syntaxe est détectée après une erreur normale dans la
+même commande, c'est l'erreur de syntaxe est utilisée pour l'émission de
+l'exception.
+   Exemple : >
+	:unlet pasvar #
+Ceci provoque :
+	E108: Variable inexistante: pasvar ~
+	E488: Caractères surnuméraires ~
+La valeur de l'exception sur erreur dans la conditionnelle try est :
+	Vim(unlet):E488: Caractères surnuméraires ~
+Ce comportement a été choisi car l'erreur de syntaxe pourrait modifier le
+chemin d'exécution d'une manière inattendue pour l'utilisateur. Exemple : >
+	:try
+	:  try | unlet pasvar # | catch | echo v:exception | endtry
+	:catch /.*/
+	:  echo "catch externe :" v:exception
+	:endtry
+Ceci affiche "catch externe : Vim(unlet):E488: Caractères surnuméraires", puis
+le message d'erreur "E600: :endtry manquant" est émis, voir
+|except-single-line|.
+
+==============================================================================
+9. Exemples						*eval-examples*
+
+AFFICHAGE EN HEXADÉCIMAL >
+
+  :" La fonction NbEnHexa() renvoie une chaîne correspondant à la valeur hexa
+  :" d'un nombre.
+  :func NbEnHexa(nb)
+  :  let n = a:nb
+  :  let r = ""
+  :  while n
+  :    let r = '0123456789ABCDEF'[n % 16] . r
+  :    let n = n / 16
+  :  endwhile
+  :  return r
+  :endfunc
+
+  :" La fonction ChaineEnHexa() convertit chaque caractère dans une chaîne en
+  :" une chaîne hexa de deux caractères.
+  :func ChaineEnHexa(chn)
+  :  let sortie = ''
+  :  let idx = 0
+  :  while idx < strlen(a:chn)
+  :    let sortie = sortie . NbEnHexa(char2nr(a:chn[idx]))
+  :    let idx = idx + 1
+  :  endwhile
+  :  return sortie
+  :endfunc
+
+Exemples : >
+	:echo NbEnHexa(32)
+Ceci renvoie "20". >
+	:echo ChaineEnHexa("32")
+Ceci renvoie "3332".
+
+
+TRIER DES LIGNES (PAR ROBERT WEBB)
+
+Le script Vim qui suit permet de trier des lignes. Pour cela, mettez les
+lignes en surbrillance dans Vim et tapez ":Sort". Aucun programme externe
+n'est appelé, cela devrait donc fonctionner sur n'importe quelle plate-forme.
+La fonction Sort() prend en fait le nom d'une fonction de comparaison en
+argument, comme qsort() le fait en C. Ainsi, vous pouvez lui passer
+différentes fonctions de comparaison afin d'effectuer un tri par date, etc. >
+
+  :" Fonction à utiliser avec Sort(), pour comparer deux chaînes.
+  :func! CmpChn(chn1, chn2)
+  :  if (a:chn1 < a:chn2)
+  :	return -1
+  :  elseif (a:chn1 > a:chn2)
+  :	return 1
+  :  else
+  :	return 0
+  :  endif
+  :endfunction
+
+  :" Trie des lignes. SortR() est appelé récursivement.
+  :func! SortR(debut, fin, cmp)
+  :  if (a:debut >= a:fin)
+  :	return
+  :  endif
+  :  let partition = a:debut - 1
+  :  let milieu = partition
+  :  let partChn = getline((a:debut + a:fin) / 2)
+  :  let i = a:debut
+  :  while (i <= a:fin)
+  :	let chn = getline(i)
+  :	exec "let resultat = " . a:cmp . "(chn, partChn)"
+  :	if (resultat <= 0)
+  :	    " Doit être placé avant la partition. Échange les lignes i et
+  :	    " partition.
+  :	    let partition = partition + 1
+  :	    if (resultat == 0)
+  :		let milieu = partition
+  :	    endif
+  :	    if (i != partition)
+  :		let chn2 = getline(partition)
+  :		call setline(i, chn2)
+  :		call setline(partition, chn)
+  :	    endif
+  :	endif
+  :	let i = i + 1
+  :  endwhile
+
+  :  " Nous disposons maintenant d'un pointeur sur un élément "milieu" pour
+  :  " l'ordre et le partitionnement choisis, qui peut se trouver n'importe où
+  :  " avant "partition", qui sépare les éléments plus petits des éléments
+  :  " plus grands. Faisons en sorte que cette coupure corresponde au milieu
+  :  " dans l'ordre choisi, en déplaçant "milieu". XXX
+  :  if (milieu != partition)
+  :	let chn = getline(milieu)
+  :	let chn2 = getline(partition)
+  :	call setline(milieu, chn2)
+  :	call setline(partition, chn)
+  :  endif
+  :  call SortR(a:debut, partition - 1, a:cmp)
+  :  call SortR(partition + 1, a:fin, a:cmp)
+  :endfunc
+
+  :" Pour trier une plage de lignes, passez la plage à Sort() en même temps
+  :" que le nom d'une fonction qui comparera deux lignes.
+  :func! Sort(cmp) range
+  :  call SortR(a:firstline, a:lastline, a:cmp)
+  :endfunc
+
+  :" :Sort prend une plage de lignes et les trie.
+  :command! -nargs=0 -range Sort <line1>,<line2>call Sort("CmpChn")
+<
+
+							*sscanf*
+Il n'y a pas de fonction sscanf() dans Vim. Si vous avez besoin d'extraire des
+parties d'une ligne, vous pouvez utiliser matchstr() et substitute() pour le
+faire. Cet exemple montre comment extraire le nom de fichier, le numéro de
+ligne et le numéro de colonne d'une ligne semblable à "toto.txt, 123, 45". >
+
+  :" Fixe le champ de correspondance.
+  :let mx='\(\f\+\),\s*\(\d\+\),\s*\(\d\+\)'
+  :" Extrait la partie correspondante de l'expression entière.
+  :let l = matchstr(ligne, mx)
+  :" Extrait chaque élément de la correspondance.
+  :let fichier = substitute(l, mx, '\1', '')
+  :let nol = substitute(l, mx, '\2', '')
+  :let col = substitute(l, mx, '\3', '')
+
+L'entrée est dans la variable "ligne", les résultats dans les variables
+"fichier", "nol" et "col". (L'idée vient de Michael Geddes.)
+
+==============================================================================
+10. Fonctionnalité +eval absente			*no-eval-feature*
+
+Lorsque la fonctionnalité |+eval| a été désactivée à la compilation, aucune
+des commandes d'évaluation d'expression n'est disponible. Dans ce cas, afin
+d'éviter que les scripts Vim ne génèrent toutes sortes d'erreurs, les
+commandes ":if" et ":endif" sont toujours reconnues, mais l'argument du ":if"
+et tout ce qui suit jusqu'au ":endif" correspondant est ignoré. L'imbrication
+de blocs ":if" est autorisée, mais uniquement si les commandes sont au début
+de la ligne. La commande ":else" n'est pas reconnue.
+
+Cet exemple montre comment éviter d'exécuter des commandes quand la
+fonctionnalité |+eval| est manquante : >
+
+	:if 1
+	:  echo "L'évaluation d'expression est supportée"
+	:else
+	:  echo "Vous n'obtiendrez _jamais_ ce message"
+	:endif
+
+==============================================================================
+11. Le bac à sable				*eval-sandbox* *sandbox* *E48*
+
+Les options 'foldexpr', 'includeexpr', 'indentexpr', 'statusline' et
+'foldtext' sont évaluées dans un bac à sable. Cela signifie que vous êtes
+protégé contre les nuisances éventuelles que ces expressions pourraient vous
+causer. Vous bénéficiez ainsi d'une relative sécurité lorsque ces options sont
+fixées depuis une ligne de mode. Le bac à sable est aussi utilisé lorsqu'une
+commande est exécutée depuis un fichier de marqueurs.
+   La sécurité n'est pas garantie à 100 %, mais cela devrait suffire à bloquer
+la plupart des attaques.
+
+Ces actions sont interdites dans le bac à sable :
+- modifier le texte d'un tampon ;
+- définir ou modifier des mappages, autocommandes, fonctions, commandes
+  utilisateur ;
+- fixer une option avec ":set" ;
+- exécuter une commande shell ;
+- lire ou écrire un fichier ;
+- sauter à un autre tampon ou éditer un fichier.
+
+ vim:tw=78:ts=8:ft=help:norl:

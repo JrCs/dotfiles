@@ -1,0 +1,70 @@
+*os_unix.txt*   Pour Vim version 6.2.  Dernière modification : 15 mar 2003
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+							*unix* *Unix*
+Ce fichier documente les particularités de la version Unix de Vim.
+
+Pour compiler Vim sur Unix, consultez les fichiers "INSTALL" et "Makefile"
+dans le répertoire "src".
+
+Le fichier d'aide par défaut est "/usr/local/lib/vim/help.txt". Les fichiers
+"$HOME/.vimrc" et "$HOME/.exrc" sont recherchés au lieu de "s:.vimrc" et
+"s:.exrc". De plus, le fichier "/usr/local/etc/vimrc" est lu en premier. Si
+"/usr/local/share" existe, alors il est utilisé à la place de
+"/usr/local/lib".
+
+Les fichiers temporaires (pour le filtrage) sont créés dans le répertoire
+"/tmp". Si vous voulez les placer ailleurs, définissez la variable
+d'environnement $TMPDIR avec le répertoire approprié.
+
+Avec l'expansion des jokers, vous pouvez aussi utiliser '~' (répertoire
+utilisateur) et '$' (pour les variables d'environnement).
+
+							*fork* *spoon*
+Pour l'exécution des commandes externes, le couple fork()/exec() est utilisé
+si c'est possible, sinon Vim utilise fonction system(), un peu plus lente. La
+sortie de ":version" comprend |+fork| si le duo fork()/exec() est utilisé, et
+|+system()| si system() est utilisé. Il est possible de modifier cela au
+moment de la compilation. (Pour l'utilisation de fork() avec l'interface
+graphique, voir |gui-fork|).
+
+Parce que les terminaux Unix sont souvent lents pour raffraîchir leur
+affichage (par exemple, terminaux sur ligne série, fenêtre de shell dans les
+suntools), les options 'showcmd' et 'ruler' sont désactivées. Si vous utilisez
+un terminal rapide, essayez de les activer. Vous pourriez aussi activer
+l'option 'ttyfast'.
+
+Lorsque vous utilisez Vim dans un xterm, Vim peut prendre la souris en compte
+si 'mouse' vaut "a". Si un accès à une interface graphique de type serveur X
+est disponible, le copier/coller sera possible et un effet visuel rendra
+compte du glissement de la souris. Si vous voulez que le xterm continue de
+copier/coller avec la souris, pressez la touche MAJ lorsque vous utilisez la
+souris. Voir |mouse-using|. Le retour visuel lorsque vous faites glisser la
+souris peut aussi être obtenu avec l'option 'ttymouse' si votre xterm est
+assez récent.
+
+							*terminal-colors*
+Pour utiliser les couleurs dans Vim, vous pouvez utiliser l'exemple suivant
+(si votre terminal supporte les couleurs, mais que "t_co" est vide ou vaut
+zéro) : >
+
+   :set t_me=^[[0;1;36m     " mode normal (annule t_mr et t_md)
+   :set t_mr=^[[0;1;33;44m  " mode vidéo inverse
+   :set t_md=^[[1;33;41m    " mode gras
+   :set t_se=^[[1;36;40m    " fin de la surbrillance
+   :set t_so=^[[1;32;45m    " mode surbrillance
+   :set t_ue=^[[0;1;36m     " fin du mode souligné
+   :set t_us=^[[1;32m       " démarrer le mode souligné
+
+[ ^[ représente la touche d'échappement, tapez CTRL-V <Echap> pour la saisir.]
+
+Pour les vrais terminaux couleurs, la commande ":highlight" peut être
+utilisée.
+
+Le fichier "tools/Vim132" est un script shell qui permet de passer Vim en mode
+132 colonnes sur les terminaux vt100 et assimilés.
+
+ vim:tw=78:ts=8:ft=help:norl:

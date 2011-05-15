@@ -1,0 +1,278 @@
+*usr_11.txt*	Pour Vim version 6.2.
+
+	       MANUEL de l'UTILISATEUR VIM - par Bram Moolenaar
+
+			Recouvrement après un plantage
+
+
+Votre ordinateur a planté ? Vous venez de perdre des heures passées à éditer
+un texte ? Pas de panique ! Vim a conservé suffisamment d'informations sur
+votre disque dur pour vous permettre de restaurer la majeure partie de votre
+travail. Ce chapitre vous explique comment faire et aborde le fonctionnement
+du fichier d'échange.
+
+|11.1|	Recouvrement ordinaire
+|11.2|	Emplacement du fichier d'échange
+|11.3|	Plantage ou pas ?
+|11.4|	Lectures complémentaires
+
+  Chapitre suivant : |usr_12.txt|  Trucs et astuces
+Chapitre précédent : |usr_10.txt|  Effectuer des modifications importantes
+Table des matières : |usr_toc.txt|
+
+==============================================================================
+*11.1*	Recouvrement ordinaire
+
+Dans la plupart des cas il est très simple de recouvrer un fichier, pour peu
+que vous sachiez quel fichier vous étiez en train d'éditer (et que le disque
+dur ne soit pas endommagé). Lancez Vim avec le nom du fichier, en ajoutant
+l'argument "-r" : >
+
+	vim -r help.txt
+
+Vim lira le fichier d'échange (utilisé pour enregistrer le texte que vous
+étiez en train d'éditer) et pourra lire certaines parties du fichier original.
+Si tout se passe bien, vous verrez ces messages (avec des noms de fichiers
+différents, bien sûr) :
+
+	Using swap file ".help.txt.swp" ~
+	Original file "~/vim/runtime/doc/help.txt" ~
+	Recovery completed. You should check if everything is OK. ~
+	(You might want to write out this file under another name ~
+	and run diff with the original file to check for changes) ~
+	Delete the .swp file afterwards. ~
+
+Par mesure de sécurité, enregistrez ce fichier sous un autre nom : >
+
+	:write help.txt.recouvr
+
+Comparez le fichier avec le fichier original pour vérifier s'il correspond
+bien à ce que vous attendez. Vimdiff vous sera certainement utile dans cette
+tâche |08.7|. Vérifiez que le fichier original ne contienne pas une version
+plus récente (au cas où vous avez enregistrer le fichier juste avant que
+l'ordinateur ne plante). Vérifiez également qu'aucune ligne ne manque (si
+quelque chose a bloqué le recouvrement de Vim).
+   Si Vim émet des messages d'avertissements lors du recouvrement, lisez-les
+attentivement. Cela reste rare.
+
+Il est normal que les tout derniers changements ne puissent pas être
+recouvrés. Vim écrit les changements sur le disque quand vous n'avez rien tapé
+depuis au moins quatre secondes, ou après la saisie de deux cents caractères.
+Ces seuils sont définis via les options 'updatetime' et 'updatecount'. Ainsi,
+si Vim n'a pas eu l'occasion de faire un enregistrement avant le plantage du
+système, les changements qui ont suivi la dernière écriture sur le disque
+seront perdus.
+
+Si vous éditiez un tampon sans nom de fichier, donnez une chaîne vide en
+argument : >
+
+	vim -r ""
+
+Vous devez être dans le bon répertoire, sinon Vim ne peut pas trouver le
+fichier d'échange.
+
+==============================================================================
+*11.2*	Emplacement du fichier d'échange
+
+Vim peut enregistrer le fichier d'échange à plusieurs endroits. Normalement,
+il est placé dans le même répertoire que le fichier original. Pour le trouver,
+rendez-vous dans le répertoire du fichier et utilisez : >
+
+	vim -r
+
+Vim listera les fichiers d'échange qu'il peut trouver. Il recherchera
+également dans les autres répertoires où le fichier d'échange des fichiers du
+répertoire courant peut être situé. Mais il ne trouvera pas les fichiers
+d'échange dans les autres répertoires, car il ne parcourt pas toute
+l'arborescence des répertoires.
+   La sortie de cette commande pourrait ressembler à ceci :
+
+	Swap files found: ~
+	   In current directory: ~
+	1.    .main.c.swp ~
+		  owned by: mool   dated: Tue May 29 21:00:25 2001 ~
+		 file name: ~mool/vim/vim6/src/main.c ~
+		  modified: YES ~
+		 user name: mool   host name: masaka.moolenaar.net ~
+		process ID: 12525 ~
+	   In directory ~/tmp: ~
+	      -- none -- ~
+	   In directory /var/tmp: ~
+	      -- none -- ~
+	   In directory /tmp: ~
+	      -- none -- ~
+
+S'il y a plusieurs fichiers d'échange qui semblent correspondre à celui que
+vous voulez utiliser, une liste de ces fichiers est donnée et vous êtes invité
+à entrer le numéro de celui que vous souhaitez utiliser. Examinez
+attentivement les horodatages avant de vous décider.
+   Si vous ne savez pas lequel utiliser, essayez-les un à un et vérifiez si
+les fichiers produits correspondent à ce que vous attendez.
+
+
+UTILISER UN FICHIER D'ÉCHANGE SPÉCIFIQUE
+
+Si vous savez quel fichier d'échange doit être utilisé, vous pouvez effectuer
+un recouvrement en donnant le nom du fichier d'échange. Vim retrouvera alors
+le nom du fichier original à partir du fichier d'échange.
+   Exemple : >
+
+	vim -r .help.txt.swo
+
+C'est également utile quand le fichier d'échange est dans un autre répertoire
+que celui attendu. Si cela ne fonctionne toujours pas, relevez les noms de
+fichiers rapportés par Vim et renommez les fichiers en conséquence. Examinez
+l'option 'directory' pour voir où Vim peut avoir placé le fichier d'échange.
+
+	NOTE :
+	Vim essaie de trouver le fichier d'échange dans les répertoires de
+	l'option 'dir', en recherchant les fichiers qui correspondent à
+	"nomfichier.sw?". Si l'expansion des caractères d'englobement ne
+	fonctionne pas (p. ex., lorsque l'option 'shell' est erronée), Vim
+	effectue un essai ultime pour trouver le fichier "nomfichier.swp". Si
+	cela échoue aussi, vous devrez donner le nom du fichier d'échange
+	vous-même pour pouvoir recouvrer le fichier.
+
+==============================================================================
+*11.3*  Plantage ou pas ?				*ATTENTION* *E325*
+
+Vim essaie de vous protéger contre des accidents stupides. Supposons que vous
+ayez innocemment lancé l'édition d'un fichier, en espérant voir celui-ci
+s'afficher. À la place, Vim donne un très long message :
+
+		E325: ATTENTION ~
+	Found a swap file by the name ".main.c.swp" ~
+		  owned by: mool   dated: Tue May 29 21:09:28 2001 ~
+		 file name: ~mool/vim/vim6/src/main.c ~
+		  modified: no ~
+		 user name: mool   host name: masaka.moolenaar.net ~
+		process ID: 12559 (still running) ~
+	While opening file "main.c" ~
+		     dated: Tue May 29 19:46:12 2001 ~
+
+	(1) Another program may be editing the same file. ~
+	    If this is the case, be careful not to end up with two ~
+	    different instances of the same file when making changes. ~
+	    Quit, or continue with caution. ~
+
+	(2) An edit session for this file crashed. ~
+	    If this is the case, use ":recover" or "vim -r main.c" ~
+	    to recover the changes (see ":help recovery"). ~
+	    If you did this already, delete the swap file ".main.c.swp" ~
+	    to avoid this message. ~
+
+Vous obtenez ce message parce que, quand l'édition d'un fichier commence, Vim
+contrôle si un fichier d'échange existe déjà pour ce fichier. S'il y en a un,
+c'est que quelque chose cloche. Deux possibilités :
+
+1. Une autre session d'édition est active pour ce fichier. Recherchez dans le
+   message la ligne avec "process ID". Elle devrait ressembler à ceci :
+
+	    process ID: 12559 (still running) ~
+
+   Le texte "(still running)" indique que le processus qui édite ce fichier
+   fonctionne sur le même ordinateur. Si vous travaillez sur un système
+   non-Unix, vous n'aurez pas cette indication supplémentaire. Si vous éditez
+   un fichier via réseau, vous risquez de ne pas voir cette indication, car le
+   processus peut fonctionner sur un autre ordinateur. Dans ces deux cas, vous
+   devez déterminer vous-même quelle est la situation.
+      Si un autre Vim édite le même fichier, la poursuite de l'édition
+   aboutira à deux versions du même fichier. La dernière qui sera écrite
+   écrasera l'autre et provoquera la perte de ses modifications. Il est plus
+   prudent de quitter Vim.
+
+2. Le fichier d'échange provient d'un plantage précédent de Vim ou de
+   l'ordinateur. Examinez les horodatages mentionnés dans le message. Si
+   l'horodatage du fichier d'échange est plus récent que le fichier que vous
+   étiez en train d'éditer et que cette ligne apparaît
+
+	    modified: YES ~
+
+   alors vous êtes très certainement confronté à une session d'édition plantée
+   qui a mal été recouvrée.
+      Si l'horodatage du fichier est plus récent que celui du fichier
+   d'échange, alors soit il a été modifié après le plantage (peut-être
+   avez-vous déjà recouvré le fichier mais n'avez pas supprimé le fichier
+   d'échange), soit le fichier avait été enregistré avant le plantage mais
+   après la dernière écriture du fichier d'échange (auquel cas vous êtes
+   chanceux : vous n'avez même plus besoin de l'ancien fichier d'échange).
+   Dans ces situations, Vim vous avertira avec cette ligne supplémentaire :
+
+	    NEWER than swap file! ~
+
+
+QUE FAIRE ?
+
+Si les dialogues sont supportés, vous aurez à choisir entre cinq actions :
+
+	Swap file ".main.c.swp" already exists! ~
+	[O]pen Read-Only, (E)dit anyway, (R)ecover, (Q)uit, (D)elete it: ~
+
+O   Ouvre le fichier en lecture seule. À utiliser quand vous voulez simplement
+    voir le fichier sans le recouvrer. Cela peut être utile quand vous savez
+    qu'une autre personne est en train d'éditer le fichier et que vous
+    souhaitez juste le lire sans effectuer de modifications.
+
+E   Édite le fichier malgré tout. À utiliser avec précaution ! Si le fichier
+    est en cours d'édition dans un autre Vim, vous risquez de vous retrouver
+    avec deux versions du fichier. Vim essaiera de vous avertir si cela se
+    produit, mais mieux vaux prévenir que guérir.
+
+R   Recouvre le fichier à partir du fichier d'échange. À utiliser si vous
+    savez que le fichier d'échange contient des modifications que vous
+    souhaitez recouvrer.
+
+Q   Quitte. Cela évite de lancer l'édition du fichier. À utiliser si un autre
+    Vim est en train d'éditer le même fichier.
+       Si vous venez juste de démarrer Vim, cela fera sortir de Vim. Si vous
+    avez lancé Vim avec des fichiers dans plusieurs fenêtres, Vim quittera
+    uniquement s'il y a un fichier d'échange pour le premier. Quand une
+    commande d'édition est utilisée, le fichier ne sera pas chargé et vous
+    serez ramené au dernier fichier édité.
+
+D   Supprime le fichier d'échange. À utiliser si vous êtes sûrs de ne plus en
+    avoir besoin. Par exemple, quand il ne contient pas de changements, ou
+    quand le fichier lui-même est plus récent que le fichier d'échange.
+       Sur Unix, ce choix n'est proposé que lorsque le processus qui a créé le
+    fichier d'échange ne semble pas être en cours d'exécution.
+
+Si vous n'obtenez pas ce dialogue (vous utilisez une version de Vim qui ne le
+supporte pas), vous devrez opérer manuellement. Pour recouvrer le fichier,
+utilisez cette commande : >
+
+	:recover
+
+
+Vim n'est pas toujours capable de détecter qu'un fichier d'échange existe
+déjà. Par exemple, dans les cas où une autre session d'édition place les
+fichiers d'échange dans un autre répertoire, ou quand le chemin d'un fichier
+est différent lorsque vous l'éditez sur d'autres machines. N'escomptez pas que
+Vim vous avertisse à chaque fois.
+
+Si vous ne voulez vraiment pas voir ce message, vous pouvez ajouter le drapeau
+'A' à l'option 'shortmess'. Mais ce recours devrait rester exceptionnel.
+
+==============================================================================
+*11.4*	Lectures complémentaires
+
+|swap-file|	Une explication sur l'emplacement où le fichier d'échange sera
+		créé et sur son nom.
+|:preserve|	Écrit manuellement le fichier d'échange sur le disque.
+|:swapname|	Affiche le nom du fichier d'échange pour le fichier courant.
+'updatecount'	Nombre de saisies clavier après lesquelles le fichier
+		d'échange est écrit sur le disque.
+'updatetime'	Délai après lequel le fichier d'échange est écrit sur le
+		disque.
+'swapsync'	Spécifie si le disque est synchronisé lorsque le fichier
+		d'échange est écrit.
+'directory'	Liste de noms de répertoires où enregistrer le fichier
+		d'échange.
+'maxmem'	Limite d'utilisation de la mémoire avant l'écriture du texte
+		dans le fichier d'échange.
+'maxmemtot'	Idem, mais pour tous les fichiers au total.
+
+==============================================================================
+
+Chapitre suivant : |usr_12.txt|  Trucs et astuces
+
+Copyright : voir |manual-copyright|  vim:tw=78:ts=8:ft=help:norl:

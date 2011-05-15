@@ -1,0 +1,1133 @@
+*motion.txt*    Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+Commandes de déplacement			*cursor-motions* *navigation*
+
+Par « mouvement », on désigne toute commande déplaçant le curseur. Si la
+nouvelle position est en dehors de l'écran, celui-ci défile afin que le
+curseur y soit visible (voir aussi les options 'scrolljump' et 'scrolloff').
+
+1. Mouvements et opérateurs		|operator|
+2. Mouvements gauche/droite		|left-right-motions|
+3. Mouvements haut/bas			|up-down-motions|
+4. Mouvements par mots			|word-motions|
+5. Mouvements par objets textuels	|object-motions|
+6. Sélection par objets textuels	|object-select|
+7. Marques				|mark-motions|
+8. Sauts				|jump-motions|
+9. Mouvements divers			|various-motions|
+
+Remarques générales :
+
+Si vous désirez connaître votre position dans le fichier, utilisez la commande
+CTRL-G |CTRL-G|, ou bien "g CTRL-G" |g_CTRL-G|. Si l'option 'ruler' est
+activée, la position du curseur est visible en permanence sur la ligne d'état
+(ce qui provoque un léger ralentissement de Vim).
+
+Les utilisateurs expérimentés préfèrent les touches hjkl car elles se trouvent
+toujours juste sous leurs doigts. Les débutants utilisent souvent les touches
+fléchées, parce qu'ils ignorent ou confondent l'action des touches hjkl. Il
+est pourtant facile de les distinguer au regard de leur disposition sur le
+clavier, et en se rappelant que le j ressemble à une flèche vers le bas.
+
+L'option 'virtualedit' peut être fixée pour permettre le déplacement du
+curseur à des positions où il n'y a pas de caractères, ou au milieu d'un
+caractère (comme une tabulation).
+
+==============================================================================
+1. Mouvements et opérateurs				*operator*
+
+Les mouvements peuvent être utilisés après un opérateur, afin que celui-ci
+opère sur le texte couvert par le mouvement, c'est-à-dire sur le texte entre
+la position du curseur avant et après le mouvement. Les opérateurs sont
+souvent utilisés pour couper ou modifier du texte. Les opérateurs suivants
+sont disponibles :
+
+	|c|	c	change
+	|d|	d	coupe
+	|y|	y	copie dans un registre (ne modifie pas le texte)
+	|~|	~	inverse la casse (uniquement si 'tildeop' est activé)
+	|g~|	g~	inverse la casse
+	|gu|	gu	passe en minuscules
+	|gU|	gU	passe en majuscules
+	|!|	!	filtre avec un programme externe
+	|=|	=	filtre avec 'equalprg' ou indentation C si vide
+	|gq|	gq	met le texte en forme
+	|g?|	g?	code avec Rot13
+	|>|	>	indente à droite
+	|<|	<	indente à gauche
+	|zf|	zf	définit un repli
+
+Si le mouvement inclut un quantificateur et qu'un autre quantificateur précède
+l'opérateur, ces deux nombres sont multipliés. Par exemple, "2d3w" coupe six
+mots.
+
+Après l'exécution de l'opérateur, le curseur est laissé dans la plupart des
+cas au début de la zone de texte couverte par le mouvement. Par exemple, "yfe"
+ne déplace pas le curseur, tandis que "yFe" le place à gauche, au 'e' où la
+copie de texte a commencé.
+
+						*linewise* *characterwise*
+Un opérateur peut agir aussi bien sur des lignes entières que sur des
+caractères compris entre des positions de début et de fin. En général, les
+mouvements qui déplacent d'une ou plusieurs lignes affectent ces lignes (on
+parle de mouvements « par lignes », ["linewise"]), et les mouvements de
+déplacement à l'intérieur d'une ligne en affectent les caractères (on parle de
+mouvements « par caractères », ["characterwise"]). Il existe cependant
+plusieurs exceptions.
+
+				*exclusive* *inclusive*	*exclusif* *inclusif*
+Un mouvement par caractères peut être soit inclusif, soit exclusif.
+« Inclusif » signifie que les positions de début et de fin couvertes par le
+mouvement sont incluses dans l'opération ; « exclusif », que le dernier
+caractère du texte couvert par le mouvement n'est pas inclus.
+   Les mouvements par lignes incluent toujours les positions de début et de
+fin.
+
+Le détail des mouvements ci-dessous indique lesquels sont par lignes,
+inclusifs ou exclusifs. Il faut cependant considérer deux cas d'exceptions :
+1. Si le mouvement est exclusif et se termine à la colonne 1, sa fin est
+   déplacée à la fin de la ligne précédente et le mouvement devient inclusif.
+   Exemple : "}" déplace à la première ligne après un paragraphe, mais "d}"
+   n'inclura pas cette ligne.
+2. Si le mouvement est exclusif, se termine à la colonne 1 et débute au
+   premier caractère non-blanc (ou avant) d'une ligne, le mouvement devient
+   alors par lignes. Exemple : si un paragraphe débute par des blancs et que
+   vous tapez "d}" le curseur étant sur le premier caractère non-blanc, toutes
+   les lignes du paragraphe sont coupées, y compris les blancs. Si vous collez
+   maintenant, les lignes coupées seront insérées sous la position du curseur.
+
+NOTE : Lorsqu'un opérateur est en suspens (l'opérateur est saisi, mais pas
+encore le mouvement ; on parle alors de mode Opérateur-en-cours), un ensemble
+de mappages spéciaux peut être utilisé. Voir |:omap|.
+
+Au lieu de procéder en donnant d'abord un opérateur et ensuite un mouvement,
+vous pouvez vous servir du mode Visuel : marquez le début du texte avec "v",
+déplacez le curseur jusqu'à la fin du texte, puis saisissez l'opérateur. Le
+texte entre le début de la zone et la position du curseur est mis en
+surbrillance, vous pouvez ainsi visualiser le champ d'action de l'opérateur.
+Cela permet d'avoir plus de liberté, mais est plus long et n'offre que des
+possibilités de restauration limitées. Voir le chapitre sur le mode Visuel
+|Visual-mode|.
+
+Vous pouvez utiliser une commande ":" pour un mouvement. Par exemple,
+"d:call ChercheFin()". Mais cela ne peut pas être restauré avec ".".
+
+
+FORCER UN MOUVEMENT À ÊTRE PAR LIGNES, CARACTÈRES OU BLOCS
+
+Lorsqu'un mouvement n'est pas du type que vous souhaitez, vous pouvez le
+forcer à prendre ce type en utilisant "v", "V" ou CTRL-V juste après
+l'opérateur. Exemples : >
+	dj
+supprime deux lignes. >
+	dvj
+supprime depuis la position du curseur jusqu'au caractère en dessous du
+curseur. >
+	d<C-V>j
+supprime le caractère sous le curseur et celui en dessous du curseur.
+
+Faites attention si vous forcez un mouvement par lignes à être par caractères
+ou par blocs, la colonne ne sera pas toujours définie.
+
+							*o_v*
+v		Utilisé après un opérateur et avant un mouvement : force
+		l'opérateur à fonctionner par caractères, même si le mouvement
+		est par lignes. Si le mouvement était par lignes, il devient
+		alors |exclusif|.
+		Si le mouvement était déjà par caractères, bascule entre
+		inclusif/exclusif. Cela peut être utilisé pour rendre exclusif
+		un mouvement inclusif, et vice-versa.
+
+							*o_V*
+V		Utilisé après un opérateur et avant un mouvement : force
+		l'opérateur à fonctionner par lignes, même si le mouvement est
+		par caractères.
+
+							*o_CTRL-V*
+CTRL-V		Utilisé après un opérateur et avant un mouvement : force
+		l'opérateur à fonctionner par blocs. Cela marche comme la
+		sélection du mode Visuel par blocs, avec les coins définis par
+		la position du curseur avant et après le mouvement.
+
+==============================================================================
+2. Mouvements gauche/droite				*left-right-motions*
+
+h		ou					*h*
+<Gauche>	ou					*<Left>*
+CTRL-H		ou					*CTRL-H* *<BS>*
+<RetArr>		[quant] caractères vers la gauche. Mouvement
+			|exclusif|.
+			NOTE : Si vous préférez employer <RetArr> pour
+			supprimer des caractères, utilisez ce mappage : >
+				:map CTRL-V<RetArr>		X
+<			(Pour entrer "CTRL-V<RetArr>", saisissez la séquence
+			CTRL-V puis la touche <RetArr>.)
+			Voir |:fixdel| si la touche <RetArr> ne se comporte
+			pas comme vous le désirez.
+
+l		ou					*l*
+<Droite>	ou					*<Right>* *<Space>*
+<Espace>		[quant] caractères vers la droite. Mouvement
+			|exclusif|.
+
+							*0*
+0			Au premier caractère de la ligne. Mouvement |exclusif|.
+			Lors d'un déplacement vertical (haut/bas), reste dans
+			la même colonne si possible.
+
+							*<Home>* *<kHome>*
+<Debut>			Au premier caractère de la ligne. Mouvement |exclusif|.
+			Lors d'un déplacement vertical (haut/bas), reste dans
+			la même colonne si possible. Fonctionne comme "1|",
+			qui diffère de "0" lorsque la ligne débute par <Tab>.
+			{absent de Vi}
+
+							*^*
+^			Au premier caractère non-blanc de la ligne. Mouvement
+			|exclusif|.
+
+$		ou					*$* *<End>* *<kEnd>*
+<Fin>			À la fin de la ligne. Si un quantificateur est donné,
+			va également [quant] - 1 lignes plus bas. Mouvement
+			|inclusif|.
+			En mode Visuel, le curseur va juste après le dernier
+			caractère de la ligne.
+			Si 'virtualedit' est fixé et que le curseur est
+			positionné au-delà de la fin de la ligne, "$" le
+			ramènera en arrière au dernier caractère de la ligne.
+
+							*g_*
+g_			Au dernier caractère non-blanc de la ligne et
+			[quant] - 1 lignes plus bas. Mouvement |inclusif|.
+			{absent de Vi}
+
+g0		ou					*g0* *g<Home>*
+g<Debut>		Lignes enroulées ('wrap' activé) : Au premier
+			caractère de la ligne à l'écran. Mouvement |exclusif|.
+			Diffère de "0" lorsque la ligne est plus large que
+			l'écran.
+			Lignes déroulées ('wrap' désactivé) : Au caractère le
+			plus à gauche de la ligne à l'écran. Diffère de "0"
+			lorsque le premier caractère de la ligne n'est pas
+			visible à l'écran. {absent de Vi}
+
+							*g^*
+g^			Lignes enroulées ('wrap' activé) : Au premier
+			caractère non-blanc de la ligne à l'écran. Mouvement
+			|exclusif|. Diffère de "^" lorsque la ligne est plus
+			large que l'écran.
+			Lignes déroulées ('wrap' désactivé) : Au caractère
+			non-blanc le plus à gauche de la ligne à l'écran.
+			Diffère de "^" lorsque le premier caractère non-blanc
+			de la ligne n'est pas visible à l'écran.
+			{absent de Vi}
+
+							*gm*
+gm			Comme "g0", mais d'une demi-largeur d'écran vers la
+			droite (ou d'autant que possible). {absent de Vi}
+								["Goto Middle"]
+
+g$		ou  					*g$* *g<End>*
+g<Fin>			Lignes enroulées ('wrap' activé) : Au dernier
+			caractère de la ligne à l'écran et [quant] - 1 lignes
+			d'écran plus bas. Mouvement |inclusif|. Diffère de "$"
+			lorsqu'une ligne est plus large que l'écran.
+			Lignes déroulées ('wrap' désactivé) : Au caractère le
+			plus à droite de la ligne à l'écran. Diffère de "$"
+			quand le dernier caractère de la ligne n'est pas
+			visible à l'écran, ou quand un quantificateur est
+			précisé. {absent de Vi}
+
+							*bar*
+|			À la [quant]-ième colonne d'écran de la ligne
+			courante. Mouvement |exclusif|.
+
+							*f*
+f{car}			À la [quant]-ième occurrence de {car} vers la droite.
+			Le curseur est placé sur {car}. Mouvement |inclusif|.
+			{car} peut être saisi comme un digramme |digraph-arg|.
+			Si 'encoding' vaut "Unicode", les caractères de
+			composition peuvent être utilisés |utf-8-char-arg|.
+			Les mappages |:lmap| s'appliquent à {car}. La commande
+			CTRL-^ en mode Insertion sert à les activer/désactiver
+			|i_CTRL-^|.				       ["Find"]
+
+							*F*
+F{car}			À la [quant]-ième occurrence de {car} vers la gauche.
+			Le curseur est placé sur {car}. Mouvement |inclusif|.
+			{car} peut être saisi comme avec la commande |f|.
+
+							*t*
+t{car}			Juste avant la [quant]-ième occurrence de {car} vers
+			la droite. Le curseur est placé sur le caractère à
+			gauche de {car}. Mouvement |inclusif|.		 ["To"]
+			{car} peut être saisi comme avec la commande |f|.
+
+							*T*
+T{car}			Juste après la [quant]-ième occurrence de {car} vers
+			la gauche. Le curseur est placé sur le caractère à
+			droite de {car}. Mouvement |inclusif|.
+			{car} peut être saisi comme avec la commande |f|.
+
+							*;*
+;			Répète le dernier "f", "t", "F" ou "T" [quant] fois.
+
+							*,*
+,			Répète le dernier "f", "t", "F" ou "T" dans la
+			direction opposée [quant] fois.
+
+Ces commandes déplacent le curseur à une colonne précise de la ligne courante.
+Elles s'arrêtent à la première colonne et à la fin de la ligne, sauf "$", qui
+peut amener sur une des lignes suivantes. Voir l'option 'whichwrap' pour
+permettre à certaines d'entre elles de se déplacer au delà des limites de
+début/fin de ligne.
+
+==============================================================================
+3. Mouvements haut/bas					*up-down-motions*
+
+k		ou					*k*
+<Haut>		ou					*<Up>* *CTRL-P*
+CTRL-P			[quant] lignes vers le haut (par lignes).
+
+j		ou					*j*
+<Bas>		ou					*<Down>*
+CTRL-J		ou					*CTRL-J*
+<NL>		ou					*<NL>* *CTRL-N*
+CTRL-N			[quant] lignes vers le bas (par lignes).
+
+gk		ou					*gk* *g<Up>*
+g<Haut>			[quant] lignes d'écran vers le haut. Mouvement
+			|exclusif|. Cette commande diffère de "k" pour les
+			lignes enroulées et lorsqu'elle est associée à un
+			opérateur, car elle n'est pas par lignes.
+			{absent de Vi}
+
+gj		ou					*gj* *g<Down>*
+g<Bas>			[quant] lignes d'écran vers le bas. Mouvement
+			|exclusif|. Cette commande diffère de "j" pour les
+			lignes enroulées et lorsqu'elle est associée à un
+			opérateur, car elle n'est pas par lignes.
+			{absent de Vi}
+
+							*-*
+-  <Moins>		[quant] lignes vers le haut, sur le premier caractère
+			non-blanc (par lignes).
+
++		ou					*+*
+CTRL-M		ou					*CTRL-M* *<CR>*
+<CR>			[quant] lignes vers le bas, sur le premier caractère
+			non-blanc (par lignes).
+
+							*_*
+_  <Souligne>   	[quant] - 1 lignes vers le bas, sur le premier
+			caractère non-blanc (par lignes).
+
+							*G*
+G			Va à la ligne [quant] (défaut : dernière), sur le
+			premier caractère non-blanc (par lignes). Si
+			'startofline' n'est pas activé, reste sur la même
+			colonne.
+
+							*<C-End>*
+<C-Fin>			Va à la ligne [quant] (défaut : dernière) sur le
+			dernier caractère. Mouvement |inclusif|.
+			{absent de Vi}
+
+
+<C-Debut>	ou					*gg* *<C-Home>*
+gg			Va à la ligne [quant] (défaut : première), sur le
+			premier caractère non-blanc (par lignes). Si
+			'startofline' n'est pas activé, reste sur la même
+			colonne.
+
+:[plage]		Place le curseur sur le numéro de ligne précisé. S'il
+			y a plusieurs numéros, utilise le dernier.
+
+							*N%*
+{quant}%		Va au {quant}-ième pourcent du fichier, sur le premier
+			caractère non-blanc de la ligne (par lignes).
+			Pour définir quelle sera la nouvelle ligne, on utilise
+			la formule :
+				({quant} × nombre-de-lignes + 99) ÷ 100
+			Voir aussi l'option 'startofline'. {absent de Vi}
+
+:[plage]go[to] [quant]					*:go* *:goto* *go*
+[quant]go		Va au [quant]-ième octet du tampon (défaut : un, début
+			du fichier). Si une [plage] est spécifiée, le dernier
+			numéro de ligne qu'elle contient est utilisé comme
+			numéro d'octet. Les caractères de fin-de-ligne sont
+			comptés selon la valeur de 'fileformat'.
+			{absent de Vi} {uniquement si compilé avec la
+			fonctionnalité |+byte_offset|}
+
+Ces commandes déplacent le curseur sur une ligne précise. Elles s'arrêtent
+en atteignant la première ou dernière ligne. Les deux premières commandes
+placent le curseur dans la même colonne (si possible) que celle résultant de
+la dernière commande de changement de colonne -- la commande "$"  faisant
+exception, auquel cas le curseur sera placé sur le dernier caractère de la
+ligne.
+
+==============================================================================
+4. Mouvements par mots 					*word-motions*
+
+<S-Droite>	ou					*<S-Right>* *w*
+w			[quant] mots vers l'avant. Mouvement |exclusif|.
+								       ["Word"]
+
+<C-Droite>	ou					*<C-Right>* *W*
+W			[quant] MOTS vers l'avant. Mouvement |exclusif|.
+
+							*e*
+e			À la fin du [quant]-ième mot vers l'avant. Mouvement
+			|inclusif|.					["End"]
+
+							*E*
+E			À la fin du [quant]-ième MOT vers l'avant. Mouvement
+			|inclusif|.
+
+<S-Gauche>	ou					*<S-Left>* *b*
+b			[quant] mots vers l'arrière. Mouvement |exclusif|.
+								       ["Back"]
+
+<C-Gauche>	ou					*<C-Left>* *B*
+B			[quant] MOTS vers l'arrière. Mouvement |exclusif|.
+
+							*ge*
+ge			À la fin du [quant]-ième mot vers l'arrière. Mouvement
+			|inclusif|.
+
+							*gE*
+gE			À la fin du [quant]-ième MOT vers l'arrière. Mouvement
+			|inclusif|.
+
+Ces commandes déplacent le curseur d'un ou plusieurs mots ou MOTS :
+							*word* *mot*
+Un « mot » consiste en une séquence de lettres, chiffres et soulignés '_', ou
+une séquence d'autres caractères non-blancs, séparés par des espaces blancs
+(espaces, tabulations, <EOL>). Cette définition peut être modifiée via
+l'option 'iskeyword'.
+							*WORD* *MOT*
+Un « MOT » consiste en une séquence de caractères non-blancs, séparés par des
+espaces blancs. Une ligne vide est considérée à la fois comme un mot et un
+MOT.
+
+Une suite de lignes repliées compte pour un mot d'un seul caractère. "w" et
+"W", "e" et "E" déplacent au début/fin du premier mot ou MOT après la plage de
+lignes repliées. "b" et "B" déplacent au début du premier mot ou MOT avant le
+repli.
+
+Cas particulier : "cw" et "cW" sont traités comme "ce" et "cE" si le curseur
+est sur un caractère non-blanc. Cela est dû à ce que "cw" est interprété comme
+une commande changeant un mot, et qu'un mot ne comprend pas l'espace blanc qui
+suit. {Vi : lorsque le curseur est sur un blanc suivi d'autres blancs, "cw"
+change uniquement le premier blanc ; c'est probablement un bogue, car "dw"
+coupe tous les blancs}
+
+Autre cas particulier : lorsqu'on utilise le mouvement "w" en association avec
+un opérateur et que le dernier mot où était placé le curseur est à la fin
+d'une ligne, la fin de ce mot marque la fin de la zone de texte où agit
+l'opérateur (et non pas le premier mot de la ligne suivante).
+
+À l'origine, le mouvement "e" est affecté par un bogue dans Vi. Par exemple,
+la commande "e" s'arrête au premier caractère d'une ligne si la ligne
+précédente est vide. Mais si vous tapez "2e", cela ne survient pas. Dans Vim,
+"ee" et "2e" sont identiques, ce qui est plus logique. Cela cause cependant
+une petite incompatibilité entre Vi et Vim.
+
+==============================================================================
+5. Mouvements par objets textuels			*object-motions*
+
+							*(*
+(			[quant] phrases vers l'arrière. Mouvement |exclusif|.
+
+							*)*
+)			[quant] phrases vers l'avant. Mouvement |exclusif|.
+
+							*{*
+{			[quant] paragraphes vers l'arrière. Mouvement
+			|exclusif|.
+
+							*}*
+}			[quant] paragraphes vers l'avant. Mouvement |exclusif|.
+
+							*]]*
+]]			[quant] sections vers l'avant ou au '{' suivant dans
+			la première colonne. Utilisé après un opérateur, au
+			'{' suivant dans la première colonne. (Par lignes
+			|linewise|.)
+
+							*][*
+][			[quant] sections vers l'avant ou au '}' suivant dans
+			la première colonne. (Par lignes |linewise|.)
+
+
+							*[[*
+[[			[quant] sections vers l'arrière ou au '{' précédent
+			dans la première colonne. (Par lignes |linewise|.)
+
+
+							*[]*
+[]			[quant] sections vers l'arrière ou au '}' précédent
+			dans la première colonne. (Par lignes |linewise|.)
+
+
+Ces commandes déplacent le curseur selon trois types d'objets textuels :
+
+							*sentence*
+Une « phrase » est définie comme se terminant par un '.', '!' ou '?' suivi
+soit par une fin de ligne, soit par un espace ou une tabulation. N'importe
+quel nombre de caractères fermants ')', ']', '"' et ''' peut apparaître après
+le '.', '!' ou '?' et avant les espaces, tabulations ou fins-de-lignes. Une
+limite de paragraphe ou de section est également une limite de phrase.
+   Si le drapeau 'J' est inclus dans 'cpoptions', deux espaces au moins
+doivent suivre le signe de ponctuation ; les <Tab> ne sont pas reconnus comme
+des espaces blancs. La définition d'une phrase ne peut pas être modifiée.
+
+							*paragraph*
+Un « paragraphe » débute après chaque ligne vide, et également à chacune des
+macros de paragraphe données sous forme de paires de caractères dans l'option
+'paragraphs'. La valeur par défaut est "IPLPPPQPP LIpplpipbp", ce qui
+correspond aux macros ".IP", ".LP", etc. (il s'agit de macros nroff, le point
+doit donc être dans la première colonne). Une limite de section est également
+une limite de paragraphe. NOTE : Cela n'inclut pas un '{' ou un '}' dans la
+première colonne. Remarquez également qu'une ligne blanche (contenant
+uniquement des caractères blancs) n'est PAS un paragraphe.
+
+							*section*
+Une « section » débute après un caractère saut-de-page (<C-L>) dans la
+première colonne et à chacune des macros de section, précisé par paire de
+caractères dans l'option 'sections'. La valeur par défaut est "SHNHH HUnhsh",
+ce qui correspond aux macros nroff ".SH", ".NH", ".H", ".HU", ".nh" and ".sh".
+
+Les commandes "]" et "[" s'arrêtent à un '{' ou un '}' dans la première
+colonne. C'est utile pour trouver le début ou la fin d'une fonction dans un
+programme en C. NOTE : Le premier caractère de la commande définit la
+direction de la recherche, et le second le type du délimiteur recherché.
+
+Si vos '{' ou '}' ne sont pas dans la première colonne et que vous désiriez
+utiliser "[[" et "]]" malgré tout, essayez ces mappages : >
+	:map [[ ?{<CR>w99[{
+	:map ][ /}<CR>b99]}
+	:map ]] j0[[%/{<CR>
+	:map [] k$][%?}<CR>
+(Saisissez-les littéralement, voir |<>|.)
+
+==============================================================================
+6. Sélection par objets textuels    		*object-select* *text-objects*
+
+							*v_a* *v_i*
+Les commandes qui suivent ne peuvent être utilisées qu'en mode Visuel ou après
+un opérateur. Celles qui débutent par "a" [N.D.T. : « un/une » en anglais]
+sélectionnent « un » objet, en incluant l'espace final s'il y en a un ; celles
+qui débutent par "i" [N.D.T. : pour "Inner", « intérieur »] sélectionnent un «
+intérieur » d'objet, c'est-à-dire sans espace, ou uniquement l'espace. Ainsi,
+les commandes "i" sélectionnent toujours moins de texte que les commandes "a".
+
+{absent de Vi}
+{uniquement si compilé avec la fonctionnalité |+textobjects|}
+
+							*v_aw* *aw*
+aw			« Un mot », sélectionne [quant] mots (voir |mot|).
+			L'espace blanc suivant ou précédent est inclus, mais
+			pas compté.
+			En mode Visuel par lignes, "aw" fait passer en mode
+			Visuel par caractères.
+
+							*v_iw* *iw*
+iw			« Intérieur d'un mot », sélectionne [quant] mots (voir
+			|mot|). Les espaces blancs entre les mots sont
+			compris.
+			En mode Visuel par lignes, "iw" fait passer en mode
+			Visuel par caractères.
+
+							*v_aW* *aW*
+aW			« Un MOT », sélectionne [quant] MOTS (voir |MOT|).
+			L'espace blanc suivant ou précédent est inclus, mais
+			pas compté.
+			En mode Visuel par lignes, "aW" fait passer en mode
+			Visuel par caractères.
+
+							*v_iW* *iW*
+iW			« Intérieur d'un MOT », sélectionne [quant] MOTS (voir
+			|MOT|). Les espaces blancs entre les MOTS sont
+			compris.
+			En mode Visuel par lignes, "aW" fait passer en mode
+			Visuel par caractères.
+
+							*v_as* *as*
+as			« Une phrase », sélectionne [quant] phrases (voir
+			|sentence|).
+			En mode Visuel, le fait passer par caractères.
+
+							*v_is* *is*
+is			« Intérieur d'une phrase », sélectionne [quant]
+			phrases (voir |sentence|).
+			En mode Visuel, le fait passer par caractères.
+
+							*v_ap* *ap*
+ap			« Un paragraphe », sélectionne [quant] paragraphes
+			(voir |paragraph|).
+			Exception : une ligne blanche (ne contenant que des
+			espaces blancs) est également une limite de
+			paragraphe.
+			En mode Visuel, le fait passer par lignes.
+
+							*v_ip* *ip*
+ip			« Intérieur d'un paragraphe », sélectionne [quant]
+			paragraphes (voir |paragraph|).
+			Exception : une ligne blanche (ne contenant que des
+			espaces blancs) est également une limite de
+			paragraphe.
+			En mode Visuel, le fait passer par lignes.
+
+a]						*v_a]* *v_a[* *a]* *a[*
+a[			« Un bloc [] », sélectionne [quant] blocs '[' ']'.
+			Cela s'étend du [quant]-ième '[' non fermé vers
+			l'arrière au ']' apparié. Le texte du bloc est
+			sélectionné, '[' et ']' inclus.
+			En mode Visuel, le fait passer par caractères.
+
+i]						*v_i]* *v_i[* *i]* *i[*
+i[			« Intérieur d'un bloc [] », sélectionne [quant] blocs
+			'[' ']'. Cela s'étend du [quant]-ième '[' non fermé
+			vers l'arrière au ']' apparié. Le texte du bloc est
+			sélectionné, '[' et ']' exclus.
+			En mode Visuel, le fait passer par caractères.
+
+a)							*v_a)* *a)* *a(*
+a(							*v_ab* *v_a(* *ab*
+ab			« Un bloc », sélectionne [quant] blocs, de "[quant] [("
+			au ')' apparié, en incluant '(' et ')' (voir |[(|).
+			En mode Visuel, le fait passer par caractères.
+
+i)							*v_i)* *i)* *i(*
+i(							*v_ib* *v_i(* *ib*
+ib			« Intérieur d'un bloc », sélectionne [quant] blocs, de
+			"[quant] [(" au ')' apparié, '(' et ')' étant
+			exclus (voir |[(|).
+			En mode Visuel, le fait passer par caractères.
+
+a>						*v_a>* *v_a<* *a>* *a<*
+a<			« Un bloc <> », sélectionne [quant] blocs '<' '>'.
+			Cela s'étend du [quant]-ième '<' non fermé vers
+			l'arrière au '>' apparié. Le texte du bloc est
+			sélectionné, '<' et '>' inclus.
+			En mode Visuel, le fait passer par caractères.
+
+i>						*v_i>* *v_i<* *i>* *i<*
+i<			« Intérieur d'un bloc <> », sélectionne [quant] blocs
+			'<' '>'. Cela s'étend du [quant]-ième '<' non fermé
+			vers l'arrière au '>' apparié. Le texte du bloc est
+			sélectionné, '<' et '>' exclus.
+			En mode Visuel, le fait passer par caractères.
+
+a}							*v_a}* *a}* *a{*
+a{							*v_aB* *v_a{* *aB*
+aB			« Un Bloc », sélectionne [quant] Blocs, de "[quant] [{"
+			au '}' apparié, en incluant '{' et '}' (voir |[{|).
+			En mode Visuel, le fait passer par caractères.
+
+i}							*v_i}* *i}* *i{*
+i{							*v_iB* *v_i{* *iB*
+iB			« Intérieur d'un Bloc », sélectionne [quant] Blocs, de
+			"[quant] [{" au '}' apparié, '{' et '}' étant
+			exclus (voir |[{|).
+			En mode Visuel, le fait passer par caractères.
+
+Utilisation après un opérateur :
+- Pour un objet autre que de bloc :
+  - Pour les commandes "a" : l'opérateur s'exécute sur l'objet et sur l'espace
+    blanc consécutif. S'il n'y a pas d'espace blanc après l'objet ou que le
+    curseur était placé sur l'espace blanc avant l'objet, c'est l'espace blanc
+    précédent l'objet qui est inclus.
+  - Pour les commandes "i" : si le curseur était placé sur un objet,
+    l'opérateur s'exécute sur cet objet ; s'il était sur un espace blanc,
+    l'opérateur s'exécute sur cet espace blanc.
+- Pour un objet de bloc : l'opérateur s'exécute sur le bloc où est placé le
+  curseur, ou sur le bloc dans lequel le curseur se trouve sur un des
+  délimiteurs. Pour les commandes "i", ces délimiteurs (les plus extérieurs)
+  sont exclus ; ils sont inclus pour les commandes "a".
+
+Utilisation en mode Visuel :
+- Quand le début et la fin de la zone Visuel sont confondus (juste après avoir
+  tapé la commande "v") : les objets sont sélectionnés de la même façon que
+  pour l'utilisation après un opérateur.
+- Quand le début et la fin de la zone Visuel sont distincts :
+  - Pour les objets autres que de blocs : la zone est étendue par un objet ou
+    par l'espace adjacent à l'objet suivant, ou par les deux pour les
+    commandes "a". La direction dans laquelle s'étend la sélection dépend du
+    côté où se trouve le curseur dans la zone Visuel.
+  - Pour les objets de blocs : la sélection s'étend d'une profondeur vers les
+    blocs extérieurs (contenant la sélection courante).
+
+En guise d'illustration, voici une liste de commandes de coupage, classée des
+plus petits objets aux plus gros. Remarquez que pour un caractère unique, ou
+une ligne entière, les mouvements Vi existants sont utilisés.
+	"dl"	coupe un caractère (alias "x")		|dl|
+	"diw"	coupe l'intérieur d'un mot		*diw*
+	"daw"	coupe un mot				*daw*
+	"diW"	coupe l'intérieur d'un |MOT|		*diW*
+	"daW"	coupe un |MOT|				*daW*
+	"dd"	coupe une ligne				|dd|
+	"dis"	coupe l'intérieur d'une phrase		*dis*
+	"das"	coupe une phrase			*das*
+	"dib"	coupe l'intérieur d'un bloc '(' ')'	*dib*
+	"dab"	coupe un bloc '(' ')'			*dab*
+	"dip"	coupe l'intérieur d'un paragraphe	*dip*
+	"dap"	coupe un paragraphe			*dap*
+	"diB"	coupe l'intérieur d'un bloc '{' '}'	*diB*
+	"daB"	coupe un bloc '{' '}'			*daB*
+
+Remarquez la différence entre l'utilisation d'une commande de déplacement et
+d'un objet. Les mouvements couvrent depuis la position courante jusqu'à la fin
+de leur mouvement ; avec les objets, c'est tout un objet qui est sélectionné,
+indépendamment de la position du curseur. Comparez par exemple "dw" et "da" :
+"dw" coupe depuis la position du curseur jusqu'au début du mot suivant, "da"
+coupe le mot sous le curseur et l'espace suivant ou précédent.
+
+==============================================================================
+7. Marques					*mark-motions* *E20* *E78*
+
+Il y a deux façons de sauter vers une marque :
+1. Avec ` (contre-apostrophe) :	le curseur est placé à l'endroit exact de la
+				marque et le mouvement est |exclusif|.
+2. Avec ' (apostrophe simple) :	le curseur est placé sur le premier caractère
+				non-blanc de la ligne contenant la marque, et
+				le mouvement est par lignes.
+
+							*m* *mark* *Mark*
+m{a-zA-Z}		Positionne la marque {a-zA-Z} à la position du curseur
+			(ne déplace pas le curseur, ce n'est pas un
+			mouvement).
+
+m'  ou  m`		Positionne la marque de dernière position. Vous pouvez
+			y sauter avec la commande "''" ou "``" (ne déplace pas
+			le curseur, ce n'est pas un mouvement).
+
+							*:ma* *:mark* *E191*
+:[plage]ma[rk] {a-zA-Z}	Positionne la marque {a-zA-Z} au dernier numéro de
+			ligne dans [plage], colonne 0 (défaut : ligne
+			courante).
+
+							*:k*
+:[plage]k{a-zA-Z}	Comme ":mark", mais l'espace précédant le nom de la
+			marque peut être omis.
+
+							*'* *'a* *`* *`a*
+'{a-z}  `{a-z}		Saute à la marque {a-z}.
+
+							*'A* *'0* *`A* *`0*
+'{A-Z0-9}  `{A-Z0-9}	Saute à la marque {A-Z0-9} dans le fichier correct
+			(pas un mouvement si c'est dans un autre fichier).
+			{absent de Vi}
+
+							*g'* *g'a* *g`* *g`a*
+g'{marque}  g`{marque}	Saute à la {marque}, mais ne change pas la liste des
+			sauts si c'est en dehors du tampon courant. Par
+			exemple >
+				g`"
+<			saute à la dernière position connue d'un fichier. Voir
+			"$VIMRUNTIME/vimrc_example.vim". {absent de Vi}
+
+							*:marks*
+:marks			Liste toutes les marques courantes (ce n'est pas un
+			mouvement). Les marques |'(|, |')|, |'{| et |'}| ne
+			sont pas listées. {absent de Vi}
+							*E283*
+:marks {arg}		Liste les marques mentionnées par {arg} (ce n'est pas
+			un mouvement). Par exemple >
+				:marks aB
+<			liste les marques 'a' et 'B'. {absent de Vi}
+
+L'emplacement d'une marque n'est pas visualisable. Il s'agit simplement d'une
+position dans un fichier qui est mémorisée. Ne confondez pas marques et
+registres nommés (ils n'ont aucun rapport entre eux).
+
+'a - 'z	    marques minuscules, valides à l'intérieur d'un fichier
+'A - 'Z	    marques majuscules (ou « de fichier »), valides entre fichiers
+'0 - '9	    marques numérotées, positionnées par le fichier viminfo
+
+Les marques minuscules ('a à 'z) restent mémorisées tant que le fichier est
+présent dans la liste des tampons. Si vous l'en supprimez, toutes ses marques
+sont perdues. Si vous supprimez une ligne qui contient une marque, cette
+marque est supprimée. Les marques minuscules peuvent être utilisées avec un
+opérateur. Par exemple : "d'h" coupe les lignes depuis la position courante
+jusqu'à la position de la marque 'h'. Conseil : Utilisez la marque 'h' pour
+« Haut », 'b' pour « Bas », etc. Les marques minuscules sont affectées par les
+commandes d'annulation/restauration.
+
+Les marques majuscules ('A à 'Z) sont associées à un nom de fichier. {Vi n'a
+pas de marques de fichier}. Vous pouvez les utiliser pour sauter d'un fichier
+à un autre. Si la marque majuscule est dans le fichier courant, vous ne pouvez
+alors l'utiliser qu'avec un opérateur. Le numéro de ligne associé à la marque
+reste correct même lorsque vous insérez/supprimez des lignes, ou éditez un
+autre fichier quelques instants. Lorsque l'option 'viminfo' n'est pas vide,
+les marques majuscules sont enregistrées dans le fichier viminfo. Voir
+|viminfo-file-marks|.
+
+Les marques numérotées ('0 à '9) sont assez différentes. Elles ne peuvent pas
+être positionnées directement. Elles sont présentes uniquement lorsqu'un
+fichier viminfo est utilisé |viminfo-file|. En général, '0 désigne la position
+du curseur lorsque Vim a été quitté la dernière fois, '1 pour l'avant-dernière
+fois, etc. Voir |viminfo-file-marks|.
+
+
+							*'[* *`[*
+'[  `[			Au premier caractère du texte précédemment modifié ou
+			copié. {absent de Vi}
+
+							*']* *`]*
+']  `]			Au dernier caractère du texte précédemment modifié ou
+			copié. {absent de Vi}
+
+Après l'exécution d'un opérateur, le curseur est placé au début du texte sur
+lequel la commande a opéré. Après une commande coller ("p" ou "P"), le curseur
+est placé soit sur la première ligne insérée, soit au dernier caractère
+inséré. Les quatre commandes ci-dessus laissent le curseur à l'une des deux
+extrémités. Exemples : Après avoir copié dix lignes, vous désirez vous rendre
+à la dernière d'entre elles : "10Y']". Après avoir inséré plusieurs lignes
+avec la commande "p", vous désirez sauter au dernier caractère du texte
+inséré : "p`]". Cela marche aussi pour le texte qui vient d'être inséré.
+
+NOTE : Après avoir coupé du texte, les positions de début et de fin sont les
+mêmes, sauf en mode Visuel par blocs. Ces commandes ne fonctionnent pas si
+aucune modification n'a encore été faite dans le fichier courant.
+
+							*'<* *`<*
+'<  `<			Au premier caractère de la dernière zone Visuel
+			sélectionnée dans le tampon courant. {absent de Vi}
+
+							*'>* *`>*
+'>  `>			Au dernier caractère de la dernière zone Visuel
+			sélectionnée dans le tampon courant. {absent de Vi}
+
+							*''* *``*
+''  ``			À la position d'avant le dernier saut, ou à la
+			position de la dernière commande "m'" ou "m`"
+			effectuée. Voir aussi |restore-position|.
+
+							*'quote* *`quote*
+'"  `"			À la position du curseur lors de la dernière sortie du
+			tampon (défaut : premier caractère de la première
+			ligne). Voir |last-position-jump| si vous voulez
+			utiliser cela pour chaque fichier ouvert.
+			Une seule position est mémorisée par tampon, et non
+			une par fenêtre. Tant que le tampon est visible dans
+			une fenêtre, la position ne sera pas changée.
+			{absent de Vi}.
+
+							*'^* *`^*
+'^  `^			À la position du curseur la dernière fois que le mode
+			Insertion a été stoppé. Cela est utilisé par la
+			commande |gi|. {absent de Vi}
+
+							*'.* *`.*
+'.  `.			À la position où le dernier changement a été effectué.
+			La position est sur ou près de l'endroit où le
+			changement a débuté. Parfois, une commande effectue
+			plusieurs changements, auquel cas la position pourra
+			être près de la fin du texte changé par la commande.
+			Par exemple, lors de l'insertion d'un mot, la position
+			sera sur le dernier caractère.
+			{absent de Vi}
+
+							*'(* *`(*
+'(  `(			Au début de la phrase courante, comme la commande |(|.
+			{absent de Vi}
+
+							*')* *`)*
+')  `)			À la fin de la phrase courante, comme la commande |)|.
+			{absent de Vi}
+
+							*'{* *`{*
+'{  `{			Au début du paragraphe courant, comme la commande |{|.
+			{absent de Vi}
+
+							*'}* *`}*
+'}  `}			À la fin du paragraphe courant, comme la commande |}|.
+			{absent de Vi}
+
+Ces commandes ne sont pas des marques en elles-mêmes, mais permettent de
+sauter vers des marques :
+
+							*]'*
+]'			[quant] fois à la ligne suivante avec une marque
+			minuscule sous le curseur, sur le premier caractère
+			non-blanc de la ligne. {absent de Vi}
+
+							*]`*
+]`			[quant] fois à la marque minuscule après le curseur.
+			{absent de Vi}
+
+							*['*
+['			[quant] fois à la ligne précédente avec une marque
+			minuscule avant le curseur, sur le premier caractère
+			non-blanc de la ligne. {absent de Vi}
+
+							*[`*
+[`			[quant] fois à la marque minuscule avant le curseur.
+			{absent de Vi}
+
+==============================================================================
+8. Sauts						*jump-motions*
+
+Un « saut » est un déplacement provoqué par les commandes suivantes : "'",
+"`", "G", "/", "?", "n", "N", "%", "(", ")", "[[", "]]", "{", "}", ":s",
+":tag", "L", "M", "H" et les commandes qui démarrent l'édition d'un nouveau
+fichier. Si vous faites « sauter » le curseur avec une de ces commandes, la
+position du curseur avant le saut est mémorisée. Vous pouvez revenir à cette
+position avec les commandes "''" et "``", à moins que la ligne contenant cette
+position n'ait été modifiée ou supprimée.
+
+							*CTRL-O*
+CTRL-O			À la [quant]-ième plus ancienne position dans la liste
+			des sauts (ce n'est pas un mouvement).
+			{absent de Vi} {uniquement si compilé avec la
+			fonctionnalité |+jumplist|}			["Old"]
+
+<Tab>		ou					*CTRL-I* *<Tab>*
+CTRL-I			À la [quant]-ième plus récente position dans la liste
+			des sauts (ce n'est pas un mouvement).
+			Dans une fenêtre mise-au-point |quickfix-window|,
+			amène le curseur à la position de l'erreur courante.
+			{absent de Vi} {uniquement si compilé avec la
+			fonctionnalité |+jumplist|}
+
+							*:ju* *:jumps*
+:ju[mps]		Affiche la liste des sauts (ce n'est pas un
+			mouvement).
+			{absent de Vi} {uniquement si compilé avec la
+			fonctionnalité |+jumplist|}
+
+							*jumplist*
+Les sauts sont mémorisés dans la liste des sauts. Avec les commandes CTRL-O et
+CTRL-I, vous pouvez positionner le curseur à l'emplacement de sauts plus
+anciens, et revenir vers des plus récents. Ainsi, vous pourrez parcourir la
+liste de haut en bas. Il existe une liste des sauts unique pour chaque
+fichier. Le nombre maximum d'entrées est fixé à 100.
+{uniquement si compilé avec la fonctionnalité |+jumplist|}
+
+Par exemple, après trois commandes de saut vous obtenez cette liste des sauts :
+
+   jump line  col file/line ~
+     3	   1    0 du texte ~
+     2	  70    0 une autre ligne ~
+     1  1154   23 fin. ~
+  > ~
+
+La colonne "file/line" [« fichier/ligne »] affiche le nom du fichier ou le
+texte correspondant au saut s'il s'agit du fichier courant (l'indentation est
+supprimée et les lignes longues sont tronquées pour rentrer dans la fenêtre).
+
+Imaginons que vous soyez sur la ligne 1167. Si vous utilisez alors la commande
+CTRL-O, le curseur est ramené en ligne 1154. Vous obtiendrez alors :
+
+   jump line  col file/line ~
+     2	   1  	0 du texte ~
+     1	  70  	0 une autre ligne ~
+  >  0  1154   23 fin. ~
+     1  1167  	0 zorglub ~
+
+Le pointeur ('>') sert à indiquer la dernière position de saut utilisée. La
+prochaine commande CTRL-O utilisera l'entrée juste au-dessus, la prochaine
+commande CTRL-I, celle juste en dessous. Lorsque vous n'avez encore utilisé ni
+CTRL-O ni CTRL-I, le pointeur se situera sous la dernière entrée de la liste.
+Dans ce cas, la commande CTRL-O entraînera la mémorisation de la position
+courante dans la liste des sauts, de telle sorte que vous puissiez revenir à
+votre précédente position. Dans notre exemple, c'est la ligne 1167.
+
+Si vous saisissez d'autres commandes CTRL-O, vous sauterez aux lignes 70 et 1.
+Avec CTRL-I, vous pourrez retourner à nouveau en 1154 et 1167. Remarquez que
+le nombre dans la colonne "jump" [« saut »] donne le quantificateur optionnel
+aux commandes CTRL-O ou CTRL-I qui vous permettra de sauter directement à une
+position.
+
+Si vous utilisez une commande de saut, le numéro de la ligne courante est
+inséré à la fin de la liste des sauts. Si cette ligne était déjà présente dans
+la liste, elle en est d'abord supprimée. Ainsi, en saisissant plusieurs fois
+CTRL-O, vous ne reviendrez sur chaque position qu'une seule fois.
+
+Après la commande CTRL-O qui vous a amené ligne 1154, vous pouvez saisir une
+autre commande de saut (p. ex., "G"). La liste des sauts deviendrait alors :
+
+   jump line  col file/line ~
+     4	   1  	0 du texte ~
+     3	  70  	0 une autre ligne ~
+     2  1167    0 zorglub ~
+     1  1154   23 fin. ~
+  > ~
+
+Les numéros de lignes seront ajustés lors de l'insertion ou de la suppression
+de lignes. Cela échouera si vous cessez l'édition d'un fichier sans
+l'enregistrer (avec ":n!", par exemple).
+
+Lorsque vous partagez une fenêtre, la liste des sauts sera copiée pour la
+nouvelle fenêtre.
+
+Si vous avez inclus l'élément ' dans l'option 'viminfo', la liste des sauts
+sera enregistrée dans le fichier viminfo et restaurée au lancement de Vim.
+
+==============================================================================
+9. Mouvements divers					*various-motions*
+
+							*%*
+%			Trouve le prochain élément dans cette ligne après ou
+			sous le curseur et saute à sa correspondance.
+			Mouvement |inclusif|. Les éléments peuvent être :
+			([{}])		parenthèses, crochets ou accolades
+					(cela peut être modifié avec l'option
+					'matchpairs')
+			/* */		débuts ou fins de commentaires C
+			#if, #ifdef, #else, #elif, #endif
+					instructions conditionnelles du
+					préprocesseur C (quand le curseur est
+					sur le '#' ou qu'aucun '([{' ne suit)
+			Pour d'autres éléments, le greffon "matchit" peut être
+			utilisé, voir |matchit-install|.
+
+			Lorsque le drapeau 'M' est présent dans 'cpoptions'
+			|cpo-M|, les contre-obliques avant les parenthèses et
+			autres délimiteurs sont ignorés. Sans 'M', le nombre
+			de contre-obliques est pris en compte : un nombre
+			impair ne correspondra pas avec un nombre pair. Ainsi,
+			dans "( \) )" et "\( ( \)", les première et dernière
+			parenthèses sont appariées.
+			Lorsque le drapeau '%' est absent de 'cpoptions'
+			|cpo-%|, les délimiteurs à l'intérieur de
+			doubles-apostrophes sont ignorés, sauf s'il y en a un
+			nombre impair et que cette ligne comme la précédente
+			ne se terminent pas par une contre-oblique. '(', '{',
+			'[', ']', '}' et ')' sont également ignorés
+			(parenthèses, accolades ou crochets entre apostrophes
+			simples). NOTE : Ce comportement est approprié au C,
+			mais pas à Perl, où les apostrophes délimitent des
+			chaînes.
+			Aucun quantificateur ne doit être fourni ("{quant}%"
+			fait sauter au {quant}-ième pourcent du fichier |N%|).
+			L'utilisation de "%" sur #if/#else/#endif rend ce
+			mouvement par lignes.
+
+							*[(*
+[(			Au [quant]-ième '(' précédent déparié. Mouvement
+			|exclusif|. {absent de Vi}
+
+							*[{*
+[{			Au [quant]-ième '{' précédent déparié. Mouvement
+			|exclusif|. {absent de Vi}
+
+							*])*
+])			Au [quant]-ième ')' suivant déparié. Mouvement
+			|exclusif|. {absent de Vi}
+
+							*]}*
+]}			Au [quant]-ième '}' suivant déparié. Mouvement
+			|exclusif|. {absent de Vi}
+
+Les quatre commandes ci-dessus peuvent être utilisées pour se rendre au début
+ou à la fin du bloc de code courant. Elles fonctionnent comme la commande "%"
+utilisée sur '(', ')', '{' ou '}' à l'autre bout du bloc de code (mais ces
+commandes sont valables depuis n'importe où dans le bloc). Très utile dans les
+programmes C. Exemple : si vous êtes sur "case x:", la commande "[{" vous
+ramènera à l'instruction switch correspondante.
+
+							*]m*
+]m			Au [quant]-ième début de méthode suivant (pour Java ou
+			des langages de structure identique). Si non placé
+			avant le début d'une méthode, saute au début ou à la
+			fin de la classe. Si aucun '{' n'est trouvé après le
+			curseur, c'est une erreur. Mouvement |exclusif|.
+			{absent de Vi}
+
+							*]M*
+]M			À la [quant]-ième fin de méthode suivante (pour Java
+			ou des langages de structure identique). Si non placé
+			avant la fin d'une méthode, saute au début ou à la fin
+			de la classe. Si aucun '}' n'est trouvé après le
+			curseur, c'est une erreur. Mouvement |exclusif|.
+			{absent de Vi}
+
+							*[m*
+[m			Au [quant]-ième début de méthode précédent (pour Java
+			ou des langages de structure identique). Si non placé
+			après le début d'une méthode, saute au début ou à la
+			fin de la classe. Si aucun '{' n'est trouvé avant le
+			curseur, c'est une erreur. Mouvement |exclusif|.
+			{absent de Vi}
+
+							*[M*
+[M			À la [quant]-ième fin de méthode précédente (pour Java
+			ou des langages de structure identique). Si non placé
+			après la fin d'une méthode, saute au début ou à la fin
+			de la classe. Si aucun '}' n'est trouvé avant le
+			curseur, c'est une erreur. Mouvement |exclusif|.
+			{absent de Vi}
+
+Les deux commandes ci-dessus supposent que votre fichier contient une classe
+avec des méthodes. La définition d'une classe est encadrée par '{' et '}'.
+Chaque méthode dans la classe est également encadrée par '{' et '}'. Cela
+s'applique au langage Java. Le fichier ressemble à ceci :
+
+	// commentaire ~
+	class toto { ~
+		int methode_un() { ~
+			corps_un(); ~
+		} ~
+		int methode_deux() { ~
+			corps_deux(); ~
+		} ~
+	} ~
+
+Utiliser "[m" avec le curseur sur "corps_deux()" sautera au '{' au début de
+"methode_deux()" (c'est donc fichtrement plus utile lorsque la méthode est
+longue !). Utiliser "2[m" sautera au début de "methode_un()". Utiliser "3[m"
+sautera au début de la classe.
+
+							*[#*
+[#			Va au [quant]-ième "#if" ou "#else" précédent sans
+			correspondance. Mouvement |exclusif|. {absent de Vi}
+
+							*]#*
+]#			Va [quant]-ième "#else" ou "#endif" suivant sans
+			correspondance. Mouvement |exclusif|. {absent de Vi}
+
+Ces deux commandes fonctionnent dans les programmes C qui contiennent des
+instructions #if/#else/#endif. Elles vous amènent au début ou à la fin du bloc
+#if/#else/#endif courant. Vous pouvez ensuite utiliser "%" pour sauter à
+l'instruction correspondante.
+
+							*[star* *[/*
+[*  ou  [/		Au [quant]-ième début de commentaire C "/*" précédent.
+			Mouvement |exclusif|. {absent de Vi}
+
+							*]star* *]/*
+]*  ou  ]/		À la [quant]-ième fin de commentaire C "/*" suivante.
+			Mouvement |exclusif|. {absent de Vi}
+
+							*H*
+H			À la ligne [quant] depuis le haut de l'écran (défaut :
+			première), sur le premier caractère non-blanc (par
+			lignes). Voir aussi l'option 'startofline'. Le curseur
+			est ajusté en fonction de 'scrolloff'.	       ["Home"]
+
+							*M*
+M			À la ligne médiane de l'écran, sur le premier
+			caractère non-blanc (par lignes). Voir aussi l'option
+			'startofline'.
+
+							*L*
+L			À la ligne [quant] depuis le bas de l'écran (défaut :
+			dernière), sur le premier caractère non-blanc (par
+			lignes). Voir aussi l'option 'startofline'. Le curseur
+			est ajusté en fonction de 'scrolloff'.	       ["Last"]
+
+<ClicGauche>		Place le curseur à la position du clic de la souris.
+			Mouvement |inclusif|. Voir aussi |<LeftMouse>|. Si le
+			clic est effectué sur une ligne d'état, la fenêtre
+			correspondante devient active, mais le curseur reste
+			inchangé. {absent de Vi}
+
+ vim:tw=78:ts=8:ft=help:norl:

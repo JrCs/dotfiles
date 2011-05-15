@@ -1,0 +1,4273 @@
+*syntax.txt*	Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+Coloration syntaxique		    *syntax* *syntax-highlighting* *coloring*
+
+La coloration syntaxique permet à Vim de représenter certaines parties du
+texte avec une police ou une couleur différente. Ces parties peuvent être des
+mots-clés spécifiques ou des chaînes correspondant à un motif. Vim n'analyse
+pas le fichier en entier (pour rester rapide), la coloration possède donc des
+limitations. « Coloration lexicale » serait certainement un terme plus
+approprié, mais comme tout le monde utilise « coloration syntaxique », on
+gardera cette habitude.
+
+Vim supporte la coloration syntaxique pour tous les terminaux. Mais comme les
+terminaux les plus répandus ont des possibilités de coloration très limitées,
+cela marche mieux dans la version IHM graphique, gvim.
+
+Dans le Manuel de l'utilisateur :
+|usr_06.txt|  Introduction à la coloration syntaxique
+|usr_44.txt|  Introduction à l'écriture des fichiers de syntaxe
+
+ 1. Démarrage rapide				|:syn-qstart|
+ 2. Fichiers de syntaxe				|:syn-files|
+ 3. Procédure de chargement de la syntaxe	|syntax-loading|
+ 4. Remarques sur les fichiers de syntaxe	|:syn-file-remarks|
+ 5. Définir une syntaxe				|:syn-define|
+ 6. Arguments de la commande ":syntax"		|:syn-arguments|
+ 7. Motifs de syntaxe				|:syn-pattern|
+ 8. Grappes de syntaxe				|:syn-cluster|
+ 9. Inclure des fichiers de syntaxe		|:syn-include|
+10. Synchronisation				|:syn-sync|
+11. Lister les éléments de syntaxe		|:syntax|
+12. Commandes de surbrillance			|:highlight|
+13. Lier des groupes				|:highlight-link|
+14. Nettoyage					|:syn-clear|
+15. Marqueurs en surbrillance			|tag-highlight|
+16. Xterms couleur				|xterm-color|
+
+{absent de Vi}
+{uniquement si compilé avec la fonctionnalité |+syntax|}
+
+==============================================================================
+1. Démarrage rapide					*:syn-qstart*
+
+						*:syn-enable* *:syntax-enable*
+Cette commande active la coloration syntaxique : >
+
+	:syntax enable
+
+Cela revient en fait à exécuter la commande suivante : >
+
+	:source $VIMRUNTIME/syntax/syntax.vim
+
+Si la variable d'environnement $VIM n'est pas fixée, Vim essaiera de trouver
+le chemin d'une autre façon (voir |$VIMRUNTIME|). Habituellement, cela marche
+bien. Si ce n'est pas le cas, essayez de fixer la variable d'environnement
+$VIM au répertoire où sont situés les fichiers de support. Par exemple, si vos
+fichiers de syntaxe sont dans "/usr/vim/vim50/syntax", fixez $VIMRUNTIME à
+"/usr/vim/vim50". Vous devez faire cela dans le shell, avant de lancer Vim.
+
+						*:syn-on* *:syntax-on*
+La commande ":syntax enable" conservera vos paramètres de couleurs courants.
+Cela vous permet d'utiliser des commandes ":highlight" pour définir vos
+couleurs préférées avant ou après l'invocation de cette commande. Si vous
+voulez que Vim recouvre vos paramètres avec les valeurs par défaut, faites : >
+
+	:syntax on
+<
+					*:hi-normal* *:highlight-normal*
+Si vous utilisez l'IHM graphique, vous pouvez obtenir un texte blanc sur un
+fond noir avec : >
+	:highlight Normal guibg=Black guifg=White
+Pour un terminal couleur, voir |:hi-normal-cterm|.
+   Pour définir vos propres couleurs à utiliser pour la coloration syntaxique,
+voir |syncolor|.
+
+NOTE : Les lignes des fichiers de syntaxe sur MS-DOS et Windows se terminent
+par <CR><NL>. Les lignes des fichiers pour Unix se terminent par <NL>. Cela
+signifie que vous devez utiliser le bon format de fichier pour votre système.
+Même si sur MS-DOS et Windows, le format correct est automatiquement
+sélectionné si l'option 'fileformats' n'est pas vide.
+
+NOTE : Si vous utilisez la vidéo inverse (`gvim -fg white -bg black`), la
+valeur par défaut de 'background' ne sera pas fixée jusqu'à ce que la fenêtre
+de l'IHM graphique soit ouverte, c'est-à-dire après la lecture du fichier
+gvimrc. Cela provoquera l'utilisation de mauvaises couleurs. Pour fixer la
+valeur de 'background' avant l'activation de la coloration, incluez la
+commande ":gui" dans le fichier gvimrc : >
+
+	:gui	    " ouvre une fenêtre et fixe la valeur 'background'
+	:syntax on  " lance la coloration, fixe les couleurs selon 'background'
+
+NOTE : L'emploi de ":gui" dans le fichier gvimrc signifie que `gvim -f` ne
+lancera pas l'IHM graphique au premier plan ! Utilisez plutôt ":gui -f" dans
+ce cas.
+
+
+Vous pouvez inverser l'activation/désactivation de la syntaxe avec cette
+commande : >
+	:if exists("syntax_on") | syntax off | else | syntax enable | endif
+
+Si vous souhaitez utiliser ceci dans un mappage : >
+	:map <F7> :if exists("syntax_on") <Bar>
+	 \   syntax off <Bar>
+	 \ else <Bar>
+	 \   syntax enable <Bar>
+	 \ endif <CR>
+[Utilisez la notation |<>|, tapez ceci littéralement.]
+
+
+DÉTAILS
+
+Les commandes ":syntax" sont mises en oeuvre en sourçant un fichier. Pour un
+aperçu exact de ce qui se passe, regardez dans le fichier :
+	COMMANDE	 FICHIER        ~
+	:syntax enable	 $VIMRUNTIME/syntax/syntax.vim
+	:syntax on	 $VIMRUNTIME/syntax/syntax.vim
+	:syntax manual	 $VIMRUNTIME/syntax/manual.vim
+	:syntax off	 $VIMRUNTIME/syntax/nosyntax.vim
+Voir aussi |syntax-loading|.
+
+==============================================================================
+2. Fichiers de syntaxe					*:syn-files*
+
+Les commandes de syntaxe et de surbrillance propres à un langage sont
+normalement regroupées dans un fichier de syntaxe. La convention de nommage
+est : "{nom}.vim", où {nom} désigne le nom du langage, ou son abréviation
+(pour que le nom du fichier ne dépasse pas 8.3 caractères, ce qui est
+nécessaire au cas où le fichier serait utilisé sur un système de fichiers
+DOS).
+   Exemples :
+	c.vim		perl.vim	java.vim	html.vim
+	cpp.vim		sh.vim		csh.vim
+
+Le fichier de syntaxe peut contenir n'importe quelle commande Ex, comme un
+fichier vimrc. Mais le but est de n'y inclure que les commandes relatives à un
+langage spécifique. Si un langage est un surensemble d'un autre langage, il
+peut inclure cet autre. Par exemple, le fichier "cpp.vim" pourrait inclure le
+fichier "c.vim" : >
+	:so $VIMRUNTIME/syntax/c.vim
+
+Les fichiers en ".vim" sont normalement chargés par une autocommande. Par
+exemple : >
+	:au Syntax c	    source $VIMRUNTIME/syntax/c.vim
+	:au Syntax cpp	    source $VIMRUNTIME/syntax/cpp.vim
+Ces commandes sont normalement dans le fichier $VIMRUNTIME/syntax/synload.vim.
+
+
+CRÉER VOS PROPRES FICHIERS DE SYNTAXE			*mysyntaxfile*
+
+Quand vous créez vos propres fichiers de syntaxe et que vous souhaitez que Vim
+les utilise automatiquement avec ":syntax enable", faites ceci :
+
+1. Créez votre répertoire de support utilisateur. En principe, vous utiliserez
+   le premier élément de l'option 'runtimepath'. Exemple pour Unix : >
+	mkdir ~/.vim
+
+2. Créez dedans un répertoire nommé "syntax". Pour Unix : >
+	mkdir ~/.vim/syntax
+
+3. Écrivez le fichier de syntaxe Vim, ou téléchargez-en un sur Internet. Puis
+   enregistrez-le dans votre répertoire "syntax". Par exemple, pour la syntaxe
+   "perso" : >
+	:w ~/.vim/syntax/perso.vim
+
+À présent, vous pouvez utiliser directement ce fichier de syntaxe avec : >
+	:set syntax=perso
+Vous n'avez pas à sortir de Vim.
+
+Si vous souhaitez en outre que Vim détecte le type du fichier, voir
+|new-filetype|.
+
+Si vous configurez un système pour un grand nombre d'utilisateurs et que vous
+voulez éviter que chaque utilisateur ajoute le même fichier de syntaxe, vous
+pouvez utiliser un autre répertoire de 'runtimepath'.
+
+
+COMPLÉTER UN FICHIER DE SYNTAXE EXISTANT		*mysyntaxfile-add*
+
+Si vous êtes majoritairement satisfait par un fichier de syntaxe existant,
+mais que vous souhaitiez y ajouter quelques éléments ou changer la
+surbrillance, voici la démarche à suivre :
+
+1. Créer votre répertoire utilisateur selon 'runtimepath', voir ci-dessus.
+
+2. Créer dedans un répertoire nommé "after/syntax". Pour Unix : >
+	mkdir ~/.vim/after
+	mkdir ~/.vim/after/syntax
+
+3. Écrire un script Vim qui contient les commandes que vous voulez utiliser.
+   Par exemple, pour changer les couleurs pour la syntaxe C : >
+	highlight cComment ctermfg=Green guifg=Green
+
+4. Enregistrer ce fichier dans le répertoire "after/syntax". Utiliser le nom
+   de la syntaxe, en y suffixant ".vim". Pour notre syntaxe C : >
+	:w ~/.vim/after/syntax/c.vim
+
+Et voilà. La prochaine fois que vous éditerez un fichier C, la couleur des
+commentaires sera différente. Il n'est même pas nécessaire de relancer Vim.
+
+
+REMPLACER UN FICHIER DE SYNTAXE EXISTANT		*mysyntaxfile-replace*
+
+Si vous n'aimez pas un des fichiers de syntaxe distribués, ou que vous avez
+téléchargé une version plus récente, procédez comme décrit ci-dessus pour
+|mysyntaxfile|. Assurez-vous juste que le fichier de syntaxe est bien
+enregistré dans un des premiers répertoires de 'runtimepath'. Vim ne chargera
+que le premier fichier de syntaxe trouvé.
+
+
+CONVENTIONS DE NOMMAGE		    *group-name* *{group-name}* *{nomgroupe}*
+
+Le nom d'un groupe de syntaxe ou de surbrillance doit consister en une suite
+de lettres ASCII, chiffres et soulignés. En exprat : "[a-zA-Z0-9_]*".
+
+Pour permettre à chaque utilisateur de définir son jeu de couleurs favorites,
+il existe des noms de référence pour les groupes de surbrillance. Ils sont
+communs à de nombreux langages. Voici les noms utilisés pour ces groupes par
+défaut :
+
+	*Comment	n'importe quel commentaire
+
+	*Constant	n'importe quelle constante
+	 String		une constante de type chaîne : "ceci est une chaîne"
+	 Character	une constante de type caractère : 'c', '\n'
+	 Number		une constante de type numérique : 234, 0xff
+	 Boolean	une constante de type booléen : TRUE, false
+	 Float		une constante de type virgule flottante : 2.3e10
+
+	*Identifier	n'importe quel nom de variable
+	 Function	un nom de fonction (ou de méthode pour les classes)
+
+        *Statement	n'importe quelle instruction
+	 Conditional	if, then, else, endif, switch, etc.
+	 Repeat		for, do, while, etc.
+	 Label		case, default, etc.
+	 Operator	sizeof, +, *, etc.
+	 Keyword	n'importe quel autre mot-clé
+	 Exception	try, catch, throw
+
+        *PreProc	n'importe quelle clause préprocesseur
+	 Include	une clause préprocesseur #include
+	 Define		une clause préprocesseur #define
+	 Macro		comme Define
+	 PreCondit	une clause préprocesseur #if, #else, #endif, etc.
+
+	*Type		int, long, char, etc.
+	 StorageClass	static, register, volatile, etc.
+	 Structure	struct, union, enum, etc.
+	 Typedef	une définition de type (typedef)
+
+	*Special	n'importe quel symbole spécial
+	 SpecialChar	un caractère spécial dans une constante
+	 Tag		un marqueur (utilisez CTRL-] dessus)
+	 Delimiter	un caractère qui mérite l'attention
+	 SpecialComment	une partie spéciale à l'intérieur d'un commentaire
+	 Debug		une instruction de débogage
+
+	*Underlined	un texte à faire ressortir, un lien HTML
+
+	*Ignore		quelque chose à dissimuler, à rendre invisible
+
+	*Error		n'importe quelle construction erronée
+
+	*Todo		tout ce qui mérite une attention particulière : le
+			   plus souvent, les mots-clés TODO, FIXME et XXX
+
+Les noms précédés par '*' désignent les groupes maîtres ; les autres, les
+groupes mineurs. Pour les groupes maîtres, le fichier "syntax.vim" contient
+une surbrillance par défaut. Les groupes mineurs sont liés aux groupes
+maîtres, et auront donc la même surbrillance. Vous pouvez recouvrir ces
+valeurs par défaut en utilisant des commandes ":highlight" après le sourcement
+du fichier "syntax.vim".
+
+NOTE : Les noms des groupes de surbrillance ne sont pas sensibles à la casse.
+"String" et "string" désignent le même groupe.
+
+Les noms suivants sont réservés et ne peuvent pas être utilisés comme noms de
+groupes :
+	NONE   ALL   ALLBUT   contains   contained
+
+==============================================================================
+3. Procédure de chargement de la syntaxe		    *syntax-loading*
+
+Vous trouverez ici le détail de ce qui se produit lorsque la commande ":syntax
+enable" est invoquée. Quand Vim s'initialise, il recherche l'emplacement de
+ses fichiers de support. Il utilise pour ceci la variable |$VIMRUNTIME|.
+
+":syntax enable" et ":syntax on" respectent la procédure suivante :
+
+    Sourcer "$VIMRUNTIME/syntax/syntax.vim".
+    |
+    +--	Effacer toute syntaxe ancienne en sourçant
+    |	"$VIMRUNTIME/syntax/nosyntax.vim".
+    |
+    +--	Sourcer "$VIMRUNTIME/syntax/synload.vim" depuis 'runtimepath'.
+    |	|
+    |	+-- Fixer les couleurs pour la coloration syntaxique. Si un jeu de
+    |	|   couleurs est défini, il est chargé à nouveau avec ":colors {nom}".
+    |	|   Sinon, ":runtime! syntax/syncolor.vim" est utilisé. ":syntax on"
+    |	|   recouvre le couleurs existantes, ":syntax enable" ne fixe que les
+    |	|   couleurs qui ne l'étaient pas encore.
+    |	|					    *synload-1*
+    |	+-- Définir les autocommandes de syntaxe pour charger le fichier de
+    |	|   syntaxe approprié lorsque l'option 'syntax' est fixée.
+    |	|					    *synload-2*
+    |	+-- Sourcer le fichier optionnel de l'utilisateur, à partir de la
+    |	    variable |mysyntaxfile|. Cela est effectué uniquement pour assurer
+    |	    la compatibilité avec Vim 5.x.
+    |
+    +--	Exécuter ":filetype on", qui lance ":runtime! filetype.vim". Cela
+    |	charge tous les fichiers "filetype.vim" trouvés. Le fichier
+    |	$VIMRUNTIME/filetype.vim devrait toujours être sourcé. Il effectue le
+    |	travail suivant.
+    |	|					    *synload-3*
+    |	+-- Installer les autocommandes basées sur le suffixe pour fixer
+    |	|   l'option 'filetype'. C'est à ce moment qu'est réalisé le lien
+    |	|   entre le nom et le type du fichier pour les types de fichiers
+    |	|   connus.
+    |	|				    *synload-4* *myfiletypefile*
+    |	+-- Sourcer le fichier optionnel de l'utilisateur, à partir de la
+    |	|   variable "myfiletypefile". Cela est effectué uniquement pour
+    |	|   assurer la compatibilité avec Vim 5.x.
+    |	|					    *synload-5*
+    |	+-- Installer une autocommande qui source "scripts.vim" lorsque aucun
+    |	|   type de fichier n'a encore été détecté.
+    |	|
+    |	+-- Sourcer $VIMRUNTIME/menu.vim, pour définir le menu "Syntaxe".
+    |	    |menu.vim|
+    |						    *synload-6*
+    +--	Installer une autocommande FileType pour fixer l'option 'syntax'
+    |	lorsqu'un type de fichier a été détecté.
+    |
+    +--	Exécuter les autocommandes de syntaxe pour lancer la coloration
+	syntaxique pour chaque tampon déjà chargé.
+
+
+Lors du chargement d'un fichier, Vim trouve le fichier de syntaxe
+correspondant comme suit :
+
+    Le chargement du fichier déclenche les autocommandes BufReadPost.
+    |
+    +--	S'il y a une correspondance avec une des autocommandes de |synload-3|
+    |	(types de fichiers connus) ou |synload-4| (types de fichiers de
+    |	l'utilisateur), l'option 'filetype' est fixée au type du fichier.
+    |
+    +--	L'autocommande de |synload-5| est déclenchée. Si le type du fichier
+    |	n'a pas encore été trouvé, alors "scripts.vim" est recherché dans
+    |	'runtimepath'. Cela devrait toujours charger $VIMRUNTIME/scripts.vim,
+    |	qui effectue le travail suivant.
+    |	|					    *myscriptsfile*
+    |	+-- Sourcer le fichier optionnel de l'utilisateur, à partir de la
+    |	|   variable "myscriptsfile". Cela est effectué uniquement pour
+    |	|   assurer la compatibilité avec Vim 5.x.
+    |	|
+    |	+-- Si le type du fichier est toujours inconnu, en examiner le contenu
+    |	    avec des tests comme "getline(1) =~ motif" jusqu'à ce que le type
+    |	    du fichier soit reconnu, puis fixer 'filetype'.
+    |
+    +--	Lorsque le type du fichier a été déterminé et que 'filetype' a été
+    |	fixé, l'événement d'autocommande FileType de |synload-6| (voir
+    |	ci-dessus) est déclenché. L'option 'syntax' est fixée au type de
+    |	fichier approprié.
+    |
+    +--	Si l'option 'syntax' a été définie au point précédent, cela déclenche
+    |	une autocommande de |synload-1| (et |synload-2|). Le fichier de
+    |	syntaxe principal est recherché dans 'runtimepath', avec cette
+    |	commande :
+    |		:runtime! syntax/<nom>.vim
+    |
+    +--	Toutes les autres autocommandes FileType ou Syntax de l'utilisateur
+	installées sont déclenchées. Cela peut servir à modifier la
+	surbrillance pour une syntaxe spécifique.
+
+==============================================================================
+4. Remarques sur les fichiers de syntaxe		*:syn-file-remarks*
+
+						*b:current_syntax-variable*
+Vim mémorise le nom de la syntaxe qui a été chargée dans la variable
+"b:current_syntax". Vous pouvez l'utiliser si vous souhaitez charger d'autres
+paramètres, en fonction de la syntaxe active. Exemple : >
+	:au BufReadPost * if b:current_syntax == "csh"
+	:au BufReadPost *   faire-quelque-chose
+	:au BufReadPost * endif
+
+
+2HTML						*2html.vim* *convert-to-HTML*
+
+Il ne s'agit pas en soi d'un fichier de syntaxe, mais d'un script qui
+convertit la fenêtre courante en code HTML. Vim ouvre une nouvelle fenêtre
+dans laquelle le fichier HTML est généré.
+
+Les options 'filetype' ou 'syntax' ne doivent être fixées à "2html" ! Sourcez
+plutôt le script pour convertir le fichier courant : >
+
+	:runtime! syntax/2html.vim
+
+Avertissement : c'est relativement lent !
+							*:TOhtml*
+Vous pouvez également utiliser la commande utilisateur ":TOhtml". Elle est
+définie dans un greffon standard. ":TOhtml" fonctionne en outre avec une plage
+et dans une zone Visuel : >
+
+	:10,40TOhtml
+
+Après l'enregistrement du fichier produit, vous pouvez le visualiser dans un
+visualisateur HTML, comme Netscape. Les couleurs devraient être exactement
+identiques à celle que vous aviez dans Vim.
+
+Pour restreindre la conversion à une plage de lignes, fixez "html_start_line"
+et "html_end_line" aux première et dernière lignes (respectivement) à
+convertir. Par exemple, pour convertir la dernière zone Visuel : >
+
+	:let html_start_line = line("'<")
+	:let html_end_line = line("'>")
+
+Les lignes seront numérotées en fonction de l'option 'number' et de la
+surbrillance Number. Vous pouvez forcer la numérotation des lignes dans la
+sortie HTML en fixant "html_number_lines" à une valeur non-nulle : >
+	:let html_number_lines = 1
+Utilisez la valeur zéro pour forcer l'omission des numéros de lignes : >
+	:let html_number_lines = 0
+Revenez au comportement par défaut (utilisant 'number') en supprimant la
+variable : >
+	:unlet html_number_lines
+
+Par défaut, le code HTML produit est optimisé pour les anciens navigateurs. Si
+vous préférez utiliser les feuilles de styles CSS1 pour les attributs (ce qui
+donne un fichier HTML 4 valide et bien plus court), spécifiez : >
+	:let html_use_css = 1
+
+Par défaut, le texte est encadré par les balises "<pre>" et "</pre>". Cela lui
+confère un aspect identique à ce que vous voyez dans Vim, mais sans
+l'enroulement des lignes. Si vous préférez conserver l'enroulement, au risque
+que l'aspect final du document soit légèrement différent, utilisez : >
+	:let html_no_pre = 1
+Ceci obligera à utiliser "<br>" à la fin de chaque ligne et "&nbsp;" pour les
+séquences d'espaces.
+
+La valeur courante de 'encoding' est utilisée pour définir le jeu de
+caractères du fichier HTML. Cela ne fonctionne que pour les valeurs
+de 'encoding' pour lesquelles il existe un jeu de caractères HTML équivalent.
+Pour passer outre, fixez "g:html_use_encoding" au nom du jeu de caractères à
+utiliser : >
+	:let html_use_encoding = "mon_encodage"
+Pour omettre la ligne définissant le jeu de caractères, fixez
+"g:html_use_encoding" à une chaîne vide : >
+	:let html_use_encoding = ""
+Pour revenir au mécanisme de définition automatique, supprimez la variable
+"g:html_use_encoding" : >
+	:unlet html_use_encoding
+
+Remarques :
+- Ceci fonctionne uniquement dans une version incluant le support IHM
+  graphique. Si l'IHM graphique n'est pas réellement lancée (c'est possible
+  pour X11), cela fonctionne quand même, mais pas très bien (les couleurs
+  peuvent être fausses).
+- Les anciens navigateurs n'afficheront pas les couleurs de fond.
+- Vous pouvez aussi imprimer le fichier depuis la plupart des navigateurs (en
+  couleurs) !
+
+Cet exemple décrit comment on peut lancer ce script sur tous les fichiers *.c
+et *.h du répertoire courant depuis un shell Unix : >
+	for f in *.[ch]; do gvim -f +"syn on" +"run! syntax/2html.vim" +"wq" +"q" $f; done
+
+
+ABEL						*abel.vim* *abel-syntax*
+
+La coloration pour ABEL fournit des options à définir par l'utilisateur. Pour
+en activer une, assignez n'importe quelle valeur à la variable correspondante.
+Exemple : >
+	:let abel_obsolete_ok = 1
+Pour la désactiver, utilisez ":unlet". Exemple : >
+	:unlet abel_obsolete_ok
+<
+	VARIABLE		    ACTION  ~
+	abel_obsolete_ok	    Affiche les mot-clés obsolètes comme des
+				       instructions, pas des erreurs
+	abel_cpp_comments_illegal   Ne pas interpréter "//" comme un début de
+				       commentaire à l'intérieur d'une ligne
+
+
+ADA						*ada.vim* *ada-syntax*
+
+Ce mode est conçu pour la version du langage Ada de 1995 ("Ada95"), qui inclut
+le support de la programmation objet, des types protégés, etc. Il prend
+également en charge le code écrit pour le langage Ada originel ("Ada83" ou
+"Ada87"), bien qu'un code Ada83 utilisant des mot-clés uniquement prévus pour
+Ada95 aura une mauvaise coloration (un tel code devrait normalement être
+corrigé). Pour plus d'informations sur Ada, voir "http://www.adapower.com/".
+
+Le mode Ada gère correctement un grand nombre de situations. Par exemple, il
+sait que le '-' de "-5" est un nombre, mais que le même caractère dans "A-5"
+est un opérateur. Normalement, une clause "with" ou "use" faisant référence à
+une autre unité de compilation est mise en surbrillance de la même façon qu'un
+"#include" en C. Si vos groupes "Conditional" ou "Repeat" sont de couleurs
+différentes, alors les "end if" et "end loop" seront mis en surbrillance selon
+leur groupe respectif.
+   Vous pouvez les fixer à différentes couleurs en utilisant la commande
+"highlight" de Vim (p. ex., pour modifier la façon dont les boucles sont
+affichées, entrez la commande ":hi Repeat" suivie par la spécification de
+couleur ; sur des terminaux simples, la spécification de couleur
+"ctermfg=White" convient souvent).
+
+Il existe plusieurs options pour le mode Ada. Pour en activer une,
+assignez-lui une valeur. Exemple : >
+	:let ada_standard_types = 1
+Pour la désactiver, utilisez ":unlet". Exemple : >
+	:unlet ada_standard_types = 1
+Vous pouvez simplement taper ":" puis la commande pour fixer les options
+temporairement avant le chargement d'un fichier Ada. Vous pouvez aussi rendre
+ce paramétrage permanent en ajoutant la ou les commandes "let" (sans
+deux-points) dans votre fichier vimrc.
+
+Voici les options du mode Ada :
+
+VARIABLE		   MET EN SURBRILLANCE...  ~
+ada_standard_types	   les types du paquetage Standard (p. ex., "Float")
+ada_space_errors	   les erreurs étrangères dans les espaces...
+ada_no_trail_space_error   ... mais ignore les espaces surnuméraires en fin de
+			      ligne
+ada_no_tab_space_error     ... mais ignore les tabulations après des espaces
+ada_withuse_ordinary       "with" et "use" comme des mots-clés ordinaires
+			      (quand ils font référence à d'autres unités de
+			      compilation, ils possèdent normalement une
+			      surbrillance particulière)
+ada_begin_preproc          tous les mots-clés tels que "begin" en utilisant la
+			      coloration des commandes du préprocesseur C
+
+Même sur un PC lent (90 MHz), ce mode fonctionne rapidement, mais si vous
+jugez les performances trop médiocres, activez "ada_withuse_ordinary".
+
+
+ANT						*ant.vim* *ant-syntax*
+
+Le fichier de syntaxe Ant inclut la coloration syntaxique pour JavaScript et
+Python par défaut. La coloration syntaxique pour d'autres langages de script
+peut être installée avec la fonction AntSyntaxScript(), qui accepte un nom
+d'étiquette comme premier argument et le nom du fichier de syntaxe associé
+comme deuxième argument. Par exemple >
+
+	:call AntSyntaxScript('perl', 'perl.vim')
+
+installera la coloration syntaxique de Perl pour le code Ant suivant : >
+
+	<script language = 'perl'><![CDATA[
+	    # everything inside is highlighted as perl
+	]]></script>
+
+Voir |mysyntaxfile-add| pour installer des langages de script de façon
+permanente.
+
+
+APACHE						*apache.vim* *apache-syntax*
+
+Le fichier de syntaxe Apache fournit une coloration syntaxique dépendante de
+la version du serveur HTTP Apache (1.3.x par défaut). Fixez "apache_version" à
+la version courante d'Apache (en tant que chaîne) pour obtenir la coloration
+pour une version différente. Exemple : >
+
+	:let apache_version = "2.0"
+<
+
+				*nasm.vim* *masm.vim* *asm68k* *masm-syntax*
+				*asm68k-syntax* *asm.vim* *asmh8300.vim*
+ASSEMBLEUR			*asm-syntax* *asmh8300-syntax* *nasm-syntax*
+
+Les fichiers d'extension ".i" peuvent être en Progress ou en assembleur. Si la
+détection automatique ne marche pas pour vous, ou que vous n'éditez jamais de
+fichiers Progress, utilisez ceci dans votre fichier vimrc de démarrage : >
+	:let filetype_i = "asm"
+Remplacez "asm" par le type d'assembleur que vous utilisez.
+
+Il existe de nombreux types d'assembleurs différents qui utilisent tous la
+même extension de fichier. Vous devrez donc en choisir le type vous-même, ou
+ajouter une ligne dans le fichier assembleur que Vim reconnaîtra.
+Actuellement, ces dialectes sont supportés par la coloration :
+	asm		assembleur GNU (défaut)
+	asm68k		assembleur Motorola 680x0
+	asmh8300	version Hitachi H-8300 de l'assembleur GNU
+	ia64		assembleur Intel Itanium 64
+	masm		assembleur Microsoft (fonctionne probablement pour
+			   tout 80x86)
+	nasm		assembleur Netwide
+	tasm		assembleur Turbo (avec des codes opératoires 80x86
+			   jusqu'au Pentium et MMX)
+	pic		assembleur PIC (pour PIC16F84 actuellement)
+
+La solution la plus souple consiste à ajouter une ligne à votre fichier
+assembleur contenant : >
+	:asmsyntax=nasm
+Remplacez "nasm" par le nom du type d'assembleur que vous utilisez. La ligne
+doit faire partie des cinq premières lignes du fichier.
+
+Le type de la syntaxe peut toujours être recouvert pour un tampon spécifique
+en fixant la variable "b:asmsyntax" : >
+	:let b:asmsyntax = nasm
+
+Si "b:asmsyntax" n'est pas fixé, ni automatiquement ni manuellement, alors la
+valeur de la variable globale "asmsyntax" est utilisée. Cela peut être
+considéré comme le langage assembleur par défaut : >
+	:let asmsyntax = nasm
+
+En dernier ressort, si rien n'est défini, la syntaxe "asm" est employée.
+
+Coloration optionnelle pour l'assembleur Netwide (nasm.vim)
+-----------------------------------------------------------
+Pour activer une fonctionnalité : >
+	:let   {variable}=1|set syntax=nasm
+Pour désactiver une fonctionnalité : >
+	:unlet {variable}  |set syntax=nasm
+<
+	VARIABLE		 MET EN SURBRILLANCE...  ~
+	nasm_loose_syntax	 la syntaxe autorisée par un analyseur
+				    syntaxique non officiel pas selon Error
+				    (dépend de l'analyseur ; déconseillé)
+	nasm_ctx_outside_macro	 les macros hors contexte pas selon Error
+	nasm_no_warn		 la syntaxe potentiellement à risque pas selon
+				    Todo
+
+
+ASPPERL et ASPVBS			*aspperl-syntax* *aspvbs-syntax*
+
+Les fichiers *.asp et *.asa peuvent être soit des scripts Perl, soit des
+scripts Visual Basic. Comme il est difficile de le déterminer, vous pouvez
+fixer deux variables globales pour indiquer à Vim ce que éditez. Pour Perl,
+utilisez : >
+	:let g:filetype_asa = "aspperl"
+	:let g:filetype_asp = "aspperl"
+Et pour Visual Basic : >
+	:let g:filetype_asa = "aspvbs"
+	:let g:filetype_asp = "aspvbs"
+
+
+BASIC				*basic.vim* *vb.vim* *basic-syntax* *vb-syntax*
+
+Les fichiers Visual Basic comme les fichiers Basic « normaux » utilisent
+l'extension ".bas". Pour détecter quelle syntaxe doit être utilisée, Vim
+recherche la chaîne "VB_Name" dans les cinq premières lignes du fichier. Si
+elle n'est pas trouvée, le type de fichier sera "basic", "vb" sinon. Les
+fichiers possédant l'extension ".frm" seront toujours considérés comme du
+Visual Basic.
+
+
+C						*c.vim* *c-syntax*
+
+Il existe une petit nombre d'options pour la coloration du C. Pour en activer
+une, assignez-lui une valeur. Exemple : >
+	:let c_comment_strings = 1
+Pour la désactiver, utilisez ":unlet". Exemple : >
+	:unlet c_comment_strings
+
+VARIABLE		MET EN SURBRILLANCE...  ~
+c_gnu			les éléments spécifiques à GCC
+c_comment_strings	les chaînes et les nombres dans un commentaire
+c_space_errors		les espaces blancs finaux et avant une tabulation...
+c_no_trail_space_error	... mais pas les espaces blancs finaux
+c_no_tab_space_error	... mais pas les espaces avant une tabulation
+c_no_bracket_error	les {}; dans des [] pas comme des erreurs
+c_no_ansi		pas les types et les constantes standards ANSI...
+c_ansi_typedefs		... mais les types standards ANSI
+c_ansi_constants	... mais les constantes standards ANSI
+c_no_utf		pas \u et \U dans les chaînes
+c_syntax_for_h		les fichiers *.h avec la syntaxe C, au lieu de C++
+c_no_if0		les blocs "#if 0" pas comme des commentaires
+c_no_cformat		pas les éléments de format '%' dans les chaînes
+c_no_c99		pas les éléments C99 standards
+
+Si vous remarquez des erreurs de coloration lorsque vous revenez en arrière,
+que vous pouvez corriger avec CTRL-L, essayez de fixer la variable interne
+"c_minlines" à un nombre plus grand : >
+	:let c_minlines = 100
+Ceci fera débuter la synchronisation de la syntaxe 100 lignes avant la
+première ligne affichée. La valeur par défaut est 50 (15 quand "c_no_if0" est
+fixé). L'inconvénient d'utiliser un grand nombre est que le rafraîchissement
+peut devenir lent.
+
+Lorsque vous utilisez la surbrillance de commentaire pour "#if 0 ... #endif",
+remarquez que cela ne fonctionne que si "#if 0" est compris dans les
+"c_minlines" lignes depuis le haut de la fenêtre. Si vous avez une
+construction "#if 0" longue, elle ne sera pas gérée correctement.
+
+Pour passer en surbrillance des éléments supplémentaires dans les
+commentaires, utilisez la grappe cCommentGroup. Exemple : >
+	:au Syntax c call MonAjoutC()
+	:function MonAjoutC()
+	:  syn keyword cMonElement contained Ni
+	:  syn cluster cCommentGroup add=cMonElement
+	:  hi link cMonElement Title
+	:endfun
+
+Les constantes ANSI seront mises en surbrillance selon le groupe cConstant.
+Ceci inclut "NULL", "SIG_IGN" et autres. Mais pas "TRUE", par exemple, car il
+n'appartient pas au standard ANSI. Si vous trouvez cela confus, supprimez la
+surbrillance du groupe cConstant : >
+	:hi link cConstant NONE
+
+Si vous voyez '{' et '}' mis en surbrillance comme des erreurs alors qu'ils
+sont corrects, supprimez la surbrillance des groupes cErrInParen et
+cErrInBracket.
+
+
+CHANGELOG				*changelog.vim* *changelog-syntax*
+
+La coloration syntaxique pour ChangeLog supporte la surbrillance des espaces
+situés en début de ligne. Si cela ne vous convient pas, ajoutez cette ligne
+dans votre vimrc : >
+	let g:changelog_spacing_errors = 0
+Elle sera prise en compte à la prochaine édition d'un fichier ChangeLog. Vous
+pouvez également utiliser "b:changelog_spacing_errors" si vous ne souhaitez
+désactiver ce comportement que pour quelques tampons (avant le chargement du
+fichier de syntaxe).
+
+Vous pouvez changer la surbrillance utilisée, par exemple pour afficher les
+espaces comme des erreurs : >
+	:hi link ChangelogError Error
+Ou, pour désactiver cette surbrillance : >
+	:hi link ChangelogError NONE
+Cela fonctionne immédiatement.
+
+
+COBOL						*cobol.vim* *cobol-syntax*
+
+La coloration syntaxique pour COBOL est différente selon qu'on ait affaire à
+du code historique ou à un développement récent. Cela dépend de plusieurs
+facteurs, et particulièrement de la tâche effectuée (maintenance ou bien
+développement). Pour activer la coloration pour le code historique, ajoutez
+cette ligne à votre fichier vimrc : >
+
+	:let cobol_legacy_code = 1
+
+Pour la désactiver à nouveau, utilisez : >
+
+	:unlet cobol_legacy_code
+
+
+COLD FUSION				*coldfusion.vim* *coldfusion-syntax*
+
+ColdFusion a sa propre version des commentaires HTML. Pour activer la
+surbrillance des commentaires ColdFusion, ajoutez la ligne suivante à votre
+fichier de démarrage : >
+
+	:let html_wrong_comments = 1
+
+Le fichier de syntaxe ColdFusion est basé sur le fichier de syntaxe HTML.
+
+
+CYNLIB						*cynlib.vim* *cynlib-syntax*
+
+Les fichiers Cynlib sont des fichiers C++ qui utilisent la bibliothèque de
+classes Cynlib pour permettre la modélisation et la simulation matérielle en
+utilisant C++. En général, les fichiers Cynlib ont une extension ".cc" ou
+".cpp", ce qui les rend difficiles à distinguer des fichiers C++
+traditionnels.
+   Si vous souhaitez activer la coloration Cynlib pour les fichiers ".cc",
+ajoutez cette ligne à votre fichier vimrc : >
+
+	:let cynlib_cyntax_for_cc = 1
+
+Pareillement pour les fichiers ".cpp" (cette extension n'est habituellement
+utilisée que sous Windows) : >
+
+	:let cynlib_cyntax_for_cpp = 1
+
+Pour les désactiver à nouveau : >
+
+	:unlet cynlib_cyntax_for_cc
+	:unlet cynlib_cyntax_for_cpp
+
+
+CWEB						*cweb.vim* *cweb-syntax*
+
+Les fichiers d'extension ".w" peuvent être en Progress ou en CWeb. Si la
+détection automatique ne marche pas pour vous, ou que vous n'éditez jamais de
+fichiers Progress, utilisez ceci dans votre fichier vimrc de démarrage : >
+
+	:let filetype_w = "cweb"
+
+
+DOSBATCH				*dosbatch.vim* *dosbatch-syntax*
+
+Il existe une option pour la coloration des fichiers batch du DOS. Elle permet
+de couvrir les nouvelles extensions de l'interpréteur de commandes introduites
+par Windows 2000. Elle est contrôlée par la variable "dosbatch_cmdextversion".
+Pour Windows NT, elle devrait prendre la valeur de 1, et pour Windows 2000, la
+valeur de 2. Fixez la version désirée avec la ligne suivante : >
+
+	:let dosbatch_cmdextversion = 1
+
+Si cette variable n'est pas définie, elle est fixée à 2 par défaut, pour
+supporter Windows 2000.
+
+
+DTD						*dtd.vim* *dtd-syntax*
+
+La coloration syntaxique pour DTD est sensible à la casse par défaut. Pour
+désactiver la sensibilité à la casse, ajoutez la ligne suivante à votre
+fichier de démarrage : >
+
+	:let dtd_ignore_case = 1
+
+Le fichier de syntaxe DTD mettra en surbrillance les balises inconnues comme
+des erreurs. Pour désactiver cela, faites >
+
+	:let dtd_no_tag_errors = 1
+
+avant de sourcer le fichier de syntaxe "dtd.vim".
+
+Les noms d'entités de paramètres sont mis en surbrillance dans la définition
+selon le groupe Type, et selon Comment pour la ponctuation et '%'. Les
+instances d'entités de paramètres sont mises en surbrillance selon le groupe
+Constant, et selon Type pour les délimiteurs '%' et ';'. Ceci peut être
+désactivé en fixant : >
+
+	:let dtd_no_param_entities = 1
+
+Le fichier de syntaxe DTD est également inclus par "xml.vim", pour supporter
+la coloration des DTD incluses dans les documents XML.
+
+
+EIFFEL						*eiffel.vim* *eiffel-syntax*
+
+Bien qu'Eiffel ne soit pas sensible à la casse, ses règles de codage le
+préconisent, et le fichier de coloration syntaxique l'encourage. Cela permet
+aussi de mettre en surbrillance les noms de classes différemment. Pour
+désactiver la sensibilité à la casse de la coloration, ajoutez cette ligne
+dans votre fichier de démarrage : >
+
+	:let eiffel_ignore_case = 1
+
+La casse restera prise en compte pour les noms de classes et les chaînes
+"TODO" dans les commentaires.
+
+Inversement, pour des contrôles encore plus stricts, ajoutez une des lignes
+suivantes : >
+
+	:let eiffel_strict = 1
+	:let eiffel_pedantic = 1
+
+L'utilisation de "eiffel_strict" détectera uniquement une casse impropre des
+mots réservés "Current", "Void", "Result", "Precursor" et "NONE", pour vous
+avertir en cas d'utilisation accidentelle en tant que fonctionnalité ou nom de
+classe.
+   L'utilisation de "eiffel_pedantic" imposera le respect strict des règles de
+codage Eiffel (tels que les mélanges arbitraires de majuscules/minuscules et
+la capitalisation obsolète des mots-clés).
+
+Si vous souhaitez utiliser les versions minuscules de "Current", "Void",
+"Result" et "Precursor", vous pouvez utiliser >
+
+	:let eiffel_lower_case_predef = 1
+
+au lieu de désactiver complètement la sensibilité à la casse de la coloration.
+
+Le support pour la nouvelle syntaxe de création proposée par ISE (déjà prise
+en compte expérimentalement par certains compilateurs) peut être activée
+par : >
+
+	:let eiffel_ise = 1
+
+Enfin, certains produits supportent les constantes hexadécimales. Pour les
+prendre en compte, ajoutez >
+
+	:let eiffel_hex_constants = 1
+
+dans votre fichier de démarrage.
+
+
+ERLANG						*erlang.vim* *erlang-syntax*
+
+Le fichier de syntaxe "erlang.vim" est destiné à Erlang (ERicsson LANGuage).
+Erlang est sensible à la casse et son extension par défaut est ".erl".
+
+Si vous voulez désactiver la coloration des mots-clés, placez ceci dans votre
+fichier vimrc : >
+
+	:let erlang_keywords = 1
+
+Pour désactiver la coloration des fonctions internes, utilisez : >
+
+	:let erlang_functions = 1
+
+Et pour désactiver la coloration des caractères spéciaux : >
+
+	:let erlang_characters = 1
+
+
+FORM						*form.vim* *form-syntax*
+
+La coloration employée pour les fichiers FORM utilise les groupes par défaut
+Conditional, Number, Statement, Comment, PreProc, Type et String, en se
+conformant aux spécifications établies dans "Symbolic Manipulation with FORM",
+par J.A.M. Vermaseren, CAN, Pays-Bas, 1991.
+
+Si vous souhaitez modifier cette coloration par défaut, vous devrez redéfinir
+les groupes de syntaxe suivants :
+
+    - formConditional ;
+    - formNumber ;
+    - formStatement ;
+    - formHeaderStatement ;
+    - formComment ;
+    - formPreProc ;
+    - formDirective ;
+    - formType ;
+    - formString.
+
+NOTE : Le fichier de syntaxe "form.vim" place par défaut les commandes et les
+directives du préprocesseur FORM dans le même groupe de syntaxe.
+
+Il existe un mode de coloration amélioré pour FORM qui permet de distinguer
+les instructions de l'en-tête de celles du corps d'un programme FORM. Pour
+activer ce mode, définissez la variable suivante dans votre fichier vimrc : >
+
+	:let form_enhanced_color = 1
+
+Le mode amélioré peut aussi tirer parti des possibilités de coloration
+supplémentaires offertes par un fond sombre dans l'IHM graphique. Dans ce cas,
+les instructions apparaîtront en jaune clair ["LightYellow"] plutôt qu'en
+jaune ["Yellow"] XXX Bram, et les conditions en bleu clair ["LightBlue"], pour une
+meilleure distinction.
+
+
+FORTRAN						*fortran.vim* *fortran-syntax*
+
+Dialectes et coloration par défaut
+----------------------------------
+La coloration syntaxique par défaut se destine à f95 (Fortran 95). Ce choix
+devrait être approprié dans la plupart des cas, car Fortran 95 est un
+surensemble de Fortran 90 et est aussi (à quelques détails près) un
+surensemble de Fortran 77.
+
+Forme du code source Fortran
+----------------------------
+Le code Fortran 9x peut être de forme source fixe ou bien libre. NOTE : La
+coloration syntaxique ne sera pas correcte si cette forme n'est pas définie
+correctement.
+
+Lorsque vous créez un nouveau fichier Fortran, le script de syntaxe supposera
+par défaut qu'il s'agit d'une forme source fixe. Si vous utilisez toujours la
+forme source libre, placez >
+	let fortran_free_source = 1
+dans votre fichier vimrc avant la commande "syntax on". Si vous utilisez
+toujours la forme source fixe, placez alors >
+	let fortran_fixed_source = 1
+dans votre vimrc avant la commande "syntax on".
+
+Si la forme du code source dépend de l'extension du fichier, le mieux est
+alors de fixer la variable "fortran_free_source" dans un greffon de type de
+fichier. Voir |ftplugin| pour plus d'informations sur les greffons de types de
+fichiers. Par exemple, si tous vos fichiers Fortran d'extension ".f90" sont
+écrits en forme source libre, et les autres en forme source fixe, ajoutez le
+code suivant à votre greffon : >
+	let s:extfname = expand("%:e")
+	if s:extfname ==? "f90"
+	  let fortran_free_source = 1
+	  unlet! fortran_fixed_source
+	else
+	  let fortran_fixed_source = 1
+	  unlet! fortran_free_source
+	endif
+NOTE : Cela ne fonctionnera que si la commande "filetype plugin indent on"
+précède la commande "syntax on" dans votre fichier vimrc.
+
+Lorsque vous éditez un fichier Fortran, le script de syntaxe supposera qu'il
+s'agit d'une forme source libre si la variable "fortran_free_source" a été
+fixée, et d'une forme source fixe si "fortran_fixed_source" a été fixé. Si
+aucune de ces deux variables n'a été fixée, le script de syntaxe essaiera de
+déterminer la forme utilisée pour le code source en en examinant les cinq
+premières colonnes des 25 premières lignes. Si aucun signe n'indique une forme
+source libre, alors Vim supposera que le fichier est de forme source fixe.
+L'algorithme employé devrait marcher dans la grande majorité des cas. Mais
+dans certains cas (par exemple, si un fichier débute par 25 lignes -- ou
+plus -- de commentaires), il pourrait se prononcer improprement pour une forme
+source fixe. Si cela arrive, il vous suffit d'ajouter une instruction autre
+qu'un commentaire n'importe où dans les cinq premières colonnes des 25
+premières lignes du fichier, puis de l'enregistrer (":w") et ensuite de le
+recharger (":e!").
+
+Tabulations dans les fichiers Fortran
+-------------------------------------
+Les tabulations ne sont pas reconnues par les standards Fortran. Elles sont à
+proscrire dans les fichiers de forme source fixe, qui nécessitent des limites
+de colonnes fixes. C'est pourquoi les tabulations sont marquées comme des
+erreurs. Néanmoins, certains programmeurs aiment utiliser des tabulations. Si
+vos fichiers Fortran en contiennent, vous devriez fixer la variable
+"fortran_have_tabs" dans votre fichier vimrc en plaçant cette commande >
+	:let fortran_have_tabs = 1
+avant la commande "syntax on". Malheureusement, l'utilisation de tabulations
+signifiera que le fichier de syntaxe ne sera pas capable de détecter des
+marges incorrectes.
+
+Repliage par syntaxe des fichiers Fortran
+-----------------------------------------
+Si vous souhaitez utiliser "foldmethod=syntax", vous devez d'abord fixer la
+variable "fortran_fold" avec une commande du type >
+	:let fortran_fold = 1
+to instruct the syntax script to define fold regions for program units, that
+is main programs starting with a program statement, subroutines, function
+subprograms, block data subprograms, interface blocks, and modules XXX. Si vous
+fixez en outre la variable "fortran_fold_conditionals" avec une commande du
+type >
+	:let fortran_fold_conditionals = 1
+alors les régions de replis seront aussi définies pour les boucles "do", les
+blocs "if" et les constructions "select case". Si vous fixez en outre la
+variable "fortran_fold_multilinecomments" avec une commande du type >
+	:let fortran_fold_multilinecomments = 1
+alors les régions de replis seront également définies pour trois lignes de
+commentaires consécutives ou plus.
+   NOTE : La définition de régions de replis peut être lente avec de gros
+fichiers.
+
+Si "fortran_fold" et éventuellement "fortran_fold_conditionals" et/ou
+"fortran_fold_multilinecomments" ont été fixés, alors Vim repliera votre
+fichier si vous fixez "foldmethod=syntax". Les commentaires et les lignes
+blanches entre deux unités de programme ne sont pas repliées car ils ne sont
+pas considérés comme appartenant à une unité de programme.
+
+Syntaxe Fortran plus précise
+----------------------------
+Si vous fixez la variable "fortran_more_precise" avec une commande comme
+celle-ci >
+	:let fortran_more_precise = 1
+alors la coloration syntaxique sera plus précise, mais plus lente. En
+particulier, les étiquettes d'instructions utilisées dans les instructions
+"do", "goto" et "if" arithmétique seront reconnues, comme le seront les noms
+de constructions à la fin d'une construction "do", "if", "select" ou "forall".
+
+Choix d'un dialecte Fortran
+---------------------------
+Le script de syntaxe supporte cinq dialectes Fortran : f95, f90, f77, le
+sous-ensemble elf90 de Lahey et le sous-ensemble F de Imagine1.
+
+Si vous utilisez f77 avec des extensions, même de très courantes telles que
+les boucles do/enddo, les boucles do/while ou la forme source libre, qui sont
+supportées par la plupart des compilateurs f77 -- g77 (GNU Fortran) inclus --,
+alors vous trouverez probablement la coloration par défaut satisfaisante.
+Néanmoins, si vous utilisez f77 sans aucune extension (pas même la forme
+source libre ou les extensions MIL STD 1753), vous avez intérêt à fixer le
+dialecte à f77 afin que : les noms comme SUM soient reconnus comme des noms de
+variables utilisateur et ne soient pas mis en surbrillance comme des fonctions
+internes f9x ; les constructions obsolètes comme les instructions ASSIGN ne
+soient pas mises en surbrillance selon le groupe Todo ; et que la forme source
+fixe soit employée par défaut.
+
+Si vous utilisez elf90 ou F, vous avez intérêt à bien définir votre dialecte,
+car les fonctionnalités f90 exclues de ces dialectes seront mises en
+surbrillance selon le groupe Todo, et la forme source libre sera supposée
+nécessaire pour ces dialectes.
+
+Le dialecte peut être sélectionné en fixant la variable "fortran_dialect". Les
+valeurs autorisées pour "fortran_dialect" sont sensibles à la casse et doivent
+être "f95", "f90", "f77", "elf" ou "F". Les valeurs invalides de
+"fortran_dialect" sont ignorées.
+
+Si tous vos fichiers Fortran utilisent le même dialecte, fixez
+"fortran_dialect" dans votre fichier vimrc avant la commande "syntax on". Si
+le dialecte dépend de l'extension du fichier, il est alors préférable de le
+définir dans un greffon de type de fichier. Voir |ftplugin| pour plus
+d'informations sur ce sujet. Par exemple, si tous vos fichiers Fortran
+d'extension ".f90" sont écrits dans le sous-ensemble elf, ajoutez le code
+suivant à votre greffon : >
+	let s:extfname = expand("%:e")
+	if s:extfname ==? "f90"
+	  let fortran_dialect = "elf"
+	else
+	  unlet! fortran_dialect
+	endif
+NOTE : Cela ne fonctionnera que si la commande "filetype plugin indent on"
+précède la commande "syntax on" dans votre fichier vimrc.
+
+Un contrôle plus fin est nécessaire si l'extension du fichier n'identifie pas
+le dialecte de façon unique. Vous pouvez recouvrir la valeur du dialecte par
+défaut, au cas par cas, en incluant un commentaire avec la directive
+"fortran_dialect=xx" (où xx=f77 ou elf ou F ou f90 ou f95) dans une des trois
+premières lignes de votre fichier.
+   Par exemple, si vos anciens fichiers ".f" ont été écrits en f77 mais que
+les nouveaux le sont en F et que vous souhaitiez identifier ces fichiers plus
+récents, incluez ce commentaire Fortran dans une des trois premières lignes : >
+	! fortran_dialect = F
+F recouvrira elf si les deux directives sont présentes.
+
+Limitations
+-----------
+Le contrôle des parenthèses ne détecte pas les situations où il y a trop peu
+de parenthèses fermantes. Les chaînes Hollerith ne sont pas reconnues.
+Certains mots-clés pourraient ne pas ressortir correctement, car Fortran90 n'a
+pas de mots réservés.
+
+Pour plus d'informations sur le Fortran, reportez-vous à |fortran-indent| et
+|fortran-plugin|.
+
+
+FICHIERS DE CONFIGURATION FVWM			*fvwm.vim* *fvwm-syntax*
+
+Afin que Vim puisse reconnaître les fichiers de configuration Fvwm qui ne
+correspondent pas aux motifs *fvwmrc* ou *fvwm2rc* , vous devez ajouter des
+instructions supplémentaires adaptées à votre système dans votre fichier
+"myfiletypes.vim". Vous devrez fixer la variable "b:fvwm_version" au numéro de
+version majeur de Fvwm, et l'option 'filetype' à "fvwm".
+
+Par exemple, pour que Vim identifie tous les fichiers dans /etc/X11/fvwm2/
+comme des fichiers de configuration Fvwm2, ajoutez la ligne suivante >
+
+	:au! BufNewFile,BufRead /etc/X11/fvwm2/*  let b:fvwm_version = 2 |
+					 \ set filetype=fvwm
+
+dans votre fichier ".vimrc". Si vous souhaitez que Vim mette en surbrillance
+tous les noms de couleurs valides, donnez-lui l'emplacement de la base de
+données de couleurs ("rgb.txt") de votre système. Pour cela, fixez la variable
+"rgb_file" à cet emplacement. Par exemple, si votre base de données de
+couleurs est située dans /usr/X11/lib/X11/, utilisez cette ligne : >
+
+	:let rgb_file = "/usr/X11/lib/X11/rgb.txt"
+
+
+GSP							*gsp.vim*
+
+Le style de la coloration par défaut pour les pages GSP est défini par
+|html.vim|, et la coloration pour le code Java (à l'intérieur des balises ou
+en-lignes Java entre contre-apostrophes) est définie par |java.vim|. Les
+groupes HTML suivants, définis dans |html.vim|, sont redéfinis pour intégrer
+et mettre en surbrillance le code Java en-ligne :
+
+    - htmlString ;
+    - htmlValue ;
+    - htmlEndTag ;
+    - htmlTag ;
+    - htmlTagN.
+
+La coloration devrait être correcte pour la plupart des emplacements où vous
+avez du code Java en-ligne, mais dans certains cas spéciaux, elle risque
+d'être erronée. Pour ajouter un autre groupe HTML où vous aurez du code Java
+en-ligne à un endroit où il n'est pas correctement mis en surbrillance, il
+vous suffit de copier la ligne désirée dans |html.vim| et d'ajouter gspJava à
+la clause "contains".
+
+Les contre-apostrophes pour les en-lignes Java sont mis en surbrillance selon
+le groupe htmlError, ce qui les rend plus faciles à repérer.
+
+
+GROFF						*groff.vim* *groff-syntax*
+
+Le fichier de syntaxe groff n'est qu'une surcouche de |nroff.vim|. Lire les
+notes s'y rapportant. Vous pouvez utiliser cette surcouche pour créer un
+mappage de type de fichier qui emploie la syntaxe groff par défaut, au lieu
+des mappages définis dans "filetype.vim".
+
+
+HTML						*html.vim* *html-syntax*
+
+La méthode de coloration des balises dans les fichiers HTML fonctionne comme
+suit :
+
+Les chevrons des balises ouvrantes <> ont une coloration différente de ceux
+des balises fermantes </>. C'est fait exprès ! Pour l'ouverture, le groupe par
+défaut Function est utilisé, et pour la fermeture, le groupe Type (consultez
+"syntax.vim" pour voir comment ces groupes sont définis pour vous).
+
+Les noms de balises connus sont mis en surbrillance comme des instructions C.
+Les noms de balises inconnus sont mis en surbrillance avec la même couleur que
+<> ou </> respectivement, ce qui facilite le repérage des erreurs.
+
+NOTE : Cela reste vrai pour les noms d'arguments (ou d'attributs). Les noms
+d'attributs connus ont une coloration différente de ceux qui sont inconnus.
+
+Certaines balises HTML sont utilisées pour modifier l'aspect du texte. Les
+balises suivantes sont reconnues par le fichier de syntaxe "html.vim" et
+changent la façon dont le texte est affiché : <B>, <I>, <U>, <EM>, <STRONG>,
+(<EM> est utilisé comme alias pour <I>, et <STRONG> comme alias pour <B>),
+<H1> à <H6>, <HEAD>, <TITLE> et <A>, mais uniquement si elles sont utilisées
+comme lien, c'est-à-dire qu'elles doivent inclure un attribut "href" comme
+dans <A href="somfile.html">.
+
+Si vous voulez modifier la façon dont un tel texte est rendu, vous devez
+redéfinir les groupes de syntaxe suivants :
+
+    - htmlBold ;
+    - htmlBoldUnderline ;
+    - htmlBoldUnderlineItalic ;
+    - htmlUnderline ;
+    - htmlUnderlineItalic ;
+    - htmlItalic ;
+    - htmlTitle pour les titres principaux ;
+    - htmlH1 à htmlH6 pour les titres de sections.
+
+Pour que cette redéfinition opère, vous devez redéfinir tous les groupes à
+l'exception des deux derniers (htmlTitle et htmlH[1-6], qui sont optionnels),
+et définir la variable suivante dans votre fichier vimrc (cela est dû à
+l'ordre dans lequel les fichiers sont lus pendant l'initialisation) : >
+
+	:let html_my_rendering = 1
+
+Si vous voulez voir un exemple, téléchargez "mysyntax.vim" sur
+"http://www.fleiner.com/vim/mysyntax.vim".
+
+Vous pouvez aussi désactiver ce rendu en ajoutant la ligne suivante dans votre
+fichier vimrc : >
+
+	:let html_no_rendering = 1
+
+Les commentaires HTML sont plutôt spéciaux (consultez un document de référence
+sur le HTML pour plus de détails) et la méthode employée pour la coloration
+syntaxique mettra en surbrillance toutes les erreurs. Cependant, si vous
+préférez utiliser le mauvais style (débutant par "<!--" et se finissant par
+"--!>"), vous pouvez utiliser : >
+
+	:let html_wrong_comments = 1
+
+Si du JavaScript ou du Visual Basic se trouvent encapsulés dans des documents
+HTML, ils seront mis en surbrillance selon le groupe Special, leurs
+instructions, commentaires, chaînes, etc. seront mis en surbrillance comme
+dans ces langages originaux.
+   NOTE : JavaScript et Visual Basic sont les seuls langages actuellement
+supportés, aucun autre langage de script n'est pris en compte pour l'instant.
+
+Les feuilles de styles CSS encapsulées et en-lignes sont aussi mis en
+surbrillance.
+
+Il existe de nombreux autres préprocesseurs HTML en dehors de ceux déjà cités.
+"html.vim" a été écrit de telle manière qu'il soit simple de les inclure. Pour
+cela, ajoutez deux lignes similaires aux suivantes dans le fichier de syntaxe
+du langage concerné (cet exemple provient du fichier "asp.vim") : >
+
+	runtime! syntax/html.vim
+	syn cluster htmlPreproc add=asp
+
+Il ne vous reste plus qu'à vous assurer que vous avez ajouté toutes les
+régions qui contiennent le langage préprocesseur à la grappe htmlPreproc.
+
+
+HTML/OS (par Aestiva)				*htmlos.vim* *htmlos-syntax*
+
+La méthode de coloration pour HTML/OS fonctionne comme suit :
+
+Les noms des variables et des fonctions sont de la même couleur par défaut,
+car Vim n'utilise pas des couleurs différentes pour les groupes Function et
+Identifier. Pour changer cela (si vous souhaitez que les noms de fonctions
+soient reconnaissables dans une couleur différente), vous devez ajouter la
+ligne suivante dans votre fichier vimrc : >
+
+	:hi Function term=underline cterm=bold ctermfg=LightGray
+
+Bien sûr, "ctermfg" peut prendre la valeur de votre choix.
+
+Un problème rencontré par HTML/OS est qu'il n'existe pas de type de fichier
+spécifique pour HTML/OS. Pour surmonter cela, il suffit d'activer la syntaxe
+dédiée après l'ouverture d'un fichier : >
+
+	:set syntax=htmlos
+
+Enfin, veuillez noter que les caractères ouvrants et fermants pour délimiter
+un bloc en HTML/OS peuvent être soit << ou [[, et >> ou ]] respectivement.
+
+
+IA64				*ia64.vim* *intel-itanium* *ia64-syntax*
+
+Coloration pour le langage assembleur Intel Itanium 64. Voir |asm.vim| pour
+faire reconnaître ce type de fichier.
+
+Pour que les fichiers ".inc" soient reconnus comme IA64, ajoutez ceci dans
+votre fichier vimrc : >
+
+	:let g:filetype_inc = "ia64"
+
+
+INFORM						*inform.vim* *inform-syntax*
+
+La coloration syntaxique pour Inform inclut les symboles fournis par la
+bibliothèque Inform, que de nombreux programmes utilisent intensivement. Si
+vous ne souhaitez pas que les symboles de cette bibliothèque soient mis en
+surbrillance, ajoutez ceci à votre fichier vimrc de démarrage : >
+
+	:let inform_highlight_simple = 1
+
+Par défaut, Vim suppose que les programmes Inform sont destinés à la
+Z-machine, et la surbrillance des symboles du langage assembleur Z-machine est
+bien prise en compte. Si vous destinez votre programme à un environnement
+Glulx/Glk, vous devrez ajouter ceci à votre fichier de démarrage : >
+
+	:let inform_highlight_glulx = 1
+
+La surbrillance gérera alors correctement les codes opératoires Glulx, et
+considérera glk() comme une fonction système.
+
+Le compilateur Inform rapportera certains mots-clés obsolètes comme des
+erreurs lorsqu'il les recontrera. Ces mots-clés sont normalement mis en
+surbrillance en tant qu'erreurs par Vim. Si vous ne le souhaitez pas, ajoutez
+ceci à votre fichier de démarrage : >
+
+	:let inform_suppress_obsolete = 1
+
+
+JAVA						*java.vim* *java-syntax*
+
+Le fichier de syntaxe "java.vim" offre plusieurs options :
+
+Avec Java 1.0.2, il était impossible d'avoir des accolades dans des
+parenthèses, et cela était mis en surbrillance comme une erreur. Comme cela
+est devenu possible avec Java 1.1 (avec les classes anonymes), ce n'est plus
+montré comme une erreur. Si vous préférez l'ancien comportement, placez la
+ligne suivante dans votre fichier vimrc de démarrage : >
+	:let java_mark_braces_in_parens_as_errors = 1
+
+Tous les identifiants de java.lang.* sont toujours visibles depuis toutes les
+classes. Pour les mettre en surbrillance, utilisez : >
+	:let java_highlight_java_lang_ids = 1
+
+Vous pouvez également mettre en surbrillance les identifiants de la plupart
+des paquetages Java en téléchargeant le script "javaid.vim" à l'adresse
+suivante : "http://www.fleiner.com/vim/syntax/javaid.vim".
+   Si vous préférez ne mettre en surbrillance que les identifiants d'un
+certain paquetage, mettons java.io, utilisez ceci : >
+	:let java_highligh_java_io = 1
+Reportez-vous au fichier "javaid.vim" pour une liste de tous les paquetages
+supportés.
+
+Les noms de fonctions ne sont pas mis en surbrillance, leur repérage dépendant
+de la façon dont vous écrivez votre code Java. Le fichier de syntaxe supporte
+deux manières possibles de mettre les fonctions en surbrillance :
+
+Si vous écrivez des déclarations de fonctions qui sont toujours indentées soit
+par une tabulation, 8 espaces ou 2 espaces, vous pouvez spécifier : >
+	:let java_highlight_functions = "indent"
+Mais si vous suivez les conventions de nommage Java pour les fonctions et les
+classes (avec le respect de la casse), utilisez : >
+	:let java_highlight_functions = "style"
+Si aucune de ces deux valeurs ne fonctionne pour vous, mais que vous souhaitez
+quand même que les déclarations de fonctions soient mises en surbrillance,
+créez vos propres définitions en modifiant celles contenues dans "java.vim" ou
+en créant votre propre fichier "java.vim", qui reprend le fichier original et
+y ajoute le code pour la coloration des fonctions.
+
+Dans Java 1.1, les fonctions System.out.println() et System.err.println() ne
+devraient être utilisées que pour le débogage. Il est possible de mettre en
+surbrillance différemment les instructions de débogage. Pour cela, il vous
+faut ajouter cette définition dans votre fichier de démarrage : >
+	:let java_highlight_debug = 1
+Ces instructions seront alors mises en surbrillance selon le groupe Special.
+Si vous préférez utiliser une surbrillance différente, vous devez redéfinir la
+coloration des groupes suivants :
+    - Debug,
+    - DebugSpecial,
+    - DebugString,
+    - DebugBoolean,
+    - DebugType,
+qui sont utilisés respectivement : pour l'instruction elle-même, les
+caractères spéciaux utilisés dans les chaînes de débogage, lesdites chaînes,
+les booléens et les types ("this", "super"). J'ai opté pour une couleur de
+fond différente pour ces instructions.
+
+Pour vous aider à écrire un code qui puisse être facilement porté de Java à
+C++, tous les mots-clés du C++ sont marqués comme des erreurs dans un
+programme Java. Cependant, si vous les utilisez régulièrement, vous voudrez
+certainement définir cette variable dans votre fichier vimrc : >
+	:let java_allow_cpp_keywords = 1
+
+Javadoc est un programme qui extrait des commentaires spéciaux des fichiers
+source Java et crée des pages HTML. La configuration standard mettra en
+surbrillance ce code HTML de la même façon que dans les fichiers HTML (voir
+|html.vim|). Vous pouvez même ajouter des passages JavaScript et CSS dans ce
+code (voir ci-dessous). Il existe néanmoins quatre différences :
+1. Le titre (tous les caractères jusqu'au premier '.' suivi par un espace
+   blanc, ou jusqu'au premier '@') est mis en surbrillance différemment (pour
+   en changer la couleur, changez la coloration du groupe CommentTitle) ;
+2. Le texte est mis en surbrillance selon Comment ;
+3. Les commentaires HTML sont mis en surbrillance selon Special ;
+4. Les balises Javadoc spéciales ("@see", "@param"...) sont mises en
+   surbrillance selon Special et leur argument (pour "@see", "@param",
+   "@exception") selon Function.
+Pour désactiver cette fonctionnalité, ajoutez la ligne suivante à votre
+fichier de démarrage : >
+	:let java_ignore_javadoc = 1
+
+Si vous utilisez la coloration pour les commentaires Javadoc spéciaux décrite
+ci-dessus, vous pouvez également activer la coloration spéciale pour
+JavaScript, les scripts Visual Basic et les CSS (feuilles de styles)
+encapsulées. Cela n'a de sens que si vous utilisez des commentaires Javadoc
+qui incluent du JavaScript ou des CSS encapsulées. Les options à utiliser
+sont : >
+	:let java_javascript = 1
+	:let java_css = 1
+	:let java_vb = 1
+
+Si vous souhaitez utiliser des couleurs différentes pour les parenthèses
+imbriquées, définissez des colorations pour javaParen, javaParen1 et
+javaParen2, par exemple avec >
+	:hi link javaParen Comment
+ou : >
+	:hi javaParen ctermfg=blue guifg=#0000ff
+
+Si vous remarquez des erreurs de coloration lorsque vous revenez en arrière,
+que vous pouvez corriger avec CTRL-L, essayez de fixer la variable interne
+"java_minlines" à un nombre plus grand : >
+	:let java_minlines = 50
+Ceci fera débuter la synchronisation de la syntaxe 50 lignes avant la première
+ligne affichée. La valeur par défaut est 10. L'inconvénient d'utiliser un
+grand nombre est que le rafraîchissement peut devenir lent.
+
+
+LACE						*lace.vim* *lace-syntax*
+
+LACE ("Language for Assembly of Classes in Eiffel") est sensible à la casse,
+mais pas ses règles de codage. Si vous préférez une coloration insensible à la
+casse, définissez la variable "lace_case_insensitive" dans votre fichier de
+démarrage : >
+	:let lace_case_insensitive = 1
+
+
+LEX						*lex.vim* *lex-syntax*
+
+La synchronisation pour Lex est assez fruste, car le délimiteur de section
+"^%%$" ne donne aucune indication quant à la section qui suit. En conséquence,
+vous pouvez modifier la valeur de >
+	:syn sync minlines = 300
+si vous rencontrez des problèmes de synchronisation (ce qui se produire avec
+de grand fichier Lex).
+
+
+LITE						*lite.vim* *lite-syntax*
+
+Il existe deux options pour la coloration syntaxique de Lite.
+
+Pour activer la coloration du code SQL dans les chaînes de caractères,
+spécifiez : >
+
+	:let lite_sql_query = 1
+
+Pour la synchronisation, "minlines" vaut 100 par défaut. Si vous préférez une
+autre valeur, vous pouvez modifier la variable "lite_minlines". Exemple : >
+
+	:let lite_minlines = 200
+
+
+LPC						*lpc.vim* *lpc-syntax*
+
+LPC est une langage simple et peu gourmand en mémoire. Son nom est l'acronyme
+de "Lars Pensj| C". Les fichiers LPC ont habituellement une extension ".c".
+Cependant, afin de ne pas gêner les utilisateurs qui n'écrivent que des
+programmes en C, la reconnaissance des fichiers LPC est désactivée par défaut.
+Si vous voulez utiliser la syntaxe LPC dans Vim, vous devrez fixer une
+variable dans votre fichier vimrc : >
+
+	:let lpc_syntax_for_c = 1
+
+Si cela ne fonctionne pas correctement pour certains fichiers C ou LPC,
+utilisez une ligne de mode. Pour un fichier LPC : >
+
+	// vim:set ft=lpc:
+
+Pour un fichier C reconnu comme un LPC : >
+
+	// vim:set ft=c:
+
+Si vous ne désirez pas fixer la variable, utiliser une ligne de mode dans TOUS
+les fichiers LPC.
+
+Il existe plusieurs variantes de LPC, Vim s'efforce de supporter les plus
+courantes. La syntaxe LPC par défaut supporte les séries MudOS ; pour MudOS
+v22 et antérieures, vous devrez initialiser la variable "lpc_pre_v22", et les
+nouveaux "efun" post-v22 seront alors considérés invalides. Ne fixez pas cette
+variable si vous utilisez la dernière version de MudOS : >
+
+	:let lpc_pre_v22 = 1
+
+Pour les séries LpMud 3.2 de LPC : >
+
+	:let lpc_compat_32 = 1
+
+Pour les séries LPC4 de LPC : >
+
+	:let lpc_use_lpc4_syntax = 1
+
+Pour les séries uLPC de LPC : uLPC a été développé pour Pike, vous devez donc
+utiliser la syntaxe de Pike à la place, et le nom de votre fichier source doit
+correspondre à "*.pike".
+
+
+LUA						*lua.vim* *lua-syntax*
+
+Ce fichier de syntaxe peut être utilisé pour Lua 4.0 et Lua 5.0 (cas par
+défaut). Si vous programmez en Lua 4.0, utilisez : >
+
+	:let lua_version = 4
+
+Si la variable "lua_version" n'est pas définie, elle est fixée à 5.
+
+
+MAPLE						*maple.vim* *maple-syntax*
+
+Maple V, de Waterloo Maple Inc., autorise le calcul symbolique. Le langage
+supporte de nombreux paquetages de fonctions que l'utilisateur peut charger
+séparément. Le jeu standard de paquetages de fonctions fourni avec "Maple V
+release 4" peut être mis en surbrillance selon vos besoins. Pour cela, placez
+dans votre fichier vimrc >
+
+	:let mvpkg_all = 1
+
+pour que tous les paquetages de fonctions soient mis en surbrillance, ou bien
+sélectionnez-en un sous-ensemble en choisissant les variables correspondantes
+dans la liste ci-dessous et en les fixant à 1, également dans le fichier vimrc
+(avant le sourcement de $VIMRUNTIME/syntax/syntax.vim).
+
+Liste des variables associées aux paquetages de fonctions Maple V :
+
+	mv_DEtools	 mv_genfunc	mv_networks	mv_process
+	mv_Galois	 mv_geometry    mv_numapprox    mv_simplex
+	mv_GaussInt	 mv_grobner	mv_numtheory	mv_stats
+	mv_LREtools	 mv_group	mv_orthopoly	mv_student
+	mv_combinat	 mv_inttrans	mv_padic	mv_sumtools
+	mv_combstruct    mv_liesymm	mv_plots	mv_tensor
+	mv_difforms	 mv_linalg	mv_plottools	mv_totorder
+	mv_finance	 mv_logic	mv_powseries
+
+
+MOO						*moo.vim* *moo-syntax*
+
+Si vous utilisez des commentaires en style C dans des expressions et que vous
+trouvez que cela déforme votre coloration, vous pouvez utiliser les
+correspondances étendues (et lentes !) pour les commentaires en style C : >
+
+	:let moo_extended_cstyle_comments = 1
+
+Pour désactiver la coloration des motifs de substitution de pronoms dans les
+chaînes : >
+
+	:let moo_no_pronoun_sub = 1
+
+Pour désactiver la coloration de l'opérateur d'expression rationnelle "%|", et
+des "%(" et "%)" appariés dans les chaînes : >
+
+	:let moo_no_regexp = 1
+
+Les doubles-apostrophes non appariées peuvent être détectés et mis en
+surbrillance comme des erreurs : >
+
+	:let moo_unmatched_quotes = 1
+
+Pour mettre en surbrillance les propriétés internes (".name", ".location",
+".programmer", etc.) : >
+
+	:let moo_builtin_properties = 1
+
+Les fonctions internes inconnues peuvent être détectées et mises en
+surbrillance comme des erreurs. Si vous utilisez cette option, ajoutez vos
+propres extensions au groupe mooKnownBuiltinFunction. Pour activer cette
+option : >
+
+	:let moo_unknown_builtin_functions = 1
+
+Par exemple, pour ajouter sprintf() à la liste des fonctions internes
+reconnues : >
+
+	:syn keyword mooKnownBuiltinFunction sprintf contained
+
+
+MSQL						*msql.vim* *msql-syntax*
+
+Il existe deux options pour la coloration syntaxique de MSQL.
+
+Pour activer la coloration du code SQL dans les chaînes de caractères,
+spécifiez : >
+
+	:let msql_sql_query = 1
+
+Pour la synchronisation, "minlines" vaut 100 par défaut. Si vous préférez une
+autre valeur, vous pouvez modifier la variable "msql_minlines". Exemple : >
+
+	:let msql_minlines = 200
+
+
+NCF						*ncf.vim* *ncf-syntax*
+
+Il existe une option pour la coloration syntaxique de NCF.
+
+Si vous souhaitez que les instructions non reconnues (par "ncf.vim") soient
+mises en surbrillance comme des erreurs, spécifiez : >
+
+	:let ncf_highlight_unknowns = 1
+
+Sinon, ne fixez pas cette variable.
+
+
+NROFF						*nroff.vim* *nroff-syntax*
+
+Le fichier de syntaxe nroff fonctionne bien avec le n/troff officiel d'AT&T,
+mais pas avec GNU groff. Pour cela, vous devrez activer des fonctionnalités
+supplémentaires incluses dans le fichier de syntaxe.
+
+Si vous utilisez GNU groff, ce qui est le cas dans toutes les distributions
+Linux et BSD, spécifiez >
+
+	:let b:nroff_is_groff = 1
+
+pour activer ces fonctionnalités supplémentaires.
+
+Groff est différent du vieux n/troff d'AT&T. Contrairement à ce dernier, les
+noms de macros et de requêtes ne sont pas limités à deux caractères et il
+existe des extensions aux primitives du langage. Par exemple, avec le troff
+d'AT&T, il est possible d'afficher l'année présentée sur 2 chiffres avec la
+requête "\(yr". Avec groff, vous pouvez utiliser la même requête, reconnue
+pour compatibilité ascendante, ou employer la syntaxe native "\[yr]". Vous
+pouvez aussi afficher directement l'année sur 4 chiffres : "\[year]". XXX
+Macro requests can be longer than 2 characters, for example, GNU mm accepts
+the requests ".VERBON" and ".VERBOFF" for creating verbatim environments.
+
+Évitez de laisser des espaces surnuméraires en fin de ligne ou de mettre plus
+d'un espace après le point final d'une phrase, un point d'exclamation,... dans
+un texte destiné à être traité par n/troff (toutes versions confondues), car
+cela interfère avec l'algorithme de césure des lignes. À la différence de TeX,
+troff traite le texte ligne par ligne et non paragraphe par paragraphe, et
+de plus il ne dispose pas de « glue » entre les mots (tous les espaces saisis
+sont restitués tels quels), faites donc bien attention à ne pas utiliser plus
+d'espaces entre vos phrases que vous ne souhaitez en obtenir dans le document
+final. Pour cette raison, il est d'usage d'insérer un retour chariot
+immédiatement après chaque signe de ponctuation. Si vous préférez des textes
+moins « irréguliers », vous devrez veiller au respect de l'espacement dans
+votre document. Pour faire ressortir en tant qu'erreurs les espaces en fin de
+ligne et les espaces multiples après un signe de ponctuation, utilisez : >
+
+	:let nroff_space_errors = 1
+
+Une autre technique pour détecter les espaces surnuméraires et autres erreurs
+qui perturbent la bonne composition de votre fichier consiste à définir une
+surbrillance facile à repérer pour les groupes de syntaxe nroffDefinition et
+nroffDefSpecial dans vos fichiers de configuration. Par exemple : >
+
+	hi def nroffDefinition term=italic cterm=italic gui=reverse
+	hi def nroffDefSpecial term=italic,bold cterm=italic,bold
+			       \ gui=reverse,bold
+
+Pour pouvoir naviguer dans les entrées du préprocesseur dans votre fichier
+source de la même façon qu'avec les balises de section, vous pouvez fixer la
+variable suivante dans votre fichier vimrc : >
+
+	let b:preprocs_as_sections = 1
+
+De même, le fichier de syntaxe ajoute une balise de paragraphe supplémentaire
+pour la macro de paragraphe étendue (".XP") du paquetage ms.
+
+Pour finir, il existe un fichier de syntaxe |groff.vim| qui peut être utilisé
+pour activer globalement la surbrillance pour groff par défaut.
+
+
+OCAML						*ocaml.vim* *ocaml-syntax*
+
+Le fichier de syntaxe OCaml prend en charge les fichiers d'extensions ".ml",
+".mli", ".mll" et ".mly". En fixant la variable >
+
+	:let ocaml_revised = 1
+
+vous pouvez passer de la syntaxe OCaml standard à la syntaxe révisée telle
+qu'elle est supportée par le préprocesseur camlp4. L'utilisation de >
+
+	:let ocaml_noend_error = 1
+
+empêche la surbrillance de "end" en tant qu'erreur. C'est utile pour les très
+longues structures qui perturbent la synchronisation de la syntaxe.
+
+
+PAPP						*papp.vim* *papp-syntax*
+
+Le fichier de syntaxe PApp prend en charge les fichiers ".papp" et, dans une
+moindre mesure, les fichiers ".pxml" et ".pxsl" qui sont un mélange de
+Perl/XML/HTML/autre utilisant XML comme format de fichier canonique. Par
+défaut, le contenu des sections PHTML ou PXML est traité comme une chaîne avec
+des commandes préprocesseur encapsulées. Si vous fixez la variable >
+
+	:let papp_include_html = 1
+
+dans votre fichier de démarrage, Vim essaiera d'utiliser la coloration du code
+HTML dans les sections PHTML, mais cela est relativement lent et bien trop
+bigarré pour pouvoir travailler efficacement.
+
+La version la plus récente du fichier de syntaxe "papp.vim" est normalement
+disponible sur : "http://papp.plan9.de/".
+
+
+PASCAL						*pascal.vim* *pascal-syntax*
+
+Les fichiers d'extension ".p" peuvent être en Progress ou en Pascal. Si la
+détection automatique ne marche pas pour vous, ou que vous n'éditez jamais de
+fichiers Progress, utilisez ceci dans votre fichier vimrc de démarrage : >
+
+	:let filetype_p = "pascal"
+
+Le fichier de syntaxe Pascal a été étendu pour prendre en compte certaines
+extensions fournies par Turbo Pascal, les compilateurs Free Pascal et GNU
+Pascal. Les mots-clés Delphi sont également supportés. Par défaut, les
+fonctionnalités pour Turbo Pascal 7.0 sont activées. Si vous préférez vous
+conformer aux mots-clés standards du Pascal, ajoutez la ligne suivante dans
+votre fichier de démarrage : >
+
+	:let pascal_traditional = 1
+
+Pour supporter les constructions Delphi spécifiques (comme les commentaires en
+ligne, les mots-clés, etc.) : >
+
+	:let pascal_delphi = 1
+
+L'option "pascal_symbol_operator" détermine si les opérateurs de symboles
+comme "+", "*", "..", etc. sont mis en surbrillance selon le groupe Operator
+ou pas. Pour les mettre en surbrillance, ajoutez la ligne suivante à fichier
+de démarrage : >
+
+	:let pascal_symbol_operator = 1
+
+Certaines fonctions sont mises en surbrillance par défaut. Pour désactiver
+cela : >
+
+	:let pascal_no_functions = 1
+
+De surcroît, il existe des variables spécifiques à certains compilateurs. En
+plus de "pascal_delphi", il y a "pascal_gpc" et "pascal_fpc". Par défaut,
+c'est le Turbo Pascal qui est supporté. >
+
+	:let pascal_gpc = 1
+
+ou : >
+
+	:let pascal_fpc = 1
+
+Pour être sûr que vos chaînes sont définies sur une seule ligne, vous pouvez
+utiliser la variable "pascal_one_line_string" : >
+
+	:let pascal_one_line_string = 1
+
+Si vous n'aimez pas les caractères <Tab>, vous pouvez fixer la variable
+"pascal_no_tabs". Les tabulations seront mises en surbrillance comme des
+erreurs. >
+
+	:let pascal_no_tabs = 1
+
+
+PERL						*perl.vim* *perl-syntax*
+
+Il existe de nombreuses options pour la coloration syntaxique de Perl.
+
+Si vous utilisez des fichiers POD ou des segments POD : >
+
+	:let perl_include_pod = 1
+
+Pour utiliser une couleur pour les références aux paquetages dans les noms de
+variables ou de fonctions diffèrent du reste du nom (comme "NomPqt::" dans
+"$NomPqt::NomVar") : >
+
+	:let perl_want_scope_in_variables = 1
+
+Si vous voulez que choses complexes comme "@{${"zorglub"}}" soient
+analysées : >
+
+	:let perl_extended_vars = 1
+
+La coloration des chaînes de caractères peut être modifiée. Par défaut, les
+chaînes et autres "qq" seront mis en surbrillance comme dans la première ligne
+ci-dessous. Si vous fixez la variable "perl_string_as_statement", c'est la
+deuxième ligne qui servira de modèle :
+
+	"Bonjour monde !"; qq|Bonjour monde|; ~
+	^^^^^^^^^^^^^^^^^RR^^^^^^^^^^^^^^^^^R  (unlet perl_string_as_statement)
+	S^^^^^^^^^^^^^^^SRRSSS^^^^^^^^^^^^^SR  (let perl_string_as_statement)
+
+('^' = perlString (chaîne), 'S' = perlStatement (instruction), 'R' = Rien du
+tout.)
+
+La synchronisation est contrôlée par 3 options. Les deux premières désactivent
+certains points de synchronisation et ne devraient être nécessaires qu'au cas
+où celle-ci ne fonctionnerait pas correctement. Si alors que vous faites
+défiler le texte les couleurs sont soudainement bouleversées dans tout
+l'écran, vous devriez essayer de désactiver une de ces options. Si vous
+parvenez à isoler la ligne qui provoque cette erreur, faites-le moi savoir.
+
+La première de ces variables influence la coloration de "^\s*sub\s*", et
+l'autre plus ou moins celle de "^[$@%]" : >
+
+	:let perl_no_sync_on_sub
+	:let perl_no_sync_on_global_var
+
+Utilisez la ligne ci-dessous pour définir la distance (nombre de lignes)
+maximale que Vim doit considérer pour la synchronisation de la syntaxe : >
+
+	:let perl_sync_dist = 100
+
+Pour les constructions du type "<<xxx" (documents ici-même), Vim ne peut pas
+gérer les différentes valeurs de "xxx". Si vous le pouvez, utilisez
+"<<EOF ... EOF", qui est correctement supporté par la coloration. XXX Bram
+
+Si vous voulez utiliser les replis avec Perl, fixez "perl_fold" : >
+
+       :let perl_fold = 1
+
+
+PHP3 ET PHP4		    *php.vim* *php3.vim* *php-syntax* *php3-syntax*
+
+NOTE : Antérieurement, cette syntaxe était nommée "php3", mais comme elle
+supporte à présent PHP4, elle à été renommée en "php".
+
+Les options suivantes sont disponibles pour la coloration syntaxique de PHP.
+
+Pour activer la coloration du code SQL dans les chaînes de caractères : >
+
+	:let php_sql_query = 1
+
+Pour activer la coloration des méthodes de Baselib : >
+
+	:let php_baselib = 1
+
+Pour activer la coloration du code HTML dans les chaînes : >
+
+	:let php_htmlInStrings = 1
+
+Pour utiliser l'ancien style de la coloration : >
+
+	:let php_oldStyle = 1
+
+Pour activer la coloration des balises courtes de style ASP : >
+
+	:let php_asp_tags = 1
+
+Pour désactiver la coloration des balises courtes : >
+
+	:let php_noShortTags = 1
+
+Pour mettre en surbrillance les erreurs de parenthésage avec ']' ou ')' : >
+
+	:let php_parent_error_close = 1
+
+Pour sauter une fin de balise PHP s'il existe un '(' ou '[' ouvert sans son
+appariement : >
+
+	:let php_parent_error_open = 1
+
+Pour activer les replis sur les classes et fonctions : >
+
+	:let php_folding = 1
+
+Pour choisir la méthode de synchronisation >
+
+	:let php_sync_method = x
+
+où : - x = -1 pour synchroniser par recherche (par défaut) ;
+     - x > 0 pour synchroniser depuis au moins x lignes en arrière ;
+     - x = 0 pour synchroniser depuis le début.
+
+
+PPWIZARD					*ppwiz.vim* *ppwiz-syntax*
+
+PPWizard est un préprocesseur pour les fichiers HTML et INF OS/2.
+
+Ce fichier de syntaxe comprend les options :
+
+- "ppwiz_highlight_defs" : détermine le mode de coloration pour les
+  définitions en PPWizard. Utilisez >
+	:let ppwiz_highlight_defs = 1
+< pour que les instructions "#define" de PPWizard prennent la couleur de leur
+  contenu (p. ex., macros et variables PPWizard), ou >
+	:let ppwiz_highlight_defs = 2
+< pour que les instructions préprocesseur "#define" et "#evaluate" soient
+  affichées dans une seule couleur, à l'exception des symboles de continuation
+  de ligne.
+  Par défaut, "ppwiz_highlight_defs" vaut 1.
+
+- "ppwiz_with_html" : si cette variable vaut 1 (c'est le cas par défaut),
+  active la coloration pour le code HTML ; si elle vaut 0, le code HTML est
+  traité comme du texte ordinaire.
+
+
+PHTML						*phtml.vim* *phtml-syntax*
+
+Il existe deux options pour la coloration syntaxique du PHTML.
+
+Pour activer la coloration du code SQL dans les chaînes de caractères,
+spécifiez : >
+
+	:let phtml_sql_query = 1
+
+Pour la synchronisation, "minlines" vaut 100 par défaut. Si vous préférez une
+autre valeur, vous pouvez modifier la variable "phtml_minlines". Exemple : >
+
+	:let phtml_minlines = 200
+
+
+POSTSCRIPT					*postscr.vim* *postscr-syntax*
+
+Il existe de plusieurs options pour la coloration syntaxique du PostScript.
+
+Tout d'abord, il faut déterminer la version du langage PostScript à mettre en
+surbrillance. Il existe actuellement trois versions de ce langage, ou niveaux.
+Le niveau 1 représente la version originale de base et couvre toutes les
+extensions antérieures à la sortie du niveau 2. Le niveau 2 est le plus
+répandu et couvre son propre ensemble d'extensions antérieur à la sortie du
+niveau 3. Le niveau 3 est le plus haut actuellement supporté. Pour choisir le
+niveau de PostScript que vous voulez mettre en surbrillance, définissez la
+variable "postscr_level" comme suit : >
+
+	:let postscr_level = 2
+
+Si cette variable n'est pas définie, elle vaut 2 par défaut (niveau 2), car
+c'est la version la plus répandue.
+
+NOTE : Tous les interpréteurs PS ne supportent pas toutes les fonctionnalités
+du langage pour un niveau défini. En particulier, l'en-tête "%!PS-Adobe-3.0"
+au début d'un fichier PS ne signifie PAS qu'il s'agit de PostScript de
+niveau 3 !
+
+Si vous travaillez avec Display PostScript, vous pouvez inclure la coloration
+pour les fonctionnalités du langage spécifiques à Display PS en définissant la
+variable "postscr_display" : >
+
+	:let postscr_display = 1
+
+Si vous travaillez avec Ghostscript, vous pouvez inclure la coloration pour
+les fonctionnalités du langage spécifiques à Ghostscript en définissant la
+variable "postscr_ghostscript" : >
+
+	:let postscr_ghostscript = 1
+
+Le PostScript est un langage vaste, avec de nombreux éléments prédéfinis. Bien
+qu'il soit utile de disposer de la coloration pour tous ces éléments, cela
+peut ralentir Vim sur certaines machines peu rapides. Afin d'épargner les
+ressources des machines, les noms de polices et d'encodages de caractères ne
+sont pas mis en surbrillance par défaut. À moins que vous ne travailliez
+particulièrement avec l'un de ces éléments, cela ne devrait pas être trop
+gênant. Si vous souhaitez qu'ils soient mis en surbrillance, fixez une ou les
+deux variables suivantes : >
+
+	:let postscr_fonts = 1
+	:let postscr_encodings = 1
+
+Il existe une options stylistique pour la coloration de "and", "or", and
+"not". En PostScript, la fonction de ces opérateurs dépend du type de leurs
+opérandes -- si les opérandes sont booléens, alors ce sont des opérateurs
+logiques ; si ce sont des entiers, ce sont des opérateurs binaires. Comme des
+opérateurs binaires et logiques peuvent être mis en surbrillance différemment,
+ils doivent l'être d'une façon ou d'une autre. Par défaut, ils sont traités
+comme des opérateurs logiques. Vous pouvez les mettre en surbrillance comme
+des opérateurs binaires en définissant la variable "postscr_andornot_binary"
+comme suit : >
+
+	:let postscr_andornot_binary = 1
+<
+
+					*ptcap-syntax* *ptcap.vim*
+PRINTCAP ET TERMCAP			*termcap-syntax* *printcap-syntax*
+
+Ce fichier de syntaxe s'applique aux bases de données printcap et termcap.
+
+Afin que Vim puisse reconnaître les fichiers printcap/termcap qui ne
+correspondent pas aux motifs "*printcap*" ou "*termcap*", vous devez ajouter
+des instructions supplémentaires adaptées à votre système dans votre fichier
+|myfiletypefile|. Vous devrez fixer la variable "b:ptcap_type" à "print" ou à
+"term", puis l'option 'filetype' à "ptcap".
+
+Par exemple, pour que Vim identifie tous les fichiers dans /etc/termcaps/
+comme des fichiers termcap, ajoutez la ligne suivante : >
+
+	:au BufNewFile,BufRead /etc/termcaps/* let b:ptcap_type = "term" |
+				       \ set filetype=ptcap
+
+Si vous remarquez des erreurs de coloration lorsque vous revenez en arrière,
+que vous pouvez corriger avec CTRL-L, essayez de fixer la variable interne
+"ptcap_minlines" à un nombre plus grand : >
+
+	:let ptcap_minlines = 50
+
+(La valeur par défaut est de 20 lignes.)
+
+
+PROGRESS				*progress.vim* *progress-syntax*
+
+Les fichiers d'extension ".w" peuvent être en Progress ou en CWeb. Si la
+détection automatique ne marche pas pour vous, ou que vous n'éditez jamais de
+fichiers CWeb, utilisez ceci dans votre fichier vimrc de démarrage : >
+
+	:let filetype_w = "progress"
+
+Le même problème survient pour ".i", qui peut être de l'assembleur, et ".p",
+qui peut être du Pascal. Utilisez ceci si vous n'éditez ni assembleur ni
+Pascal : >
+
+	:let filetype_i = "progress"
+	:let filetype_p = "progress"
+
+
+PYTHON						*python.vim* *python-syntax*
+
+Il existe quatre options pour contrôler la coloration syntaxique de Python.
+
+Pour la coloration des nombres : >
+
+	:let python_highlight_numbers = 1
+
+Pour la coloration des fonctions internes : >
+
+	:let python_highlight_builtins = 1
+
+Pour la coloration des exceptions standards : >
+
+	:let python_highlight_exceptions = 1
+
+Pour activer toutes les fonctionnalités de la coloration pour Python (cela
+revient à spécifier les trois commandes précédentes) : >
+
+	:let python_highlight_all = 1
+
+
+QUAKE						*quake.vim* *quake-syntax*
+
+Les définitions de syntaxe pour Quake devraient fonctionner pour la plupart
+des autres jeux ("FPS") basés sur les moteurs Quake. Cependant, les noms de
+commandes varient légèrement entre les trois jeux (Quake, Quake 2 et Quake
+3 Arena), et les définitions de syntaxe utilisent trois variables globales
+pour déterminer les commandes autorisées dans les fichiers :
+
+Pour la coloration des commandes disponibles uniquement dans Quake : >
+
+	:let quake_is_quake1 = 1
+
+Pour la coloration des commandes disponibles uniquement dans Quake 2 : >
+
+	:let quake_is_quake2 = 1
+
+Pour la coloration des commandes disponibles uniquement dans Quake 3 Arena : >
+
+	:let quake_is_quake3 = 1
+
+Vous pouvez utiliser n'importe quelle combinaison de ces trois variables, mais
+vous risquez de mettre en surbrillance plus de commandes que le jeu n'en
+supporte vraiment.
+
+
+READLINE				*readline.vim* *readline-syntax*
+
+La bibliothèque readline est normalement utilisée par le shell bash, et ajoute
+un certain nombre de commandes et d'options à celles déjà disponibles. Pour
+mettre en surbrillance ces éléments, vous pouvez ajouter la ligne suivante à
+votre fichier |vimrc|, ou simplement la taper sur la ligne de commande avant
+de charger un fichier utilisant la syntaxe readline : >
+
+	let readline_has_bash = 1
+
+Ceci ajoutera la coloration pour les commandes que bash (version 2.05a et
+ultérieures, et même certaines versions antérieures) ajoute.
+
+
+REXX						*rexx.vim* *rexx-syntax*
+
+Si vous remarquez des erreurs de coloration lorsque vous revenez en arrière,
+que vous pouvez corriger avec CTRL-L, essayez de fixer la variable interne
+"rexx_minlines" à un nombre plus grand : >
+
+	:let rexx_minlines = 50
+
+Ceci fera débuter la synchronisation de la syntaxe 50 lignes avant la première
+ligne affichée. La valeur par défaut est 10. L'inconvénient d'utiliser un
+grand nombre est que le rafraîchissement peut devenir lent.
+
+
+RUBY						*ruby.vim* *ruby-syntax*
+
+Il existe quelques options pour la coloration syntaxique de Ruby.
+
+Par défaut, le mot-clé "end" est mis en surbrillance en fonction de
+l'instruction d'ouverture du bloc qu'il referme. Bien qu'utile, cette
+fonctionnalité peut se révéler coûteuse : si vous notez un ralentissement lors
+du rafraîchissement de l'écran (ou si votre terminal ne supporte qu'un nombre
+restreint de couleurs), vous pouvez la désactiver en définissant la variable
+"ruby_no_expensive" : >
+	:let ruby_no_expensive = 1
+Dans ce cas, la même couleur sera utilisé pour tous les mots-clés de contrôle.
+
+Si vous voulez absolument conserver cette fonctionnalité, mais que vous
+remarquez des erreurs de coloration lorsque vous revenez en arrière, que vous
+pouvez corriger avec CTRL-L, essayez de fixer la variable interne
+"ruby_minlines" à un nombre supérieur à 50 : >
+	:let ruby_minlines = 100
+Idéalement, cette valeur devrait être un nombre suffisamment grand pour
+pouvoir embrasser votre classe ou module le plus étendu.
+
+Enfin, si vous n'aimez pas avoir trop d'éléments en surbrillance, vous pouvez
+définir "ruby_no_identifiers" : >
+	:let ruby_no_identifiers = 1
+Ceci annulera la surbrillance des identifiants spéciaux comme "NomConstante",
+"$var_globale", "@var_instance", "| iterateur |" ou ":symbole".
+
+
+SDL						*sdl.vim* *sdl-syntax*
+
+Il manque probablement quelques mots-clés pour la coloration SDL, mais SDL en
+contient tellement qu'il est presque impossible de tous les répertorier.
+
+Le nouveau standard, SDL-2000, stipule que tous les identifiants sont
+sensibles à la casse (ce qui n'était pas le cas précédemment), et que tous les
+mots-clés peuvent être donnés entièrement en majuscules ou en minuscules. Pour
+que la coloration se conforme à ces spécifications, vous pouvez fixer la
+variable suivante : >
+
+	:let sdl_2000 = 1
+
+Ceci ajoute également de nombreux nouveaux mots-clés. Pour désactiver la
+coloration des anciens mots-clés (c'est probablement une bonne chose),
+utilisez : >
+
+	:let SDL_no_96 = 1
+
+L'indentation est elle aussi certainement incomplète, mais pour l'instant j'en
+suis très satisfait pour mes propres projets.
+
+The last thing is a little PO-editing helper. It adds a couple of menu
+entries. XXX Bram ? Ce n'est pas grand-chose, mais je trouve cela extrêmement utile
+pour traduire des fichiers PO. Je préfère me passer d'Emacs, vous savez.
+
+
+SED						*sed.vim* *sed-syntax*
+
+Pour que les tabulations soient différenciées des blancs simples (en les
+mettant en surbrillance selon le groupe Todo), initialisez "highlight_sedtabs"
+>
+	:let highlight_sedtabs = 1
+
+dans votre fichier vimrc. (Cette coloration spéciale ne s'applique qu'aux
+tabulations dans les motifs de recherche, textes de remplacement, adresses et
+textes inclus par une commande d'Ajout/Changement/Insertion.) Si vous activez
+cette option, vous voudrez aussi probablement fixer la largeur des tabulations
+à un caractère ; en faisant cela, vous pouvez facilement dénombrer le nombre
+de tabulations dans une chaîne.
+
+Bogues :    La commande de transformation ("y") est traitée exactement comme
+	    la commande de substitution. Cela signifie qu'elle acceptera les
+	    mêmes drapeaux que la commande de substitution, ce qui est faux
+	    (la transformation n'accepte aucun drapeau). Ce bogue est toléré
+	    car les commandes concernées nécessitent déjà un traitement très
+	    complexe (95 motifs, un pour chaque délimiteur de motif possible).
+
+
+SGML						*sgml.vim* *sgml-syntax*
+
+La méthode de coloration des balises dans les fichiers SGML fonctionne comme
+suit :
+
+Les chevrons des balises ouvrantes <> utilisent une surbrillance différente
+de ceux des balises fermantes </>. C'est fait exprès ! Pour l'ouverture, le
+groupe par défaut Function est utilisé, et pour la fermeture, le groupe Type
+(consultez "syntax.vim" pour voir comment ces groupes sont définis pour vous).
+
+Les noms de balises connus sont mis en surbrillance comme des instructions C.
+Les noms de balises inconnus ne sont pas mis en surbrillance ce qui facilite
+le repérage des erreurs.
+
+NOTE : La même chose reste vraie pour les noms d'arguments (ou d'attributs).
+Les noms d'attributs connus ont une coloration différente de ceux qui sont
+inconnus.
+
+Certaines balises SGML permettent de modifier l'aspect du texte. Les balises
+suivantes sont reconnues par le fichier de syntaxe "sgml.vim" et changent la
+façon dont le texte est affiché : <varname>, <emphasis>, <command>,
+<function>, <literal>, <replaceable>, <ulink> et <link>.
+
+Si vous voulez modifier la façon dont un tel texte est rendu, vous devez
+redéfinir les groupes de syntaxe suivants :
+
+    - sgmlBold ;
+    - sgmlBoldItalic ;
+    - sgmlUnderline ;
+    - sgmlItalic ;
+    - sgmlLink pour les liens.
+
+Pour que cette redéfinition opère, vous devez redéfinir tous ces groupes, et
+définir la variable suivante dans votre fichier vimrc (cela est dû à l'ordre
+dans lequel les fichiers sont lus pendant l'initialisation) : >
+
+	:let sgml_my_rendering = 1
+
+Vous pouvez aussi désactiver ce rendu en ajoutant la ligne suivante dans votre
+fichier vimrc : >
+
+	:let sgml_no_rendering = 1
+
+(Adapté du texte d'aide de "html.vim", par Claudio Fleiner
+<claudio@fleiner.com>.)
+
+
+SH						*sh.vim* *sh-syntax*
+
+Ceci couvre le shell Unix « normal » sh (Bourne), bash et le shell Korn.
+
+Vim essaie de déterminer quel type de shell est utilisé d'après le nom du
+fichier édité :
+
+	ksh  : .kshrc*, *.ksh
+	bash : .bashrc*, bashrc, bash.bashrc, .bash_profile*, *.bash
+
+Si aucun de ces cas ne correspond, alors la première ligne du fichier est
+examinée. Si la première ligne spécifie un type de shell (p. ex., "/bin/sh",
+"/bin/ksh", "/bin/bash"), celui-ci est utilisé.
+   Toutefois, certains fichiers (p. ex., ".profile") sont des fichiers de
+shell mais dont le type n'est pas apparent. Vous pouvez : soit définir une
+variable de tampon particulière avant de sourcer le fichier de syntaxe
+"sh.vim" ("b:is_kornshell", "b:is_bash", ou "b:is_sh") afin que le type de
+shell associé soit utilisé ; soit définir une variable globale par défaut en
+utilisant une des trois suivantes :
+
+	ksh  : is_kornshell
+	bash : is_bash
+	sh   : is_sh
+
+Vous pouvez également indiquer que ce qui est reconnu comme un shell de type
+sh doit en fait être interprété comme un shell bash en fixant "bash_is_sh". Il
+est préférable de fixer toutes ces variables globales dans votre fichier
+vimrc.
+
+Pour choisir entre les deux façons de traiter les apostrophes simples dans une
+paire de doubles-apostrophes, j'ai introduit la variable Vim
+"highlight_balanced_quotes". Par défaut (c.-à-d. si cette variable n'est pas
+déclarée), les apostrophes simples peuvent être utilisées à l'intérieur de
+doubles-apostrophes, et ne seront pas mises en surbrillance. Si comme moi vous
+préférez la coloration des apostrophes simples, placez l'instruction suivante
+dans votre fichier vimrc : >
+	:let highlight_balanced_quotes = 1
+
+De la même façon, j'ai introduit une autre variable Vim,
+"highlight_function_name", pour activer/désactiver la coloration du nom de la
+fonction dans une déclaration de fonction. Par défaut, les noms des fonctions
+ne sont pas mis en surbrillance. Pour qu'ils le soient, placez ceci dans votre
+fichier vimrc : >
+	:let highlight_function_name = 1
+
+Si vous remarquez des erreurs de coloration lorsque vous revenez en arrière,
+qui peuvent être corrigées avec CTRL-L, essayez de fixer la variable interne
+"sh_minlines" à un nombre plus grand : >
+	:let sh_minlines = 200
+Ceci fera débuter la synchronisation de la syntaxe 200 lignes avant la
+première ligne affichée. La valeur par défaut est 100. L'inconvénient
+d'utiliser un grand nombre est que le rafraîchissement peut devenir lent.
+
+S'il n'y a pas grand-chose pour se synchroniser, l'affichage peut être très
+lent. Pour éviter cela, la variable interne "sh_maxlines" peut être fixée : >
+	:let sh_maxlines = 100
+Par défaut, le double de "sh_minlines" est utilisé. Définissez un nombre
+inférieur pour accélérer l'affichage. L'inconvénient est que des erreurs de
+coloration peuvent apparaître.
+
+
+						*spup.vim* *spup-syntax*
+SPEEDUP (Simulateur d'installation industrielle AspenTech)
+
+Le fichier de syntaxe Speedup comprend ces options :
+
+- "strict_subsections" : si cette variable est définie, seuls les mots-clés
+  pour les sections et les sous-sections seront mis en surbrillance comme des
+  instructions, mais pas les autres mots-clés (comme WITHIN dans la section
+  OPERATION).
+
+- "highlight_types" : si cette variable est définie, les types de flux comme
+  la température ou la pression seront mis en surbrillance selon Type, et non
+  selon Identifier. Les types que l'on trouve normalement dans la section
+  DECLARE sont inclus ; si vous définissez vos propres types, vous devez les
+  inclure dans le fichier de syntaxe.
+
+- "oneline_comments" : cette variable varie de 1 à 3 et définit la coloration
+  des commentaires de style '#'. >
+	:let oneline_comments = 1
+< autorise  le code Speedup normal après un nombre pair de '#'. >
+	:let oneline_comments = 2
+< affiche le code débutant par le deuxième '#' comme une erreur. C'est la
+  valeur par défaut. >
+	:let oneline_comments = 3
+< affiche la ligne entière comme une erreur si elle contient plus d'un '#'.
+
+Comme les sections OPERATION (en particulier) tendent à devenir très longues
+à cause des variables utilisées avec PRESET, la synchronisation peut se
+révéler problématique. Si votre ordinateur est suffisamment rapide, vous
+pouvez augmenter les valeurs de "minlines" et/ou "maxlines" vers la fin du
+fichier.
+
+
+TEX						*tex.vim* *tex-syntax*
+
+La coloration syntaxique de "tex.vim" supporte TeX, LaTeX et partiellement
+AmS-TeX. La coloration gère trois zones primaires : normal, texZone et
+texMathZone. Bien qu'un travail important ait été effectué pour que ces zones
+se terminent correctement, les zones délimitées par $...$ et $$...$$ ne
+peuvent pas être synchronisées car il n'y a pas de différence entre les motifs
+de début et de fin. Pour surmonter cette difficulté, un commentaire TeX
+spécial est à votre disposition >
+	%stopzone
+qui indiquera la fin de la coloration d'une zone texZone ou texMathZone.
+
+Si vous disposez d'une machine lente, vous voudrez certainement réduire les
+valeurs suivantes >
+	:syn sync maxlines=200
+	:syn sync minlines=50
+(particulièrement la dernière). Si votre ordinateur est rapide, vous pouvez
+les augmenter. Cela n'affecte que la synchronisation (c.-à-d. la recherche du
+groupe auquel, s'il y en a un, le texte en haut de l'écran est censé
+appartenir).
+
+Le fichier "tex.vim" supporte différents contrôles d'erreurs lexicales.
+Cependant, bien que le contrôle d'erreurs soit souvent très utile, il peut
+indiquer des erreurs qui n'existent pas. Si cela se produit et vous gêne, vous
+pouvez placer la ligne suivante dans votre fichier vimrc >
+	let tex_no_error = 1
+et tous les contrôles d'erreurs de "tex.vim" seront supprimés.
+
+
+TF						*tf.vim* *tf-syntax*
+
+Il existe une option pour la coloration syntaxique TF.
+
+Pour la synchronisation, "minlines" vaut 100 par défaut. Si vous préférez une
+autre valeur, vous pouvez modifier la variable "tf_minlines". Exemple : >
+
+	:let tf_minlines = ce que vous voulez
+
+
+VIM						*vim.vim* *vim-syntax*
+
+Il existe une option disponible pour "vim.vim", accessible via la variable
+globale "g:vimembedscript". Cette option permet de bénéficier d'un chargement
+relativement plus rapide de la syntaxe, au détriment du support de la
+coloration pour les langages de script externes (Perl, Python, Ruby et Tcl
+sont actuellement supportés).
+
+- g:vimembedscript == 1 (défaut)    ou
+  g:vimembedscript n'existe pas		"vim.vim" autorise la coloration des
+					langages de script encapsulés
+					supportés : Perl, Python, Ruby et Tcl.
+
+- g:vimembedscript == 0			La coloration syntaxique pour les
+					langages de script encapsulés ne sera
+					pas chargée.
+
+
+XF86CONFIG                              *xf86conf.vim* *xf86conf-syntax*
+
+La syntaxe du fichier XF86Config diffère entre XFree86 v3.x et v4.x. Les deux
+variantes sont supportées. La détection automatique est utilisée, mais elle
+est loin d'être parfaite. Vous pourrez avoir besoin de spécifier la version à
+la main. Fixez pour cela la variable "xf86conf_xfree86_version" à 3 ou 4 dans
+votre fichier vimrc selon votre version de XFree86. Exemple : >
+
+        :let xf86conf_xfree86_version = 3
+
+Si vous utilisez un mélange de ces versions, fixez simplement la variable
+"b:xf86conf_xfree86_version".
+
+NOTE : Les espaces et les soulignés dans les noms d'options ne sont pas
+supportés. Utilisez "SyncOnGreen" au lieu de "__s yn con gr_e_e_n" si vous
+voulez que le nom de l'option soit mis en surbrillance.
+
+
+XML						*xml.vim* *xml-syntax*
+
+Les espaces de nommage XML sont mis en surbrillance par défaut. Cela peut être
+désactivé en fixant la variable globale : >
+
+	:let g:xml_namespace_transparent = 1
+<
+							*xml-folding*
+La syntaxe XML permet le repliage |folding| par syntaxe (voir |:syn-fold|)
+entre les balises de début et de fin. Cela peut être activé avec : >
+
+	:set foldmethod=syntax
+
+
+X PIXMAPS (XPM)					*xpm.vim* *xpm-syntax*
+
+"xpm.vim" crée ses éléments de syntaxe dynamiquement en fonction du contenu du
+fichier XPM. Ainsi, si vous effectuez des changements dans les chaînes de
+spécifications des couleurs, il vous faudra sourcer le fichier à nouveau,
+avec ":set syn=xpm" par exemple.
+
+Pour copier un pixel contenant une couleur, utilisez "yl", et pour l'insérer
+autre part, utilisez "P".
+
+Vous souhaitez dessiner avec la souris ? Essayez le code suivant : >
+
+	:function! ObtenirPixel()
+	:  let c = getline(line("."))[col(".") - 1]
+	:  echo c
+	:  exe "noremap <LeftMouse> <LeftMouse>r".c
+	:  exe "noremap <LeftDrag>  <LeftMouse>r".c
+	:endfunction
+	:noremap <RightMouse> <LeftMouse>:call ObtenirPixel()<CR>
+	:set guicursor=n:hor20	   " pour voir la couleur sous le curseur
+
+Ceci changera le bouton droit de la souris en pipette, et le bouton gauche en
+crayon. Cela marchera avec des fichiers XPM qui utilisent un seul caractère
+par pixel, et vous ne devrez pas cliquer en dehors des chaînes de pixels, mais
+vous êtes libre d'améliorer ce code.
+
+Le rendu du pixmap sera bien meilleur avec une police de taille de cellule
+carrée, p. ex. pour X : >
+
+	:set guifont=-*-clean-medium-r-*-*-8-*-*-*-*-80-*
+
+==============================================================================
+5. Définir une syntaxe					*:syn-define* *E410*
+
+Vim gère trois types d'éléments de syntaxe :
+
+1. Les mots-clés.
+   Ils ne peuvent contenir que des caractères de mot-clé, définis par l'option
+   'iskeyword'. Ils ne peuvent pas contenir d'autres éléments de syntaxe. Ils
+   correspondront uniquement à un mot-clé entier (il n'y a pas de caractères
+   de mot-clé avant ou après la correspondance). Le mot-clé "if" concordera
+   dans "if(a=b)", mais pas dans "ifdef x", car '(' n'est pas un caractère de
+   mot-clé, alors que 'd' en est un.
+
+2. Les correspondances.
+   Il s'agit de la correspondance avec un motif d'expression rationnelle
+   simple.
+
+3. Les régions.
+   Elles débutent à une correspondance du motif d'exprat "start" et se
+   terminent à une correspondance du motif d'exprat "end". Tout le texte
+   compris entre ces deux motifs est inclus. Un motif d'exprat "skip" peut
+   être utilisé pour sauter une correspondance du motif "end".
+
+Plusieurs ÉLÉMENTS de syntaxe peuvent être placés dans un GROUPE de syntaxe.
+Vous pouvez spécifier des attributs de surbrillance à un groupe de syntaxe.
+Par exemple, vous pouvez avoir un élément pour définir un commentaire en
+"/* ... */" et un autre pour définir un commentaire en "// ...", et les placer
+tous les deux au sein du groupe "Commentaire". Vous pouvez ensuite spécifier
+qu'un "Commentaire" sera en gras et aura une couleur bleue. Vous pouvez aussi
+bien créer un groupe de surbrillance pour chaque élément de syntaxe que placer
+tous vos éléments dans un seul groupe. Cela dépend de la manière dont vous
+voulez spécifier les attributs de surbrillance. Placer chaque élément dans son
+propre groupe entraîne la définition de la surbrillance d'un grand nombre de
+groupes.
+
+NOTE : Un groupe de syntaxe est similaire à un groupe de surbrillance. Pour un
+groupe de surbrillance, vous devrez donner des attributs de surbrillance. Ces
+attributs seront utilisés pour le groupe de syntaxe du même nom.
+
+Au cas où plus d'un élément correspondent à la même position, celui qui a été
+défini en DERNIER l'emporte. Ainsi, vous pouvez recouvrir les éléments de
+syntaxe précédemment définis en utilisant un élément qui correspond au même
+texte. Mais un mot-clé l'emporte toujours sur une correspondance ou une
+région. Et un mot-clé dont la casse correspond l'emporte toujours sur un
+mot-clé sans correspondance de casse.
+
+
+CHOISIR LA SENSIBILITÉ À LA CASSE			*:syn-case* *E390*
+
+:sy[ntax] case [match|ignore]
+	Définit si les commandes ":syntax" qui suivent vérifieront la
+	correspondance à la casse (quand "match" est utilisé) ou non (quand
+	"ignore" est utilisé).
+	NOTE : Les éléments précédant cette commande ne sont pas affectés,
+	mais tous les éléments jusqu'à la commande ":syntax case" suivante le
+	sont.
+
+
+DÉFINIR DES MOTS-CLÉS					*:syn-keyword*
+
+:sy[ntax] keyword {nomgroupe} [{options}] {mot-cle} ... [{options}]
+
+	Définit un ou plusieurs mots-clés.
+
+	{nomgroupe}	Nom d'un groupe de syntaxe, comme "Commentaire".
+	[{options}]	Voir |:syn-arguments| plus bas.
+	{mot-cle} ...	Liste de mots-clés qui font partie de ce groupe.
+
+	Exemple : >
+		:syntax keyword   Type   int long char
+<
+	Les {options} peuvent être données n'importe où dans la ligne. Elles
+	s'appliqueront à tous les mots-clés donnés, même pour les options qui
+	viennent après un mot-clé. Ces trois exemples sont identiques : >
+		:syntax keyword   Type   contained int long char
+		:syntax keyword   Type   int long contained char
+		:syntax keyword   Type   int long char contained
+<
+	Si vous avez un mot-clé avec une terminaison optionnelle, comme une
+	commande Ex dans Vim, vous pouvez placer cette terminaison entre
+	[] pour en définir toutes les variantes en une seule fois : >
+		:syntax keyword   vimCommand   ab[breviate] n[ext]
+<
+	N'oubliez pas qu'un mot-clé ne peut être reconnu que si tous ses
+	caractères sont compris dans l'option 'iskeyword'. Si un caractère ne
+	l'est pas, le mot-clé ne pourra pas être reconnu.
+	Les caractères multi-octets peuvent aussi être utilisés. Ceux-ci n'ont
+	pas besoin d'être inclus dans 'iskeyword'.
+
+	Un mot-clé a toujours la priorité sur une correspondance ou une
+	région ; c'est lui qui sera utilisé s'il y a plus d'un élément de
+	syntaxe qui correspond. Les mots-clés n'admettent pas l'imbrication et
+	un mot-clé ne peut pas contenir autre chose.
+
+	NOTE : Si vous avez un mot-clé identique à une option (même une option
+	non autorisée dans ce contexte), vous ne pouvez pas l'utiliser.
+	Employez une correspondance à la place.
+
+	La longueur maximale d'un mot-clé est de 80 caractères.
+
+	Un même mot-clé peut être défini plusieurs fois, selon les différentes
+	façons dont il peut être contenu. Par exemple, vous pouvez définir un
+	mot-clé une première fois non contenu -- et utiliser un groupe de
+	surbrillance -- et une autre fois contenu -- avec un groupe de
+	surbrillance différent. Exemple : >
+		:syn keyword vimCommand tag
+		:syn keyword vimSetting contained tag
+<	Lorsque "tag" est trouvé en dehors de tout élément de syntaxe, le
+	groupe "vimCommand" est utilisé. Si "tag" est trouvé dans un autre
+	groupe de syntaxe contenant "vimSetting", le groupe "vimSetting" est
+	utilisé.
+
+
+DÉFINIR DES CORRESPONDANCES				*:syn-match*
+
+:sy[ntax] match {nomgroupe} [{options}] [excludenl] {motif} [{options}]
+
+	Définit une correspondance.
+
+	{nomgroupe}	Nom d'un groupe de syntaxe, comme "Commentaire".
+	[{options}]	Voir |:syn-arguments| plus bas.
+	[excludenl]	Si inclus, un motif avec une fin-de-ligne "$" n'étend
+			pas une correspondance ou une région contenante. Doit
+			être donné avant le motif. |:syn-excludenl|
+	{motif}		Motif de recherche qui définit la correspondance (voir
+			|:syn-pattern| plus bas).
+			NOTE : Le motif peut correspondre à plus d'une ligne,
+			ce qui fait dépendre la correspondance de l'endroit où
+			Vim a lancé la recherche du motif. Assurez-vous que la
+			synchronisation prend bien ceci en compte.
+
+	Exemple (ceci correspond à une constante d'un caractère) : >
+		:syntax match Caractere /'.'/hs=s+1,he=e-1
+
+
+DÉFINIR DES RÉGIONS	    *:syn-region* *:syn-start* *:syn-skip* *:syn-end*
+								*E398* *E399*
+:sy[ntax] region {nomgroupe} [{options}]
+		[matchgroup={nomgroupe}]
+		[keepend]
+		[extend]
+		[excludenl]
+		start={motif-start} ...
+		[skip={motif-skip}]
+		end={motif-end} ...
+		[{options}]
+
+	Définit une région. Cette commande peut occuper plusieurs lignes.
+
+	{nomgroupe}		Nom d'un groupe de syntaxe, comme
+				"Commentaire".
+	[{options}]		Voir |:syn-arguments| plus bas.
+	[matchgroup={nomgroupe}]  Le groupe de syntaxe à utiliser pour les
+				correspondances aux motifs "start" ou "end"
+				suivants ; le texte entre ces positions n'est
+				pas inclus. Utilisez NONE pour annuler
+				l'utilisation d'un groupe différent pour les
+				motifs "start" ou "end". |:syn-matchgroup|
+	[keepend]		Si inclus, les correspondances contenues ne
+				pourront pas s'étendre au-delà du motif "end".
+				Voir |:syn-keepend|.
+	[extend]		Annule un "keepend" pour un élément dans
+				lequel cette région est contenue. Voir
+				|:syn-extend|.
+	[excludenl]		Si inclus, un motif avec une fin-de-ligne "$"
+				n'étend pas une correspondance ou une région
+				contenante. Uniquement utile pour les motifs
+				"end". Doit être donné avant les motifs
+				auxquels il s'applique. |:syn-excludenl|
+	start={motif-start}	Le motif de recherche qui définit le début de
+				la région. Voir |:syn-pattern| plus bas.
+	[skip={motif-skip}]	Le motif de recherche qui définit un texte
+				de la région dans lequel ne pas chercher le
+				motif "end". Voir |:syn-pattern| plus bas.
+	end={motif-end}		Le motif de recherche qui définit la fin de
+				la région. Voir |:syn-pattern| plus bas.
+
+	Exemple : >
+		:syntax region Chaine   start=+"+  skip=+\\"+  end=+"+
+<
+	Les motifs "start"/"skip"/"end" et les options peuvent être donnés
+	dans n'importe quel ordre. Il peut y avoir zéro ou un motif "skip". Il
+	doit y avoir au moins un motif "start" et un "end". Cela signifie que
+	vous pouvez omettre le motif "skip", mais que vous devez donner au
+	moins un motif "start" et un motif "end". Il est permis d'avoir des
+	espaces blancs avant et après le signe égal (bien que cela soit plus
+	lisible sans espaces).
+
+	Lorsque plusieurs motifs "start" sont donnés, une correspondance avec
+	un seul de ces motifs est suffisante. C'est-à-dire qu'il existe une
+	relation OU entre ces motifs. Le dernier motif qui correspond est
+	utilisé. La même chose est vraie pour les motifs "end".
+
+	La recherche du motif "end" débute juste après le motif "start". Les
+	décalages ne sont pas utilisés ici. Cela implique que la
+	correspondance du motif "end" ne pourra jamais empiéter sur le motif
+	"start".
+
+	Les motifs "skip" et "end" peuvent correspondre après plusieurs
+	coupures de lignes, mais comme la recherche du motif peut débuter à
+	n'importe quelle ligne, vous n'obtiendrez pas souvent l'effet désiré.
+	Le motif "skip" n'a pas d'effet pour une correspondance du motif "end"
+	dans la ou les lignes suivantes. Utilisez des motifs mono-lignes pour
+	éviter tout problème.
+
+	NOTE : La décision de faire débuter une région dépend exclusivement
+	d'une correspondance au motif "start". Il n'y a pas de vérification
+	pour une correspondance au motif "end". Ceci ne marche PAS : >
+		:syn region Premier start="("  end=":"
+		:syn region Second  start="("  end=";"
+<	La région Second correspondra toujours avant Premier (le dernier motif
+	défini a la priorité). La région Second continue alors jusqu'au ';'
+	suivant, même s'il y a un ':' avant. L'utilisation de correspondances
+	fonctionne correctement : >
+		:syn match Premier "(\_.\{-}:"
+		:syn match Second  "(\_.\{-};"
+<	Ce motif correspond à n'importe quel caractère ou coupure de ligne
+	(avec "\_."), et le répète (aussi peu que possible) avec "\{-}".
+
+							*:syn-keepend*
+	Par défaut, une correspondance contenue peut masquer une
+	correspondance pour le motif "end". C'est utile pour les imbrications.
+	Par exemple, une région qui débute par '{' et se termine par '}' peut
+	contenir une autre région. Si un '}' est rencontré, il terminera la
+	région contenue, mais pas la région extérieure :
+	    {		débute la région "{}" extérieure
+		{	débute la région "{}" contenue
+		}	termine la région "{}" contenue
+	    }		termine la région "{}" extérieure
+	Si vous ne souhaitez pas ce comportement, l'argument "keepend" vous
+	permet de faire correspondre un motif "end" de la région extérieure
+	avec la fin de n'importe quel élément contenu. Cela interdit
+	l'imbrication d'une région de niveau identique, mais autorise des
+	éléments contenus à mettre en surbrillance une partie du motif "end",
+	sans causer son masquage. Exemple : >
+		:syn match  vimComment +"[^"]\+$+
+		:syn region vimCommand start="set" end="$" contains=vimComment keepend
+<	Le "keepend" fait se terminer l'élément vimCommand toujours à la fin
+	de la ligne, même si l'élément contenu vimComment inclut une
+	correspondance avec la fin-de-ligne.
+
+	Lorsque "keepend" n'est pas utilisé, Vim recherche une correspondance
+	au motif "end" après chaque correspondance contenue. Lorsque "keepend"
+	est inclus, la première correspondance établie avec un motif "end" est
+	utilisée, tronquant toute correspondance contenue.
+
+							*:syn-extend*
+	Le comportement de "keepend" peut être changé en utilisant l'argument
+	"extend". Quand un élément avec "extend" est contenu dans un élément
+	qui utilise "keepend", "keepend" est ignoré et la région contenante
+	sera étendue.
+	Ceci peut être utilisé pour avoir certains éléments contenus qui
+	étendent une région, mais d'autres pas. Exemple : >
+		:syn region htmlRef    start=+<a>+ end=+</a>+ keepend contains=htmlItem,htmlScript
+		:syn match  htmlItem   +<[^>]*>+ contained
+		:syn region htmlScript start=+<script+ end=+</script[^>]*>+ contained extend
+<	Ici, l'élément htmlItem ne fera pas s'étendre l'élément htmlRef, il
+	n'est utilisé que pour mettre en surbrillance les chevrons. L'élément
+	htmlScript, lui, étendra htmlRef.
+
+	Autre exemple : >
+		:syn region xmlFold start="<a>" end="</a>" fold transparent keepend extend
+<	Ceci définit une région avec "keepend", de telle sorte que sa fin ne
+	puisse pas être changée par des éléments contenus, par exemple lorsque
+	"</a>" correspond également à un autre groupe de surbrillance. Mais si
+	la région xmlFold est imbriquée (elle s'inclut elle-même), "extend"
+	s'applique et le "</a>" de la région imbriquée termine uniquement
+	cette région, et non celle qui la contient.
+
+							*:syn-excludenl*
+	Quand le motif d'une correspondance ou le motif "end" d'une région
+	inclut un '$' pour correspondre avec une fin-de-ligne, la région dans
+	laquelle cet élément est contenu se poursuivra sur la ligne suivante.
+	Par exemple, une correspondance avec "\\$" (contre-oblique à la fin
+	d'une ligne) peut provoquer le prolongement d'une région qui se serait
+	normalement terminée à la fin de cette ligne. Il s'agit du
+	comportement par défaut. Si ce n'est pas ce que vous souhaitez, il
+	existe deux manières pour l'éviter :
+
+	1. Utilisez "keepend" dans l'élément contenant. Cela empêchera les
+	   correspondances contenues d'étendre la correspondance ou la région.
+	   Cette solution peut être utilisée quand aucun élément contenu ne
+	   doit étendre l'élément contenant.
+
+	2. Utilisez "excludenl" dans l'élément contenu. Cela empêchera sa
+	   correspondance d'étendre la correspondance ou région contenante.
+	   Cette solution peut être utilisée si seuls certains éléments
+	   contenus doivent ne pas étendre l'élément contenant. "excludenl"
+	   doit être spécifié avant les motifs auxquels il s'applique.
+
+							*:syn-matchgroup*
+	"matchgroup" peut être utilisé pour mettre en surbrillance le motif
+	"start" et/ou "end" différemment du corps de la région. Exemple : >
+		:syntax region Chaine matchgroup=Apostrophes start=+"+ skip=+\\"+ end=+"+
+<	Ceci mettra en surbrillance les doubles-apostrophes selon le groupe
+	Apostrophes, et le texte ainsi encadré selon le groupe Chaine.
+
+	"matchgroup" est utilisé pour tous les motifs "start" et "end" qui
+	suivent, jusqu'au "matchgroup" suivant. Utilisez "matchgroup=NONE"
+	pour annuler l'utilisation de "matchgroup".
+
+	Les éléments contenus d'une région ne sont pas recherchés dans les
+	motifs "start" et "end" quand ces derniers sont mis en surbrillance
+	avec "matchgroup". Cela peut servir à éviter qu'un élément contenu ne
+	concorde dans une correspondance aux motifs "start" ou "end". La
+	transparence (lorsque "transparent" est spécifié) ne s'applique pas
+	pour les correspondances aux motifs "start" et "end" mis en
+	surbrillance avec "matchgroup".
+
+	Voici un exemple qui met en surbrillance trois niveaux de parenthèses
+	dans des couleurs différentes : >
+		:sy region par1 matchgroup=par1 start=/(/ end=/)/ contains=par2
+		:sy region par2 matchgroup=par2 start=/(/ end=/)/ contains=par3 contained
+		:sy region par3 matchgroup=par3 start=/(/ end=/)/ contains=par1 contained
+		:hi par1 ctermfg=red guifg=red
+		:hi par2 ctermfg=blue guifg=blue
+		:hi par3 ctermfg=darkgreen guifg=darkgreen
+
+==============================================================================
+6. Arguments de la commande ":syntax"			*:syn-arguments*
+
+Les commandes ":syntax" qui définissent les éléments de syntaxe acceptent bon
+nombre d'arguments. Les plus courants sont détaillés ci-dessous. Les arguments
+peuvent être donnés dans n'importe quel ordre et mélangés avec les motifs.
+
+Tous les arguments ne sont pas utilisables avec toutes les commandes. Ce
+tableau indique quels arguments peuvent être donnés pour quelles commandes :
+							*E395* *E396*
+		  contains   oneline   fold   display   extend  ~
+:syntax keyword	     -		-	-	 -	  -
+:syntax match	    oui		-      oui	oui	 oui
+:syntax region	    oui	       oui     oui	oui	 oui
+
+Ces arguments peuvent être donnés pour les trois commandes :
+	contained
+	containedin
+	nextgroup
+	transparent
+	skipwhite
+	skipnl
+	skipempty
+
+
+"contained"						*:syn-contained*
+
+Si l'argument "contained" est donné, cet élément ne sera pas reconnu au niveau
+supérieur, mais uniquement quand il sera mentionné dans le champ "contains"
+d'un autre élément. Exemple : >
+	:syntax keyword AFaire	    AFAIRE  contained
+	:syntax match   Commentaire "//.*"  contains=AFaire
+
+
+"display"						*:syn-display*
+
+Si l'argument "display" est donné, cet élément sera sauté lorsque la
+surbrillance appropriée n'est pas affichée à l'écran. Cela accélère le rendu
+de la coloration, en sautant cet élément et en analysant uniquement la syntaxe
+du texte destiné à être effectivement mis en surbrillance.
+
+En général, vous pouvez utiliser "display" pour des correspondances ou des
+régions qui remplissent ces conditions :
+1° L'élément ne continue pas après la fin d'une ligne. Exemple pour le C : une
+   région définie pour un commentaire "/*" ne peut pas contenir "display", car
+   elle continue sur la ligne suivante ;
+2° L'élément ne contient pas d'éléments qui continuent après la fin de la
+   ligne ou le fait continuer sur la ligne suivante ;
+3° L'élément ne change pas la taille des éléments dans lesquels il est
+   contenu. Exemple pour le C : une correspondance à "\\$" dans un
+   préprocesseur ne peut pas contenir "display", car il peut raccourcir la
+   correspondance au préprocesseur ;
+4° La non-correspondance de l'élément n'entraîne pas la correspondance
+   d'autres éléments qui n'auraient pas correspondu sinon, et qui risqueraient
+   de trop étendre la correspondance. Exemple pour le C : la correspondance
+   pour un commentaire "//" ne peut pas utiliser "display", car un "/*" dans
+   ce commentaire correspondrait et commencerait un nouveau commentaire qui
+   s'étendrait au-delà de la fin de la ligne.
+
+Exemples pour le langage C où "display" peut être utilisé :
+- une correspondance avec un nombre ;
+- une correspondance avec une étiquette.
+
+
+"transparent"						*:syn-transparent*
+
+Si l'argument "transparent" est donné, cet élément XXX n'aura pas de surbrillance
+en propre mais prendra celle de l'élément dans lequel il est contenu. C'est
+utile pour des éléments de syntaxe qui ne sont utilisés que pour sauter une
+partie du texte et ne nécessitent pas de coloration.
+
+L'argument "contains=" est également hérité de l'élément dans lequel il est
+contenu, à moins qu'un argument "contains" ne soit donné pour l'élément
+transparent lui-même. Pour éviter que des éléments indésirables ne soient
+contenus, utilisez "contains=NONE". Exemple (ceci met en surbrillance les mots
+dans les chaînes, en traitant "vim" comme un cas particulier) : >
+	:syn match persoChaines /'[^']*'/ contains=persoMots,persoVim
+	:syn match persoMots    /\<[a-z]*\>/ contained
+	:syn match persoVim     /\<vim\>/ transparent contained contains=NONE
+	:hi link persoChaines String
+	:hi link persoMots    Constant
+Comme la correspondance persoVim vient après persoMots, elle aura la priorité
+(la dernière correspondance trouvée à la même position en masque une
+précédente). L'argument "transparent" fait utiliser la même coloration à
+persoVim qu'à persoChaines. Mais elle ne contient aucun élément. Si l'argument
+"contains=NONE" n'avait pas été spécifié, persoVim aurait utilisé l'argument
+"contains" de persoChaines -- ce qui aurait permis à persoMots d'être contenu
+dans persoVim et mis en surbrillance selon le groupe Constant. Ceci vient du
+fait qu'une correspondance contenue ne peut pas correspondre dans elle-même à
+la même position, et qu'ainsi la correspondance persoVim ne masque pas la
+correspondance persoMots ici.
+
+Quand vous regardez le texte en surbrillance, c'est comme si vous regardiez
+des calques des éléments contenus. L'élément contenu est au-dessus de
+l'élément qui le contient, vous pouvez donc voir l'élément contenu. Quand un
+élément contenu est transparent, vous pouvez voir au travers ; ainsi, vous
+pouvez voir l'élément dans lequel il est contenu. Schéma :
+
+	     vous regardez d'ici
+
+	    |	|   |	|   |	|
+	    V	V   V	V   V	V
+
+	       xxxx	  yyy		éléments les plus contenus
+	    ....................	élément contenu (transparent)
+	=============================	premier élément
+
+Les 'x', 'y' et '=' représentent des éléments de syntaxe mis en surbrillance.
+Les '.' représentent un groupe transparent.
+
+Voici ce que vous voyez :
+
+	=======xxxx=======yyy========
+
+Cela revient donc à regarder à travers le transparent "....".
+
+
+"oneline"						*:syn-oneline*
+
+L'argument "oneline" indique que la région n'inclut pas de fin-de-ligne. Elle
+doit correspondre entièrement dans la ligne courante. Néanmoins, si la région
+contient un élément qui inclut une fin-de-ligne, elle continuera malgré tout
+sur la ligne suivante. Un élément contenu peut être utilisé pour reconnaître
+un motif de continuation de ligne. Mais le motif "end" doit toujours
+correspondre dans la première ligne, sinon la région n'est même pas commencée.
+
+Quand le motif "start" inclut un "\n" pour correspondre avec une fin-de-ligne,
+le motif "end" doit être trouvé dans la ligne où le motif "start" se termine.
+Le motif "end" peut aussi inclure une fin-de-ligne. Dans ce cas, l'argument
+"oneline" signifie que la fin du motif "start" et le début du motif "end"
+doivent se situer à l'intérieur d'une même ligne. Cela ne peut pas être
+modifié par un motif "skip" correspondant avec une coupure de ligne.
+
+
+"fold"							*:syn-fold*
+
+{uniquement si compilé avec la fonctionnalité |+folding|}
+
+L'argument "fold" incrémente de 1 le niveau de repli pour cet élément.
+Exemple : >
+	:syn region MonRepli start="{" end="}" transparent fold
+	:syn sync fromstart
+	:set foldmethod=syntax
+Ceci créera un repli pour chaque bloc {}.
+
+Le repli débutera à la ligne où l'élément commence et se terminera où
+l'élément se termine. Si le début et la fin sont dans une même ligne, il n'y a
+pas de repli. L'option 'foldnestmax' limite l'imbrication des replis par
+syntaxe.
+
+
+					    *E405* *E406* *E407* *E408* *E409*
+"contains={nomgroupe},..."		    *:syn-contains*
+
+L'argument "contains" est suivi par une liste de noms de groupes de syntaxe.
+Ces groupes seront autorisés à débuter à l'intérieur de l'élément (et pourront
+s'étendre au-delà de la fin du groupe contenant). Cela permet l'imbrication
+récursive de correspondances et de régions. S'il n'y a pas d'argument
+"contains", aucun groupe ne sera contenu dans cet élément. Les noms de groupes
+n'ont pas besoin d'être définis avant qu'ils soient utilisés.
+
+contains=ALL	Si le seul élément dans la liste "contains" est "ALL", alors
+		tous les groupes seront admis dans l'élément.
+
+contains=ALLBUT,{nomgroupe},...
+		Si le premier élément dans la liste "contains" est "ALLBUT",
+		alors tous les groupes seront admis dans l'élément, sauf ceux
+		qui sont listés. Exemple : >
+			:syntax region Bloc start="{" end="}" ... contains=ALLBUT,Fonction
+
+contains=TOP	Si le premier élément dans la liste "contains" est "TOP",
+		alors tous les groupes qui n'ont pas d'argument "contained"
+		seront admis.
+contains=TOP,{nomgroupe},...
+		Comme "TOP", mais exclut les groupes listés.
+
+contains=CONTAINED
+		Si le premier élément dans la liste "contains" est
+		"CONTAINED", alors tous les groupes disposant d'un argument
+		"contained" seront admis.
+contains=CONTAINED,{nomgroupe},...
+		Comme "CONTAINED", mais exclut les groupes listés.
+
+Le {nomgroupe} dans la liste "contains" peut être un motif. Tous les noms de
+groupes qui correspondent au motif seront inclus (ou exclus, si "ALLBUT" est
+utilisé). Le motif ne peut pas contenir d'espaces blancs ni de ','. Exemple : >
+	... contains=Commentaire.*,Motcle[0-3]
+La correspondance sera effectuée lors de l'exécution de la commande de
+syntaxe. Les groupes définis ultérieurement ne seront pas pris en compte. De
+même, si la commande de syntaxe courante définit un nouveau groupe, il ne sera
+pas pris en compte. Soyez prudent : lorsque vous mettez des commandes de
+syntaxe dans un fichier, vous ne pouvez pas compter sur le fait que des
+groupes ne sont pas définis, car le fichier peut avoir été sourcé auparavant,
+et ":syn clear" ne supprime pas les noms de groupes.
+
+Les groupes contenus correspondront également dans les motifs "start" et "end"
+d'une région. Si ce n'est pas ce que vous voulez, vous pouvez utiliser
+l'argument "matchgroup" |:syn-matchgroup|. Les décalages "ms=" et "me="
+peuvent être utilisés pour modifier la région où les éléments contenus
+correspondent. Mais ceci peut aussi limiter la zone mise en surbrillance.
+
+
+"containedin={nomgroupe}..."				*:syn-containedin*
+
+L'argument "containedin" est suivi par une liste de noms de groupes de
+syntaxe. L'élément sera autorisé à débuter à l'intérieur de ces groupes. Cela
+marche comme si l'élément contenant avait un argument "contains=" qui
+inclurait cet élément.
+
+Le {nomgroupe}... peut être utilisé exactement comme pour "contains", voir
+ci-dessus.
+
+C'est utile lors de l'ajout d'un élément de syntaxe après coup. On peut ainsi
+ordonner l'inclusion d'un élément dans un autre déjà existant, sans changer la
+définition de cet autre élément. Par exemple, pour mettre en surbrillance un
+mot dans un commentaire C après le chargement de la syntaxe C : >
+	:syn keyword MonMot AIDE containedin=cComment contained
+NOTE : "contained" est également utilisé, afin d'éviter que le mot ne
+corresponde au niveau supérieur.
+
+Les correspondances pour "containedin" sont ajoutées aux autres endroits où
+l'élément peut apparaître. Un argument "contains" peut également être ajouté
+comme d'habitude. N'oubliez pas que les mots-clés ne contiennent jamais
+d'autres éléments : en ajouter à "containedin" ne marcherait donc pas.
+
+
+"nextgroup={nomgroupe},..."				*:syn-nextgroup*
+
+L'argument "nextgroup" est suivi par une liste de noms de groupes de syntaxe,
+séparés par des virgules (exactement comme pour "contains" ; il vous est aussi
+possible d'utiliser des motifs). [N.D.T. : Ces groupes sont dits « groupes
+suiveurs ».]
+
+Si l'argument "nextgroup" est donné, Vim essaiera de faire correspondre les
+groupes de syntaxe mentionnés après la fin de la correspondance ou de la
+région. Si aucun des groupes ne correspond, la coloration se poursuit
+normalement. S'il y a une correspondance, ce groupe sera utilisé, même s'il
+n'est pas mentionné dans le champ "contains" du groupe courant. Cela revient à
+donner la priorité au groupe mentionné sur tous les autres groupes. Exemple : >
+  :syntax match  ccGloubiBoulga  "Gloubi.\{-}Boulga"  contains=ccGloubi
+  :syntax match  ccGloubi	 "Gloubi" contained  nextgroup=ccRemplissage
+  :syntax region ccRemplissage   start="."  matchgroup=ccBoulga  end="Boulga"  contained
+
+Ceci mettra en surbrillance "Gloubi" et "Boulga" différemment, et uniquement
+s'il y a un "Boulga" après un "Gloubi". Dans la ligne ci-dessous, 'g' indique
+les endroits où ccGloubi est utilisé pour la surbrillance, et 'b' ceux où
+ccBoulga est utilisé :
+
+	Gloubi blablabla Boulga blabla Gloubi blabla Boulga blabla ~
+	gggggg		 bbbbbb	       gggggg	     bbbbbb
+
+NOTE : L'utilisation de ".\{-}" permet de passer le moins de texte possible
+jusqu'au "Boulga" suivant. Si ".*" avait été utilisé, le "blabla" entre
+"Boulga" et "Gloubi" aurait été mis en surbrillance selon le groupe
+ccGloubiBoulga, car la correspondance ccGloubiBoulga aurait inclus le premier
+"Gloubi" et le dernier "Boulga" de la ligne (voir |pattern|).
+
+
+"skipwhite"						*:syn-skipwhite*
+"skipnl"						*:syn-skipnl*
+"skipempty"						*:syn-skipempty*
+
+Ces arguments sont utilisables uniquement en combinaison avec "nextgroup". Ils
+peuvent être utilisés pour permettre au groupe suiveur de correspondre après
+avoir sauté du texte :
+	skipwhite      saute des caractères d'espaces blancs et de tabulations
+	skipnl	       saute une fin-de-ligne
+	skipempty      saute des lignes vides (implique "skipnl")
+
+Lorsque "skipwhite" est présent, l'espace blanc est sauté uniquement s'il n'y
+a pas de groupe suiveur qui correspond à l'espace blanc.
+
+Lorsque "skipnl" est présent, la correspondance avec le groupe suiveur peut
+être trouvée dans la ligne suivante. Cela n'est possible que si l'élément
+courant est situé à la fin de la ligne courante ! Si "skipnl" n'est pas
+présent, le groupe suiveur sera trouvé uniquement après l'élément courant dans
+la même ligne.
+
+Quand du texte est sauté à la recherche d'un groupe suiveur, les
+correspondances pour les autres groupes sont ignorées. Les autres éléments ne
+sont pris en compte que si aucun groupe suiveur ne correspond. Cela signifie
+que la recherche d'un groupe suiveur et le saut d'espaces blancs et de
+fins-de-lignes a une priorité plus élevée que les autres éléments.
+
+Exemple : >
+  :syn match DebutIf "if.*"     nextgroup=SuiteIf skipwhite skipempty
+  :syn match SuiteIf "endif"    contained
+  :syn match SuiteIf "[^ \t].*" nextgroup=SuiteIf skipwhite skipempty contained
+NOTE : La dernière correspondance -- qui correspond à n'importe quel texte
+non-blanc -- est placée en dernier, sans cela le "endif" sans indentation ne
+correspondrait jamais, car le "[^ \t].*" correspondrait avant. XXX
+   NOTE : Cet exemple ne marche pas avec des "if" imbriqués. Dans ce cas, vous
+devrez ajouter des arguments "contains" (ils sont omis ici pour simplifier
+l'exemple).
+
+==============================================================================
+7. Motifs de syntaxe				*:syn-pattern* *E401* *E402*
+
+Dans les commandes de syntaxe, un motif doit être encadré par deux caractères
+identiques. Cela fonctionne de la même façon que pour la commande ":s". Le
+caractère le plus utilisé est la double-apostrophe. Mais si le motif contient
+une double-apostrophe, vous pouvez utiliser un autre caractère non employé
+dans le motif. Exemples : >
+	:syntax region Commentaire  start="/\*"  end="\*/"
+	:syntax region Chaine	    start=+"+    end=+"+   skip=+\\"+
+
+Voir |pattern| pour l'explication de ce qu'est un motif. Les motifs de syntaxe
+sont toujours interprétés comme si l'option 'magic' était activée,
+indépendamment de la valeur courante de cette option. Et les motifs sont aussi
+interprétés comme si le drapeau 'l' était exclu de 'cpoptions'. Ce
+comportement permet de rendre les fichiers de syntaxe portables et
+indépendants des valeurs de 'compatible' et 'magic'.
+
+Essayez d'éviter les motifs qui peuvent correspondre à une chaîne vide, comme
+"[a-z]*". Ils ralentissent sensiblement la coloration, car ils correspondent
+partout.
+
+
+DÉCALAGE					    *:syn-pattern-offset*
+
+Le motif peut être suivi par un décalage en caractères. Celui-ci peut être
+utilisé pour changer la partie mise en surbrillance et changer la zone de
+texte incluse dans la correspondance ou la région (ce qui n'a d'intérêt que
+lorsqu'une correspondance doit être établie avec d'autres éléments). Il est
+toujours relatif au motif de correspondance. Un décalage en caractères pour un
+motif "skip" peut être utilisé pour indiquer où continuer la recherche d'un
+motif "end".
+
+Le décalage prend la forme suivante : "{type}={decal}".
+
+Le {type} peut être une des sept chaînes :
+
+ms	décalage pour le début du texte recherché		["Match Start"]
+me	décalage pour la fin du texte recherché			  ["Match End"]
+hs	décalage pour où commence la surbrillance	    ["Highlight Start"]
+he	décalage pour où se termine la surbrillance	      ["Highlight End"]
+rs	décalage pour où commence le corps de la région	       ["Region Start"]
+re	décalage pour où se termine le corps de la région	 ["Region End"]
+lc	décalage après le « contexte initial » du motif	    ["Leading Context"]
+
+Le {decal}age peut être :
+
+s	début du motif correspondant				       ["Start]
+s+{nb}	début du motif correspondant plus {nb} cars vers la droite
+s-{nb}	début du motif correspondant plus {nb} cars vers la gauche
+e	fin du motif correspondant					["End"]
+e+{nb}	fin du motif correspondant plus {nb} cars vers la droite
+e-{nb}	fin du motif correspondant plus {nb} cars vers la gauche
+{nb}	(pour "lc" uniquement) : débute la correspondance {nb} cars vers la
+	   gauche
+
+Exemples : "ms=s+1", "hs=e-2", "lc=3".
+
+Bien que tous les décalages soient acceptés après les différents motifs, ils
+n'ont pas toujours de sens. Ce tableau vous donne ceux qui sont vraiment pris
+en compte :
+
+			    ms    me    hs    he    rs    re	lc  ~
+élément de correspondance   oui   oui   oui   oui    -     -    oui
+élément de région "start"   oui    -    oui    -    oui    -    oui
+élément de région "skip"     -    oui    -     -     -     -    oui
+élément de région "end"      -    oui    -    oui    -    oui   oui
+
+Les décalages peuvent être concaténés, avec un ',' entre. Exemple : >
+	:syn match Chaine  /"[^"]*"/hs=s+1,he=e-1
+<
+	une "chaîne" de texte ~
+	     ^^^^^^		   mis en surbrillance
+
+NOTES :
+- Il ne doit pas y avoir d'espace blanc entre le motif et le décalage en
+  caractères.
+- La zone mise en surbrillance ne sera jamais en dehors du texte de la
+  correspondance.
+- Un décalage négatif pour un motif "end" peut ne pas toujours fonctionner,
+  car le motif "end" peut être détecté alors que la surbrillance aura déjà
+  cessé.
+- Le début d'une correspondance ne peut pas être dans une ligne autre que
+  celle où le motif correspond. Ceci ne fonctionne pas : "a\nb"ms=e. Vous
+  pouvez faire commencer la  surbrillance dans une autre ligne, ceci
+  fonctionne : "a\nb"hs=e.
+
+Exemple (correspond à un commentaire C, mais ne met pas en surbrillance "/*"
+et "*/") : >
+	:syntax region Commentaire start="/\*"hs=e+1 end="\*/"he=s-1
+<
+	/* un commentaire */ ~
+	  ^^^^^^^^^^^^^^^^	   mis en surbrillance
+
+Un autre exemple, plus complexe : >
+	:syn region Ex matchgroup=Gloubi start="Gloubi"hs=s+2,rs=e+2 matchgroup=Boulga end="Boulga"me=e-1,he=e-1,re=s-1
+<
+	 abcGloubichaîneBoulgaabc ~
+	    ccccccccccccccccc	   correspondance
+	      sssssrrrreeeeee	   surbrillance des motifs "start"/région/"end"
+				      (Gloubi, Ex et Boulga)
+
+
+CONTEXTE INITIAL		    *:syn-lc* *:syn-leading* *:syn-context*
+
+NOTE : Cette fonctionnalité est obsolète, elle n'est conservée que pour
+assurer la compatibilité ascendante avec les versions antérieures de Vim. Il
+est maintenant recommandé d'utiliser la construction |/\@<=| dans le motif.
+
+Le décalage "lc" spécifie un contexte initial ["Leading Context"] -- une
+partie du motif qui doit être présente, mais n'est pas considérée comme
+appartenant à la correspondance. Un décalage de "lc=N" fera reculer Vim de N
+colonnes avant d'essayer de faire correspondre un motif, permettant à des
+caractères qui ont déjà correspondu dans un motif précédent d'être réutilisés
+comme contexte initial dans cette correspondance. Cela peut être utilisé par
+exemple pour indiquer qu'un caractère d'échappement ne doit pas précéder la
+correspondance : >
+
+	:syn match ZSansContrOb "[^\\]z"ms=s+1
+	:syn match WSansContrOb "[^\\]w"lc=1
+	:syn match Souligne "_\+"
+<
+	  ___zzzz ___wwww ~
+	  ^^^     ^^^		   correspond à Souligne
+	      ^ ^		   correspond à ZSansContrOb
+		     ^^^^	   correspond à WSansContrOb
+
+Le décalage "ms" est automatiquement fixé à la même valeur que le décalage
+"lc", à moins que vous ne fixiez "ms" explicitement.
+
+
+MOTIFS MULTI-LIGNES					*:syn-multi-line*
+
+Les motifs peuvent inclure "\n" pour correspondre avec une fin-de-ligne. La
+plupart du temps, cela marchera comme prévu, mais il y a quelques exceptions.
+
+Si vous utilisez un motif "start" avec un décalage, le début de la
+correspondance ne pourra pas se situer dans une ligne suivante. Mais la
+surbrillance pourra elle débuter dans un ligne suivante.
+
+Le motif "skip" peut inclure un "\n", mais la recherche du motif "end"
+continuera au premier caractère de la ligne suivante, même si ce caractère
+correspond avec le motif "skip". Cela provient du fait que le rafraîchissement
+peut commencer dans n'importe quelle ligne au sein d'une région et qu'il n'y
+a pas de contrôle pour savoir si le motif "skip" a débuté dans une ligne
+précédente.
+   Par exemple, si le motif "skip" est "a\nb" et le motif "end" est "b", le
+motif "end" correspondra dans la deuxième de ces lignes :
+
+	 x x a ~
+	 b x x ~
+
+En général, cela signifie que le motif "skip" ne devrait pas correspondre avec
+des caractères après le "\n".
+
+
+CORRESPONDANCES EXTERNES				*:syn-ext-match*
+
+Ces expressions rationnelles supplémentaires sont disponibles pour les motifs
+des régions :
+
+						*/\z(* */\z(\)* *E50* *E52*
+\z(\)		Marque la sous-expression comme « externe », ce qui signifie
+		qu'on peut y accéder depuis une autre correspondance de motif.
+		Actuellement, cela n'est utilisable que dans la définition du
+		motif "start" d'une région de syntaxe.
+
+						*/\z1* */\z2* *\z9* *E66* *E67*
+\z1 ... \z9	Correspond à la chaîne qui correspondait à la sous-expression
+		concordante dans une correspondance précédente au motif
+		"start".
+
+Parfois, les motifs "start" et "end" d'une région ont besoin de partager une
+sous-expression commune. Les « documents ici-même » en Perl et dans de
+nombreux shells Unix nous en donnent un exemple bien connu. Pour parvenir à un
+tel résultat, il est possible d'utiliser les éléments spéciaux d'expressions
+rationnelles "\z", qui marquent une sous-expression comme « externe », au sens
+où elle peut être rappelée en dehors du motif dans lequel est a été définie.
+Par exemple, pour gérer la coloration d'un document ici-même : >
+	:syn region DocIciMeme start="<<\z(\I\i*\)" end="^\z1$"
+
+Comme vous pouvez le constater, le "\z" fait double emploi. Dans le motif
+"start", il marque la sous-expression "\(\I\i*\)" comme externe ; dans le
+motif "end", il change la post-référence "\1" en une référence externe à la
+première sous-expression dans le motif "start".
+   Les références externes peuvent aussi être utilisées dans les motifs
+"skip" : >
+  :syn region Toto start="début \z(\I\i*\)" skip="pas fin \z1" end="fin \z1"
+
+NOTE : Les sous-expressions normales et externes sont complètement dissociées
+et indexées séparément ; par exemple, si le motif "\z(..\)\(..\)" est appliqué
+à la chaîne "aabb", alors \1 fera référence à "bb", et \z1 à "aa".
+   NOTE : Il n'est pas possible d'accéder aux expressions externes en tant que
+post-références à l'intérieur du même motif, comme pour les sous-expressions
+normales. Si vous souhaitez utiliser une sous-expression à la fois comme
+sous-expression normale et externe, vous pouvez imbriquer les deux, comme dans
+"\(\z(...\)\)".
+
+NOTE : Seules les correspondances dans des lignes simples peuvent être
+utilisées. Il est impossible de faire référence à des correspondances
+multi-lignes.
+
+==============================================================================
+8. Grappes de syntaxe					*:syn-cluster* *E400*
+
+:sy[ntax] cluster {nomgrappe} [contains={nomgroupe}...]
+				 [add={nomgroupe}...]
+				 [remove={nomgroupe}...]
+
+Cette commande vous permet de mettre en grappe une liste de groupes de
+syntaxe, c'est-à-dire à les réunir sous un même nom.
+
+	contains={nomgroupe}...
+		La grappe est fixée à la liste de groupes spécifiée.
+	add={nomgroupe}...
+		Les groupes spécifiés sont ajoutés à la grappe.
+	remove={nomgroupe}...
+		Les groupes spécifiés sont retirés de la grappe.
+
+Une grappe ainsi définie peut être référencée dans une liste de
+"contains=...", "nextgroup=...", "add=..." ou "remove=...", avec le préfixe
+'@'. Vous pouvez également utiliser cette notation pour déclarer implicitement
+une grappe avant de spécifier son contenu.
+
+Exemple : >
+	:syntax match Truc "# [^#]\+ #" contains=@ElementsTruc
+	:syntax cluster ElementsTruc contains=ElementTruc1,ElementTruc2
+
+Comme l'exemple précédent le suggère, la modification d'une grappe est à effet
+rétroactif ; l'appartenance ou non à la grappe n'est contrôlée qu'à la
+dernière minute, pour ainsi dire : >
+	:syntax keyword A aaa
+	:syntax keyword B bbb
+	:syntax cluster AetB contains=A
+	:syntax match UnGroupe "( aaa bbb )" contains=@AetB
+	:syntax cluster AetB add=B	" Maintenant, les deux mot-clés seront
+					" trouvés dans UnGroupe
+
+Cela a aussi des conséquences pour les grappes imbriquées : >
+	:syntax keyword A aaa
+	:syntax keyword B bbb
+	:syntax cluster PetitGroupe contains=B
+	:syntax cluster GrosGroupe contains=A,@PetitGroupe
+	:syntax match UnGroupe "( aaa bbb )" contains=@GrosGroupe
+	:syntax cluster GrosGroupe remove=B	" Sans effet, car B n'est pas
+						" dans GrosGroupe
+	:syntax cluster PetitGroupe remove=B	" Maintenant, "bbb" ne sera
+						" plus trouvé dans UnGroupe
+
+==============================================================================
+9. Inclure des fichiers de syntaxe			*:syn-include* *E397*
+
+Il est parfois utile d'inclure le fichier de syntaxe d'un langage dans celui
+d'un autre langage. Selon la nature exacte de ce que l'on veut obtenir, il y a
+deux façons de procéder :
+
+- Si les éléments de syntaxe de niveau supérieur du fichier inclus doivent
+  être utilisés au niveau supérieur dans le fichier de syntaxe qui les inclut,
+  vous pouvez alors simplement employer la commande |:runtime| : >
+
+	" Dans cpp.vim :
+	:runtime! syntax/c.vim
+	:unlet b:current_syntax
+
+- Si les éléments de syntaxe de niveau supérieur du fichier inclus doivent
+  être contenus dans une région du fichier de syntaxe qui les inclut, vous
+  pouvez utiliser la commande ":syntax include" :
+
+:sy[ntax] include [@{nom-listegroupes}] {nomfichier}
+
+	  Tous les éléments de syntaxe déclarés dans le fichier inclus se
+	  verront ajoutés le drapeau "contained". De plus, si une liste de
+	  groupes est spécifiée, tous les éléments de syntaxe de niveau
+	  supérieur dans le fichier inclus seront ajoutés à cette liste. >
+
+		" Dans perl.vim :
+		:syntax include @Pod <sfile>:p:h/pod.vim
+		:syntax region perlPOD start="^=head" end="^=cut" contains=@Pod
+<
+	  Lorsque {nomfichier} dispose d'un chemin absolu (qui débute par "/",
+	  "c:", "$VAR" ou "<sfile>"), le fichier correspondant est sourcé. Si
+	  c'est un chemin relatif (p. ex., "syntax/pod.vim"), le fichier est
+	  recherché dans 'runtimepath'. Tous les fichiers correspondants sont
+	  chargés. Il est recommandé d'utiliser un chemin relatif, car cela
+	  permet à un utilisateur de remplacer le fichier inclus par sa propre
+	  version, sans modifier le {nomfichier} de ":syn include".
+
+==============================================================================
+10. Synchronisation				    *:syn-sync* *E403* *E404*
+
+Vim se veut capable de rafraîchir l'écran à partir de n'importe quelle
+position dans le document. Pour que cela soit possible, il doit connaître
+l'état de la syntaxe à la position où le rafraîchissement commence.
+
+:sy[ntax] sync [ccomment [nomgroupe] | minlines={N} | ...]
+
+Il existe quatre méthodes de synchronisation :
+1. En commençant toujours l'analyse syntaxique au début du fichier ;
+   |:syn-sync-first|
+2. En se basant sur les commentaires de style C. Vim sait comment fonctionnent
+   les commentaires C et peut déterminer si la ligne courante débute à
+   l'intérieur ou à l'extérieur d'un tel commentaire ; |:syn-sync-second|
+3. En remontant un certain nombre de lignes et en commençant l'analyse
+   syntaxique à cette nouvelle position ; |:syn-sync-third|
+4. En recherchant vers l'arrière dans le texte un motif sur lequel se
+   synchroniser. |:syn-sync-fourth|
+
+				*:syn-sync-maxlines* *:syn-sync-minlines*
+Pour les trois dernières méthodes, la plage de lignes dans laquelle l'analyse
+syntaxique peut débuter est limitée par "minlines" et "maxlines".
+
+Si l'argument "minlines={N}" est donné, l'analyse syntaxique commence toujours
+au moins N lignes en arrière. C'est utile si l'analyse peut avoir besoin de
+quelques lignes avant d'être correcte, ou qu'il n'est pas possible d'utiliser
+la synchronisation.
+
+Si l'argument "maxlines={N}" est donné, le nombre de lignes recherchées pour
+un commentaire ou un motif de synchronisation est limité à N lignes vers
+l'arrière (en plus de "minlines"). C'est utile sur une machine lente, quand il
+n'y a pas beaucoup d'éléments pour se synchroniser. Exemple : >
+	:syntax sync ccomment maxlines=500
+<
+						*:syn-sync-linebreaks*
+Lorsque vous utilisez un motif qui correspond avec plusieurs lignes, une
+modification dans une ligne peut faire cesser la correspondance du motif dans
+une ligne précédente. Cela signifie que l'analyse doit débuter une ou
+plusieurs lignes avant l'emplacement de la modification. Le nombre de lignes
+concernées peut être spécifié avec l'argument "linebreaks". Par exemple, si un
+motif peut contenir une coupure de ligne, utilisez : >
+	:syntax sync linebreaks=1
+Avec ceci, le rafraîchissement débute toujours au moins une ligne avant
+l'emplacement d'une modification.
+   "linebreaks" vaut zéro par défaut. Habituellement, la valeur de "minlines"
+est supérieure à celle de "linebreaks".
+
+
+PREMIÈRE MÉTHODE DE SYNCHRONISATION			*:syn-sync-first*  >
+
+	:syntax sync fromstart
+
+Le fichier sera analysé depuis le début. Cela rend la coloration syntaxique
+plus fiable, mais peut être lent pour des fichiers importants. Vim garde en
+mémoire le texte précédemment analysé, ainsi cela ne sera lent que lors de la
+première analyse syntaxique du texte. Cependant, si vous opérez des
+changements, certaines parties du texte devront être analysées à nouveau (vers
+la fin du fichier dans le pire des cas).
+
+L'utilisation de "fromstart" revient à utiliser "minlines" avec un nombre très
+grand.
+
+
+DEUXIÈME MÉTHODE DE SYNCHRONISATION	*:syn-sync-second* *:syn-sync-ccomment*
+
+Pour la deuxième méthode, seul l'argument "ccomment" est nécessaire.
+Exemple : >
+	:syntax sync ccomment
+
+Lorsque Vim décèle que la ligne où l'affichage débute fait partie d'un
+commentaire de style C, le dernier élément syntaxique de région portant le nom
+de groupe "Comment" sera utilisé. Cela requiert qu'il existe une région avec
+le nom de groupe "Comment" ! Un nom de groupe alternatif peut être spécifié,
+par exemple : >
+	:syntax sync ccomment javaComment
+Cela signifie que le dernier élément défini avec "syn region javaComment" sera
+utilisé pour la détection de la région de commentaire C. Cela ne marche
+correctement que si la région possède un motif "start" en "\/*", et un motif
+"end" en "*\/".
+
+L'argument "maxlines" peut être utilisé pour restreindre la recherche à un
+certain nombre de lignes. L'argument "minlines" peut être utilisé pour faire
+commencer la recherche au moins un certain nombre de lignes en arrière
+(p. ex., pour quand il existe une construction qui n'occupe que quelques
+lignes, mais sur laquelle il est difficile de se synchroniser).
+
+NOTE : La synchronisation sur un commentaire C ne fonctionne pas correctement
+lorsque des chaînes sont utilisées qui s'étendent sur plusieurs lignes et
+contiennent un "*/". Comme l'utilisation de chaînes s'étendant sur plusieurs
+lignes est une mauvaise habitude en programmation (de nombreux compilateurs
+donnant un message d'avertissement) et que la probabilité qu'un "*/"
+apparaisse dans un commentaire est très faible, cette restriction n'a souvent
+pas d'incidence.
+
+
+TROISIÈME MÉTHODE DE SYNCHRONISATION			*:syn-sync-third*
+
+Pour la troisième méthode, seul l'argument "minlines={N}" est nécessaire. Vim
+soustraira N au numéro de ligne courant et débutera l'analyse syntaxique de
+cette position. Cela signifie que N lignes supplémentaires seront analysées,
+ce qui rend cette méthode légèrement lente. Exemple : >
+	:syntax sync minlines=50
+
+"lines" est équivalent à "minlines" (utilisé dans les versions antérieures).
+
+
+QUATRIÈME MÉTHODE DE SYNCHRONISATION			*:syn-sync-fourth*
+
+L'idée est de se synchroniser sur la fin de quelques régions particulières,
+appelées « motifs de synchronisation ». Seules les régions peuvent s'étendre
+sur plusieurs lignes, par conséquent, lorsqu'on trouve la fin d'une région, on
+devrait être capable de savoir dans quel élément de syntaxe on se trouve. La
+recherche débute dans la ligne immédiatement au-dessus de la toute première
+ligne affichée. Elle se poursuit en arrière dans le fichier depuis cette
+position.
+
+Cela fonctionne de la même façon que pour les éléments de syntaxe ne réglant
+pas la synchronisation. Vous pouvez utiliser des correspondances contenues,
+des groupes suiveurs, etc. Mais il existe plusieurs différences :
+- les mots-clés ne peuvent pas être utilisés ;
+- les éléments de syntaxe incluant le mot-clé "sync" forment un groupe
+  complètement séparé des autres éléments de syntaxe. Vous ne pouvez pas
+  mélanger des groupes de synchronisation et des groupes qui n'en sont pas ;
+- la correspondance est établie vers l'arrière dans le tampon (ligne par
+  ligne), au lieu de vers l'avant ;
+- un motif de continuation de ligne peut être donné. Il est utilisé pour
+  décider quel groupe de lignes doivent être recherchées comme si elles n'en
+  formaient qu'une seule. Cela signifie que la recherche d'une correspondance
+  avec les éléments spécifiés débute dans le premier des éléments consécutifs
+  qui contient le motif de continuation de ligne ;
+- lors de l'utilisation de "nextgroup" ou "contains", cela ne fonctionne qu'à
+  l'intérieur d'une ligne (ou d'un groupe de lignes en continuation) ;
+- lors de l'utilisation d'une région, elle doit débuter et se terminer dans la
+  même ligne (ou groupe de lignes en continuation). Dans le cas contraire, la
+  fin est automatiquement placée à la fin de la ligne (ou du groupe de lignes
+  en continuation) ;
+- lorsqu'une correspondance avec un motif de synchronisation est trouvée, le
+  reste de la ligne (ou du groupe de lignes en continuation) est parcouru à la
+  recherche d'une autre correspondance. La dernière correspondance est
+  utilisée. Cela sert lorsqu'une ligne contient à la fois le début et la fin
+  d'une région (p. ex., dans un commentaire C comme "/* blabla */", le dernier
+  "*/" est utilisé).
+
+Il y a deux méthodes pour utiliser une correspondance avec un motif de
+synchronisation :
+1. L'analyse pour la coloration commence là où le rafraîchissement commence
+   (et là où le motif de synchronisation commençait). Le groupe de syntaxe
+   censé être valide ici doit être spécifié. Cela fonctionne bien quand les
+   régions s'étendant sur plusieurs lignes ne peuvent pas contenir d'autres
+   régions.
+2. L'analyse pour la coloration continue juste après la correspondance. Le
+   groupe de syntaxe censé être juste après la correspondance doit être
+   spécifié. Cela peut être utilisé quand la méthode précédente ne fonctionne
+   pas bien. C'est beaucoup plus lent, car cela nécessite l'analyse de plus de
+   texte.
+Les deux types de motifs de synchronisation peuvent être utilisés en même
+temps.
+
+En plus des motifs de synchronisation, d'autres motifs peut être spécifiés,
+pour éviter de trouver des correspondances indésirables.
+
+[La raison pour laquelle les motifs de synchronisation sont donnés séparément
+est que généralement, la recherche du point de synchronisation peut être
+beaucoup plus simple que de déterminer la coloration. Un nombre réduit de
+motifs signifie que le traitement ira (beaucoup) plus vite.]
+
+					    *syn-sync-grouphere* *E393* *E394*
+:syntax sync match {nomgroupe-sync} grouphere {nomgroupe} "pattern" ...
+	Définit une correspondance utilisée pour la synchronisation.
+	{nomgroupe} est le nom du groupe de syntaxe qui vient juste après la
+	correspondance. L'analyse du texte pour la surbrillance commence juste
+	après la correspondance. Il doit exister une région pour {nomgroupe}.
+	La première définie sera utilisée. "NONE" peut être utilisé s'il n'y a
+	pas de groupe de syntaxe après la correspondance.
+
+					    *syn-sync-groupthere*
+:syntax sync match {nomgroupe-sync} groupthere {nomgroupe} "pattern" ...
+	Comme "grouphere", mais {nomgroupe} désigne le nom d'un groupe de
+	syntaxe à utiliser au début de la ligne où la recherche du point de
+	synchronisation a commencé. Vim suppose que le texte entre la
+	correspondance et le début de la recherche du motif de synchronisation
+	ne change pas la coloration syntaxique.
+	Par exemple, en C, vous pourriez rechercher vers l'arrière "/*" et
+	"*/". Si "/*" est trouvé en premier, vous savez que vous êtes dans un
+	commentaire, et donc "groupthere" vaudra "cComment". Si "*/" est
+	trouvé en premier, vous n'êtes pas dans un commentaire, et
+	"groupthere" vaudra "NONE". (Dans la pratique c'est un peu plus
+	compliqué, car "/*" et "*/" pourraient apparaître dans une chaîne. Ce
+	cas est laissé comme exercice au lecteur...).
+
+:syntax sync match ...
+:syntax sync region ...
+	Sans argument "groupthere", définit une région ou une correspondance
+	qui sera ignorée lors de la recherche d'un point de synchronisation.
+
+:syntax sync linecont {motif}
+	Lorsque {motif} correspond dans une ligne, Vim considère qu'il
+	continue dans la ligne suivante. Cela signifie que la recherche d'un
+	point de synchronisation considérera que les lignes sont concaténées.
+
+Si l'argument "maxlines={N}" est donné aussi, le nombre de lignes où une
+correspondance est recherchée est réduit à N. C'est utile si vous disposez de
+très peu d'éléments sur lesquels vous synchroniser et d'une machine lente.
+Exemple : >
+	:syntax sync maxlines=100
+
+Vous pouvez effacer tous les paramètres de synchronisation avec : >
+	:syntax sync clear
+
+Vous pouvez effacer des motifs de synchronisation spécifiques avec : >
+	:syntax sync clear {nomgroupe-sync} ...
+
+==============================================================================
+11. Lister les éléments de syntaxe	    *:syntax* *:sy* *:syn* *:syn-list*
+
+:sy[ntax] [list]	Affiche tous les éléments de syntaxe.
+
+:sy[ntax] list {nomgroupe}
+			Affiche les éléments contenus dans le groupe de
+			syntaxe {nomgroupe}.
+
+:sy[ntax] list @{nomgrappe}				*E392*
+			Liste les groupes de syntaxe contenus dans la grappe
+			{nomgrappe}.
+
+Voir ci-dessus pour les autres arguments de la commande ":syntax".
+
+NOTE : La commande ":syntax" peut être abrégée en ":sy", bien que ":syn" soit
+utilisé plus fréquemment, car il est plus évocateur.
+
+==============================================================================
+12. Commandes de surbrillance		*:highlight* *:hi* *E28* *E411* *E415*
+
+Il existe trois types de groupes de surbrillance :
+- ceux utilisés pour des langages spécifiques. Leurs noms débutent par le nom
+  du langage. La plupart n'ont pas d'attributs, mais sont liés à un groupe du
+  deuxième type ;
+- ceux utilisés pour toutes les syntaxes ;
+- ceux utilisés pour l'option 'highlight'.
+
+							*hitest.vim*
+Vous pouvez visualiser tous les groupes actuellement actifs avec cette
+commande : >
+	:so $VIMRUNTIME/syntax/hitest.vim
+Ceci ouvrira une nouvelle fenêtre contenant tous les noms des groupes de
+surbrillance, affichés dans leurs couleurs respectives.
+
+						*:colo* *:colorscheme* *E185*
+:colo[rscheme] {nom}	Charge le jeu de couleurs {nom}. Le fichier
+			"colors/{nom}.vim" est recherché dans 'runtimepath'.
+			Le premier fichier trouvé est chargé.
+			Pour afficher le nom du jeu de couleur actuellement
+			actif : >
+				:echo colors_name
+
+:hi[ghlight]		Liste tous les groupes de surbrillance courants qui
+			ont des attributs fixés.
+
+:hi[ghlight] {nomgroupe}
+			Liste un groupe de surbrillance.
+
+:hi[ghlight] clear	Ramène toute surbrillance à ses valeurs par défaut.
+			Supprime la surbrillance pour les groupes ajoutés par
+			l'utilisateur !
+			Utilise la valeur courante de 'background' pour
+			décider des couleurs à utiliser par défaut.
+
+:hi[ghlight] clear {nomgroupe}
+:hi[ghlight] {nomgroupe} NONE
+			Désactive la surbrillance pour un groupe de
+			surbrillance. Elle n'est PAS ramenée aux couleurs par
+			défaut.
+
+:hi[ghlight] [default] {nomgroupe} {cle}={arg} ...
+			Ajoute un groupe de surbrillance, ou change la
+			surbrillance pour un groupe existant.
+			Voir |highlight-args| pour les arguments {cle}={arg}.
+			Voir |:highlight-default| pour l'argument optionnel
+			[default].
+
+Normalement, un groupe de surbrillance n'est ajouté qu'une seule fois, dans le
+fichier "*.vim". Les valeurs par défaut de la surbrillance y sont définies.
+Après cela, vous pouvez utiliser des commandes de surbrillance supplémentaires
+pour modifier les arguments que vous souhaitez fixer à d'autres valeurs que
+celles par défaut. La valeur "NONE" peut être utilisée pour désactiver la
+valeur ou pour revenir à la valeur par défaut.
+
+Exemple : le fichier "syntax.vim" contient cette ligne : >
+	:hi Comment	term=bold ctermfg=Cyan guifg=#80a0ff
+
+Vous pouvez la changer en donnant une autre commande ":highlight" : >
+	:hi Comment	gui=bold
+
+NOTE : Tous les attributs non inclus restent identiques, seuls ceux qui sont
+spécifiés sont utilisés, et ils sont mélangés avec les précédents. Dans notre
+exemple, la commande finalement produite est : >
+	:hi Comment	term=bold ctermfg=Cyan guifg=#80a0ff gui=bold
+<
+					*highlight-args* *E416* *E417* *E423*
+Il existe trois types de terminaux pour la surbrillance :
+	term	un terminal normal (vt100, xterm)
+	cterm	un terminal couleur (console MS-DOS, color-xterm, avec
+		   l'entrée termcap "Co")
+	gui	l'IHM graphique
+
+La surbrillance peut être spécifiée pour chaque type. Cela permet d'utiliser
+le même fichier de syntaxe pour tous les terminaux, avec la meilleure
+surbrillance possible.
+
+
+1. ARGUMENTS DE SURBRILLANCE POUR LES TERMINAUX NORMAUX
+
+term={listeattr}			*attr-list* *highlight-term* *E418*
+	{listeattr} est une liste d'items séparés par des virgules (sans
+	espaces et dans n'importe quel ordre) :
+		ITEM	    SIGNIFICATION  ~
+		bold	    gras
+		underline   souligné
+		reverse	    vidéo inverse
+		inverse	    comme "reverse"
+		italic	    italique
+		standout    surligné
+		NONE	    aucun attribut (utilisé pour désactiver le reste)
+
+	NOTE : "bold" peut être positionné ici ou en utilisant une police
+	grasse. Cela aura le même effet.
+
+start={listeterm}				*highlight-start* *E422*
+stop={listeterm}				*term-list* *highlight-stop*
+	Ces listes de codes de terminal peuvent être utilisées pour obtenir
+	des attributs non-standards sur un terminal.
+
+	La séquence d'échappement spécifiée avec l'argument "start" est donnée
+	avant les caractères de la zone de surbrillance. Cela peut être
+	n'importe quelle séquence que vous souhaitez envoyer au terminal pour
+	mettre cette zone en surbrillance. La séquence d'échappement spécifiée
+	avec l'argument "stop" est donnée après les caractères de la zone de
+	surbrillance. Cette séquence devrait mettre fin à celle de l'argument
+	"start". Sinon, l'écran risque d'être sali.
+
+	{listeterm} peut prendre deux formes :
+
+	1. Une chaîne avec des séquences d'échappement.
+	   Cela peut être n'importe quelle chaîne de caractères, sauf qu'elle
+	   ne peut pas débuter par "t_" et que les blancs ne sont pas
+	   autorisés. La notation <> est reconnue, vous pouvez donc utiliser
+	   des choses comme "<Esc>" et "<Space>". Exemple : >
+		start=<Esc>[27h;<Esc>[<Space>r;
+<
+	2. Une liste de codes de terminal.
+	   Chaque code de terminal est de la forme "t_xx", où "xx" est le nom
+	   de l'entrée termcap. Les codes doivent être séparés par des
+	   virgules. Les espaces blancs ne sont pas autorisés. Exemple : >
+		start=t_C1,t_BL
+<	   Les codes de terminal doivent exister pour que cela fonctionne.
+
+
+2. ARGUMENTS DE SURBRILLANCE POUR LES TERMINAUX COULEUR
+
+cterm={listeattr}					*highlight-cterm*
+	Voir ci-dessus pour la description de {listeattr} |attr-list|.
+	L'argument "cterm" sera probablement différent de "term", lorsque des
+	couleurs sont utilisées. Par exemple, dans un terminal normal, les
+	commentaires peuvent être soulignés, et être mis en bleu dans un
+	terminal couleur.
+	NOTE : De nombreux terminaux (p. ex., les consoles DOS) ne peuvent pas
+	mélanger ces attributs avec la coloration. Utilisez uniquement
+	"cterm=" OU "ctermfg=" OU "ctermbg=".
+
+ctermfg={nocouleur}				*highlight-ctermfg* *E421*
+ctermbg={nocouleur}				*highlight-ctermbg*
+	L'argument {nocouleur} est un numéro de couleur. Il peut aller de zéro
+	au nombre donné par l'entrée termcap "Co" (exclu). La couleur associée
+	à ce numéro dépend du type du terminal et de sa configuration.
+	Parfois, elle dépend aussi de la valeur de "cterm". Par exemple,
+	"cterm=bold ctermfg=3" donne la couleur 3 sur certains systèmes, et
+	donne une autre couleur sur d'autres systèmes.
+
+	Pour un xterm, cela dépend de vos ressources, il est difficile d'en
+	prévoir le résultat. Consultez la documentation de xterm pour les
+	valeurs par défaut. Les couleurs dans un color-xterm peuvent être
+	modifiées via le fichier ".Xdefaults". Malheureusement, cela signifie
+	qu'il n'est pas possible d'obtenir les mêmes couleurs pour chaque
+	utilisateur. Voir |xterm-color| pour plus d'informations sur les
+	xterms couleur.
+
+	Les couleurs MS-DOS standards sont fixes (dans une fenêtre de
+	console), leurs noms ont donc été repris. Mais la signification des
+	noms de couleurs sous X11 est fixe : les noms de couleurs concernés
+	ont cependant été utilisés, afin que les paramètres de surbrillance
+	soient portables (compliqué, pas vrai ?). Les noms suivants sont
+	reconnus, avec le numéro de couleur correspondant :
+							*cterm-colors*
+		NO-16   NO-8   NOM DE COULEUR  ~
+		0	0      Black				     [« Noir »]
+		1	4      DarkBlue			       [« Bleu Foncé »]
+		2	2      DarkGreen		       [« Vert Foncé »]
+		3	6      DarkCyan			       [« Cyan Foncé »]
+		4	1      DarkRed			      [« Rouge Foncé »]
+		5	5      DarkMagenta		    [« Magenta Foncé »]
+		6	3      Brown, DarkYellow		   [« Marron »]
+		7	7      LightGray, LightGrey, Gray, Grey	     [« Gris »]
+		8	0*     DarkGray, DarkGrey	       [« Gris Foncé »]
+		9	4*     Blue, LightBlue			     [« Bleu »]
+		10	2*     Green, LightGreen		     [« Vert »]
+		11	6*     Cyan, LightCyan
+		12	1*     Red, LightRed			    [« Rouge »]
+		13	5*     Magenta, LightMagenta
+		14	3*     Yellow, LightYellow		    [« Jaune »]
+		15	7*     White				    [« Blanc »]
+
+	Le numéro dans la colonne « NO-16 » est utilisé pour des terminaux
+	16 couleurs ('t_Co' supérieur ou égal à 16). Le numéro dans la colonne
+	« NO-8 » est utilisé pour des terminaux 8 couleurs ('t_Co' inférieur à
+	16). Le '*' indique que l'attribut "bold" [« gras »] est positionné
+	pour "ctermfg". Dans de nombreux terminaux 8 couleurs (p. ex.,
+	"linux"), cela provoque l'utilisation des couleurs claires. Cela ne
+	fonctionne pas pour les couleurs de fond ! Sans le '*', l'attribut
+	"bold" est supprimé. Si vous voulez positionner l'attribut "bold"
+	d'une autre façon, placez un argument "cterm=" APRÈS l'argument
+	"ctermfg=" ou "ctermbg=". Ou bien utilisez le numéro au lieu du nom de
+	couleur.
+
+	La casse des noms de couleurs est ignorée.
+	NOTE : Pour les terminaux 16 couleurs de style ANSI (ce qui comprend
+	les xterms), le numéro dans la colonne « NO-8 » est utilisé. Dans ce
+	cas, '*' signifie « ajouter 8 » : Blue vaut alors 12, DarkGray vaut 8,
+	etc.
+
+	NOTE : Pour certains terminaux couleur, ces noms peuvent donner des
+	mauvaises couleurs.
+
+							*:hi-normal-cterm*
+	Si vous fixez les couleurs "ctermfg" ou "ctermbg" pour le groupe
+	Normal, elles deviendront les couleurs utilisées pour le texte non mis
+	en surbrillance. Exemple : >
+		:highlight Normal ctermfg=grey ctermbg=darkblue
+<	Lorsque vous fixez la couleur "ctermbg" pour le groupe Normal,
+	l'option 'background' sera ajustée automatiquement. Cela entraîne la
+	modification des groupes de surbrillance dépendant de 'background' !
+	Cela signifie que vous devriez d'abord fixer les couleurs pour le
+	groupe Normal avant de fixer les autres.
+	Quand un jeu de couleurs est utilisé, la modification de 'background'
+	en provoque le rechargement, ce qui peut redéfinir toutes les couleurs
+	(Normal inclus). Supprimez préalablement la variable "colors_name" si
+	vous ne souhaitez pas cela.
+
+	Si vous avez fixé "ctermfg" ou "ctermbg" pour le groupe Normal, ces
+	attributs doivent être réinitialisés à la sortie de Vim. L'entrée
+	termcap "op" est utilisée pour cela |t_op|. Si cela ne marche pas
+	correctement, essayez de fixer l'option 't_op' dans votre fichier
+	vimrc.
+							*E419* *E420*
+	Quand Vim connaît les couleurs de premier plan et de fond normales,
+	"fg" et "bg" peuvent être utilisés comme noms de couleurs [N.D.T. :
+	pour les couleurs de premier plan et de fond respectivement]. Cela
+	fonctionne uniquement après avoir fixé les couleurs pour le groupe
+	Normal et pour la console MS-DOS. Exemple (ceci affiche en vidéo
+	inverse) : >
+		:highlight Visual ctermfg=bg ctermbg=fg
+<	NOTE : Les couleurs utilisées sont celles qui sont valides au moment
+	où cette commande est donnée. Si les couleurs du groupe Normal sont
+	changées par la suite, les couleurs "fg" et "bg" ne seront pas
+	réajustées.
+
+
+3. ARGUMENTS DE SURBRILLANCE POUR L'IHM GRAPHIQUE
+
+gui={listeattr}						*highlight-gui*
+	{listeattr} donne les attributs à utiliser dans le mode IHM graphique.
+	Voir |attr-list| pour une description.
+	NOTE : "bold" peut être positionné ici ou en utilisant une police
+	grasse. Cela aura le même effet.
+	NOTE : Les attributs sont ignorés pour le groupe Normal.
+
+font={nompolice}					*highlight-font*
+	{nompolice} est le nom d'une police, tel qu'il doit être donné sur le
+	système sur lequel Vim est déployé. Pour X11, c'est un nom compliqué,
+	par exemple : >
+		font=-misc-fixed-bold-r-normal--14-130-75-75-c-70-iso8859-1
+<
+	Le {nompolice} "NONE" peut être utilisé pour revenir à la police par
+	défaut. Quand vous fixez une police pour le groupe Normal, elle
+	devient la police par défaut (jusqu'à ce que l'option 'guifont' soit
+	changée ; la dernière fixée est utilisée).
+
+	Les remarques suivantes ne sont valables que pour les IHM graphiques
+	Motif et Athena, pas pour les autres :
+	- Lorsque vous fixez une police pour le groupe Menu, les menus seront
+	  changés.
+	- Lorsque vous fixez une police pour le groupe Tooltip, les bulles
+	  d'aide seront changées.
+
+	Toutes les polices utilisées, sauf pour Menu et Tooltip, doivent être
+	de la même taille que la police par défaut ! Sinon, des problèmes de
+	rafraîchissement de l'écran risquent de survenir.
+
+guifg={nomcouleur}					*highlight-guifg*
+guibg={nomcouleur}					*highlight-guibg*
+	Ces paramètres donnent les couleurs de premier plan ("guifg") et de
+	fond ("guibg") à utiliser dans l'IHM graphique. Il existe plusieurs
+	noms spéciaux :
+		NONE		aucune couleur (transparent)
+		bg		utilise la couleur de fond normale
+		background	utilise la couleur de fond normale
+		fg		utilise la couleur de premier plan normale
+		foreground	utilise la couleur de premier plan normale
+
+	Pour utiliser un nom de couleur contenant un espace ou un autre
+	caractère spécial, placez ce nom entre apostrophes simples.
+	L'apostrophe simple ne pourra alors plus être utilisée. Exemple : >
+		:hi comment guifg='salmon pink'
+<
+							*gui-colors*
+	Noms de couleurs conseillés (ces noms sont disponibles sur la plupart
+	des systèmes) :
+		Red	    LightRed	    DarkRed
+		Green	    LightGreen	    DarkGreen	    SeaGreen
+		Blue	    LightBlue	    DarkBlue	    SlateBlue
+		Cyan	    LightCyan	    DarkCyan
+		Magenta	    LightMagenta    DarkMagenta
+		Yellow	    LightYellow	    Brown	    DarkYellow
+		Gray	    LightGray	    DarkGray
+		Black	    White
+		Orange	    Purple	    Violet
+
+	Dans la version IHM graphique Win32, des couleurs système
+	supplémentaires sont disponibles. Voir |win32-colors|.
+
+	Vous pouvez également spécifier une couleur selon ses valeurs en
+	Rouge, Vert et Bleu. Le format utilisé est "#rrvvbb", où :
+		"rr"	est la valeur en Rouge,
+		"vv"	est la valeur en Vert,
+		"bb"	est la valeur en Bleu.
+	Toutes les valeurs sont en hexadécimal, allant de "00" à "ff".
+	Exemples : >
+		:highlight Commentaire guifg=#11f0c3 guibg=#ff00ff
+<
+					*highlight-groups* *highlight-default*
+Les groupes qui suivent sont les groupes de surbrillance par défaut. Ces
+groupes sont utilisés par l'option 'highlight'. NOTE : La surbrillance dépend
+de la valeur de 'background'. Vous pouvez voir les paramètres courants avec la
+commande ":highlight".
+							*hl-Cursor*
+Cursor		Le caractère sous le curseur.
+							*hl-CursorIM*
+CursorIM	Comme Cursor, mais utilisé en mode IME |CursorIM|.
+							*hl-Directory*
+Directory	Noms de répertoires (et autres noms spéciaux dans les
+		listages).
+							*hl-DiffAdd*
+DiffAdd		Mode diff : ligne ajoutée |diff.txt|.
+							*hl-DiffChange*
+DiffChange	Mode diff : ligne changée |diff.txt|.
+							*hl-DiffDelete*
+DiffDelete	Mode diff : ligne supprimée |diff.txt|.
+							*hl-DiffText*
+DiffText	Mode diff : texte changé dans une ligne changée |diff.txt|.
+							*hl-ErrorMsg*
+ErrorMsg	Messages d'erreurs sur la ligne de commande.
+							*hl-VertSplit*
+VertSplit	Colonne séparant les fenêtres partagées verticalement.
+							*hl-Folded*
+Folded		Ligne utilisée pour les replis fermés.
+							*hl-FoldColumn*
+FoldColumn	Colonnes de replis |'foldcolumn'|.
+							*hl-IncSearch*
+IncSearch	Surbrillance 'incsearch' ; également utilisé pour le texte
+		remplacé avec ":s///c".
+							*hl-LineNr*
+LineNr		Numéro de ligne pour les commandes ":number" et ":#", et
+		lorsque 'number' est activée.
+							*hl-ModeMsg*
+ModeMsg		Message 'showmode' (p. ex., "-- INSERT --").
+							*hl-MoreMsg*
+MoreMsg		Invite Plus |more-prompt|.
+							*hl-NonText*
+NonText		'~' et '@' à la fin de la fenêtre, les caractères de
+		'showbreak' et les autres caractères qui n'existent pas
+		réellement dans le texte (p. ex., un '>' affiché quand un
+		caractère de largeur double dépasse à la fin de la ligne).
+							*hl-Normal*
+Normal		Texte normal.
+							*hl-Question*
+Question	Invite Appuyez-sur-entrée |hit-enter| et questions oui/non.
+							*hl-Search*
+Search		Surbrillance du dernier motif de recherche (voir 'hlsearch') ;
+		également utilisé pour mettre en surbrillance la ligne
+		courante dans la fenêtre mise-au-point et d'autres éléments
+		nécessitant d'être mis en exergue.
+							*hl-SpecialKey*
+SpecialKey	Touches Méta et spéciales listées avec ":map" ; également pour
+		le texte utilisé pour l'affichage des caractères
+		non-imprimables dans le texte, voir 'listchars' ; en général :
+		tout texte affiché différemment de ce qu'il est réellement.
+							*hl-StatusLine*
+StatusLine	Ligne d'état de la fenêtre courante.
+							*hl-StatusLineNC*
+StatusLineNC	Lignes d'état des fenêtres non-courantes.
+		NOTE : Si la valeur est la même que pour StatusLine, Vim
+		utilisera "^^^" dans la ligne d'état de la fenêtre courante.
+							*hl-Title*
+Title		Titre pour les sorties de ":set all", ":autocmd", etc.
+							*hl-Visual*
+Visual		Sélection du mode Visuel.
+							*hl-VisualNOS*
+VisualNOS	Sélection du mode Visuel quand Vim n'est « pas propriétaire de
+		la sélection » ; seuls l'IHM graphique X11 |gui-x11| et le
+		presse-papiers X |xterm-clipboard| supportent cela.
+							*hl-WarningMsg*
+WarningMsg	Messages d'avertissements.
+							*hl-WildMenu*
+WildMenu	Correspondance courante dans le complètement 'wildmenu'.
+
+						*hl-User1* *hl-User1..9*
+La syntaxe de 'statusline' autorise l'utilisation de 9 surbrillances
+différentes dans la ligne d'état et la règle (via 'rulerformat'). Les noms
+vont de User1 à User9.
+
+Pour l'IHM graphique, vous pouvez utiliser ces groupes pour fixer les couleurs
+pour le menu, les ascenseurs et les bulles d'aide. Ils n'ont pas par défaut.
+Cela ne marche pas dans l'IHM graphique Win32. Seuls trois arguments de
+surbrillance ont un effet ici : "font", "guibg" et "guifg".
+							*hl-Menu*
+Menu		Police, couleurs de premier plan et de fond courantes pour les
+		menus. Également utilisé pour la barre d'outils.
+		Arguments de surbrillance applicables : "font", "guibg" et
+		"guifg".
+		NOTE : Pour Motif et Athena, l'argument de police spécifie en
+		fait un jeu de polices à chaque fois, indépendamment de
+		'guifontset', et de telle façon qu'il soit adapté à la langue
+		courante quand celle-ci est définie (avec |:language|).
+							*hl-Scrollbar*
+Scrollbar	Couleurs de premier plan et de fond courantes pour les
+		ascenseurs de la fenêtre principale.
+		Arguments de surbrillance applicables : "guibg" et "guifg".
+							*hl-Tooltip*
+Tooltip		Police, couleurs de premier plan et de fond courantes pour les
+		bulles d'aide.
+		Arguments de surbrillance applicables : "font", "guibg" et
+		"guifg".
+		NOTE : Pour Motif et Athena, l'argument de police spécifie en
+		fait un jeu de polices à chaque fois, indépendamment de
+		'guifontset', et de telle façon qu'il soit adapté à la langue
+		courante quand celle-ci est définie (avec |:language|).
+
+==============================================================================
+13. Lier des groupes		    *:hi-link* *:highlight-link* *E412* *E413*
+
+Supposons que vous vouliez utiliser la même surbrillance pour plusieurs
+groupes de syntaxe : vous pouvez facilement y parvenir en liant les groupes
+concernés à un groupe de surbrillance commun et en définissant les attributs
+de surbrillance pour ce seul groupe.
+
+Pour définir un lien :
+
+	:hi[ghlight][!] [default] link {groupe-depart} {groupe-cible}
+
+Pour supprimer un lien :
+
+	:hi[ghlight][!] [default] link {groupe-depart} NONE
+
+NOTES :							*E414*
+- Si {groupe-depart} et/ou {groupe-cible} n'existent pas, ils sont créés. Vous
+  n'obtiendrez pas de message d'erreur pour un groupe inexistant.
+- Dès que vous utilisez une commande ":highlight" pour un groupe lié, le lien
+  est supprimé.
+- Si {groupe-depart} possède déjà des attributs de surbrillance, le lien n'est
+  pas créé, à moins que '!' ne soit donné. Pour une commande ":highlight link"
+  dans un fichier sourcé, vous n'aurez pas de message d'erreur. Cela peut être
+  utile pour ne pas lier les groupes possédant déjà des attributs.
+
+					*:hi-default* *:highlight-default*
+L'argument [default] permet de choisir la surbrillance par défaut d'un groupe.
+Si une surbrillance a déjà été spécifiée pour le groupe, la commande sera
+ignorée. De même s'il y a un lien existant.
+
+L'utilisation de [default] est particulièrement utile pour permettre de
+recouvrir les définitions d'un fichier de syntaxe spécifique. Par exemple, le
+fichier de syntaxe C contient : >
+	:highlight default link cComment Comment
+Si vous préférez utiliser le groupe de surbrillance Question pour les
+commentaires C, ajoutez ceci dans votre fichier vimrc : >
+	:highlight link cComment Question
+Sans l'argument "default" dans le fichier de syntaxe C, la surbrillance serait
+recouverte lorsque le fichier de syntaxe est chargé.
+
+==============================================================================
+14. Nettoyage						*:syn-clear* *E391*
+
+Pour effacer tout ce qui a pu être activé par la syntaxe dans le tampon
+courant, vous pouvez utiliser cette commande : >
+
+	:syntax clear
+
+Ceci doit être utilisé quand vous voulez désactiver la coloration syntaxique,
+ou bien activer une autre coloration. Normalement, cette commande n'est pas
+nécessaire dans un fichier de syntaxe, car la syntaxe est déjà effacée par les
+autocommandes qui chargent ce fichier.
+   Cette commande supprime en outre la variable "b:current_syntax", car aucune
+syntaxe n'est chargée après son exécution.
+
+Si vous souhaitez désactiver la coloration syntaxique dans tous les tampons,
+vous devez supprimer les autocommandes qui chargent les fichiers de syntaxe :
+>
+	:syntax off
+
+En fait, cette commande exécute la ligne suivante : >
+
+	:source $VIMRUNTIME/syntax/nosyntax.vim
+
+Voir le fichier "nosyntax.vim" pour plus de détails. NOTE : Pour que ceci
+fonctionne, $VIMRUNTIME doit être valide. |$VIMRUNTIME|
+
+Pour nettoyer des groupes de syntaxe spécifiques dans le tampon courant : >
+
+	:syntax clear {nomgroupe} ...
+
+Ceci supprime tous les motifs et mots-clés pour {nomgroupe}.
+
+Pour nettoyer des listes de groupes de syntaxe spécifiques dans le tampon
+courant : >
+
+	:syntax clear @{nom-listegroupes} ...
+
+Ceci fixe le contenu de {nom-listegroupes} à une liste vide.
+
+						*:syntax-reset* *:syn-reset*
+Si vous avez modifié les couleurs et les avez corrompues, utilisez cette
+commande pour revenir à leurs valeurs par défaut : >
+
+	:syntax reset
+
+Ceci ne modifie pas les couleurs de l'option 'highlight'.
+
+NOTE : Les couleurs de syntaxe que vous définissez dans votre fichier vimrc
+seront également remises à leurs valeurs par défaut.
+   NOTE : Si vous utilisez un jeu de couleurs, les couleurs définies par le
+jeu de couleurs pour la coloration syntaxique seront perdues.
+
+En fait, cette commande exécute les lignes suivantes : >
+
+	:let g:syntax_cmd = "reset"
+	:runtime! syntax/syncolor.vim
+
+NOTE : Ceci utilise l'option 'runtimepath'.
+
+							*syncolor*
+Pour utiliser des couleurs différentes pour la coloration syntaxique, vous
+pouvez ajouter un fichier de script Vim pour définir ces couleurs. Placez ce
+fichier dans un répertoire de 'runtimepath' qui vient après $VIMRUNTIME, afin
+que vos paramètres recouvrent les couleurs par défaut. De cette façon, ces
+couleurs seront utilisées après la commande ":syntax reset".
+
+Sous Unix, vous pouvez utiliser le fichier "~/.vim/after/syntax/syncolor.vim".
+Exemple : >
+
+	if &background == "light"
+	  highlight comment ctermfg=darkgreen guifg=darkgreen
+	else
+	  highlight comment ctermfg=green guifg=green
+	endif
+
+NOTE : Lorsqu'un jeu de couleurs est utilisé, il peut y avoir confusion entre
+les couleurs que vous avez définies et celles provenant du jeu de couleurs.
+Cela dépend du fichier de jeu de couleurs. Voir |:colorscheme|.
+
+							*syntax_cmd*
+La variable "syntax_cmd" est fixée à une des valeurs suivantes quand les
+fichiers "syntax/syncolor.vim" sont chargés :
+    "on"	Commande ":syntax on". Les couleurs de la coloration sont
+		recouvertes mais les liens sont conservés.
+    "enable"	Commande ":syntax enable". Définit des couleurs uniquement
+		pour les groupes qui n'ont pas encore de surbrillance. Utilise
+		":syntax default".
+    "reset"	Commande ":syntax reset" ou chargement d'un jeu de couleurs.
+		Définit toutes les couleurs.
+    "skip"	Ne définit pas les couleurs. Utilisé pour sauter les
+		paramétrages par défaut quand un fichier "syncolor.vim" les a
+		déjà effectués précédemment dans 'runtimepath'.
+
+==============================================================================
+15. Marqueurs en surbrillance				*tag-highlight*
+
+Pour mettre en surbrillance tous les marqueurs dans votre fichier, vous pouvez
+utiliser les mappages suivants >
+
+	:map <F11>  :sp tags<CR>:%s/^\([^	:]*:\)\=\([^	]*\).*/syntax keyword Tag \2/<CR>:wq! tags.vim<CR>/^<CR><F12>
+	:map <F12>  :so tags.vim<CR>
+
+où :
+- <F11> génère un fichier "tags.vim" et met les marqueurs en surbrillance ;
+- <F12> met juste les marqueurs en surbrillance, en suivant un fichier
+  "tags.vim" existant.
+
+ATTENTION : Plus le fichier de marqueurs est long, plus cela sera lent et
+plus Vim consommera de mémoire.
+
+Il est également possible de ne mettre en surbrillance que les définitions de
+types, unions et structures. Pour cela, vous devez utiliser le programme
+"Exuberant ctags" (disponible sur "http://ctags.sf.net/").
+
+Ajoutez ces lignes dans votre fichier Makefile : >
+
+  # Crée un fichier de coloration pour les types. Requiert les programmes
+  # "Exuberant ctags" et "awk".
+  types: types.vim
+  types.vim: *.[ch]
+	ctags -i=gstuS -o- *.[ch] |\
+		awk 'BEGIN{printf("syntax keyword Type\t")}\
+			{printf("%s ", $$1)}END{print ""}' > $@
+
+Et ajoutez ceci dans votre vimrc : >
+
+  " Charge le fichier de coloration types.vim si il existe.
+  autocmd BufRead,BufNewFile *.[ch] let nomfich = expand('<afile>:p:h') . '/types.vim'
+  autocmd BufRead,BufNewFile *.[ch] if filereadable(nomfich)
+  autocmd BufRead,BufNewFile *.[ch]   exe 'so ' . nomfich
+  autocmd BufRead,BufNewFile *.[ch] endif
+
+==============================================================================
+16. Xterms couleur				*xterm-color* *color-xterm*
+
+La plupart des xterms couleur n'ont que huit couleurs. Si vous n'avez pas de
+couleurs avec votre configuration par défaut, essayez d'ajouter ces lignes
+dans votre fichier vimrc : >
+	:if &term =~ "xterm"
+	:  if has("terminfo")
+	:    set t_Co=8
+	:    set t_Sf=<Echap>[3%p1%dm
+	:    set t_Sb=<Echap>[4%p1%dm
+	:  else
+	:    set t_Co=8
+	:    set t_Sf=<Echap>[3%dm
+	:    set t_Sb=<Echap>[4%dm
+	:  endif
+	:endif
+<	[<Echap> désigne un véritable échappement, tapez "CTRL-V <Echap>".]
+
+Vous pouvez modifier le premier "if" pour entrer le nom de votre terminal,
+p. ex. "dtterm" au lieu de "xterm".
+
+NOTE : Ces configurations doivent être effectuées AVANT l'exécution de
+":syntax on". Sinon, les couleurs risquent d'être mauvaises.
+
+							*xiterm* *rxvt*
+Il a été rapporté que les paramètres ci-dessus convenaient pour xiterm et
+rxvt. Mais si vous utilisez 16 couleurs dans un rxvt, ceci devrait marcher
+avec terminfo : >
+	:set t_AB=<Echap>[%?%p1%{8}%<%t25;%p1%{40}%+%e5;%p1%{32}%+%;%dm
+	:set t_AF=<Echap>[%?%p1%{8}%<%t22;%p1%{30}%+%e1;%p1%{22}%+%;%dm
+<
+							*colortest.vim*
+Pour tester votre configuration de couleurs, un fichier a été inclus dans la
+distribution Vim. Pour l'utiliser, exécutez ces commandes : >
+	:e $VIMRUNTIME/syntax/colortest.vim
+	:so %
+
+Certaines versions de xterm (et d'autres terminaux, comme la console linux)
+peuvent afficher des couleurs de premier plan plus claires, même quand le
+nombre de couleurs est défini à 8. C'est pourquoi Vim positionne l'attribut
+"cterm=bold" pour ces couleurs de premier plan claires, lorsque 't_Co' vaut 8.
+
+							*xfree-xterm*
+Pour avoir 16 couleurs ou plus, procurez-vous la dernière version de xterm
+(elle est normalement distribuée avec XFree86 v. 3.3 et ultérieures). Vous
+pourrez aussi la trouver sur :
+	http://www.clark.net/pub/dickey/xterm/
+La configuration de xterm qui suit est intéressante. Cela permet d'utiliser 88
+couleurs et d'activer la fonctionnalité termcap-query, qui autorise Vim à
+demander à xterm combien de couleurs il supporte : >
+	./configure --disable-bold-color --enable-88-color --enable-tcap-query
+Si vous n'avez que 8 couleurs, vérifiez les paramètres de compilation de
+votre xterm. (Voir aussi |UTF8-xterm| pour utiliser cet xterm avec un jeu de
+caractères UTF-8.)
+
+Cet xterm devrait fonctionner avec ces lignes dans votre fichier vimrc (pour
+16 couleurs) : >
+	:if has("terminfo")
+	:  set t_Co=16
+	:  set t_AB=<Echap>[%?%p1%{8}%<%t%p1%{40}%+%e%p1%{92}%+%;%dm
+	:  set t_AF=<Echap>[%?%p1%{8}%<%t%p1%{30}%+%e%p1%{82}%+%;%dm
+	:else
+	:  set t_Co=16
+	:  set t_Sf=<Echap>[3%dm
+	:  set t_Sb=<Echap>[4%dm
+	:endif
+<	[<Echap> désigne un véritable échappement, tapez "CTRL-V <Echap>".]
+
+Sans |+terminfo|, Vim reconnaîtra ces paramètres et traduira automatiquement
+les couleurs cterm de 8 et plus en "<Echap>[9%dm" et "<Echap>[10%dm". Les
+couleurs au-dessus de 16 sont aussi traduites automatiquement.
+
+Pour 256 couleurs, il a été rapporté que ceci fonctionnait : >
+
+	:set t_AB=<Echap>[48;5;%dm
+	:set t_AF=<Echap>[38;5;%dm
+
+Ou bien fixez simplement la variable d'environnement TERM à "xterm-color" ou
+"xterm-16color", et faites un essai pour voir si ça marche.
+
+Ces ressources X pourraient vous être utiles (dans votre ~/.Xdefaults) : >
+	XTerm*color0:			#000000
+	XTerm*color1:			#c00000
+	XTerm*color2:			#008000
+	XTerm*color3:			#808000
+	XTerm*color4:			#0000c0
+	XTerm*color5:			#c000c0
+	XTerm*color6:			#008080
+	XTerm*color7:			#c0c0c0
+	XTerm*color8:			#808080
+	XTerm*color9:			#ff6060
+	XTerm*color10:			#00ff00
+	XTerm*color11:			#ffff00
+	XTerm*color12:			#8080ff
+	XTerm*color13:			#ff40ff
+	XTerm*color14:			#00ffff
+	XTerm*color15:			#ffffff
+	Xterm*cursorColor:		Black
+
+[NOTE : Le champ cursorColor est nécessaire pour éviter un bogue, qui modifie
+la couleur du curseur à la couleur du dernier texte affiché. Ceci a été
+corrigé dans une version récente de xterm, mais qui n'est pas encore utilisée
+par tout le monde.]
+
+Pour bénéficier immédiatement de ces modifications, rechargez le fichier
+~/.Xdefaults dans le X Option database Manager XXX (cela n'est nécessaire que
+juste après avoir modifié le fichier ".Xdefaults") : >
+	xrdb -merge ~/.Xdefaults
+<
+					*xterm-blink* *xterm-blinking-cursor*
+Pour faire clignoter le curseur dans un xterm, voir "tools/blink.c". Ou bien
+utilisez le xterm de Thomas Dickey à un niveau de rustine supérieur à 107
+(voir ci-dessus où se le procurer), avec ces ressources : >
+	XTerm*cursorBlink:	on
+	XTerm*cursorOnTime:	400
+	XTerm*cursorOffTime:	250
+	XTerm*cursorColor:	White
+<
+							*hpterm-color*
+Ces paramètres fonctionnent (plus ou moins bien) pour un hpterm, qui supporte
+uniquement 8 couleurs de premier plan : >
+	:if has("terminfo")
+	:  set t_Co=8
+	:  set t_Sf=<Echap>[&v%p1%dS
+	:  set t_Sb=<Echap>[&v7S
+	:else
+	:  set t_Co=8
+	:  set t_Sf=<Echap>[&v%dS
+	:  set t_Sb=<Echap>[&v7S
+	:endif
+<	[<Echap> désigne un véritable échappement, tapez "CTRL-V <Echap>".]
+
+						*Eterm* *enlightened-terminal*
+Il a été rapporté que ces paramètres fonctionnaient pour l'émulateur de
+terminal d'Enlightenment, ou Eterm. Ils devraient marcher avec tous les
+terminaux de type xterm qui utilisent l'attribut gras pour obtenir des
+couleurs claires. Ajoutez un ":if" comme ci-dessus lorsque c'est nécessaire. >
+       :set t_Co=16
+       :set t_AF=^[[%?%p1%{8}%<%t3%p1%d%e%p1%{22}%+%d;1%;m
+       :set t_AB=^[[%?%p1%{8}%<%t4%p1%d%e%p1%{32}%+%d;1%;m
+<
+							*TTpro-telnet*
+Ces paramètres devraient fonctionner pour TTpro telnet. Tera Term Pro est un
+graticiel à code ouvert pour MS-Windows. >
+	:set t_Co=16
+	:set t_AB=^[[%?%p1%{8}%<%t%p1%{40}%+%e%p1%{32}%+5;%;%dm
+	:set t_AF=^[[%?%p1%{8}%<%t%p1%{30}%+%e%p1%{22}%+1;%;%dm
+Assurez-vous également que Setup -> Window -> Full Color est activé et que
+Setup -> Font -> Enable Bold ne l'est PAS. XXX
+[Information fournie par John Love-Jensen <eljay@Adobe.COM>.]
+
+ vim:tw=78:ts=8:ft=help:norl:

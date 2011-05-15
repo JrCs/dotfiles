@@ -1,0 +1,985 @@
+*vi_diff.txt*   Pour Vim version 6.2.
+
+
+		 MANUEL de RÉFÉRENCE VIM - par Bram Moolenaar
+
+
+Différences entre Vim et Vi				*vi-differences*
+
+Tout au long des fichiers de l'aide, les différences entre Vim et Vi/Ex sont
+signalées à l'aide d'accolades, par exemple : « {absent de vi} ». Ce fichier
+aborde seulement les points qui n'ont pas déjà été mentionnés dans les autres
+fichiers et en donne une vue d'ensemble.
+
+Vim est en grande partie conforme à la norme POSIX 1003.2-1. La seule commande
+connue pour être manquante est ":open". Il existe probablement de nombreuses
+petites différences (soit parce que Vim est incomplet, soit à cause des
+imprécisions de POSIX).
+
+1. Commandes manquantes			|missing-commands|
+2. Options manquantes			|missing-options|
+3. Limitations				|limits|
+4. Ajouts les plus intéressants		|vim-additions|
+5. Autres fonctionnalités de Vim	|other-features|
+6. Arguments de la ligne de commande	|cmdline-arguments|
+
+==============================================================================
+1. Commandes manquantes					*missing-commands*
+
+Cette commande existe dans Vi, mais pas dans Vim :
+
+:o[pen]		{Vi : lance l'édition en mode Open}	*:o* *:op* *:open*
+
+==============================================================================
+2. Options manquantes					*missing-options*
+
+Ces options existent dans le Vi d'Unix, mais pas dans Vim. Si vous tentez de
+fixer l'une d'entre elles, vous n'obtiendrez pas de message d'erreur, mais sa
+valeur ne sera pas utilisée et il ne sera pas possible de l'afficher.
+
+autoprint (ap)		booléen	(activé par défaut)	*'autoprint'* *'ap'*
+beautify (bf)		booléen	(désactivé par défaut)	*'beautify'* *'bf'*
+flash (fl)		booléen	(??? par défaut)	*'flash'* *'fl'*
+graphic (gr)		booléen	(désactivé par défaut)	*'graphic'* *'gr'*
+hardtabs (ht)		nombre	(8 par défaut)		*'hardtabs'* *'ht'*
+	Nombre d'espaces dont un <Tab> déplace sur l'affichage
+mesg			booléen	(activé par défaut)	*'mesg'*
+novice			booléen	(désactivé par défaut)	*'novice'*
+open			booléen	(activé par défaut)	*'open'*
+optimize (op)		booléen	(désactivé par défaut)	*'optimize'* *'op'*
+prompt			booléen	(activé par défaut)	*'prompt'*
+redraw			booléen	(désactivé par défaut)	*'redraw'*
+slowopen (slow)		booléen	(désactivé par défaut)	*'slowopen'* *'slow'*
+sourceany		booléen	(désactivé par défaut)	*'sourceany'*
+window (wi)		nombre	(23 par défaut)		*'window'* *'wi'*
+w300			nombre	(23 par défaut)		*'w300'*
+w1200			nombre	(23 par défaut)		*'w1200'*
+w9600			nombre	(23 par défaut)		*'w9600'*
+
+==============================================================================
+3. Limitations						*limits*
+
+Vim n'a que peu de limitations envers les fichiers qu'il peut éditer {Vi ne
+prend pas en charge les caractères <NUL> ou supérieurs à 128, limite la
+longueur des lignes et possède de nombreuses autres limitations}.
+
+							*E340*
+Longueur maximale d'une ligne	Sur les machines dont les entiers ("int") font
+				16 bits (Amiga et DOS en mode réel) : 32 767
+				caractères ; 2 147 483 647 sinon. Les lignes
+				plus longues sont coupées.
+       
+Nombre maximal de lignes	2 147 483 647 lignes.
+
+Taille maximale de fichier	2 147 483 647 octets (2 Go) quand les entiers
+				longs ("long") font 32 bits ; beaucoup plus
+				quand ils font 64 bits. Également limitée par
+				l'espace disponible sur le disque pour le
+				fichier d'échange |swap-file|.
+
+							*E75*
+Longueur d'un nom de fichier	Unix et Win32 : 1024 caractères, 256 sinon (ou
+				autant que le système en supporte).
+
+Longueur d'une option
+chaîne expansée			Unix et Win32 : 1024 caractères, 256 sinon.
+
+Largeur maximale du terminal	Unix et Win32 : 1024 caractères, 256 sinon.
+
+Longueur maximale du ctg
+d'un mappage			50 caractères.
+
+Nombre maximal de types de
+surbrillance différents		223 types.
+
+Les données nécessaires aux annulations et le texte contenu dans les registres
+sont conservés en mémoire. Ainsi, lorsque vous effectuez des (gros)
+changements, la quantité de mémoire (virtuelle) disponible limite le nombre de
+niveaux d'annulation et le texte que les registres peuvent contenir. Sont
+également conservés en mémoire l'historique de la ligne de commande, les
+messages d'erreurs du mode mise-au-point, etc.
+
+
+LIMITES À L'UTILISATION DE LA MÉMOIRE
+-------------------------------------
+
+L'option 'maxmem' ('mm') permet de préciser la quantité maximale de mémoire
+utilisée pour un tampon (en kilo-octets). 'maxmemtot' permet de préciser la
+quantité maximale de mémoire utilisée pour tous les tampons (en kilo-octets).
+Les valeurs par défaut dépendent du système utilisé. Pour Amiga et MS-DOS,
+'maxmemtot' est fixé selon la quantité de mémoire disponible. Si vous ne
+souhaitez pas que Vim utilise un fichier d'échange pendant l'édition, fixez
+'maxmem' et 'maxmemtot' à une très grande valeur. Le fichier d'échange ne sera
+alors utilisé que pour le recouvrement. Si vous ne souhaitez pas de fichier
+d'échange du tout, fixez 'updatecount' à 0, ou bien utilisez l'argument "-n"
+lorsque vous lancez Vim. NOTE : L'option 'maxmem' n'est prise en compte qu'à
+la création d'un tampon. La modification de cette option n'affecte pas les
+tampons déjà chargés. De cette manière, vous pouvez définir différentes
+valeurs pour différents fichiers. 'maxmemtot' reste valable en permanence.
+
+==============================================================================
+4. Ajouts les plus intéressants				*vim-additions*
+
+Compatibilité Vi					|'compatible'|
+	Bien que Vim soit compatible à 99 % avec Vi, certains points de Vi
+	peuvent être considérés comme des bogues, ou alors nécessiter quelques
+	améliorations. Vim démarre pourtant dans un mode imitant le plus
+	possible le « vrai » Vi. Pour qu'il se comporte un petit peu mieux,
+	vous pouvez désactiver l'option 'compatible' >
+		:set nocompatible
+<	ou lancer Vim avec l'argument "-N" : >
+		vim -N
+<	Ce comportement est automatique si vous disposez d'un fichier vimrc.
+	Voir |startup|.
+	L'option 'cpoptions' peut être utilisée pour activer/désactiver la
+	compatibilité Vi sur certains points particuliers. |'cpoptions'|
+	
+Support pour différents systèmes
+	Vous pouvez utiliser Vim sur :
+	- tous les systèmes Unix (il fonctionne sur tous les systèmes sur
+	  lesquels il a été testé, bien que l'IHM graphique et l'interface
+	  Perl puissent ne pas fonctionner partout) ;
+	- Amiga (500, 1000, 1200, 2000, 3000, 4000,...) ;
+	- MS-DOS en mode réel (aucun pilote supplémentaire n'est nécessaire) ;
+	- en mode protégé sous Windows 3.1 et MS-DOS (pilote DPMI nécessaire) ;
+	- Windows 95 et NT, avec le support des noms de fichiers longs ;
+	- OS/2 (nécessite "emx.dll") ;
+	- Atari MiNT ;
+	- VMS ;
+	- BeOS ;
+	- Macintosh ;
+	- RISC OS ;
+	- IBM OS/390 (alias z/OS).
+
+Annulation multi-niveaux				|undo|
+	'u' revient en arrière, CTRL-R ravance dans le temps. Fixez l'option
+	'undolevels' au nombre de changements devant être mémorisés (1000 par
+	défaut). Fixez 'undolevels' à 0 pour obtenir une annulation à un
+	niveau compatible avec Vi. Fixez-le à -1 si vous ne voulez aucune
+	annulation.
+
+	Quand tous les changements dans un tampon ont été annulés, le tampon
+	n'est plus considéré comme modifié. Vous pouvez le quitter avec ":q",
+	sans le '!'.
+
+L'Interface Homme/Machine Graphique			|gui|
+	Le support de l'IHM graphique comprend les menus, la souris, les
+	barres de défilement, etc. Vous pouvez définir vos propres menus.
+	Support amélioré des touches Ctrl/Maj/Alt en combinaison avec les
+	touches spéciales et la souris.
+	L'IHM graphique existe actuellement pour X11 (avec les interfaces
+	Motif et Athena), Win32 (Windows 95 et NT), BeOS, Amiga et Macintosh.
+	XXX
+
+Fenêtres et tampons multiples				|windows.txt|
+	Vim peut partager l'écran en plusieurs fenêtres, chacune éditant un
+	tampon différent ou le même tampon à différents emplacements. Les
+	tampons peuvent être chargés (et modifiés) sans être nécessairement
+	affichés dans une fenêtre. On parle alors de tampon caché.
+	De nombreuses commandes et options ont été ajoutées pour ces
+	fonctionnalités.
+
+Coloration syntaxique					|:syntax|
+	Vim peut mettre en surbrillance des mots-clés, des motifs et d'autres
+	choses encore. Un certain nombre de commandes ":syntax" sont utilisées
+	pour cela et peuvent servir à la coloration de la plupart des langages
+	et des types de fichiers. De nombreux fichiers sont inclus pour la
+	coloration des langages les plus courants, tels que le C, le C++,
+	Java, Pascal, les Makefile, les scripts shell, etc. Les couleurs
+	employées pour la coloration peuvent être définies pour des terminaux
+	classiques, des terminaux couleur et l'IHM graphique avec la commande
+	":highlight".
+
+Repliage						|folding|
+	Une plage de ligne peut être représentée comme une seule ligne 
+	« repliée ». Cela permet d'avoir un vue d'ensemble sur un fichier et
+	de déplacer rapidement des blocs de texte. Les replis peuvent être
+	créés manuellement, selon la syntaxe d'un fichier, selon
+	l'indentation, etc.
+
+Greffons						|add-plugin|
+	Les possibilités de Vim peuvent être étendues en déposant un fichier
+	de greffon dans le répertoire approprié. Cela offre une manière simple
+	pour utiliser des scripts Vim écrits par d'autres personnes. Les
+	greffons peuvent concerner tous les fichiers ou n'être destinés qu'à
+	certains types de fichiers.
+
+Répéter une série de commandes				|q|
+	"q{c}" démarre l'enregistrement des caractères saisis dans le registre
+	nommé {c} (ajoute à la fin du registre si son nom est en majuscule).
+	Un 'q' supplémentaire arrête l'enregistrement. Le registre peut alors
+	être exécuté avec la commande "@{c}". C'est très utile pour répéter
+	une action compliquée.
+
+Mode Insertion flexible					|ins-special-special|
+	Les touches fléchées peuvent être utilisées pour se déplacer dans le
+	fichier en mode Insertion. Cela sépare l'insertion en deux parties en
+	ce qui concerne l'annulation et la restauration.
+
+	CTRL-O peut être utilisé pour exécuter une commande simple en mode
+	Normal. Cela revient à taper <Echap>, puis la commande, puis 'a'.
+
+Mode Visuel						|Visual-mode|
+	Le mode Visuel peut être utilisé pour mettre en surbrillance une
+	partie du texte puis donner une commande pour la traiter. C'est une
+	alternative (plus simple d'utilisation) à la saisie d'un opérateur
+	suivie d'un déplacement à la fin du texte sur lequel il doit opérer.
+	"v" et "V" permettent de passer en mode Visuel. "v" travaille sur les
+	caractères et "V" sur les lignes. Le déplacement du curseur étend la
+	zone Visuel. Elle est affichée en surbrillance à l'écran. Vous pouvez
+	atteindre l'autre extrémité de la zone en tapant "o". Le texte de la
+	zone Visuel peut être affecté par un opérateur :
+		d	couper					     ["Delete"]
+		c	changer
+		y	copier					       ["Yank"]
+		> ou <	augmenter ou diminuer l'indentation
+		!	filtrer avec un programme externe
+		=	filtrer avec `indent`
+		:	commencer une commande ":" pour la zone Visuel
+		gq	mettre le texte en forme sur 'textwidth' colonnes
+		J	fusionner les lignes			       ["Join"]
+		~	inverser la casse
+		u	passer en minuscules
+		U	passer en majuscules			  ["Uppercase"]
+
+Opérateurs par blocs					|visual-block|
+	En mode Visuel, il est possible de sélectionner un bloc de texte
+	rectangulaire. Lancez le mode Visuel avec CTRL-V : le bloc peut être
+	coupé ("d"), copié ("y") ou voir sa casse modifiée ("~", "u" et "U").
+	Un bloc coupé ou copié peut être collé dans le texte avec les
+	commandes "p" et "P".
+
+Système d'aide en ligne					|:help|
+	L'aide est affichée dans une fenêtre. Les commandes habituelles
+	peuvent être utilisées pour se déplacer, rechercher une chaîne, etc.
+	Les marqueurs sont utilisés pour naviguer dans les fichiers de l'aide,
+	comme des liens hypertextes. La commande ":help" accepte un argument
+	afin d'accéder rapidement à l'aide sur un sujet précis. <F1> est un
+	raccourci vers le système d'aide. L'option 'helpfile' permet de fixer
+	le nom du fichier contenant l'index de l'aide.
+
+Édition et historique de la ligne de commande		|cmdline-editing|
+	Vous pouvez insérer ou effacer des caractères n'importe où dans la
+	ligne de commande en utilisant les touches fléchées. Les touches
+	fléchées droite/gauche servent à se déplacer d'un caractère vers
+	l'avant/l'arrière. Les mêmes touches en combinaison avec Maj
+	permettent de se déplacer d'un mot vers l'avant/l'arrière.
+	CTRL-B/CTRL-E peuvent être utilisés pour aller au début/à la fin de
+	la ligne de commande.
+							|cmdline-history|
+	Les lignes de commandes sont mémorisées. Les touches fléchées haut/bas
+	permettent de rappeler les lignes de commande précédentes. Le nombre
+	de lignes à mémoriser peut être défini avec l'option 'history'.
+	L'historique des commandes est distinct de l'historique des motifs de
+	recherche.
+
+Complètement de la ligne de commande			|cmdline-completion|
+	Lors de la saisie d'une ligne de commande (sur la ligne située en bas
+	de l'écran), vous pouvez taper <Tab> pour compléter...
+	    ...				EXEMPLE  ~
+	    une commande		:e<Tab>
+	    un marqueur			:ta scr<Tab>
+	    une option			:set sc<Tab>
+	    la valeur d'une option	:set hf=<Tab>
+	    un nom de fichier		:e ve<Tab>
+	    etc.
+
+	S'il y a plusieurs correspondances, CTRL-N (["Next"], « suivant ») et
+	CTRL-P (« Précédent ») permettront de les faire défiler. <Tab>
+	fonctionne comme CTRL-N, mais reboucle à la première correspondance.
+
+	L'option 'wildchar' permet de définir le caractère utilisé pour le
+	complètement de la ligne de commande. Sa valeur par défaut est <Tab>.
+	CTRL-D peut être tapé après un joker (incomplet) ; toutes les
+	correspondances seront listées. CTRL-A insérera toutes les
+	correspondances, et CTRL-L leur plus longue partie commune.
+
+Complètement en mode Insertion				|ins-completion|
+	En mode Insertion, les touches CTRL-N et CTRL-P peuvent être utilisées
+	pour compléter un mot qui a déjà été utilisé. |i_CTRL-N|
+	CTRL-X permet d'activer un sous-mode particulier, dans lequel le
+	complètement porte sur :
+	|i_CTRL-X_CTRL-F|   les noms de fichiers
+	|i_CTRL-X_CTRL-K|   les mots d'un dictionnaire
+	|i_CTRL-X_CTRL-I|   les mots d'un fichier inclus
+	|i_CTRL-X_CTRL-L|   des lignes complètes
+	|i_CTRL-X_CTRL-]|   les mots d'un fichier de marqueurs
+	|i_CTRL-X_CTRL-D|   les définitions et les macros
+
+Support des lignes longues				|'wrap'| |'linebreak'|
+	Si l'option 'wrap' est désactivée, les lignes longues ne seront pas
+	enroulées et ne seront que partiellement affichées. Quand le curseur
+	est déplacé vers une partie non affichée, l'écran défile
+	horizontalement. L'option 'sidescroll' permet de fixer le nombre
+	minimal de colonnes pour le défilement. Les commandes "zh" et "zl"
+	peuvent être utilisées pour faire défiler l'écran latéralement.
+	Il est possible d'utiliser l'option 'linebreak' pour provoquer la
+	césure (uniquement à l'écran) des lignes longues sur des blancs entre
+	les mots. C'est pratique pour éditer un paragraphe formé d'une seule
+	ligne (par exemple pour du texte lu ultérieurement par un programme de
+	PAO). Vous pouvez déplacer le curseur vers le haut/bas avec les
+	commandes "gk" et "gj".
+
+Mise en forme du texte					|formatting|
+	L'option 'textwidth' permet de limiter automatiquement la longueur des
+	lignes. Elle complète l'option 'wrapmargin' de Vi, qui n'était pas
+	très utile. L'opérateur "gq" peut être utilisé pour mettre en forme
+	une portion de texte (par exemple, "gqap" met en forme le paragraphe
+	courant). Vim dispose de commandes pour l'alignement du texte :
+	":center", ":left", ":right".
+
+Motifs de recherche étendus				|pattern|
+	Il existe de nombreux éléments supplémentaires pour correspondre avec
+	divers éléments de texte. Exemples :
+	- "\n" peut être utilisé dans un motif de recherche pour correspondre
+	  avec une coupure de ligne ;
+	- "x\{2,4} correspond à 2, 3 ou 4 "x" ;
+	- "\s" correspond à un caractère d'espace blanc.
+
+Accélération du cycle édition-compilation-édition	|quickfix|
+	La commande ":make" permet de lancer la compilation et de sauter à la
+	première erreur. Vim peut aussi être invoqué depuis le compilateur
+	avec l'argument "-q". Un fichier contenant les messages d'erreurs du
+	compilateur est interprété, Vim démarre l'édition à la première
+	erreur.
+
+	Chaque ligne du fichier des erreurs est analysée pour y trouver le nom
+	d'un fichier, un numéro de ligne et un message d'erreur. L'option
+	'errorformat' permet de préciser comment traiter la sortie d'un
+	compilateur, avec une chaîne contenant des formateurs à la manière de
+	scanf.
+
+	La commande ":cn" permet de sauter à l'erreur suivante.
+	La commande ":cl" affiche tous les messages d'erreurs. D'autres
+	commandes sont également disponibles (quasiment les mêmes que celle de
+	l'éditeur Z de Manx sur Amiga).
+	L'option 'makeef' précise le nom du fichier contenant les messages
+	d'erreurs.
+	L'option 'makeprg' contient le nom du programme à exécuter lors de
+	l'invocation de la commande ":make".
+	L'option 'shellpipe' contient la chaîne à utiliser pour rediriger la
+	sortie du compilateur vers le fichier d'erreurs.
+
+Indentation améliorée des programmes en C		|'cindent'|
+	Lorsque l'option 'cindent' est activée, l'indentation de chaque ligne
+	est ajustée automatiquement. La syntaxe du C est reconnue presque
+	entièrement. L'option 'cinoptions' permet de définir différents styles
+	d'indentation. L'option 'cinkeys' précise les touches provoquant
+	l'indentation.
+
+	Les commentaires peuvent être mis en forme automatiquement. L'option
+	'comments' précise les caractères débutant et terminant un
+	commentaire. Cela fonctionne de manière optimale pour le C, mais
+	également pour les courriels ('>' au début de la ligne) et d'autres
+	types de texte. L'opérateur "=" permet de réindenter les lignes.
+
+Recherche de mots dans les fichiers inclus		|include-search|
+	La commande "[i" permet de rechercher les correspondances du mot sous
+	le curseur dans le fichier courant et les fichiers inclus. L'option
+	'include' contient un motif auquel doivent correspondre les commandes
+	permettant l'inclusion d'un fichier (la valeur par défaut fonctionne
+	pour les programmes en C). La commande "[I" donne la liste de toutes
+	les correspondances, la commande "[ CTRL-I" saute à une
+	correspondance.
+	Les commandes "[d", "[D" et "[ CTRL-D" font la même chose, mais
+	uniquement pour les lignes dans lesquelles le motif spécifié dans
+	'include' correspond.
+
+Commandes automatiques					|autocommand|
+	Vim est capable d'exécuter automatiquement des commandes lors de la
+	lecture d'un fichier, un enregistrement, le saut vers un autre tampon,
+	etc., en fonction du nom du fichier traité. C'est très utile pour
+	fixer des options et définir des mappages pour des programmes C, de la
+	documentation, du texte brut, des courriels, etc. Cela permet aussi
+	d'éditer des fichiers compactés.
+
+Scripts et expressions					|expression|
+	Des commandes ont été ajoutées pour mettre en oeuvre un langage de
+	script simple mais puissant.
+	|:if|	     exécution conditionnelle (permet par exemple de fixer des
+			options selon la valeur de $TERM)
+	|:while|     répète un groupe de commandes
+	|:echo|	     affiche le résultat d'une expression
+	|:let|	     affecte une valeur à une variable interne, une option,
+			etc.
+	|:execute|   exécute une commande formée par une expression
+	etc.
+
+Viminfo							|viminfo-file|
+	L'historique de la ligne de commande, les marques et les registres
+	peuvent être enregistrés dans un fichier qui sera lu au démarrage.
+	Cela vous permet de rappeler une commande de recherche ou une ligne de
+	commande après être sorti puis avoir redémarré Vim. Il est également
+	possible de sauter à l'endroit où l'édition précédente s'était arrêtée
+	avec "'0". L'option 'viminfo' permet de choisir les éléments à
+	enregistrer dans le fichier viminfo. Celui-ci n'est pas activé par
+	défaut.
+
+Support de la souris					|mouse-using|
+	La souris est supportée dans la version IHM graphique, dans les xterm
+	d'Unix, sous Linux avec gpm, sous MS-DOS et Win32. Vous pouvez
+	l'utiliser pour déplacer le curseur, sélectionner une zone Visuel,
+	coller le contenu d'un registre, etc.
+
+Nommage des touches spéciales				|<>| |key-notation|
+	Toutes les touches spéciales ont à présent un nom, tel que <Up>,
+	<End>, etc.
+	Ce nom peut être utilisé dans les mappages pour en faciliter
+	l'édition.
+
+Édition de fichiers binaires.				|edit-binary|
+	Vim peut éditer les fichiers binaires. Vous pouvez modifier quelques
+	caractères dans un fichier exécutable sans le corrompre. Les
+	caractères NUL (représentés par <NL> en interne) seront préservés.
+	|-b|	     argument de la ligne de commande à utiliser pour lancer
+			l'édition d'un fichier binaire
+	|'binary'|   option activée par "-b" ; évite l'ajout d'un <EOL> à la
+			dernière ligne du fichier
+
+Support du multilinguisme				|multi-lang|
+	Les fichiers utilisant un codage multi-octects peuvent être édités.
+	L'UTF-8 est supporté pour pouvoir gérer différentes langues
+	simultanément, sans changer de polices. |UTF-8|
+	Les messages et les menus sont disponibles dans différentes langues.
+
+==============================================================================
+5. Autres fonctionnalités de Vim			*other-features*
+
+Vous trouverez ici, pêle-mêle, une brochette de fonctionnalités
+supplémentaires bien sympathiques.
+
+
+Lorsque Vim est démarré avec "-s {fichscript}", les caractères lus dans
+{fichscript} sont traités comme si vous les aviez tapés. Si la fin du
+fichier est atteinte avant la sortie de l'éditeur, les caractères suivants
+sont lus depuis la console.
+
+L'option "-w" permet d'enregistrer tous les caractères saisis dans un fichier
+de script. Ce fichier peut ensuite être utilisé pour refaire la même édition,
+éventuellement sur un autre fichier, ou après avoir modifié certaines
+commandes dans le script.
+
+L'option "-o" ouvre une fenêtre pour chaque argument. "-o4" ouvre quatre
+fenêtres.
+
+Vi requiert plusieurs entrées termcap pour pouvoir fonctionner en plein
+écran. Vim n'a besoin que de l'entrée "cm" ["cursor motion"].
+
+
+EN MODE NORMAL
+
+Quand l'option 'showcmd' est activée, les caractères constituant la commande
+courante sont affichés sur la dernière ligne de l'écran. Ils sont effacés
+quand la commande est terminée.
+
+Quand l'option 'ruler' est activée, la position actuelle du curseur est
+affichée sur la dernière ligne de l'écran.
+
+"U" fonctionne même après avoir déplacé la dernière ligne modifiée et après
+"u".
+
+Les caractères avec le 8e bit positionné sont affichés. Les caractères entre
+'~' et 0xA0 sont représentés "~?", "~@", "~A", etc. à l'écran, à moins que
+l'option 'graphic' ne soit activée. XXX
+
+"][" va à la prochaine fin de fonction C ('}' dans la colonne 1).
+   "[]" va à la fin précédente de fonction C ('}' dans la colonne 1).
+
+"]f", "[f" et "gf" permettent d'éditer le fichier dont le nom est sous le
+curseur. "CTRL-W f" partage la fenêtre courante et édite fichier dont le
+nom est sous le curseur.
+
+"*" recherche l'identifiant sous le curseur vers l'avant, "#" vers l'arrière.
+
+"K" lance le programme spécifié par l'option 'keywordprg' avec l'identifiant
+sous le curseur comme argument.
+
+"%" peut être précédé d'un quantificateur. Le curseur saute alors à la ligne
+correspondant à cette position en pourcentage dans le fichier. La fonction "%"
+normale permettant de trouver la parenthèse appariée ignore les délimiteurs
+situées entre doubles-apostrophes.
+
+Avec la commande CTRL-], le curseur peut être positionné n'importe où sur
+l'identifiant.
+
+Les marqueurs utilisés sont mémorisés. Les commandes utilisables avec la pile
+des marqueurs sont CTRL-T, ":pop" et ":tag". ":tags" donne la liste des
+marqueurs.
+
+L'option 'tags' peut contenir une liste de fichiers de marqueurs. Ainsi,
+plusieurs fichiers de marqueurs peuvent être employés. Pour les noms de
+fichiers commençant par un '.', le '.' est remplacé par le chemin du fichier
+courant. Cela permet d'utiliser un fichier de marqueurs situé dans le même
+répertoire que le fichier en cours d'édition.
+
+Les noms de fichiers précédemment utilisés sont mémorisés dans la liste des
+tampons. CTRL-^ accepte un quantificateur, représentant un index dans cette
+liste.
+
+Les motifs de recherche supportent des fonctionnalités supplémentaires. Le
+caractère <NL> est considéré comme un caractère de motif de recherche ou de
+chaîne de substitution d'une commande ":s". Vi le considère comme la fin de la
+commande.
+
+Les recherches peuvent amener le curseur à la fin de la correspondance et
+peuvent inclure un décalage.
+
+Quantificateur ajouté pour "~", ":next", ":Next", "n" et "N".
+
+La commande ":next!" avec 'autowrite' activé n'enregistre pas le fichier. Dans
+Vi, le fichier est enregistré, mais c'est considéré comme un bogue car
+l'utilisateur ne s'y attend pas alors qu'il ne l'est pas avec ":rewind!".
+
+Dans Vi, la saisie d'un <CR> en mode Remplacement efface un caractère
+uniquement quand 'ai' est activé (mais cela n'est visible qu'après avoir
+pressé <Echap>). Vim efface toujours un caractère (et le resultat est
+immédiatement visible).
+
+Ajout de la commande ":wnext". Identique à ":write" suivi de ":next".
+
+La commande ":w!" enregistre toujours le fichier, même lorsqu'il est protégé
+en écriture. Sous Vi, il est nécessaire de faire ":!chmod +w %" puis
+":set noro".
+
+Quand 'tildeop' est activé, "~" est un opérateur (et doit être suivi d'une
+commande de mouvement).
+
+Avec la commande "J" (fusionner les lignes), il vous est possible de
+réinitialiser l'option 'joinspaces' ('js') pour n'avoir qu'un seul espace
+après un point (Vi en insère deux).
+
+"cw" permet de changer un espace blanc formé de plusieurs caractères (Vi est
+déroutant : "cw" ne change qu'un seul espace, alors que "dw" les coupe tous).
+
+"o" et "O" acceptent un quantificateur pour répéter l'insertion (Vi efface une
+partie de l'écran).
+
+Les noms de fichiers précédemment utilisés sont mémorisés dans la liste des
+tampons. ":files" permet d'afficher cette liste.
+   "#<N>" est remplacé par le N-ième nom de fichier alternatif dans la liste.
+   "#<" est remplacé par le nom courant du fichier sans son extension. XXX "%"?
+
+Les drapeaux à la suite des commandes Ex ne sont pas supportés (et il n'est
+pas prévu qu'ils le soient).
+
+Sur les systèmes non-Unix, la commande ":cd" affiche le répertoire courant au
+lieu d'aller dans le répertoire personnel de l'utilisateur (comme il n'y en a
+pas). ":pwd" affiche le répertoire courant sur tous les systèmes.
+
+Après une commande ":cd", les noms de fichiers (ouverts, c'est-à-dire dans
+liste des arguments) continuent de pointer vers les mêmes fichiers sur le
+disque. Avec Vi, ":cd" n'est pas autorisé dans un fichier modifié ; dans les
+autres cas, la signification des noms de fichiers n'est plus la même.
+
+La commande ":source!" lit des commandes Vi depuis un fichier.
+
+La commande ":mkexrc" écrit les options actuellement modifiées et les mappages
+dans un fichier ".exrc". ":mkvimrc" les écrit dans un fichier ".vimrc".
+
+Pas de contrôle de « récursion finale » dans les mappages. Cela permet
+d'écrire ce genre de choses : ":map! zorg ^]zorg".
+
+Quand un mappage commence par un nombre, Vi perd le quantificateur qui le
+précède (par exemple, lors de l'utilisation du mappage ":map g 4G", la
+commande "7g" va à la ligne 4). Ce comportement est considéré comme un bogue
+de Vi. Vim concatène les quantificateurs (dans l'exemple, cela donne "74G"),
+comme on peut s'y attendre.
+
+La commande ":put!" insère le contenu d'un registre au-dessus de la ligne
+courante.
+
+Les commandes "p" et "P" de Vi ne peuvent pas être répétées avec "." quand le
+texte collé fait moins d'une ligne. Avec Vim, elles peuvent toujours être
+répétées.
+
+La commande ":noremap" permet de saisir un mappage qui ne sera pas remappé.
+C'est pratique pour échanger la signification de deux touches. ":cmap",
+":cunmap" et ":cnoremap" permettent l'utilisation de mappages limités à
+l'édition de la ligne de commande. ":imap", ":iunmap" et ":inoremap"
+permettent l'utilisation des mappages limités au mode Insertion. Des commandes
+similaires existent pour les abréviations : ":noreabbrev", ":iabbrev",
+":cabbrev", ":iunabbrev", ":cunabbrev", ":inoreabbrev", ":cnoreabbrev".
+
+Avec Vi, la commande ":map zorg lub" supprime le mappage précédent ":map plop
+zorg". Ce comportement est considéré comme un bogue, et n'est donc pas inclus
+dans Vim. Par contre, la commande ":unmap! lub" supprime bien ":map! zorg lub"
+(comme dans Vi), car il serait très difficile de supprimer des mappages sans
+cela.
+
+Le registre ':' contient le dernière ligne de commande.
+Le registre '%' contient le nom du fichier courant.
+Le registre '.' contient le dernier texte inséré.
+
+La commande ":dis" affiche le contenu des registres à coller.
+
+Les commandes CTRL-O et CTRL-I permettent de sauter aux positions
+précédentes/suivantes. Ce sont les mêmes positions que celles utilisées par la
+commande '', mais elles peuvent être situées dans d'autres fichiers. La
+commande ":jumps" affiche les positions précédentes.
+
+Quand l'option 'shiftround' est activée, l'indentation est basée sur un
+multiple de 'shiftwidth' avec les commandes "<" et ">".
+
+L'option 'scrolljump' permet de fixer le nombre minimal de lignes à faire
+défiler quand le curseur sort de l'écran. Vous pouvez l'utiliser quand le
+défilement est lent.
+
+L'option 'scrolloff' permet de fixer le nombre minimal de lignes à conserver
+au-dessus et en dessous du curseur. Cela vous donne le contexte de
+l'emplacement où vous éditez. Quand l'option est fixée à une très grande
+valeur, la ligne du curseur reste en permanence au milieu de la fenêtre.
+
+Les marques majuscules permettent de sauter entre différents fichiers. La
+commande ":marks" donne la liste de toutes les marques actuellement
+positionnées. Les commandes "']" et "`]" amènent à la fin du dernier texte
+affecté par un opérateur ou collé ; "'[" et "`[" amènent au début.
+
+L'option 'shelltype' permet de déterminer le type de shell utilisé sur Amiga.
+
+L'option 'highlight' permet de définir le mode de surbrillance à utiliser en
+diverses occasions.
+
+Les commandes CTRL-A (ajouter) et CTRL-X (soustraire) sont nouvelles. Le
+quantificateur de ces commandes (1 par défaut) est ajouté/soustrait au nombre
+situé sous ou après le curseur. Ce nombre peut être décimal, octal (commençant
+par un '0') ou hexadécimal (commençant par "0x"). Très utile dans les
+mappages.
+
+Avec la commande ":set", le préfixe "inv" permet d'inverser les options
+booléennes.
+
+Dans Vim comme dans Vi, vous pouvez créer des coupures de ligne avec la
+commande ":substitute" en utilisant CTRL-M. Avec Vi, vous ne pouvez pas
+insérer un vrai CTRL-M dans le texte. Avec Vim, vous pouvez en insérer un en
+le faisant précéder de CTRL-V.
+
+
+EN MODE INSERTION
+
+Si l'option 'revins' est activée, l'insertion a lieu à rebours. Cela permet
+notamment la saisie de l'hébreu. Lors de l'insertion de caractères latins, le
+curseur ne se déplace pas et le texte est décalé vers la droite au fur et à
+mesure. <RetArr>, CTRL-W et CTRL-U fonctionneront également dans la direction
+opposée. CTRL-B active/désactive l'option 'revins'. En mode Remplacement,
+'revins' est sans effet. Nécessite d'être activé à la compilation.
+
+La touche <RetArr> permet de supprimer les indentations automatiques de la
+même manière que CTRL-D.
+
+Vous pouvez utiliser <RetArr>, CTRL-U et CTRL-W sur les coupures de ligne si
+l'option 'backspace' inclut "eol". Vous pouvez utiliser <RetArr> avant la
+position de début d'une insertion si l'option 'backspace' inclut "start".
+
+Quand l'option 'paste' est activée, plusieurs options sont réinitialisées, les
+abréviations et les mappages du mode Insertion sont désactivés. Cela permet de
+coller du texte dans les systèmes de fenêtrage sans aboutir à des résultats
+inattendus. Quand l'option 'paste' est réinitialisée, les anciennes valeurs
+des options sont rétablies.
+
+CTRL-T/CTRL-D augmente/diminue toujours le renfoncement de la ligne courante,
+quelle que soit la colonne où se trouve le curseur.
+
+CTRL-@ (insérer le texte précédemment inséré) fonctionne en permanence (avec
+Vi, cela ne fonctionne que si la commande est saisie comme premier caractère).
+
+CTRL-A fonctionne comme CTRL-@, mais sans quitter le mode Insertion.
+
+"CTRL-R {0-9a-z...}" permet d'insérer le contenu d'un registre.
+
+Quand l'option 'smartindent' est activée, l'indentation automatique des
+programmes C est meilleure. Et encore plus avec 'cindent'.
+
+CTRL-Y et CTRL-E permettent de copier les caractères des lignes au-dessus/en
+dessous du curseur.
+
+Après CTRL-V, vous pouvez saisir un nombre décimal à trois chiffres. L'octet
+correspondant à cette valeur est inséré dans le texte comme un seul caractère.
+Utile pour les caractères internationaux qui ne sont pas présents sur votre
+clavier.
+
+Quand l'option 'expandtab' est activée, un <Tab> est remplacé par le nombre
+d'espaces approprié.
+
+La fenêtre représente toujours le contenu du tampon (ce n'est pas toujours le
+cas avec Vi, notamment lors des changements dans le texte).
+
+Si DIGRAPHS est défini à la compilation de Vim, les digrammes sont supportés.
+Un jeu de digrammes standard est inclus. La commande ":digraph" permet de les
+afficher. Vous pouvez en ajouter avec ":digraph {car1}{car2} {nombre}". La
+saisie d'un digramme se fait avec "CTRL-K {car1} {car2}" ou bien 
+"{car1} <RetArr> {car2}" (uniquement si l'option 'digraph' est activée).
+
+Lors de la répétition d'une insertion, par exemple "10atest <Echap>", Vi ne
+prend en compte 'wrapmargin' que pour la première insertion. Vim le fait pour
+chacune d'elles.
+
+Un quantificateur devant les commandes "i" ou "a" est utilisé pour tout le
+texte. Vi ne l'utilise que pour une seule ligne. "3iabc<NL>def<Esc>"
+insérerait "abcabcabc<NL>def" dans Vi, mais insère
+"abc<NL>defabc<NL>defabc<NL>def" dans Vim.
+
+
+EN MODE LIGNE-DE-COMMANDE
+
+<Echap> termine l'édition de la ligne de commande sans l'exécuter. Dans Vi, la
+commande était exécutée, ce qui n' était pas ce à quoi la plupart de gens
+s'attendaient (taper <Echap> devrait toujours vous ramener en mode Commande).
+Pour éviter des problèmes avec certains mappages obscurs, un <Esc> dans un
+mappage exécutera la commande. Si vous voulez que <Echap> exécute votre
+commande comme dans Vi, vous pouvez utiliser : ":cmap ^V<Esc> ^V<CR>"
+
+
+GÉNÉRAL
+
+L'option 'ttimeout' est similaire à 'timeout', mais uniquement pour le curseur
+et les touches de fonction, pas pour les caractères ordinaires mappés.
+L'option 'timeoutlen' précise le nombre de millisecondes de délai. Si
+l'option 'esckeys' est désactivée, le curseur et les touches de fonction
+commençant par <Esc> ne sont pas reconnues en mode Insertion.
+
+Il existe une option pour chaque chaîne du terminal. Elles peuvent être
+utilisées quand termcap n'est pas supporté ou pour changer des chaînes
+individuellement.
+
+L'option 'fileformat' permet de sélectionner la forme des <EOL> : "dos"
+<CR><NL>, "unix" <NL> ou "mac" <CR>.
+   Quand l'option 'fileformats' n'est pas vide, Vim essaie de détecter
+automatiquement la forme des <EOL>. L'option 'fileformat' est fixée en
+conséquence.
+
+Sur les systèmes ne disposant pas de contrôle des tâches (les Unix les plus
+anciens et les systèmes non-Unix), les commandes CTRL-Z, ":stop" et ":suspend"
+lancent un nouveau shell.
+
+Sur Amiga, si Vim est démarré sans fenêtre interactive pour sa sortie
+standard, une fenêtre est ouverte (et ":sh" fonctionne toujours). Vous pouvez
+spécifier le périphérique à utiliser pour l'édition avec l'argument "-d", par
+exemple "-d con:20/20/600/150".
+
+Les options 'columns' et 'lines' permettent d'obtenir ou de fixer la largeur
+et le hauteur de l'affichage.
+
+Des valeurs d'options peuvent être lues sur les premières et dernières lignes
+du fichier. L'option 'modelines' précise le nombre de lignes à examiner (5 par
+défaut). NOTE : Il y a une différence avec les versions de Vi qui autorisent
+l'exécution de n'importe quelle commande dans une ligne de mode (un grave
+problème de sécurité). |trojan-horse|
+
+Quand l'option 'insertmode' est activée (par exemple dans le fichier ".exrc"),
+Vim démarre en mode Insertion. Et il y retourne quand vous pressez <Echap>.
+
+Les données d'annulation sont conservées en mémoire. La mémoire disponible
+limite la taille et le nombre de changements pouvant être annulés. Cela peut
+poser problème sur MS-DOS, mais très rarement sur Amiga et sans doute jamais
+sur Unix et Win32.
+
+Si l'option 'backup' ou 'writebackup' est activée, un fichier de sauvegarde
+est créé (.bak) avant d'écraser un fichier. Si l'option 'backup' est activée,
+le fichier de sauvegarde est conservé.
+
+Vim crée un fichier se terminant par ".swp" pour y enregistrer des parties du
+fichier qui ont été modifiées ou qui ne tiennent pas en mémoire. Ce fichier
+permet le recouvrement après une session d'édition anormalement terminée, via
+la commande `vim -r fichier`. L'utilisation de ce fichier d'échange peut être
+désactivée en fixant 'updatecount' à 0 ou en démarrant Vim avec l'option "-n".
+Vous pouvez utiliser l'option 'directory' pour placer le fichier d'échange
+autre part.
+
+Vim est capable de fonctionner correctement sur les systèmes de fichiers avec
+des noms de fichiers courts (8.3), y compris les systèmes de fichiers messydos
+ou crossdos sur Amiga, ou n'importe quel système de fichiers à noms courts
+monté sous Unix. Voir |'shortname'|.
+
+Les messages d'erreurs sont affichés pendant au moins une seconde (Vi écrase
+les messages d'erreurs).
+
+Lorsque Vim affiche l'invite Appuyez-sur-Entrée |hit-enter|, vous pouvez
+appuyer sur n'importe quelle touche. Tous les caractères exceptés <CR>, <NL>
+et <Espace> seront interprétés comme (le début d') une commande. (Vi ne
+supporte que les commandes commençant par ':').
+
+Le contenu des registres numérotés et du registre sans nom est mémorisé lors
+d'un changement de fichiers.
+
+Le message "--Le tampon est vide--" est un message normal plutôt qu'un message
+d'erreur, car cela peut provoquer l'abandon d'un mappage. 
+
+Le périphérique "AUX:" de l'Amiga est supporté.
+
+==============================================================================
+6. Arguments de la ligne de commande			*cmdline-arguments*
+
+Les différentes versions de Vi possèdent différents arguments de ligne de
+commande. Cela peut être déroutant. Pour vous aider, cette section donne une
+vue d'ensemble de ces différences.
+
+Cinq variantes de Vi sont considérées ici :
+	Elvis	Elvis version 2.1b
+	Nvi	Nvi version 1.79
+	Posix	Posix 1003.2
+	Vi	Vi version 3.7 (pour Sun 4.1.x)
+	Vile	Vile version 7.4 (incomplète)
+	Vim	Vim version 5.2
+
+Seul Vim est capable d'accepter des options de ligne de commande entre et
+après les noms de fichiers.
+
++{commande}	Elvis, Nvi, Posix, Vi, Vim : comme "-c {commande}".
+
+-		Nvi, Posix, Vi : lance Ex en mode non-interactif.
+		Vim : lit le fichier sur l'entrée standard (utilisez "-s" pour
+		   le mode non-interactif).
+
+--		Vim : fin des options, seuls des noms de fichiers suivent.
+
+--help		Vim : affiche un message d'aide et quitte.
+
+--literal	Vim : utilise les noms de fichiers littéralement, pas
+		   d'expansion des jokers.
+
+--noplugin[s]	Vim : ne charge pas les greffons.
+
+--remote	Vim : édite les fichiers dans un autre serveur Vim.
+
+--remote-wait	Vim : édite les fichiers dans un autre serveur Vim et attend
+		   la fin de l'édition.
+
+--remote-expr {expr}
+		Vim : évalue {expr} dans un autre serveur Vim.
+
+--remote-send {sequence}
+		Vim : envoie {sequence} clavier à un serveur Vim et quitte.
+
+--serverlist	Vim : affiche une liste des serveurs Vim et quitte.
+
+--servername {name}
+		Vim : spécifie le nom du serveur Vim.
+
+--socketid {ID} Vim : socket de la fenêtre GTK+ dans laquelle exécuter Vim.
+
+--version	Vim : affiche le message de version et quitte.
+
+-?		Vile : affiche un court mode d'emploi et quitte.
+
+-a		Elvis : charge chaque fichier spécifié dans une fenêtre
+		   (utilisez "-o" pour Vim).
+
+-A		Vim : démarre en mode arabe (si compilé avec le support de
+		   l'arabe).
+
+-b {taillebloc}	Elvis : utilise {taillebloc} pour le fichier de session.
+-b		Vim : active le mode binaire (option 'binary').
+
+-C		Vim : mode compatible.
+
+-c {commande}	Elvis, Nvi, Posix, Vim : exécute {commande} comme une commande
+		   Ex après le chargement du tampon à éditer. Vim autorise
+		   jusqu'à 10 arguments "-c".
+
+-d {periph}	Vim : utilise {periph} pour les E/S (Amiga uniquement).
+		   {uniquement si compilé sans la fonctionnalité |+diff|}
+-d		Vim : démarre avec 'diff' activé. |vimdiff|
+
+-dev {periph}	Vim : utilise {periph} pour les E/S (Amiga uniquement).
+
+-D		Vim : mode débogage.
+
+-e		Elvis, Nvi, Vim : démarre en mode Ex, comme si l'exécutable
+		   était nommé "ex".
+
+-E		Vim : démarre en mode Ex amélioré |gQ|, comme avec `exim`.
+
+-f		Vim : lance l'IHM graphique au premier plan (Amiga : n'ouvre
+		   pas de nouvelle fenêtre).
+-f {session}	Elvis : utilise {session} comme fichier de session.
+
+-F		Vim : démarre en mode farsi (si compilé avec avec le support
+		   du farsi).
+		Nvi : démarrage rapide, ne lit pas entièrement le fichier au
+		   début de l'édition.
+
+-G {IHMg}	Elvis : utilise l'{IHMg} comme interface utilisateur.
+
+-g		Vim : lance l'IHM graphique.
+-g N		Vile : démarre l'édition à la ligne N.
+
+-h		Vim : affiche le message d'aide.
+		Vile : édite le fichier d'aide.
+
+-H		Vim : démarre en mode hébreu (si compilé avec le support de
+		   l'hébreu).
+
+-i		Elvis : démarre avec chaque fenêtre en mode Insertion.
+-i {viminfo}	Vim : utilise {viminfo} comme fichier viminfo.
+
+-L		Vim : comme "-r" (existe aussi dans certaines versions de Vi).
+
+-l		Nvi, Vi, Vim : active les options 'lisp' et 'showmatch'.
+
+-m		Vim : écriture des modifications non autorisée, réinitialise
+		   l'option 'write'.
+
+-M		Vim : modifications non autorisées, réinitialise les options
+		   'modifiable' et 'write'.
+
+-N		Vim : mode non compatible.
+
+-n		Vim : ne pas utiliser de fichier d'échange.
+
+-O[N]		Vim : comme "-o", mais en utilisant des partages verticaux.
+
+-o[N]		Vim : ouvre [N] fenêtres, ou bien une pour chaque fichier.
+
+-q {nom}	Vim : utilise {nom} comme fichier d'erreur pour le mode
+		   mise-au-point.
+-q{nom}		Vim : Idem.
+
+-R		Elvis, Nvi, Posix, Vile, Vim : active l'option 'readonly'.
+
+-r		Elvis, Nvi, Posix, Vi, Vim : mode recouvrement.
+
+-S		Nvi : active l'option 'secure'.
+-S {script}	Vim : source le {script} après le démarrage.
+
+-s		Nvi, Posix, Vim : comme "-" (mode silencieux) si en mode Ex.
+		Elvis : active l'option 'safer'.
+-s {script-E}	Vim : source le fichier {script-E} sauf si lancé en mode Ex.
+		   si pas en mode Ex.
+-s {motif}	Vile : recherche {motif}.
+
+-t {marqueur}	Elvis, Nvi, Posix, Vi, Vim : édite le fichier contenant
+		   {marqueur}.
+-t{marqueur}	Vim : Idem.
+
+-T {term}	Vim : fixe le nom du terminal à {term}.
+
+-u {vimrc}	Vim : lit les initialisations dans le fichier {vimrc}.
+
+-U {gvimrc}	Vim : lit les initialisations de l'IHM graphique dans le
+		   fichier {gvimrc}.
+
+-v		Nvi, Posix, Vi, Vim : démarre en mode Normal (en mode 
+		   « Visuel », dans la terminologie Vi).
+		Vile : mode Vue, modifications impossibles.
+
+-V		Elvis, Vim : mode verbeux.
+-V{nb}		Vim : mode verbeux avec le niveau de verbosité spécifié.
+
+-w {taille}	Elvis, Posix, Nvi, Vi, Vim : fixe 'window' à {taille}.
+-w{taille}	Nvi, Vi : comme "-w {taille}".
+-w {nom}	Vim : écrit dans le fichier de script {nom} (doit débuter par
+		   un caractère non numérique).
+
+-W {nom}	Vim : ajoute à la fin du fichier de script {nom}.
+
+-x		Vi, Vim : demande une clé de chiffrement. Voir |encryption|.
+
+-X		Vim : ne pas se connecter au serveur X.
+
+-y		Vim : démarre en mode facile, comme avec |evim|.
+
+-Z		Vim : mode restreint.
+
+@{fichiercmd}	Vile : utilise {fichiercmd} comme fichier de démarrage.
+
+ vim:tw=78:ts=8:ft=help:norl:
