@@ -32,6 +32,10 @@ export HISTCONTROL=ignoreboth:erasedups
 
 # append to the history file, don't overwrite it
 shopt -s histappend
+# save history file after each command
+if [[ ! $PROMPT_COMMAND =~ "history -a" ]]; then
+    PROMPT_COMMAND="${PROMPT_COMMAND+$PROMPT_COMMAND ; }history -a"
+fi
 
 ##########
 # Misc
