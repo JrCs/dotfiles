@@ -97,7 +97,13 @@ if has("autocmd")
 
   " DetectIndent for automatically detecting indent settings
   " URL=https://github.com/ciaranm/detectindent
-  autocmd BufReadPost * :DetectIndent
+  "
+  " uncomment to have verbose messages
+  "let g:detectindent_verbosity=0
+  autocmd BufReadPost *
+    \ if &ft != 'make' |
+    \   exe ":DetectIndent" |
+    \ endif
 
   augroup END
 
