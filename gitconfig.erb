@@ -3,6 +3,7 @@
 	email = <%= print("Your Email: "); STDOUT.flush; STDIN.gets.chomp %>
 [core]
 	excludesfile = <%= ENV['HOME'] %>/.gitignore
+	pager = less -FXr
 [color]
 	ui = auto
 	wtf = auto
@@ -22,10 +23,23 @@
 	autosetupmerge = true
 [log]
 	decorate = short
+	date = local
 [rebase]
 	autosquash = true
 [alias]
 	st = status
+    ci = commit
+    br = branch
+    co = checkout
+    df = diff
+    dc = diff --cached
+    lp = log -p
+    lol = log --graph --decorate --pretty=oneline --abbrev-commit
+    lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
+    ls = ls-files
+
+    # Show files ignored by git:
+    ign = ls-files -o -i --exclude-standard
 [github]
 	user = <%= print("GitHub Username: "); STDOUT.flush; STDIN.gets.chomp %>
 	token = <%= print("GitHub API Token: "); STDOUT.flush; STDIN.gets.chomp %>
