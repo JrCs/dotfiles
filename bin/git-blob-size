@@ -1,0 +1,9 @@
+#!/bin/bash
+git rev-list --objects --all | while read hash filename; do
+    if [ -n "$filename" ];then
+        size=$(git cat-file -s $hash)
+        echo "$size -> $filename -> $hash"
+    fi
+done
+
+#cut -f1 -d ' ' | xargs -n 1 -I@ bash -c 'size=$(git cat-file -s @);echo "$size -> @"'
