@@ -22,6 +22,16 @@ if [ -z "$LS_COLORS" ];then
     export GREP_OPTIONS='--color=auto'
 fi
 
+if [ -n "$LS_COLORS" ];then
+    # LS
+    alias ll='ls -alF --color=auto'
+    alias ls='ls --color=auto'
+
+    # TREE
+    HAVE_TREE=$(command -v tree)
+    [[ -n "$HAVE_TREE" ]] && alias tree='tree -C'
+fi
+
 ##########
 # History
 ##########
