@@ -18,8 +18,6 @@ if [ -z "$LS_COLORS" ];then
     if [ -n "$DIRCOLORS_BIN" ];then
         test -r ~/.dircolors && eval "$($DIRCOLORS_BIN -b ~/.dircolors)" || eval "$($DIRCOLORS_BIN -b)"
     fi
-    export GREP_COLOR='3;32'
-    export GREP_OPTIONS='--color=auto'
 fi
 
 if [ -n "$LS_COLORS" ];then
@@ -31,6 +29,9 @@ if [ -n "$LS_COLORS" ];then
     HAVE_TREE=$(command -v tree)
     [[ -n "$HAVE_TREE" ]] && alias tree='tree -C'
 fi
+
+export GREP_COLOR='3;32'
+export GREP_OPTIONS='--color=auto'
 
 ##########
 # History
