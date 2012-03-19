@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# find duplicate files
+git ls-tree -r HEAD $@ | cut -c 13- | sort | uniq -D -w 40
