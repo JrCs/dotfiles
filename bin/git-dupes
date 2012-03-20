@@ -1,4 +1,107 @@
-#!/bin/bash
+#!/usr/bin/perl
 
-# find duplicate files
-git ls-tree -r HEAD $@ | cut -c 13- | sort | uniq -D -w 40
+use strict;
+use warnings;
+
+use File::Basename;
+use Getopt::Long  qw< :config no_auto_abbrev no_ignore_case bundling >;
+use Term::ANSIColor;
+
+my %sha1_paths;
+my @colors = (
+               'bold red',
+               'bold green',
+               'bold yellow',
+               'bold blue',
+               'bold magenta',
+               'bold cyan'
+             );
+my %options = ();
+my $count = 0;
+
+$::PROGRAM = basename($0);
+$::VERSION = '1.00';
+
+GetOptions(
+    \%options, qw{
+      help|h!  version|V
+      }
+) or pod2usage(0);
+
+$options{help}    and pod2usage(2);
+$options{version} and print "$::PROGRAM v$::VERSION\n" and exit;
+
+my $command = join( ' ', 'git ls-tree --abbrev -r HEAD', @ARGV, '|' );
+open( LS_TREE, $command ) or die $!;
+
+while (my $line = <LS_TREE>) {
+	chomp $line;
+
+    if ($line =~ m{ \A \d{6} \s \w{4} \s (\w+) \s+ (.+) \z }xms) {
+        my $sha1 = $1;
+        my $path = $2;
+        push @{$sha1_paths{$sha1}}, $path;
+    }
+}
+
+foreach my $sha1 ( keys %sha1_paths ) {
+    if ( @{ $sha1_paths{$sha1} } > 1 ) {
+        my $color = $colors[ $count++ % @colors ];
+        foreach my $path ( @{ $sha1_paths{$sha1} } ) {
+            print colored( "$sha1    $path", $color ), $/;
+        }
+    }
+}
+
+#
+# pod2usage()
+# ---------
+sub pod2usage {
+    my ($level) = @_;
+    require Pod::Usage;
+    Pod::Usage::pod2usage({ -exitval => 0, -verbose => $level,
+                            # -noperldoc => 0
+                          });
+}
+1;
+
+__END__
+
+=head1 NAME
+
+git-dupes - Find duplicated files
+
+=head1 SYNOPSIS
+
+    git-dupes [options] [<path>...]
+
+    git-dupes --help
+    git-dupes --version
+
+=head1 OPTIONS
+
+=over
+
+=item B<-h>, B<--help>
+
+Show this help.
+
+=item B<-V>, B<---version>
+
+Display program and version.
+
+=back
+
+
+=head1 DESCRIPTION
+
+This software is used to find duplicated files in a git repository.
+
+=head1 AUTHORS
+
+Yves Blusseau C<< <90z7oey02@sneakemail.com> >>
+
+=head1 COPYRIGHT & LICENSE
+
+Copyright 2012 Yves Blusseau.
+This program is free software; you may redistribute it and/or modify it under the same terms as Perl itself.
