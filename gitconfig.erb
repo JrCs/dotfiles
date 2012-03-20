@@ -1,49 +1,10 @@
-[user]
-	name = <%= print("Your Name: "); STDOUT.flush; STDIN.gets.chomp %>
-	email = <%= print("Your Email: "); STDOUT.flush; STDIN.gets.chomp %>
-[core]
-	excludesfile = <%= ENV['HOME'] %>/.gitignore
-	pager = less -FrX
-	autocrlf = input
-[color]
-	ui = auto
-	wtf = auto
-[color "branch"]
-	current = green
-	local = yellow
-	remote = red
-[color "status"]
-	added = yellow
-	changed = green
-	untracked = cyan
-[push]
-	default = current
-[apply]
-	whitespace = nowarn
-[branch]
-	autosetupmerge = true
-[log]
-	decorate = short
-	date = local
-[rebase]
-	autosquash = true
-[alias]
-	st = status
-    ci = commit
-    br = branch
-    co = checkout
-    df = diff
-    dc = diff --cached
-    lp = log -p
-    lol = log --graph --decorate --pretty=oneline --abbrev-commit
-    lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
-    ls = ls-files
+[include]
+	path = <%= ENV['HOME'] %>/.gitconfig.std
 
-    # Show files ignored by git:
-    ign = ls-files -o -i --exclude-standard
+[user]
+	name  = <%= print("Your Name: "); STDOUT.flush; STDIN.gets.chomp %>
+	email = <%= print("Your Email: "); STDOUT.flush; STDIN.gets.chomp %>
+
 [github]
-	user = <%= print("GitHub Username: "); STDOUT.flush; STDIN.gets.chomp %>
+	user  = <%= print("GitHub Username: "); STDOUT.flush; STDIN.gets.chomp %>
 	token = <%= print("GitHub API Token: "); STDOUT.flush; STDIN.gets.chomp %>
-[mergetool.ediff]
-	cmd = xemacs --eval \"(progn (setq ediff-quit-hook 'kill-emacs) (ediff-merge-files-with-ancestor \\\"$LOCAL\\\" \\\"$REMOTE\\\" \\\"$BASE\\\" nil \\\"$MERGED\\\"))\"
-	trustExitCode = false

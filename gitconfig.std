@@ -1,0 +1,60 @@
+[color]
+	ui = auto
+	wtf = auto
+[color "branch"]
+	current = green
+	local = yellow
+	remote = red
+[color "status"]
+	added = yellow
+	changed = green
+	untracked = cyan
+
+[core]
+	pager = less -FRX
+	excludesfile = $HOME/.gitignore
+
+[alias]
+	st = status
+	cav = commit -a -v
+	ci = commit
+	br = branch
+	co = checkout
+	df = diff
+	dc = diff --cached
+	dis = diff --ignore-all-space
+	lp = log -p
+	lol = log --graph --decorate --pretty=oneline --abbrev-commit
+	lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
+	ls = ls-files
+
+	# Show files ignored by git:
+	ign = ls-files -o -i --exclude-standard
+
+[pager]
+	log  = diff-highlight | less
+	show = diff-highlight | less
+	diff = diff-highlight | less
+
+[push]
+	default = current
+
+[apply]
+	whitespace = nowarn
+
+[branch]
+	autosetupmerge = true
+
+[log]
+	decorate = short
+	date = local
+
+[rebase]
+	autosquash = true
+
+[merge]
+	tool = meld
+
+[mergetool.ediff]
+	cmd = xemacs --eval \"(progn (setq ediff-quit-hook 'kill-emacs) (ediff-merge-files-with-ancestor \\\"$LOCAL\\\" \\\"$REMOTE\\\" \\\"$BASE\\\" nil \\\"$MERGED\\\"))\"
+	trustExitCode = false
