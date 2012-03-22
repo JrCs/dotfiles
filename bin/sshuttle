@@ -1,0 +1,5 @@
+#!/bin/bash
+
+SSHUTTLE_DIR=$(dirname $0)/../sshuttle
+PYTHON_BIN=$(type -P python2.7 python2.6 python | head -1)
+exec "$PYTHON_BIN" "$SSHUTTLE_DIR/main.py" "$PYTHON_BIN" "$@"

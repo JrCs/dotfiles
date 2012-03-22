@@ -7,3 +7,6 @@
 [submodule "git-tools/git-bzr-ng"]
 	path = git-tools/git-bzr-ng
 	url = git://github.com/termie/git-bzr-ng.git
+[submodule "sshuttle"]
+	path = sshuttle
+	url = git://github.com/apenwarr/sshuttle.git
