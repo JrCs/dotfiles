@@ -12,7 +12,7 @@
 
 [core]
 	pager = less -FRX
-	excludesfile = $HOME/.gitignore
+	excludesfile = ~/.gitignore
 
 [alias]
 	st = status
