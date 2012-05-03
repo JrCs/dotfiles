@@ -70,8 +70,10 @@ ACK_PAGER_COLOR="$PAGER"
 ##########
 # Autojump
 ##########
-if [[ -f "$DOTFILES_DIR/autojump/autojump.bash" ]];then
-    source "$DOTFILES_DIR/autojump/autojump.bash"
-    PYTHON_BIN=$(type -P python2.7 python2.6 python | head -1)
-    alias autojump="/usr/bin/env $PYTHON_BIN $DOTFILES_DIR/autojump/autojump"
-fi
+for autojump_dir in "$DOTFILES_DIR/autojump" "$DOTFILES_DIR/autojump/bin";do
+    if [[ -f "$autojump_dir/autojump.bash" ]];then
+	source "$autojump_dir/autojump.bash"
+	PYTHON_BIN=$(type -P python2.7 python2.6 python | head -1)
+	alias autojump="/usr/bin/env $PYTHON_BIN $autojump_dir/autojump"
+    fi
+done
