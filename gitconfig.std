@@ -30,6 +30,7 @@
 
 	# Show files ignored by git:
 	ign = ls-files -o -i --exclude-standard
+    unstage = reset HEAD --
 
 [pager]
 	log  = diff-highlight | less
