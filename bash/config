@@ -29,7 +29,7 @@ if [ -n "$LS_COLORS" ];then
     alias ls='ls --color=auto'
 
     # TREE
-    HAVE_TREE=$(command -v tree)
+    HAVE_TREE=$(type -P tree)
     [[ -n "$HAVE_TREE" ]] && alias tree='tree -C'
 fi
 
@@ -54,9 +54,9 @@ fi
 ##########
 # Misc
 ##########
-HAVE_VIM=$(command -v vim)
+HAVE_VIM=$(type -P vim)
 [[ -n "$HAVE_VIM" ]] && export EDITOR=vim
-HAVE_LESS=$(command -v less)
+HAVE_LESS=$(type -P less)
 if [[ -n "$HAVE_LESS" ]];then
     PAGER="less -FiRwX"
 	MANPAGER="less -FiRsX"
