@@ -58,13 +58,20 @@ HAVE_VIM=$(type -P vim)
 [[ -n "$HAVE_VIM" ]] && export EDITOR=vim
 HAVE_LESS=$(type -P less)
 if [[ -n "$HAVE_LESS" ]];then
-    PAGER="less -FiRwX"
-	MANPAGER="less -FiRsX"
+    export LESS='-FiRX'
+    PAGER='less -FiRX'
+    MANPAGER='less -FiRsX'
 else
 	PAGER=more
 	MANPAGER="$PAGER"
 fi
 export PAGER MANPAGER
+
+# lesspipe.sh & code2color
+LESSPIPESH_BIN=$(type -P lesspipe.sh)
+if [[ -n $(type -P code2color) && -n "$LESSPIPESH_BIN" ]];then
+    export LESSOPEN="|$LESSPIPESH_BIN %s"
+fi
 
 # Ack
 ACK_PAGER="$PAGER"
