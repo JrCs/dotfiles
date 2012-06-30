@@ -10,3 +10,9 @@
 [submodule "sshuttle"]
 	path = sshuttle
 	url = git://github.com/apenwarr/sshuttle.git
+[submodule "gitflow"]
+	path = gitflow
+	url = git://github.com/petervanderdoes/gitflow.git
+[submodule "bash/completion_scripts/git-flow-completion"]
+	path = bash/completion_scripts/git-flow-completion
+	url = git://github.com/bobthecow/git-flow-completion.git

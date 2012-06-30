@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# git-flow wrapper
+exec ${0%/*}"/../gitflow/git-flow" $@

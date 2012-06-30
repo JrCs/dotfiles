@@ -1,2 +1,5 @@
 [[ -z "$BASH_COMPLETION" && -f /etc/bash_completion ]] && source /etc/bash_completion
 complete -C ~/.bash/completion_scripts/rake_completion -o default rake
+
+# git flow
+source "$DOTFILES_DIR/bash/completion_scripts/git-flow-completion/git-flow-completion.bash"
