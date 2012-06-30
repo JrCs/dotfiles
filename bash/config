@@ -87,3 +87,12 @@ for autojump_dir in "$DOTFILES_DIR/autojump" "$DOTFILES_DIR/autojump/bin";do
 	alias autojump="/usr/bin/env $PYTHON_BIN $autojump_dir/autojump"
     fi
 done
+
+##############
+# todo.txt-cli
+##############
+if [[ -d "$HOME/.todo" && -f "$HOME/.todo.cfg" ]];then
+     export TODOTXT_CFG_FILE="$HOME/.todo.cfg"
+     alias t='todo.sh'
+     complete -F _todo t
+fi

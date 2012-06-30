@@ -16,3 +16,6 @@
 [submodule "bash/completion_scripts/git-flow-completion"]
 	path = bash/completion_scripts/git-flow-completion
 	url = git://github.com/bobthecow/git-flow-completion.git
+[submodule "todo.txt-cli"]
+	path = todo.txt-cli
+	url = git://github.com/ginatrapani/todo.txt-cli.git
