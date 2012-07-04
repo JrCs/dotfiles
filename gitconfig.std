@@ -24,8 +24,8 @@
 	dc = diff --cached
 	dis = diff --ignore-all-space
 	lp = log -p
-	lol = log --graph --decorate --pretty=oneline --abbrev-commit
-	lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
+	lol = log --graph --decorate --pretty=oneline --abbrev-commit --show-notes=*
+	lola = log --graph --decorate --pretty=oneline --abbrev-commit --all --show-notes=*
 	ls = ls-files
 
 	# Show files ignored by git:
