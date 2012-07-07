@@ -83,10 +83,11 @@ ACK_PAGER_COLOR="$PAGER"
 for autojump_dir in "$DOTFILES_DIR/autojump" "$DOTFILES_DIR/autojump/bin";do
     if [[ -f "$autojump_dir/autojump.bash" ]];then
 	source "$autojump_dir/autojump.bash"
-	PYTHON_BIN=$(type -P python2.7 python2.6 python | head -1)
-	alias autojump="/usr/bin/env $PYTHON_BIN $autojump_dir/autojump"
+	export AUTOJUMP_PYTHON_BIN=$(type -P python2.7 python2.6 python | head -1)
+	export AUTOJUMP_BIN="$autojump_dir/autojump"
     fi
 done
+unset autojump_dir
 
 ##############
 # todo.txt-cli
