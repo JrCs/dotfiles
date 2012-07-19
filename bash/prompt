@@ -1,0 +1,108 @@
+#!/bin/bash
+
+# Standard colors:
+#
+# Black       0;30     Dark Gray     1;30
+# Blue        0;34     Light Blue    1;34
+# Green       0;32     Light Green   1;32
+# Cyan        0;36     Light Cyan    1;36
+# Red         0;31     Light Red     1;31
+# Purple      0;35     Light Purple  1;35
+# Brown       0;33     Yellow        1;33
+# Light Gray  0;37     White         1;37
+
+# use colortest -w -s to get code to pass to extended_color
+function extended_color () { echo -ne "\[\033[38;5;$1m\]"; }
+
+normal='\[\e[0m\]'
+cyan='\[\e[0;36m\]'
+br_cyan='\[\e[1;36m\]'
+br_yellow=$(extended_color 184)
+br_blue='\[\e[1;34m\]'
+red='\[\e[0;31m\]'
+br_red='\[\e[1;31m\]'
+green='\[\e[0;32m\]'
+green_git_prompt=$(extended_color 40)
+green_prompt=$(extended_color 41)
+cyan_git_prompt=$(extended_color 45)
+yellow_git_prompt=$(extended_color 184)
+orange_git_prompt=$(extended_color 166)
+orange_user_prompt=$(extended_color 166)
+
+# VIM
+is_vim_shell() {
+    [[ -n "$VIMRUNTIME" ]] && echo " [\[\e[0;33m\]vim shell\[\e[0m\]]"
+}
+
+# GIT
+git_prompt_info() {
+    return
+}
+
+# If __git_ps1 is defined then redefined git_prompt_info function
+if [[ -n $(type -t __git_ps1) ]];then
+git_prompt_info() {
+	git_ps1=$(__git_ps1)
+    if [[ -n "$git_ps1" ]];then
+		git_ps1=${git_ps1//\*/${green_git_prompt}*${normal}}
+		git_ps1=${git_ps1//+/${yellow_git_prompt}+${normal}}
+		git_ps1=${git_ps1//$/${orange_git_prompt}\$${normal}}
+		git_ps1=${git_ps1//%/${cyan_git_prompt}%${normal}}
+		echo "$git_ps1"
+	fi
+}
+
+export GIT_PS1_SHOWDIRTYSTATE=true
+export GIT_PS1_SHOWSTASHSTATE=true
+export GIT_PS1_SHOWUNTRACKEDFILES=true
+export GIT_PS1_SHOWUPSTREAM="verbose"
+
+fi
+
+# USER
+user_prompt_info() {
+    if [[ "$USER" != 'root' ]];then
+        echo "${br_yellow}\u${normal}"
+    else
+        echo "${orange_user_prompt}\u${normal}"
+    fi
+}
+
+# SERVER
+server_prompt_info() {
+    echo "${br_blue}\H${normal}"
+}
+
+# CHROOT
+chroot_prompt_info() {
+    echo "${debian_chroot:+($debian_chroot) }"
+}
+
+# EXITCODE
+exitcode_prompt_info() {
+    [[ "$1" -ne 0 ]] && echo " [${br_red}${1}${normal}]"
+}
+
+prompt() {
+    # Check exit code
+    local exit_code=$?
+    if [[ $exit_code -eq 0 ]];then
+        local cl_code=${normal}
+        local cl_prompt=${green_prompt}
+    else
+        local cl_code=${br_red}
+        local cl_prompt=${br_red}
+    fi
+    local PS1_LINE1="$(chroot_prompt_info)<~~~ $(user_prompt_info)@$(server_prompt_info) ( \t )$(exitcode_prompt_info ${exit_code}) ${br_cyan}${PWD}${normal} ~~~>"
+    local PS1_LINE2="\[\e[1;36m\]\w\[\e[0m\]$(git_prompt_info)$(is_vim_shell) ${cl_prompt}\$${normal} "
+    PS1="$PS1_LINE1\n$PS1_LINE2"
+}
+
+# PS2 is used when you don't close a string or use the line continuation marker (\ at the end of a line)
+PS2=">> "
+# PS3 is used when you use the select builtin command.
+PS3=">> "
+
+if [[ ! $PROMPT_COMMAND =~ "prompt " ]]; then
+     PROMPT_COMMAND="prompt ${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
+fi
