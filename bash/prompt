@@ -98,7 +98,7 @@ prompt() {
         local cl_code=${br_red}
         local cl_prompt=${br_red}
     fi
-    local PS1_LINE1="$(chroot_prompt_info)<~~~ $(user_prompt_info)@$(server_prompt_info) ( \t )$(exitcode_prompt_info ${exit_code}) ${br_cyan}${PWD}${normal} ~~~>"
+    local PS1_LINE1="$(chroot_prompt_info)« $(user_prompt_info)@$(server_prompt_info) ( \t )$(exitcode_prompt_info ${exit_code}) ${br_cyan}${PWD}${normal} »"
     local PS1_LINE2="$(path_prompt_info)$(git_prompt_info)$(is_vim_shell) ${cl_prompt}\$${normal} "
     PS1="$PS1_LINE1\n$PS1_LINE2"
 }
