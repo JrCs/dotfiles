@@ -29,6 +29,11 @@ pathmunge "$DOTFILES_DIR/bin"
 [[ -d ~/bin ]] && pathmunge ~/bin
 
 
+## LIBRARIES
+[[ ! "$PYTHONPATH" =~ "argparse-1.2.1" ]] && \
+    export PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}$DOTFILES_DIR/libraries/argparse-1.2.1"
+
+
 ## MANPATH
 
 [[ -d /usr/local/man ]] && export MANPATH="/usr/local/man:$MANPATH"
