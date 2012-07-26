@@ -86,6 +86,14 @@ if [[ -d "$HOME/.todo" && -f "$HOME/.todo.cfg" ]];then
      complete -F _todo t
 fi
 
+######
+# xssh
+######
+if [[ -f "$HOME/.xssh_rc" ]];then
+    source "$DOTFILES_DIR/xssh/xssh.sh"
+    alias ssh >/dev/null 2>&1 || alias ssh=xssh
+fi
+
 #########
 # PROMPT
 #########

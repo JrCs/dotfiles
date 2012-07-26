@@ -19,3 +19,6 @@
 [submodule "todo.txt-cli"]
 	path = todo.txt-cli
 	url = git://github.com/ginatrapani/todo.txt-cli.git
+[submodule "xssh"]
+	path = xssh
+	url = git@github.com:JrCs/xssh.git
