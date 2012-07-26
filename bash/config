@@ -93,3 +93,11 @@ fi
 if [[ ! -z "$TERM" && ("$TERM" != "dumb" || ! -z "$INSIDE_EMACS") ]]; then
     source $DOTFILES_DIR/bash/prompt
 fi
+
+# Local Variables:      #
+# mode: ksh             #
+# tab-width: 4          #
+# indent-tabs-mode: nil #
+# End:                  #
+#
+# vi: set expandtab ts=4 sw=4 sts=4: #

@@ -6,3 +6,11 @@ source "$DOTFILES_DIR/bash/completion_scripts/git-flow-completion/git-flow-compl
 
 # todo.txt-cli
 [[ -f "$DOTFILES_DIR/todo.txt-cli/todo_completion" ]] && source "$DOTFILES_DIR/todo.txt-cli/todo_completion"
+
+# Local Variables:      #
+# mode: ksh             #
+# tab-width: 4          #
+# indent-tabs-mode: nil #
+# End:                  #
+#
+# vi: set expandtab ts=4 sw=4 sts=4: #

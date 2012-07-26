@@ -14,3 +14,11 @@ alias profileme="history | awk '{print \$2}' | awk 'BEGIN{FS=\"|\"}{print \$1}' 
 
 speed_ssh() { if [ -z "$1" ];then echo 'Vous devez specifier le nom du serveur distant'; else yes | pv | ssh "$1" "cat >/dev/null"; fi }
 typeset -f _ssh >/dev/null && shopt -u hostcomplete && complete -F _ssh speed_ssh
+
+# Local Variables:      #
+# mode: ksh             #
+# tab-width: 4          #
+# indent-tabs-mode: nil #
+# End:                  #
+#
+# vi: set expandtab ts=4 sw=4 sts=4: #
