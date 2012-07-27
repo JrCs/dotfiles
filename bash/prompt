@@ -122,9 +122,13 @@ PS2=">> "
 # PS3 is used when you use the select builtin command.
 PS3=">> "
 
-if [[ ! $PROMPT_COMMAND =~ "prompt " ]]; then
-     PROMPT_COMMAND="prompt ${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
-fi
+case $PROMPT_COMMAND in
+   *prompt\ *)
+      ;;
+   *)
+      PROMPT_COMMAND="prompt ${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
+      ;;
+esac
 
 # Local Variables:      #
 # mode: ksh             #

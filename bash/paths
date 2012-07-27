@@ -30,8 +30,13 @@ pathmunge "$DOTFILES_DIR/bin"
 
 
 ## LIBRARIES
-[[ ! "$PYTHONPATH" =~ "argparse-1.2.1" ]] && \
-    export PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}$DOTFILES_DIR/libraries/argparse-1.2.1"
+case $PYTHONPATH in
+    *argparse-1.2.1*)
+       ;;
+    *) export PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}$DOTFILES_DIR/libraries/argparse-1.2.1"
+       ;;
+esac
+
 
 
 ## MANPATH
