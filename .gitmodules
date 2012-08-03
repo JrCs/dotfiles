@@ -22,3 +22,6 @@
 [submodule "xssh"]
 	path = xssh
 	url = git@github.com:JrCs/xssh.git
+[submodule "git-archive-all"]
+	path = git-archive-all
+	url = https://github.com/Kentzo/git-archive-all.git
