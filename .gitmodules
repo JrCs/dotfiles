@@ -1,6 +1,6 @@
 [submodule "autojump"]
 	path = autojump
-	url = https://github.com/joelthelion/autojump.git
+	url = git://github.com/joelthelion/autojump.git
 [submodule "git-tools/willgit"]
 	path = git-tools/willgit
 	url = git://gitorious.org/willgit/mainline.git
@@ -21,7 +21,7 @@
 	url = git://github.com/ginatrapani/todo.txt-cli.git
 [submodule "xssh"]
 	path = xssh
-	url = git@github.com:JrCs/xssh.git
+	url = git://github.com/JrCs/xssh.git
 [submodule "git-archive-all"]
 	path = git-archive-all
-	url = https://github.com/Kentzo/git-archive-all.git
+	url = git://github.com/Kentzo/git-archive-all.git
