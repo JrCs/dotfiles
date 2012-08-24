@@ -18,7 +18,7 @@
 	st = status
 	cav = commit -a -v
 	ci = commit
-	br = branch
+	br = branch -v
 	co = checkout
 	df = diff
 	dc = diff --cached
@@ -26,6 +26,7 @@
 	lp = log -p
 	lol = log --graph --decorate --pretty=oneline --abbrev-commit --show-notes=*
 	lola = log --graph --decorate --pretty=oneline --abbrev-commit --all --show-notes=*
+    lr = log -g
 	ls = ls-files
 
 	# Show files ignored by git:
