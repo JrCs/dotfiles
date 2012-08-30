@@ -21,7 +21,7 @@ typeset -f _ssh >/dev/null && shopt -u hostcomplete && complete -F _ssh speed_ss
 
 # Idiot-Proof Git Aliases (see http://notes.envato.com/developers/rebasing-merge-commits-in-git/)
 function git_current_branch() {
-  git symbolic-ref HEAD 2> /dev/null | sed -e 's/refs\/heads\///'
+  git rev-parse --abbrev-ref HEAD 2>/dev/null
 }
 
 alias gpthis='git push origin HEAD:$(git_current_branch)'
