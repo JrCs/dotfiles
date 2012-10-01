@@ -39,7 +39,7 @@
 	diff = diff-highlight | less
 
 [push]
-	default = current
+	default = upstream
 
 [apply]
 	whitespace = nowarn
