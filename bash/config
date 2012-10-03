@@ -76,17 +76,6 @@ for autojump_dir in "$DOTFILES_DIR/autojump" "$DOTFILES_DIR/autojump/bin";do
         source "$autojump_dir/autojump.bash"
         export AUTOJUMP_PYTHON_BIN=$(type -P python2.7 python2.6 python | head -1)
         export AUTOJUMP_BIN="$autojump_dir/autojump"
-        # Check if we need to add argparse module (use for python < 2.7)
-        python_hex_version=$(${AUTOJUMP_PYTHON_BIN} -c 'import sys; print hex(sys.hexversion)')
-        if [[ $python_hex_version < 0x2070000 ]];then
-            # Add argparse library to $PYTHONPATH
-            case $PYTHONPATH in
-                *argparse-1.2.1*) ;;
-                *) export PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}$DOTFILES_DIR/libraries/argparse-1.2.1"
-                   ;;
-            esac
-        fi
-        unset python_hex_version
     fi
 done
 unset autojump_dir
