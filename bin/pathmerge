@@ -1,0 +1,81 @@
+#!/usr/bin/perl -w
+
+=head1 NAME
+
+pathmerge - concatenate paths, removing duplicates
+
+=head1 SYNOPSIS
+
+pathmerge [-d] PATHS...
+
+where each PATH is a colon-separated list of directories.
+
+If B<-d> is given then check that each really is a directory; if it
+isn't then warn and remove it from the output.  (However this check
+doesn't apply to the empty string, conventionally accepted by shells
+to mean the current directory.)
+
+=head1 DESCRIPTION
+
+Pathmerge takes the paths given on the command line and concatenates
+them into a single path, removing duplicate occurrences of filenames
+(only the first occurrence counts).  The new colon-separated path is
+printed to standard output followed by a newline.
+
+For example, in a shell script you might have:
+
+    export PATH=`pathmerge /opt/foo/bin $PATH /usr/games`
+
+which will add /opt/foo/bin at the head of the path, or move it to the
+head if it was already present, and add /usr/games at the end of the
+path if it was not already present.
+
+Pathmerge tries to follow the same conventions as the shell for
+splitting a path at colons: the empty string means a path containing
+the empty string, and empty fields anywhere in the path are
+significant.
+
+=head1 AUTHOR
+
+Ed Avis, ed@membled.com
+
+=cut
+
+use Getopt::Std;
+our $opt_d;
+getopts('d');
+
+# Split a path at colons.  Tricky, this - Perl's split() doesn't give
+# quite the same behaviour as the shell.  I don't know that this does
+# either but it seems a bit closer :-P.
+#
+sub path_split( $ ) {
+    local $_ = shift;
+    my @r;
+  START:
+    if (not length) {
+	push @r, '';
+	return @r;
+    }
+    elsif (s/^([^:]*)://) {
+	push @r, $1;
+	goto START;
+    }
+    elsif (s/^([^:]+)$//) {
+	push @r, $1;
+	return @r;
+    }
+    else { die }
+}
+
+$seen = ();
+foreach (@ARGV) {
+    foreach (path_split($_)) {
+	$seen{$_}++ && next;
+	warn("$_ not a directory, skipping\n"), next
+	  if $opt_d and length and not -d;
+	push(@out, $_);
+    }
+}
+
+print(join(':', @out), "\n");

@@ -1,23 +1,19 @@
 #!/bin/bash
 
 pathmunge () {
-    case ":${PATH}:" in
-        *:"$1":*)
-            ;;
-        *)
-            if [ "$2" = "after" ] ; then
-                PATH=$PATH:$1
-            else
-                PATH=$1:$PATH
-            fi
-    esac
+    if [[ ! $PATH =~ (^|:)$1(:|$) ]]; then
+        if [[ "$2" = "after" ]]; then
+            PATH=$PATH:$1
+        else
+            PATH=$1:$PATH
+        fi
+    fi
 }
 
 ## PATH
 
 # Adapting PATH environment variable for use with MacPorts.
 [[ -d /opt/local/bin ]] && pathmunge /opt/local/sbin && pathmunge /opt/local/bin
-
 
 # Add MAMP bin directory to PATH environment
 [[ -d /Applications/MAMP/Library/bin ]] && pathmunge /Applications/MAMP/Library/bin after
@@ -39,6 +35,10 @@ pathmunge "$DOTFILES_DIR/bin"
 # Add dotfiles man directory
 export MANPATH="$DOTFILES_DIR/man:$MANPATH"
 
+# Deduplicate entries in PATH, MANPATH and LD_LIBRARY_PATH
+export PATH=$(pathmerge -d "$PATH" 2>/dev/null)
+export MANPATH=$(pathmerge -d "$MANPATH" 2>/dev/null)
+export LD_LIBRARY_PATH=$(pathmerge -d "$LD_LIBRARY_PATH" 2>/dev/null)
 
 # Local Variables:      #
 # mode: ksh             #
