@@ -39,7 +39,15 @@ git_prompt_info() {
     return
 }
 
+# If __git_ps1 is not defined try to find and source git-prompt.sh
+if [[ -z $(type -t __git_ps1) ]];then
+    for file in /usr/share/git-core/contrib/completion/git-prompt.sh; do
+        [[ -f "$file" ]] && source $file && break
+    done
+fi
+
 # If __git_ps1 is defined then redefined git_prompt_info function
+
 if [[ -n $(type -t __git_ps1) ]];then
 git_prompt_info() {
 	git_ps1=$(__git_ps1)
