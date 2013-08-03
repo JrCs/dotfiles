@@ -5,9 +5,6 @@ alias github='br=$(git branch --contains HEAD | sed -En "s/^\* //p"); if ! git l
 # set alias for vi, only if no alias is already set
 alias vi >/dev/null 2>&1 || alias vi=vim
 
-# set alias for ack, if ack-grep exist and no alias is already set
-type -P ack-grep >/dev/null 2>&1 && { alias ack >/dev/null 2>&1 || alias ack=ack-grep; }
-
 # misc
 alias reload='. ~/.bash_profile'
 alias profileme="history | awk '{print \$2}' | awk 'BEGIN{FS=\"|\"}{print \$1}' | sort | uniq -c | sort -n | tail -n 20 | sort -nr"
