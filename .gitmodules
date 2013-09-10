@@ -1,30 +1,30 @@
 [submodule "autojump"]
 	path = autojump
-	url = git://github.com/joelthelion/autojump.git
+	url = https://github.com/joelthelion/autojump.git
 [submodule "git-tools/willgit"]
 	path = git-tools/willgit
-	url = git://gitorious.org/willgit/mainline.git
+	url = http://gitorious.org/willgit/mainline.git
 [submodule "git-tools/git-bzr-ng"]
 	path = git-tools/git-bzr-ng
-	url = git://github.com/termie/git-bzr-ng.git
+	url = https://github.com/termie/git-bzr-ng.git
 [submodule "sshuttle"]
 	path = sshuttle
-	url = git://github.com/apenwarr/sshuttle.git
+	url = https://github.com/apenwarr/sshuttle.git
 [submodule "gitflow"]
 	path = gitflow
-	url = git://github.com/petervanderdoes/gitflow.git
+	url = https://github.com/petervanderdoes/gitflow.git
 [submodule "bash/completion_scripts/git-flow-completion"]
 	path = bash/completion_scripts/git-flow-completion
-	url = git://github.com/bobthecow/git-flow-completion.git
+	url = https://github.com/bobthecow/git-flow-completion.git
 [submodule "todo.txt-cli"]
 	path = todo.txt-cli
-	url = git://github.com/ginatrapani/todo.txt-cli.git
+	url = https://github.com/ginatrapani/todo.txt-cli.git
 [submodule "xssh"]
 	path = xssh
-	url = git://github.com/JrCs/xssh.git
+	url = https://github.com/JrCs/xssh.git
 [submodule "git-archive-all"]
 	path = git-archive-all
-	url = git://github.com/Kentzo/git-archive-all.git
+	url = https://github.com/Kentzo/git-archive-all.git
 [submodule "git-blameall"]
 	path = git-blameall
 	url = https://github.com/ddev/git-blameall.git
