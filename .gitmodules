@@ -28,3 +28,6 @@
 [submodule "git-blameall"]
 	path = git-blameall
 	url = https://github.com/ddev/git-blameall.git
+[submodule "cheat"]
+	path = cheat
+	url = https://github.com/chrisallenlane/cheat.git

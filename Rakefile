@@ -1,7 +1,7 @@
 require 'rake'
 require 'erb'
 
-excludes = %w[Rakefile README.rdoc LICENSE bin autojump man git-tools sshuttle gitflow todo.txt-cli libraries xssh git-archive-all git-blameall]
+excludes = %w[Rakefile README.rdoc LICENSE bin autojump man git-tools sshuttle gitflow todo.txt-cli libraries xssh git-archive-all git-blameall cheat]
 
 desc "install the dot files into user's home directory"
 task :install do
