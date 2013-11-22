@@ -1,10 +1,14 @@
 #!/bin/bash
 
 # If not running interactively, don't do anything
-[ -z "$PS1" ] && return
+[[ -z "$PS1" ]] && return
+
+if [[ -f ~/.localrc.pre ]]; then
+  source ~/.localrc.pre
+fi
 
 # Source global definitions
-if [ -f /etc/bashrc ]; then
+if [[ -f /etc/bashrc ]]; then
   . /etc/bashrc
 fi
 
@@ -17,7 +21,7 @@ source ~/.bash/paths
 source ~/.bash/config
 
 # use .localrc for settings specific to one system
-if [ -f ~/.localrc ]; then
+if [[ -f ~/.localrc ]]; then
   source ~/.localrc
 fi
 
