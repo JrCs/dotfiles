@@ -101,6 +101,20 @@ if [[ -f "$HOME/.xssh_rc" ]];then
     alias ssh >/dev/null 2>&1 || alias ssh=xssh
 fi
 
+
+############
+# pastebinit
+############
+# Check if we have the configobj python module
+"$DOTFILES_DIR/bin/test-python-import.py" configobj >/dev/null
+if [[ $? -ne 0 ]]; then
+    # Add configobj library to $PYTHONPATH
+    case $PYTHONPATH in
+        *configobj*) ;;
+        *) export PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}$DOTFILES_DIR/libraries/configobj-4.7.2"
+    esac
+fi
+
 #########
 # PROMPT
 #########
