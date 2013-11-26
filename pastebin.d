@@ -1,0 +1,1 @@
+pastebinit/pastebin.d
