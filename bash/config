@@ -1,5 +1,26 @@
 #!/bin/bash
+
 # A basically sane bash environment.
+
+####################
+# Specific OS config
+####################
+# Turn case-insensitive matching temporarily on, if necessary.
+nocasematchWasOff=0
+shopt nocasematch >/dev/null || nocasematchWasOff=1
+(( nocasematchWasOff )) && shopt -s nocasematch
+
+configOS=''
+case "${OSTYPE}" in
+    linux*)  configOS='linux' ;;
+esac
+
+# Restore state of 'nocasematch' option, if necessary.
+(( nocasematchWasOff )) && shopt -u nocasematch
+unset nocasematchWasOff
+
+[[ -n "$configOS" && -f ~/.bash/config.$configOS ]] && source ~/.bash/config.$configOS
+unset configOS
 
 ##########
 # Color
