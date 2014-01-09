@@ -100,6 +100,15 @@ for autojump_dir in "$DOTFILES_DIR/autojump" "$DOTFILES_DIR/autojump/bin";do
         source "$autojump_dir/autojump.bash"
         export AUTOJUMP_PYTHON_BIN=$(type -P python2.7 python2.6 python | head -1)
         export AUTOJUMP_BIN="$autojump_dir/autojump"
+        # # Check if we have the argparse python module
+        # "$DOTFILES_DIR/bin/test-python-import.py" argparse >/dev/null
+        # if [[ $? -ne 0 ]]; then
+        #     # Add configobj library to $PYTHONPATH
+        #     case $PYTHONPATH in
+        #         *argparse*) ;;
+        #         *) export PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}$DOTFILES_DIR/libraries/argparse-1.2"
+        #     esac
+        # fi
         break
     fi
 done
