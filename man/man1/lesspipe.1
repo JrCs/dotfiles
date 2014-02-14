@@ -1,0 +1,170 @@
+.\""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.\" make the file command recognize this file as a roff text
+.\""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.TH LESSPIPE.SH "1" "Oct 2011" "lesspipe.sh" "User Commands"
+.SH NAME
+lesspipe.sh \- a filter for less
+.SH SYNOPSIS
+.B lesspipe.sh
+[\fIFILE[s]\fR]...
+.SH DESCRIPTION
+.PP
+Usually
+.B lesspipe.sh
+is called as an input filter to
+.B less
+With the help of that filter
+.B less
+will display the uncompressed contents of compressed (gzip, bzip2, compress,
+rar, 7-zip, lzip, xz or lzma) files.
+For files containing archives and directories, a table of contents
+will be displayed (e.g tar, ar rar, jar, rpm and deb formats). Other supported
+formats include nroff, pdf, ps, dvi, shared library, MS word,
+OASIS (e.g. Openoffice), debian package,
+html, mp3, jpg, png, iso images, MacOSX bom, plist and archive formats, perl
+storable data and gpg encrypted files.
+This does require additional helper programs being installed.
+.PP
+If at configure
+time support for the ENV variable LESS_ADVANCED_PREPROCESSOR was included then
+files with mostly ASCII text such as html, ps, rtf and files with
+alternate character encoding remain normally unprocessed (see below)
+.PP
+The filter does not only display the above mentioned file formats,
+but can also be applied recursively up to a depth of 6 where applying a
+decompression algorithm counts as a separate level.
+.PP
+In a few rare cases the
+file command does not recognize the correct format (especially with nroff).
+In such cases filtering can be suppressed by a trailing colon on the file
+name.
+.PP
+If the file command reports text with UTF-8, ISO-8859-1 or UTF-16 encoded
+characters then the text will be transformed using iconv into the default
+encoding. This does assume iconv has the right default which can be wrong
+in some situations.
+.PP
+To suppress informal messages in the first line of the filter output the
+ENV variable
+.B LESSQUIET
+can be set to a nonempty value.
+.SH FILTER ACTIVATION
+The filter is called from
+.B less
+provided the environment variable
+.B LESSOPEN
+is set properly. For the shells csh and tcsh the command
+.PP
+setenv LESSOPEN "|lesspipe.sh %s"
+.PP
+should be used, for other shells the command
+.PP
+LESSOPEN="|lesspipe.sh %s"; export LESSOPEN
+.PP
+does activate the filter for less. Use the fully qualified path, if
+.B lesspipe.sh
+is not in the search path. The command to set
+.B LESSOPEN
+can also be displayed by calling
+.B lesspipe.sh
+without arguments. This can even be used to set
+.B LESSOPEN
+directly:
+.PP
+eval `lesspipe.sh`
+.PP
+Having set the environment variable as described above,
+.B less
+will then display textual information for a wide range of file formats.
+.SH ADVANCED USAGE
+This version of
+.B lesspipe.sh
+allows you to view individual files contained in a file archive, which itself
+may even be contained in another archive.
+.PP
+The notation for viewing files in multifile archives is
+.PP
+.B less
+\fIarchive_file\fP:\fIcontained_file\fP
+.PP
+or even
+.PP
+.B less
+\fIsuper_archive\fP:\fIarchive_file\fP:\fIcontained_file\fP
+.PP
+To display a file in raw format, a colon (:) has to be appended
+to the file name.
+To suppress the decompression of files two colons have to be appended. This 
+does apply as well to the last file in the colon separated chain of file
+names as described above.
+.PP
+To display files without engaging
+.B lesspipe.sh
+temporarily, the command
+.PP
+.B cat
+\fIfilename\fP | 
+.B less
+.PP
+can be used instead of unsetting the environment variable
+.B LESSOPEN
+.PP
+If the ENV variable LESS_ADVANCED_PREPROCESSOR is respected by lesspipe.sh
+then files containing mostly ASCII text get displayed unmodified. To activate
+filtering for such formats the contents of
+.B LESS_ADVANCED_PREPROCESSOR
+has to be set to an non empty value.
+.SH OUTPUT COLORIZATION
+The filter is able to do syntax highlighting for
+the languages ada, asm, awk, c, c++, groff, html, xml, java, javascript, lisp,
+m4, make, pascal, patch, perl, povray, python, ruby shellscript and sql by
+using code2color as the colorizing program. A different colorizer can be called
+by setting the ENV variable
+. B LESSCOLORIZER
+do the name of an alternative (currently only pygmentize allowed).
+.PP
+ATTENTION: Syntax highlighting is only activated, if the environment variable
+.B LESS
+exists and contains the option 
+.B -R
+or 
+.B -r
+or less is called with one
+of these options. This guarantees, that instead of literal escape sequences,
+colors are displayed. The detection of the
+.B -r/-R
+presence at runtime is
+rather dependent on the operating system and may not work in all cases.
+Putting the option in the
+.B LESS
+environment variable is guaranteed to work.
+.PP
+As syntax highlighting is rather resource intense, it can be switched off by
+appending a colon after the file name, if the output was colorful. If the
+wrong language was chosen for syntax highlighting, then another one can be
+forced by appending a colon and a suffix to the file name.
+.PP
+The following suffixes are recognized (works with code2color only):
+.PP
+.cc ;
+.ada .asm .inc .awk .c .h .cpp .cxx .groff .html .php .xml .java .js .lsp .m4
+Makefile .pas .patch .diff .pm .pl .pod .pov .py .rb .sh .sql
+;cc .
+.PP
+When the conditions for syntax highlighting are met directory listings and
+listings of tar file contents get colorized as well.
+.SH AUTHOR
+Written by Wolfgang Friebel
+.SH "REPORTING BUGS"
+Report bugs to <Wolfgang.Friebel AT desy.de>.
+.SH COPYRIGHT
+Copyright \(co 2005-2011 Wolfgang Friebel
+.br
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+.SH "SEE ALSO"
+less(1)
+.PP
+A description of
+.B lesspipe.sh
+is also contained in the file README contained in the source code package
