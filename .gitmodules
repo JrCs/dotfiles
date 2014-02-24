@@ -30,4 +30,4 @@
 	url = https://github.com/ddev/git-blameall.git
 [submodule "cheat"]
 	path = cheat
-	url = https://github.com/chrisallenlane/cheat.git
+	url = https://github.com/JrCs/cheat.git
