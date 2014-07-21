@@ -25,4 +25,12 @@ if [[ -f ~/.localrc ]]; then
   source ~/.localrc
 fi
 
+# Adapting PATH environment variable for use with RVM,
+# load RVM into a shell session *as a function*, and
+# add completion
+if [[ -s "$HOME/.rvm/scripts/rvm" ]]; then
+  source "$HOME/.rvm/scripts/rvm"
+  [[ -r "$rvm_path"/scripts/completion ]] && . "$rvm_path"/scripts/completion
+fi
+
 unset DOTFILES_DIR
