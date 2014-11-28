@@ -31,3 +31,6 @@
 [submodule "cheat"]
 	path = cheat
 	url = https://github.com/JrCs/cheat.git
+[submodule "git-store"]
+	path = git-store
+	url = https://github.com/JrCs/git-store.git
