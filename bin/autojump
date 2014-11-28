@@ -1,9 +1,0 @@
-#! /bin/bash
-
-# Wrapper for autojump
-if [[ -n "$AUTOJUMP_BIN" && -n "$AUTOJUMP_PYTHON_BIN" ]];then
-    exec /usr/bin/env ${AUTOJUMP_PYTHON_BIN} ${AUTOJUMP_BIN} $@
-else
-    echo "Autojump was not configured on this server" >&2
-fi
-exit 1

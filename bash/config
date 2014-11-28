@@ -103,6 +103,11 @@ for autojump_dir in "$DOTFILES_DIR/autojump" "$DOTFILES_DIR/autojump/bin";do
         break
     fi
 done
+if [[ -n "$AUTOJUMP_BIN" && -n "$AUTOJUMP_PYTHON_BIN" ]]; then
+function autojump() {
+    /usr/bin/env "${AUTOJUMP_PYTHON_BIN}" "${AUTOJUMP_BIN}" $@
+}
+fi
 unset autojump_dir
 
 ##############
