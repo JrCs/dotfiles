@@ -1,7 +1,98 @@
 #!/bin/bash
-git rev-list --objects --all | while read hash filename; do
-    if [ -n "$filename" ];then
-        size=$(git cat-file -s $hash)
-        echo "$size -> $filename -> $hash"
+
+declare -r self="${0##*/}"
+
+# Convert numeric size to human
+declare -a _unit=( $((2**30)) $((2**20)) $((2**10)) )
+declare -a _unit_string=( 'G' 'M' 'K' )
+
+numeric_to_human() {
+    local value=${1?missing argument}
+    local idx=0
+    local u
+    if [[ "$value" -lt 1024 ]]; then
+        echo "${value}"
+        return
+    fi
+    for u in "${_unit[@]}"; do
+        if [[ $value -ge $u ]]; then
+            local result=$(echo "scale=2; $value / $u" | bc -l)
+            echo "$result${_unit_string[$idx]}"
+            return
+        fi
+        (( idx++ ))
+    done
+}
+
+# Convert human size to numeric
+human_to_numeric() {
+    local value=${1?missing argument}
+    local i
+    for i in "g G m M k K"; do
+        value=${value//[gG]/*1024m}
+        value=${value//[mM]/*1024k}
+        value=${value//[kK]/*1024}
+    done
+    [[ ${value} == *\** ]] && echo $((value)) || return 1
+}
+
+# Print the usage.
+usage () {
+    printf "Usage: %s [OPTION] [REF]\n" "$self"
+    printf "Get blob sizes\n\n"
+    printf "  --help                  print this message and exit\n"
+    printf "  -v, --version           print the version information and exit\n\n"
+    printf "  -g min_size             only display blobs that have size >= min_size\n"
+    printf "  -h                      print the size of blob in human readable format\n"
+}
+
+MIN_SIZE=0
+OPT_H=0
+
+argument() {
+    local opt=$1
+    shift
+    if [[ $# -eq 0 ]]; then
+        printf "%s: option \`%s' requires an argument\n" "$0" "$opt" >&2
+        exit 1
+    fi
+    echo $1
+}
+
+# Check the arguments.
+set -e # errexit
+while [[ $# -gt 0 ]]; do
+    option="$1"
+    shift
+
+    case "$option" in
+        --help)
+            usage
+            exit 0 ;;
+        -v | --version)
+            echo "$self ${VERSION}"
+            exit 0 ;;
+		-h) OPT_H=1 ;;
+        -g)
+            MIN_SIZE=$(human_to_numeric $(argument $option "$@")); shift;;
+        -*)
+            printf "Unrecognized option \`%s'\n\n" "$option" >&2
+            usage
+            exit 1
+            ;;
+        *) ARGS+=("$option") ;; # $ fix fontification
+    esac
+done
+set +e
+
+ref="${ARGS[0]:---all}"
+
+git rev-list --objects $ref | while read hash filename; do
+	if [[ -n "$filename" ]]; then
+		size=$(git cat-file -s $hash)
+		if [[ $size -ge $MIN_SIZE ]]; then
+			[[ "$OPT_H" -eq 1 ]] && size=$(numeric_to_human $size)
+			echo "$size -> $filename -> $hash"
+		fi
     fi
 done
