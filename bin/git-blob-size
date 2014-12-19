@@ -16,7 +16,7 @@ numeric_to_human() {
     fi
     for u in "${_unit[@]}"; do
         if [[ $value -ge $u ]]; then
-            local result=$(echo "scale=2; $value / $u" | bc -l)
+            local result=$(echo "scale=0; $value / $u" | bc -l)
             echo "$result${_unit_string[$idx]}"
             return
         fi
