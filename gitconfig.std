@@ -18,28 +18,37 @@
 	st = status
 	cav = commit -a -v
 	ci = commit
-	br = branch -v
+	br = branch -vv
 	co = checkout
 	df = diff
 	dc = diff --cached
 	dis = diff --ignore-all-space
+	lg = log --graph --pretty=tformat:'%C(auto)%h%Creset -%C(auto)%d%Creset %s %C(green)(%C(bold blue)%an%Creset %C(green)%ar)%Creset'
 	lp = log -p
 	lol = log --graph --decorate --pretty=oneline --abbrev-commit --show-notes=*
 	lola = log --graph --decorate --pretty=oneline --abbrev-commit --all --show-notes=*
-    lr = log -g
+	lr = log -g
 	ls = ls-files
+	oops = commit --amend --no-edit
 
 	# Show files ignored by git:
 	ign = ls-files -o -i --exclude-standard
-    unstage = reset HEAD --
+	unstage = reset HEAD --
 
 [pager]
-	log  = diff-highlight | less
+	log	 = diff-highlight | less
 	show = diff-highlight | less
 	diff = diff-highlight | less
 
-[push]
-	default = upstream
+[diff]
+	mnemonicPrefix = true
+	renames = copies
+
+[fetch]
+	recurseSubmodules = on-demand
+
+[grep]
+	extendedRegexp = true
 
 [apply]
 	whitespace = nowarn
@@ -48,14 +57,12 @@
 	autosetupmerge = true
 
 [log]
+	abbrevCommit = true
 	decorate = short
 	date = local
 
 [rebase]
 	autosquash = true
-
-[rerere]
-	enabled = true
 
 [merge]
 	tool = meld
@@ -64,19 +71,41 @@
 	cmd = xemacs --eval \"(progn (setq ediff-quit-hook 'kill-emacs) (ediff-merge-files-with-ancestor \\\"$LOCAL\\\" \\\"$REMOTE\\\" \\\"$BASE\\\" nil \\\"$MERGED\\\"))\"
 	trustExitCode = false
 
+[pull]
+	# This is GREAT… when you know what you're doing and are careful
+	# not to pull --no-rebase over a local line containing a true merge.
+	# rebase = true
+	# WARNING! This option, which does away with the one gotcha of
+	# auto-rebasing on pulls, is only available from 1.8.5 onwards.
+	rebase = preserve
+
+[push]
+	default = upstream
+
+[rerere]
+	autoupdate = true
+	enabled = true
+
+[status]
+	submoduleSummary = true
+	showUntrackedFiles = all
+
+[tag]
+	sort = version:refname
+
 # URL shorthands
 [url "git@github.com:"]
-        insteadOf = "gh:"
-        pushInsteadOf = "github:"
-        pushInsteadOf = "git://github.com/"
+	insteadOf = "gh:"
+	pushInsteadOf = "github:"
+	pushInsteadOf = "git://github.com/"
 
 [url "git://github.com/"]
-        insteadOf = "github:"
+	insteadOf = "github:"
 
 [url "git@gist.github.com:"]
-        insteadOf = "gst:"
-        pushInsteadOf = "gist:"
-        pushInsteadOf = "git://gist.github.com/"
+	insteadOf = "gst:"
+	pushInsteadOf = "gist:"
+	pushInsteadOf = "git://gist.github.com/"
 
 [url "git://gist.github.com/"]
-        insteadOf = "gist:"
+	insteadOf = "gist:"
