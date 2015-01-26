@@ -22,6 +22,7 @@
 	co = checkout
 	df = diff
 	dc = diff --cached
+	dw = diff --word-diff --color-words
 	dis = diff --ignore-all-space
 	lg = log --graph --pretty=tformat:'%C(auto)%h%Creset -%C(auto)%d%Creset %s %C(green)(%C(bold blue)%an%Creset %C(green)%ar)%Creset'
 	lp = log -p
@@ -43,6 +44,8 @@
 [diff]
 	mnemonicPrefix = true
 	renames = copies
+	wordRegex = .
+	submodule = log
 
 [fetch]
 	recurseSubmodules = on-demand
@@ -66,6 +69,7 @@
 
 [merge]
 	tool = meld
+	log = true
 
 [mergetool.ediff]
 	cmd = xemacs --eval \"(progn (setq ediff-quit-hook 'kill-emacs) (ediff-merge-files-with-ancestor \\\"$LOCAL\\\" \\\"$REMOTE\\\" \\\"$BASE\\\" nil \\\"$MERGED\\\"))\"
