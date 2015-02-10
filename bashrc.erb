@@ -25,6 +25,14 @@ if [[ -f ~/.localrc ]]; then
   source ~/.localrc
 fi
 
+# Adapting PATH environment variable for use with perlbrew,
+# load RVM into a shell session *as a function*, and add completion
+if [[ -s "$HOME/perl5/perlbrew/etc/bashrc" ]]; then
+  source "$HOME/perl5/perlbrew/etc/bashrc"
+  [[ -r "$PERLBREW_ROOT"/etc/perlbrew-completion.bash ]] && \
+      . "$PERLBREW_ROOT"/etc/perlbrew-completion.bash
+fi
+
 # Adapting PATH environment variable for use with RVM,
 # load RVM into a shell session *as a function*, and
 # add completion
