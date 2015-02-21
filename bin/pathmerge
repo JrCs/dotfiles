@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl
 
 =head1 NAME
 
@@ -41,6 +41,7 @@ Ed Avis, ed@membled.com
 
 =cut
 
+use warnings;
 use Getopt::Std;
 our $opt_d;
 getopts('d');
