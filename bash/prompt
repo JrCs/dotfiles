@@ -22,6 +22,7 @@ br_blue='\[\e[1;34m\]'
 red='\[\e[0;31m\]'
 br_red='\[\e[1;31m\]'
 green='\[\e[0;32m\]'
+br_green='\[\e[1;32m\]'
 green_git_prompt=$(extended_color 40)
 green_prompt=$(extended_color 41)
 cyan_git_prompt=$(extended_color 45)
@@ -52,14 +53,14 @@ fi
 
 if [[ -n $(type -t __git_ps1) ]];then
 git_prompt_info() {
-	git_ps1=$(__git_ps1)
+    git_ps1=$(__git_ps1)
     if [[ -n "$git_ps1" ]];then
-		git_ps1=${git_ps1//\*/${green_git_prompt}*${normal}}
-		git_ps1=${git_ps1//+/${yellow_git_prompt}+${normal}}
-		git_ps1=${git_ps1//$/${orange_git_prompt}\$${normal}}
-		git_ps1=${git_ps1//%/${cyan_git_prompt}%${normal}}
-		echo "$git_ps1"
-	fi
+        git_ps1=${git_ps1//\*/${green_git_prompt}*${normal}}
+        git_ps1=${git_ps1//+/${yellow_git_prompt}+${normal}}
+        git_ps1=${git_ps1//$/${orange_git_prompt}\$${normal}}
+        git_ps1=${git_ps1//%/${cyan_git_prompt}%${normal}}
+        echo "$git_ps1"
+    fi
 }
 
 export GIT_PS1_SHOWDIRTYSTATE=true
@@ -71,7 +72,7 @@ fi
 
 # USER
 user_prompt_info() {
-    if [[ "$USER" != 'root' ]];then
+    if [[ "$USER" != 'root' ]]; then
         echo "${br_yellow}\u${normal}"
     else
         echo "${orange_user_prompt}\u${normal}"
@@ -83,7 +84,11 @@ user_prompt_info() {
 hostname_prompt="\H" # Can be overwrite
 
 server_prompt_info() {
-    echo "${br_blue}${hostname_prompt}${normal}"
+    if [[ "$USER" != 'root' ]]; then
+        echo "${br_green}${hostname_prompt}${normal}"
+    else
+        echo "${br_blue}${hostname_prompt}${normal}"
+    fi
 }
 
 # CHROOT
