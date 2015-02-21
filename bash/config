@@ -25,11 +25,9 @@ unset configOS
 ##########
 # Color
 ##########
-if [ -z "$LS_COLORS" ];then
-    DIRCOLORS_BIN=$(type -P dircolors gdircolors | head -1)
-    if [ -n "$DIRCOLORS_BIN" ];then
-        test -r ~/.dircolors && eval "$($DIRCOLORS_BIN -b ~/.dircolors)" || eval "$($DIRCOLORS_BIN -b)"
-    fi
+DIRCOLORS_BIN=$(type -P dircolors gdircolors | head -1)
+if [ -n "$DIRCOLORS_BIN" ];then
+    test -r ~/.dircolors && eval "$($DIRCOLORS_BIN -b ~/.dircolors)" || eval "$($DIRCOLORS_BIN -b)"
 fi
 
 if [ -n "$LS_COLORS" ];then
