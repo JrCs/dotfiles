@@ -41,7 +41,9 @@ git_prompt_info() {
 
 # If __git_ps1 is not defined try to find and source git-prompt.sh
 if [[ -z $(type -t __git_ps1) ]];then
-    for file in /usr/share/git-core/contrib/completion/git-prompt.sh; do
+    for file in \
+     /usr/share/git-core/contrib/completion/git-prompt.sh \
+     /opt/local/share/git/git-prompt.sh; do
         [[ -f "$file" ]] && source $file && break
     done
 fi

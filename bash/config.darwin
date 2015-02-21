@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# Compat
+export COMMAND_MODE=unix2003

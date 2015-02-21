@@ -30,6 +30,9 @@ pathmunge "$DOTFILES_DIR/bin"
 [[ -d /usr/local/man ]] && export MANPATH="/usr/local/man:$MANPATH"
 
 # Adapting MANPATH environment variable for use with MacPorts.
+for perl_man_dir in /opt/local/share/perl*/man; do
+    export MANPATH="$perl_man_dir:$MANPATH"
+done
 [[ -d /opt/local/share/man ]] && export MANPATH="/opt/local/share/man:$MANPATH"
 
 # Add dotfiles man directory
@@ -38,7 +41,8 @@ export MANPATH="$DOTFILES_DIR/man:$MANPATH"
 # Deduplicate entries in PATH, MANPATH and LD_LIBRARY_PATH
 export PATH=$(pathmerge -d "$PATH" 2>/dev/null)
 export MANPATH=$(pathmerge -d "$MANPATH" 2>/dev/null)
-export LD_LIBRARY_PATH=$(pathmerge -d "$LD_LIBRARY_PATH" 2>/dev/null)
+[[ -n "$LD_LIBRARY_PATH" ]] && \
+ export LD_LIBRARY_PATH=$(pathmerge -d "$LD_LIBRARY_PATH" 2>/dev/null)
 
 # Local Variables:      #
 # mode: ksh             #

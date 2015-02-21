@@ -1,4 +1,10 @@
 [[ -z "$BASH_COMPLETION" && -f /etc/bash_completion ]] && source /etc/bash_completion
+
+# MacPorts completions
+if [[ -f /opt/local/share/bash-completion/bash_completion ]]; then
+    . /opt/local/share/bash-completion/bash_completion
+fi
+
 complete -C "$DOTFILES_DIR/bash/completion_scripts/rake_completion" -o default rake
 
 # git flow

@@ -12,7 +12,8 @@ shopt nocasematch >/dev/null || nocasematchWasOff=1
 
 configOS=''
 case "${OSTYPE}" in
-    linux*)  configOS='linux' ;;
+    linux*)  configOS='linux'  ;;
+    darwin*) configOS='darwin' ;;
 esac
 
 # Restore state of 'nocasematch' option, if necessary.
@@ -25,23 +26,36 @@ unset configOS
 ##########
 # Color
 ##########
-DIRCOLORS_BIN=$(type -P dircolors gdircolors | head -1)
-if [ -n "$DIRCOLORS_BIN" ];then
-    test -r ~/.dircolors && eval "$($DIRCOLORS_BIN -b ~/.dircolors)" || eval "$($DIRCOLORS_BIN -b)"
+ls --color /dev/null >/dev/null 2>&1 && gnu_ls=1 || gnu_ls=0
+if [[ "$gnu_ls" -eq 1 ]]; then
+    # GNU ls
+    DIRCOLORS_BIN=$(type -P dircolors gdircolors | head -n 1)
+    if [ -n "$DIRCOLORS_BIN" ];then
+        test -r ~/.dircolors && eval "$($DIRCOLORS_BIN -b ~/.dircolors)" || eval "$($DIRCOLORS_BIN -b)"
+    fi
+
+    if [ -n "$LS_COLORS" ];then
+        # LS
+        alias ll='ls -al --color=auto'
+        alias ls='ls --color=auto'
+    fi
+else
+    # BSD ls
+    export CLICOLOR=1
+    export LSCOLORS=ExFxCxDxBxegedabagacad
+	alias ll='ls -alG'
+	alias ls='ls -G'
 fi
+unset gnu_ls
 
-if [ -n "$LS_COLORS" ];then
-    # LS
-    alias ll='ls -alF --color=auto'
-    alias ls='ls --color=auto'
-
-    # TREE
-    HAVE_TREE=$(type -P tree)
-    [[ -n "$HAVE_TREE" ]] && alias tree='tree -C'
-fi
-
+# GREP
 export GREP_COLOR='3;32'
-export GREP_OPTIONS='--color=auto'
+alias grep='grep --color=auto'
+
+# TREE
+HAVE_TREE=$(type -P tree)
+[[ -n "$HAVE_TREE" ]] && alias tree='tree -C'
+unset HAVE_TREE
 
 ##########
 # History
@@ -66,6 +80,8 @@ esac
 ##########
 HAVE_VIM=$(type -P vim)
 [[ -n "$HAVE_VIM" ]] && export EDITOR=vim
+unset HAVE_VIM
+
 HAVE_LESS=$(type -P less)
 if [[ -n "$HAVE_LESS" ]];then
     export LESS='-FiRX'
@@ -76,6 +92,7 @@ else
 	MANPAGER="$PAGER"
 fi
 export PAGER MANPAGER
+unset HAVE_LESS
 
 # lesspipe.sh & code2color
 LESSPIPESH_BIN=$(type -P lesspipe.sh)
@@ -90,7 +107,6 @@ ACK_PAGER_COLOR="$PAGER"
 ##########
 # Autojump
 ##########
-
 for autojump_dir in "$DOTFILES_DIR/autojump" "$DOTFILES_DIR/autojump/bin";do
     if [[ -f "$autojump_dir/autojump.bash" ]];then
         [[ -z "$AUTOJUMP_IGNORE_CASE" ]]   && export AUTOJUMP_IGNORE_CASE=1
