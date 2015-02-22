@@ -125,11 +125,13 @@ export PROMPT_DIRTRIM=2 # Number of trailing directory components to retain
 prompt() {
     # Check exit code
     local exit_code=$?
-    if [[ $exit_code -eq 0 ]];then
-        local cl_code=${normal}
-        local cl_prompt=${green_prompt}
+    if [[ $exit_code -eq 0 ]]; then
+        if [[ "$USER" != 'root' ]]; then
+            local cl_prompt=${green_prompt}
+        else
+            local cl_prompt=${orange_user_prompt}
+        fi
     else
-        local cl_code=${br_red}
         local cl_prompt=${br_red}
     fi
     local PS1_LINE1="$(window_title_info)$(chroot_prompt_info)<~~~ $(user_prompt_info)@$(server_prompt_info) ( \t )$(exitcode_prompt_info ${exit_code}) ${br_cyan}$(pwd -P)${normal} ~~~>"
