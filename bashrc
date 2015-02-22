@@ -19,9 +19,9 @@ if [[ ! -d "$DOTFILES_DIR" ]]; then
     return 1
 fi
 
-source "$DOTFILES_DIR"/bash/completions
 source "$DOTFILES_DIR"/bash/paths
 source "$DOTFILES_DIR"/bash/config
+source "$DOTFILES_DIR"/bash/completions
 source "$DOTFILES_DIR"/bash/aliases
 
 # use .localrc for settings specific to one system

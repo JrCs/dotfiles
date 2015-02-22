@@ -7,6 +7,9 @@ fi
 
 complete -C "$DOTFILES_DIR/bash/completion_scripts/rake_completion" -o default rake
 
+# ack
+source "$DOTFILES_DIR/ack/completion.bash"
+
 # git flow
 source "$DOTFILES_DIR/bash/completion_scripts/git-flow-completion/git-flow-completion.bash"
 
