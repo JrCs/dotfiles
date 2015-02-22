@@ -120,6 +120,8 @@ path_prompt_info() {
     echo "${br_cyan}\w${normal}"
 }
 
+export PROMPT_DIRTRIM=2 # Number of trailing directory components to retain
+
 prompt() {
     # Check exit code
     local exit_code=$?
