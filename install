@@ -1,0 +1,86 @@
+#!/bin/bash
+
+declare -r self="${0##*/}"
+declare DOTFILES_DIR="$(cd "$(dirname "$0")" && echo "$PWD")"
+
+declare -r LINKS=(       \
+ bash_profile bashrc     \
+ dircolors gvimrc        \
+ gitignore gitconfig.std \
+ irbrc                   \
+ terminfo                \
+ todo.cfg todo.actions.d \
+ vim vimrc               \
+ pastebin.d              \
+ railsrc)
+
+
+function md5() {
+    md5sum "$1" | awk '{print $1}'
+}
+
+# Main
+
+source "$DOTFILES_DIR"/libraries/bash_library.sh
+
+if [[ -n "$(type -P git)" ]]; then
+    # Do an upgrade first
+    git_version=$(git --version | sed 's/^.*version *//')
+
+    submodule_recursive_option=''
+    version_test_gt "$git_version" "1.8.5"
+    [[ $? -eq 0 ]] && submodule_recursive_option='--recursive'
+
+    cd "$DOTFILES_DIR" && \
+     git submodule sync "$submodule_recursive_option" && \
+     git submodule update --init "$submodule_recursive_option"
+
+    # TODO: populate .gitconfig
+else
+    if [[ "$self" == upgrade ]]; then
+        printf "%s\n" "$(sayColor yellow 'Git must be installed to upgrade')" >&2
+    fi
+fi
+
+YES=0
+
+for link in ${LINKS[@]}; do
+    source="$HOME/.$link"
+    source_txt=$(echo "$source" | sed "s@$HOME@~@")
+    dest="$DOTFILES_DIR/$link"
+    if [[ -e "$source" ]]; then
+        # Check if identical
+        if [[ ( -L "$source" && $(readlink "$source") == "$dest" ) || \
+              ( ! -d "$source" && $(md5 "$source") == $(md5 "$dest") ) ]]; then
+            printf "%s $source_txt\n" "$(sayColor green identical)"
+            continue
+        fi
+
+        if [[ "$YES" -eq 0 ]]; then
+            msg=$(printf "%s $source_txt (ynaq)" "$(sayColor red overwrite)")
+            answer=$(prompt "$msg" "n" 'N' 'Y' 'Q' 'A')
+            case $(lc "$answer") in
+                n) continue ;;
+                q) exit 0 ;;
+                a) YES=1 ;;
+            esac
+        fi
+        # Overwrite
+        backup="${source}.bak"
+        backup_text="${source_txt}.bak"
+        # Remove old backup if exists
+        rm -rf "$backup"
+        printf "%s $source_txt to $backup_text\n" "$(sayColor yellow backup)"
+        mv "$source" "$backup"
+    fi
+    printf "%s $source_txt\n" "$(sayColor cyan linking)"
+    ln -sf "$dest" "$source"
+done
+
+# Local Variables:      #
+# mode: ksh             #
+# tab-width: 4          #
+# indent-tabs-mode: nil #
+# End:                  #
+#
+# vi: set expandtab ts=4 sw=4 sts=4: #

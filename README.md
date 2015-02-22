@@ -8,8 +8,13 @@ Installation
 ------------
 ```bash
 env GIT_SSL_NO_VERIFY=true git clone https://github.com/JrCs/dotfiles.git ~/.dotfiles
-cd ~/.dotfiles
-rake install
+~/.dotfiles/install
+```
+
+upgrade
+-------
+```bash
+~/.dotfiles/upgrade
 ```
 
 Environment
