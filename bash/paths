@@ -38,11 +38,14 @@ done
 # Add dotfiles man directory
 export MANPATH="$DOTFILES_DIR/man:$MANPATH"
 
-# Deduplicate entries in PATH, MANPATH and LD_LIBRARY_PATH
-export PATH=$(pathmerge -d "$PATH" 2>/dev/null)
-export MANPATH=$(pathmerge -d "$MANPATH" 2>/dev/null)
-[[ -n "$LD_LIBRARY_PATH" ]] && \
- export LD_LIBRARY_PATH=$(pathmerge -d "$LD_LIBRARY_PATH" 2>/dev/null)
+# Check if pathmerge can run
+if "$DOTFILES_DIR"/bin/pathmerge >/dev/null 2>&1; then
+    # Deduplicate entries in PATH, MANPATH and LD_LIBRARY_PATH
+    export PATH=$("$DOTFILES_DIR"/bin/pathmerge -d "$PATH" 2>/dev/null)
+    export MANPATH=$("$DOTFILES_DIR"/bin/pathmerge -d "$MANPATH" 2>/dev/null)
+    [[ -n "$LD_LIBRARY_PATH" ]] && \
+     export LD_LIBRARY_PATH=$("$DOTFILES_DIR"/bin/pathmerge -d "$LD_LIBRARY_PATH" 2>/dev/null)
+fi
 
 # Local Variables:      #
 # mode: ksh             #

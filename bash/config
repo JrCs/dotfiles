@@ -44,14 +44,16 @@ else
     # BSD ls
     export CLICOLOR=1
     export LSCOLORS=ExFxCxDxBxegedabagacad
-	alias ll='ls -alG'
-	alias ls='ls -G'
+    alias ll='ls -alG'
+    alias ls='ls -G'
 fi
 unset gnu_ls
 
 # GREP
-export GREP_COLOR='3;32'
-alias grep='grep --color=auto'
+if echo "test" | grep -q --color=auto 'test' 2>/dev/null; then
+    export GREP_COLOR='3;32'
+    alias grep='grep --color=auto'
+fi
 
 # TREE
 HAVE_TREE=$(type -P tree)
