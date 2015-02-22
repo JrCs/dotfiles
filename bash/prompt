@@ -19,6 +19,7 @@ cyan='\[\e[0;36m\]'
 br_cyan='\[\e[1;36m\]'
 br_yellow=$(extended_color 184)
 br_blue='\[\e[1;34m\]'
+blue='\[\e[0;34m\]'
 red='\[\e[0;31m\]'
 br_red='\[\e[1;31m\]'
 green='\[\e[0;32m\]'
@@ -81,13 +82,15 @@ user_prompt_info() {
 
 # SERVER
 
-hostname_prompt="\H" # Can be overwrite
+dotfiles_host="${HOSTNAME%%.*}"  # Can be overwrite
+dotfiles_domain=$(echo "$HOSTNAME" | sed 's/^[^.]*//') # Can be overwrite
+dotfiles_domain_prompt="${dotfiles_domain:+${normal}.${blue}${dotfiles_domain#.}}"
 
 server_prompt_info() {
     if [[ "$USER" != 'root' ]]; then
-        echo "${br_green}${hostname_prompt}${normal}"
+        echo "${br_green}${dotfiles_host}${dotfiles_domain_prompt}${normal}"
     else
-        echo "${br_blue}${hostname_prompt}${normal}"
+        echo "${br_blue}${dotfiles_host}${dotfiles_domain_prompt}${normal}"
     fi
 }
 
@@ -100,7 +103,7 @@ chroot_prompt_info() {
 window_title_info() {
     case "$TERM" in
         linux*|xterm*|rxvt*)
-            echo "\[\e]0;${debian_chroot:+($debian_chroot)}${window_title:-$hostname_prompt}\a\]"
+            echo "\[\e]0;${debian_chroot:+($debian_chroot)}${window_title:-$dotfiles_host}\a\]"
             ;;
         *)
             ;;
