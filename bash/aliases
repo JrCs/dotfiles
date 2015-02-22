@@ -8,18 +8,16 @@ alias vi >/dev/null 2>&1 || alias vi=vim
 # misc
 alias reload='. ~/.bash_profile'
 alias profileme="history | awk '{print \$2}' | awk 'BEGIN{FS=\"|\"}{print \$1}' | sort | uniq -c | sort -n | tail -n 20 | sort -nr"
+alias cleanup="find . -name '*~' -print0 | xargs -0 -I@ sh -c \"echo 'Removing @'; rm -f '@'\""
 
-speed_ssh() { if [ -z "$1" ];then echo 'Vous devez specifier le nom du serveur distant'; else yes | pv | ssh "$1" "cat >/dev/null"; fi }
-typeset -f _ssh >/dev/null && shopt -u hostcomplete && complete -F _ssh speed_ssh
+# ls aliases
+alias lr="ls -ltra"
 
-#####
-# GIT
-# ###
+if [[ -n "$(type -P pv)" ]]; then
+    speed_ssh() { if [ -z "$1" ];then echo 'Vous devez specifier le nom du serveur distant'; else yes | pv | ssh "$1" "cat >/dev/null"; fi }
+    typeset -f _ssh >/dev/null && shopt -u hostcomplete && complete -F _ssh speed_ssh
+fi
 
-# Idiot-Proof Git Aliases (see http://notes.envato.com/developers/rebasing-merge-commits-in-git/)
-function git_current_branch() {
-  git rev-parse --abbrev-ref HEAD 2>/dev/null
-}
 
 # Local Variables:      #
 # mode: ksh             #
