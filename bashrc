@@ -13,12 +13,16 @@ if [[ -f /etc/bashrc ]]; then
 fi
 
 # Declare dotfiles directory
-DOTFILES_DIR=<%= File.dirname(File.expand_path(__FILE__)) %>
+DOTFILES_DIR=${DOTFILES_DIR:-"$HOME"/.dotfiles}
+if [[ ! -d "$DOTFILES_DIR" ]]; then
+    echo "Error: can't find $DOTFILES_DIR directory" >&2
+    return 1
+fi
 
-source ~/.bash/aliases
-source ~/.bash/completions
-source ~/.bash/paths
-source ~/.bash/config
+source "$DOTFILES_DIR"/bash/completions
+source "$DOTFILES_DIR"/bash/paths
+source "$DOTFILES_DIR"/bash/config
+source "$DOTFILES_DIR"/bash/aliases
 
 # use .localrc for settings specific to one system
 if [[ -f ~/.localrc ]]; then
@@ -40,5 +44,3 @@ if [[ -s "$HOME/.rvm/scripts/rvm" ]]; then
   source "$HOME/.rvm/scripts/rvm"
   [[ -r "$rvm_path"/scripts/completion ]] && . "$rvm_path"/scripts/completion
 fi
-
-unset DOTFILES_DIR

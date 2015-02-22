@@ -20,7 +20,8 @@ esac
 (( nocasematchWasOff )) && shopt -u nocasematch
 unset nocasematchWasOff
 
-[[ -n "$configOS" && -f ~/.bash/config.$configOS ]] && source ~/.bash/config.$configOS
+[[ -n "$configOS" && -f "$DOTFILES_DIR"/bash/config.$configOS ]] && \
+ source "$DOTFILES_DIR"/bash/config.$configOS
 unset configOS
 
 ##########
