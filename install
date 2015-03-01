@@ -25,6 +25,9 @@ source "$DOTFILES_DIR"/libraries/bash_library.sh
 
 if [[ -n "$(type -P git)" ]]; then
     # Do an upgrade first
+    git pull --rebase --ff-only || exit $?
+
+    # Get git version
     git_version=$(git --version | sed 's/^.*version *//')
 
     submodule_recursive_option=''
