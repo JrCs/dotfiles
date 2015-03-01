@@ -1,10 +1,20 @@
-[[ -z "$BASH_COMPLETION" && -f /etc/bash_completion ]] && source /etc/bash_completion
+if [[ -n "$BASH_VERSION" && -z "$BASH_COMPLETION_COMPAT_DIR" ]]; then
+	for file in \
+	 /etc/bash_completion \
+	 /usr/share/bash-completion/bash_completion \
+	 /usr/local/share/bash-completion/bash_completion; do
+		if [[ -f "$file" ]]; then
+			source "$file" && break
+		fi
+	done
+fi
 
 # MacPorts completions
 if [[ -f /opt/local/share/bash-completion/bash_completion ]]; then
     . /opt/local/share/bash-completion/bash_completion
 fi
 
+# rake
 complete -C "$DOTFILES_DIR/bash/completion_scripts/rake_completion" -o default rake
 
 # ack
