@@ -7,9 +7,9 @@ if [[ -x /usr/bin/dbus-launch ]] &&   \
     eval $( /usr/bin/dbus-launch --sh-syntax --autolaunch=$(dbus-uuidgen --get) )
 fi
 
-if [[ -x /usr/bin/gnome-keyring-daemon ]]; then
-   eval $(/usr/bin/gnome-keyring-daemon --start --components=secrets,ssh,gpg)
-   [[ -n "$GNOME_KEYRING_CONTROL" ]] && export GNOME_KEYRING_CONTROL
-   [[ -n "$SSH_AUTH_SOCK" ]]  && export SSH_AUTH_SOCK
-   [[ -n "$GPG_AGENT_INFO" ]] && export GPG_AGENT_INFO
-fi
+#if [[ -x /usr/bin/gnome-keyring-daemon ]]; then
+#   eval $(/usr/bin/gnome-keyring-daemon --start --components=secrets,ssh,gpg)
+#   [[ -n "$GNOME_KEYRING_CONTROL" ]] && export GNOME_KEYRING_CONTROL
+#   [[ -n "$SSH_AUTH_SOCK" ]]  && export SSH_AUTH_SOCK
+#   [[ -n "$GPG_AGENT_INFO" ]] && export GPG_AGENT_INFO
+#fi
