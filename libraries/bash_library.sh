@@ -213,11 +213,11 @@ sayColor() {
 }
 
 say() {
-    say_color info "$*"
+    sayColor info "$*"
 }
 
 error() {
-    say_color error "Error: $*" >&2
+    sayColor error "Error: $*" >&2
 }
 
 die() {
