@@ -19,6 +19,47 @@ function md5() {
     md5sum "$1" | awk '{print $1}'
 }
 
+function uppercase_first_letters() {
+    local result=()
+    for word in $*; do
+        declare -c uc_first_letter # undocument bash
+        uc_first_letter="$word"
+        result+=( "$uc_first_letter" )
+    done
+    echo "${result[@]}"
+}
+
+function populate_gitconfig {
+    local username="${username:-$(git config --global user.name)}"
+    while [[ -z "$username" ]]; do
+        read -e -p 'Your user name (ex Yves Blusseau): ' username
+        if [[ ! -z "$username" && "$username" != *\ * ]]; then
+            error "Invalid username ! Must be Firstname Lastname.\n"
+            username=''
+        fi
+    done
+    username="$(uppercase_first_letters "$username")"
+    git config --global user.name "$username"
+
+    email="${email:-$(git config --global user.email)}"
+    while [[ -z "$email" ]]; do
+        read -e -p 'Your email (ex firstname.lastname@gmail.com): ' email
+        if [[ ! -z "$email" && "$email" != *@* ]]; then
+            error "Invalid email !\n"
+            email=''
+        fi
+    done
+    git config --global user.email "$email"
+
+    # Add the include
+    if [[ -z $(git config --global include.path) ]]; then
+        tmp_file=$(mktemp)
+        git config -f "$tmp_file" include.path .gitconfig.std
+        cat "$HOME/.gitconfig" >> $tmp_file
+        mv "$tmp_file" "$HOME/.gitconfig"
+    fi
+}
+
 # Main
 
 source "$DOTFILES_DIR"/libraries/bash_library.sh
@@ -38,7 +79,9 @@ if [[ -n "$(type -P git)" ]]; then
      git submodule sync "$submodule_recursive_option" && \
      git submodule update --init "$submodule_recursive_option"
 
-    # TODO: populate .gitconfig
+    # Populate .gitconfig file
+    populate_gitconfig
+
 else
     if [[ "$self" == upgrade ]]; then
         printf "%s\n" "$(sayColor yellow 'Git must be installed to upgrade')" >&2
