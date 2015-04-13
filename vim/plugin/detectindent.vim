@@ -16,6 +16,9 @@
 "                " to set a preferred indent level when detection is
 "                " impossible:
 "                :let g:detectindent_preferred_indent = 4
+"                
+"                " To use preferred values instead of guessing:
+"                :let g:detectindent_preferred_when_mixed = 1
 "
 " Requirements:  Untested on Vim versions below 6.2
 
@@ -28,20 +31,28 @@ if !exists('g:detectindent_verbosity')
     let g:detectindent_verbosity = 1
 endif
 
+fun! <SID>HasCStyleComments()
+    return index(["c", "cpp", "java", "javascript", "php", "vala"], &ft) != -1
+endfun
+
 fun! <SID>IsCommentStart(line)
     " &comments aren't reliable
-    if index(["c", "cpp", "javascript", "php"], &ft) != -1
-        return -1 != match(a:line, '/\*')
-    else
-        return 0
-    endif
+    return <SID>HasCStyleComments() && a:line =~ '/\*'
 endfun
 
 fun! <SID>IsCommentEnd(line)
-    if index(["c", "cpp", "javascript", "php"], &ft) != -1
-        return -1 != match(a:line, '\*/')
+    return <SID>HasCStyleComments() && a:line =~ '\*/'
+endfun
+
+fun! <SID>IsCommentLine(line)
+    return <SID>HasCStyleComments() && a:line =~ '^\s\+//'
+endfun
+
+fun! s:GetValue(option)
+    if exists('b:'. a:option)
+        return get(b:, a:option)
     else
-        return 0
+        return get(g:, a:option)
     endif
 endfun
 
@@ -49,6 +60,7 @@ fun! <SID>DetectIndent()
     let l:has_leading_tabs            = 0
     let l:has_leading_spaces          = 0
     let l:shortest_leading_spaces_run = 0
+    let l:shortest_leading_spaces_idx = 0
     let l:longest_leading_spaces_run  = 0
     let l:max_lines                   = 1024
     if exists("g:detectindent_max_lines_to_analyse")
@@ -77,6 +89,12 @@ fun! <SID>DetectIndent()
             continue
         endif
 
+        " Skip comment lines since they are not dependable.
+        if <SID>IsCommentLine(l:line)
+            let l:idx = l:idx + 1
+            continue
+        endif
+
         " Skip lines that are solely whitespace, since they're less likely to
         " be properly constructed.
         if l:line !~ '\S'
@@ -98,6 +116,7 @@ fun! <SID>DetectIndent()
                 if l:shortest_leading_spaces_run == 0 ||
                             \ l:spaces < l:shortest_leading_spaces_run
                     let l:shortest_leading_spaces_run = l:spaces
+                    let l:shortest_leading_spaces_idx = l:idx
                 endif
                 if l:spaces > l:longest_leading_spaces_run
                     let l:longest_leading_spaces_run = l:spaces
@@ -118,21 +137,21 @@ fun! <SID>DetectIndent()
 
     if l:has_leading_tabs && ! l:has_leading_spaces
         " tabs only, no spaces
-        let l:verbose_msg = "Detected tabs only, no spaces"
+        let l:verbose_msg = "Detected tabs only and no spaces"
         setl noexpandtab
-        if exists("g:detectindent_preferred_indent")
+        if s:GetValue("detectindent_preferred_indent")
             let &l:shiftwidth  = g:detectindent_preferred_indent
             let &l:tabstop     = g:detectindent_preferred_indent
         endif
 
     elseif l:has_leading_spaces && ! l:has_leading_tabs
         " spaces only, no tabs
-        let l:verbose_msg = "Detected spaces only, no tabs"
+        let l:verbose_msg = "Detected spaces only and no tabs"
         setl expandtab
         let &l:shiftwidth  = l:shortest_leading_spaces_run
         let &l:softtabstop = l:shortest_leading_spaces_run
 
-    elseif l:has_leading_spaces && l:has_leading_tabs
+    elseif l:has_leading_spaces && l:has_leading_tabs && ! s:GetValue("detectindent_preferred_when_mixed")
         " spaces and tabs
         let l:verbose_msg = "Detected spaces and tabs"
         setl noexpandtab
@@ -149,17 +168,17 @@ fun! <SID>DetectIndent()
 
     else
         " no spaces, no tabs
-        let l:verbose_msg = "Detected no spaces, no spaces"
-        if exists("g:detectindent_preferred_indent") &&
-                    \ exists("g:detectindent_preferred_expandtab")
+        let l:verbose_msg = s:GetValue("detectindent_preferred_when_mixed") ? "preferred_when_mixed is active" : "Detected no spaces and no tabs"
+        if s:GetValue("detectindent_preferred_indent") &&
+                    \ (s:GetValue("detectindent_preferred_expandtab"))
             setl expandtab
             let &l:shiftwidth  = g:detectindent_preferred_indent
             let &l:softtabstop = g:detectindent_preferred_indent
-        elseif exists("g:detectindent_preferred_indent")
+        elseif s:GetValue("detectindent_preferred_indent")
             setl noexpandtab
             let &l:shiftwidth  = g:detectindent_preferred_indent
             let &l:tabstop     = g:detectindent_preferred_indent
-        elseif exists("g:detectindent_preferred_expandtab")
+        elseif s:GetValue("detectindent_preferred_expandtab")
             setl expandtab
         else
             setl noexpandtab
@@ -172,6 +191,7 @@ fun! <SID>DetectIndent()
                     \ ."; has_leading_tabs:" l:has_leading_tabs
                     \ .", has_leading_spaces:" l:has_leading_spaces
                     \ .", shortest_leading_spaces_run:" l:shortest_leading_spaces_run
+                    \ .", shortest_leading_spaces_idx:" l:shortest_leading_spaces_idx
                     \ .", longest_leading_spaces_run:" l:longest_leading_spaces_run
 
         let changed_msg = []
@@ -187,5 +207,5 @@ fun! <SID>DetectIndent()
     endif
 endfun
 
-command! -nargs=0 DetectIndent call <SID>DetectIndent()
+command! -bar -nargs=0 DetectIndent call <SID>DetectIndent()
 

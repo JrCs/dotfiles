@@ -99,11 +99,8 @@ if has("autocmd")
   " URL=https://github.com/ciaranm/detectindent
   "
   " uncomment to have verbose messages
-  "let g:detectindent_verbosity=0
-  autocmd BufReadPost *
-    \ if &ft != 'make' |
-    \   exe ":DetectIndent" |
-    \ endif
+  " let g:detectindent_verbosity=1
+  autocmd BufReadPost * :DetectIndent
 
   augroup END
 
