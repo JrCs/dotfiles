@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+# reset environment variables that could interfere with normal usage
+export GREP_OPTIONS=
+# put all utility functions here
+
+# make a temporary file
+git_extra_mktemp() {
+    mktemp -t "$(basename "$0")".XXX
+}
+
+#
+# check whether current directory is inside a git repository
+#
+
+is_git_repo() {
+  git rev-parse --show-toplevel > /dev/null 2>&1
+  result=$?
+  if test $result != 0; then
+    >&2 echo 'Not a git repo!'
+    exit $result
+  fi
+}
+
+is_git_repo
+
+function show_contents {
+  local file="${2/#~/$HOME}"
+  if [ -f "$file" ]; then
+    echo "$1 gitignore: $2" && cat "$file"
+  else
+    echo "There is no $1 .gitignore yet"
+  fi
+}
+
+function show_global {
+  show_contents Global `git config --global core.excludesfile`
+}
+
+function add_global {
+  add_patterns `git config --global core.excludesfile` "$@"
+}
+
+function show_local {
+  cd "$(git root)"
+  show_contents Local .gitignore
+}
+
+function add_local {
+  cd "$(git root)"
+  add_patterns .gitignore "$@"
+}
+
+function add_patterns {
+  echo "Adding pattern(s) to: $1"
+  local file="${1/#~/$HOME}"
+  for pattern in "${@:2}"; do
+    echo "... adding '$pattern'"
+    (test -f "$file" && test "$pattern" && grep -q -F -x -- "$pattern" "$file") || echo "$pattern" >> "$file"
+  done
+}
+
+if test $# -eq 0; then
+   show_global
+   echo "---------------------------------"
+   show_local
+else
+  case "$1" in
+    -l|--local)
+      test $# -gt 1 && add_local "${@:2}" && echo
+      show_local
+      ;;
+    -g|--global)
+      test $# -gt 1 && add_global "${@:2}" && echo
+      show_global
+      ;;
+    *)
+      add_local "$@"
+      ;;
+  esac
+fi
+

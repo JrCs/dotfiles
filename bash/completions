@@ -29,6 +29,9 @@ source "$DOTFILES_DIR/bash/completion_scripts/git-flow-completion/git-flow-compl
 # cheat
 [[ -f "$DOTFILES_DIR/cheat/autocompletion/cheat.bash" ]] && source "$DOTFILES_DIR/cheat/autocompletion/cheat.bash"
 
+# git-extras
+[[ -f "$DOTFILES_DIR/git-extras/bash_completion.d/git-extras" ]] && source "$DOTFILES_DIR/git-extras/bash_completion.d/git-extras"
+
 # Local Variables:      #
 # mode: ksh             #
 # tab-width: 4          #

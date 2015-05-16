@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# reset environment variables that could interfere with normal usage
+export GREP_OPTIONS=
+# put all utility functions here
+
+# make a temporary file
+git_extra_mktemp() {
+    mktemp -t "$(basename "$0")".XXX
+}
+
+
+case $# in
+  0) git config --get-regexp 'alias.*' | colrm 1 6 | sed 's/[ ]/ = /' | sort ;;
+  1) git alias | grep -e -- "$1" ;;
+  *) git config --global "alias.$1" "$2" ;;
+esac

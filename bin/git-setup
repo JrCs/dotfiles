@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# reset environment variables that could interfere with normal usage
+export GREP_OPTIONS=
+# put all utility functions here
+
+# make a temporary file
+git_extra_mktemp() {
+    mktemp -t "$(basename "$0")".XXX
+}
+
+
+gitdirexists(){
+    if [ -d ".git" ]; then
+        echo ".git directory already exists, aborting"
+        exit 1
+    fi
+}
+
+dir=$(test -z "$*" && echo "." || echo "$*")
+mkdir -p "$dir" \
+  && cd "$dir" \
+  && gitdirexists \
+  && git init \
+  && git add . \
+  && git commit --allow-empty -m 'Initial commit'

@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# reset environment variables that could interfere with normal usage
+export GREP_OPTIONS=
+# put all utility functions here
+
+# make a temporary file
+git_extra_mktemp() {
+    mktemp -t "$(basename "$0")".XXX
+}
+
+#
+# check whether current directory is inside a git repository
+#
+
+is_git_repo() {
+  git rev-parse --show-toplevel > /dev/null 2>&1
+  result=$?
+  if test $result != 0; then
+    >&2 echo 'Not a git repo!'
+    exit $result
+  fi
+}
+
+is_git_repo
+
+get_config() {
+  git config --list
+}
+
+most_recent_commit() {
+  git log --max-count=1 --pretty=short
+}
+
+local_branches() {
+  git branch
+}
+
+remote_branches() {
+  git branch -r
+}
+
+remote_urls() {
+  git remote -v
+}
+
+echon() {
+    echo "$@"
+    echo
+}
+
+# Show info similar to svn
+
+echo
+echon "## Remote URLs:"
+echon "$(remote_urls)"
+
+echon "## Remote Branches:"
+echon "$(remote_branches)"
+
+echon "## Local Branches:"
+echon "$(local_branches)"
+
+echon "## Most Recent Commit:"
+echon "$(most_recent_commit)"
+echon "Type 'git log' for more commits, or 'git show <commit id>' for full commit details."
+
+if test "$1" != "--no-config"; then
+  echon "## Configuration (.git/config):"
+  echon "$(get_config)"
+fi
