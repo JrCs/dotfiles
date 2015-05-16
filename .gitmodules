@@ -34,3 +34,6 @@
 [submodule "git-store"]
 	path = git-store
 	url = https://github.com/JrCs/git-store.git
+[submodule "git-extras"]
+	path = git-extras
+	url = https://github.com/tj/git-extras.git

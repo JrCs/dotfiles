@@ -13,7 +13,7 @@ if [[ -f /etc/bashrc ]]; then
 fi
 
 # Declare dotfiles directory
-DOTFILES_DIR=${DOTFILES_DIR:-"$HOME"/.dotfiles}
+export DOTFILES_DIR=${DOTFILES_DIR:-"$HOME"/.dotfiles}
 if [[ ! -d "$DOTFILES_DIR" ]]; then
     echo "Error: can't find $DOTFILES_DIR directory" >&2
     return 1
