@@ -14,7 +14,7 @@ cd ~/.dotfiles && ./install
 upgrade
 -------
 ```bash
-~/.dotfiles/upgrade
+cd ~/.dotfiles && ./upgrade
 ```
 
 Environment
