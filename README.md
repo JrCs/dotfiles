@@ -8,7 +8,7 @@ Installation
 ------------
 ```bash
 env GIT_SSL_NO_VERIFY=true git clone https://github.com/JrCs/dotfiles.git ~/.dotfiles
-~/.dotfiles/install
+cd ~/.dotfiles && ./install
 ```
 
 upgrade
