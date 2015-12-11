@@ -37,3 +37,6 @@
 [submodule "git-extras"]
 	path = git-extras
 	url = https://github.com/tj/git-extras.git
+[submodule "git-radar"]
+	path = git-radar
+	url = https://github.com/michaeldfallen/git-radar.git

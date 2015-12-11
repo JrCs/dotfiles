@@ -31,6 +31,8 @@ yellow_git_prompt=$(extended_color 184)
 orange_git_prompt=$(extended_color 166)
 orange_user_prompt=$(extended_color 166)
 
+: ${GIT_PROMPT_USE_GIT_RADAR:=true}
+
 # VIM
 is_vim_shell() {
     [[ -n "$VIMRUNTIME" ]] && echo " [\[\e[0;33m\]vim shell\[\e[0m\]]"
@@ -53,22 +55,33 @@ fi
 # If __git_ps1 is defined then redefined git_prompt_info function
 
 if [[ -n $(type -t __git_ps1) ]];then
-git_prompt_info() {
-    git_ps1=$(__git_ps1)
-    if [[ -n "$git_ps1" ]];then
-        git_ps1=${git_ps1//\*/${green_git_prompt}*${normal}}
-        git_ps1=${git_ps1//+/${yellow_git_prompt}+${normal}}
-        git_ps1=${git_ps1//$/${orange_git_prompt}\$${normal}}
-        git_ps1=${git_ps1//%/${cyan_git_prompt}%${normal}}
-        echo "$git_ps1"
+    if [[ "$GIT_PROMPT_USE_GIT_RADAR" == true ]]; then
+        # " \\x01\\033[1;30m\\x02git:(\\x01\\033[0m\\x02%{remote: }%{branch}%{ :local}\\x01\\033[1;30m\\x02)\\x01\\033[0m\\x02%{ :stash}%{ :changes}"}"
+        export GIT_RADAR_COLOR_CHANGES_UNSTAGED="\\033[38;5;48m"
+        export GIT_RADAR_COLOR_CHANGES_STAGED="\\033[0;33m"
+        export GIT_RADAR_COLOR_CHANGES_UNTRACKED="\\033[0;36m"
+        export GIT_RADAR_COLOR_STASH="\\033[38;5;208m"
+        export GIT_RADAR_FORMAT=" $normal(%{remote: }%{branch}%{ :local}%{ :stash}%{ :changes}$normal)"
+        git_prompt_info() {
+            git-radar --bash --fetch
+        }
+    else
+        git_prompt_info() {
+            git_ps1=$(__git_ps1)
+            if [[ -n "$git_ps1" ]];then
+                git_ps1=${git_ps1//\*/${green_git_prompt}*${normal}}
+                git_ps1=${git_ps1//+/${yellow_git_prompt}+${normal}}
+                git_ps1=${git_ps1//$/${orange_git_prompt}\$${normal}}
+                git_ps1=${git_ps1//%/${cyan_git_prompt}%${normal}}
+                echo "$git_ps1"
+            fi
+        }
+
+        export GIT_PS1_SHOWDIRTYSTATE=true
+        export GIT_PS1_SHOWSTASHSTATE=true
+        export GIT_PS1_SHOWUNTRACKEDFILES=true
+        export GIT_PS1_SHOWUPSTREAM="verbose"
     fi
-}
-
-export GIT_PS1_SHOWDIRTYSTATE=true
-export GIT_PS1_SHOWSTASHSTATE=true
-export GIT_PS1_SHOWUNTRACKEDFILES=true
-export GIT_PS1_SHOWUPSTREAM="verbose"
-
 fi
 
 # USER
