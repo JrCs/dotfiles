@@ -31,6 +31,8 @@
 	lr = log -g
 	ls = ls-files
 	oops = commit --amend --no-edit
+	# Prune local tags
+	pt = "!f() { git fetch --prune $(git remote) +refs/tags/*:refs/tags/*; }; f"
 
 	# Show files ignored by git:
 	ign = ls-files -o -i --exclude-standard
