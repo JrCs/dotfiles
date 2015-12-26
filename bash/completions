@@ -14,11 +14,15 @@ if [[ -f /opt/local/share/bash-completion/bash_completion ]]; then
     . /opt/local/share/bash-completion/bash_completion
 fi
 
-# rake
-complete -C "$DOTFILES_DIR/bash/completion_scripts/rake_completion" -o default rake
+if [[ -n "$HAVE_RUBY" ]];then
+    # rake
+    complete -C "$DOTFILES_DIR/bash/completion_scripts/rake_completion" -o default rake
+fi
 
-# ack
-source "$DOTFILES_DIR/ack/completion.bash"
+if [[ -n "$HAVE_PERL" ]];then
+    # ack
+    source "$DOTFILES_DIR/ack/completion.bash"
+fi
 
 # git flow
 source "$DOTFILES_DIR/bash/completion_scripts/git-flow-completion/git-flow-completion.bash"
@@ -26,8 +30,10 @@ source "$DOTFILES_DIR/bash/completion_scripts/git-flow-completion/git-flow-compl
 # todo.txt-cli
 [[ -f "$DOTFILES_DIR/todo.txt-cli/todo_completion" ]] && source "$DOTFILES_DIR/todo.txt-cli/todo_completion"
 
-# cheat
-[[ -f "$DOTFILES_DIR/cheat/autocompletion/cheat.bash" ]] && source "$DOTFILES_DIR/cheat/autocompletion/cheat.bash"
+if [[ -n "$HAVE_PYTHON" ]];then
+    # cheat
+    [[ -f "$DOTFILES_DIR/cheat/autocompletion/cheat.bash" ]] && source "$DOTFILES_DIR/cheat/autocompletion/cheat.bash"
+fi
 
 # git-extras
 [[ -f "$DOTFILES_DIR/git-extras/bash_completion.d/git-extras" ]] && source "$DOTFILES_DIR/git-extras/bash_completion.d/git-extras"

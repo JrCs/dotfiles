@@ -93,8 +93,8 @@ if [[ -n "$HAVE_LESS" ]];then
     PAGER='less -FiRX'
     MANPAGER='less -FiRsX'
 else
-	PAGER=more
-	MANPAGER="$PAGER"
+    PAGER=more
+    MANPAGER="$PAGER"
 fi
 export PAGER MANPAGER
 unset HAVE_LESS
@@ -105,27 +105,12 @@ if [[ -n $(type -P code2color) && -n "$LESSPIPESH_BIN" ]];then
     export LESSOPEN="|$LESSPIPESH_BIN %s"
 fi
 
-# Ack
-ACK_PAGER="$PAGER"
-ACK_PAGER_COLOR="$PAGER"
-
-##########
-# Autojump
-##########
-for autojump_dir in "$DOTFILES_DIR/autojump" "$DOTFILES_DIR/autojump/bin";do
-    if [[ -f "$autojump_dir/autojump.bash" ]];then
-        [[ -z "$AUTOJUMP_IGNORE_CASE" ]]   && export AUTOJUMP_IGNORE_CASE=1
-        [[ -z "$AUTOJUMP_KEEP_SYMLINKS" ]] && export AUTOJUMP_KEEP_SYMLINKS=1
-        source "$autojump_dir/autojump.bash"
-        export AUTOJUMP_PYTHON_BIN=$(type -P python2.7 python2.6 python | head -n 1)
-        export AUTOJUMP_BIN="$autojump_dir/autojump"
-        break
-    fi
-done
-if [[ -n "$AUTOJUMP_BIN" && -n "$AUTOJUMP_PYTHON_BIN" ]]; then
-    eval $(echo "autojump() { '${AUTOJUMP_PYTHON_BIN}' '${AUTOJUMP_BIN}' \$@ ;" })
+HAVE_PERL=$(type -P perl)
+if [[ -n "$HAVE_PERL" ]]; then
+    # Ack
+    ACK_PAGER="$PAGER"
+    ACK_PAGER_COLOR="$PAGER"
 fi
-unset autojump_dir AUTOJUMP_PYTHON_BIN AUTOJUMP_BIN
 
 ##############
 # todo.txt-cli
@@ -145,31 +130,52 @@ if [[ -f "$HOME/.xssh_rc" ]];then
 fi
 
 
-############
-# pastebinit
-############
-# Check if we have the configobj python module
-"$DOTFILES_DIR/bin/test-python-import.py" configobj >/dev/null
-if [[ $? -ne 0 ]]; then
-    # Add configobj library to $PYTHONPATH
-    case $PYTHONPATH in
-        *configobj*) ;;
-        *) export PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}$DOTFILES_DIR/libraries/configobj-4.7.2"
-    esac
-fi
-
-########
-# Cheat
-########
-export CHEATCOLORS=true
-# Check if we have the argparse python module
-"$DOTFILES_DIR/bin/test-python-import.py" argparse >/dev/null
-if [[ $? -ne 0 ]]; then
-    # Add argparse library to $PYTHONPATH
-    case $PYTHONPATH in
-        *argparse*) ;;
-        *) export PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}$DOTFILES_DIR/libraries/argparse-1.2"
-    esac
+HAVE_PYTHON=$(type -P python2.7 python2.6 python | head -n 1)
+if [[ -n "$HAVE_PYTHON" ]]; then
+    ##########
+    # Autojump
+    ##########
+    for autojump_dir in "$DOTFILES_DIR/autojump" "$DOTFILES_DIR/autojump/bin";do
+        if [[ -f "$autojump_dir/autojump.bash" ]];then
+            [[ -z "$AUTOJUMP_IGNORE_CASE" ]]   && export AUTOJUMP_IGNORE_CASE=1
+            [[ -z "$AUTOJUMP_KEEP_SYMLINKS" ]] && export AUTOJUMP_KEEP_SYMLINKS=1
+            source "$autojump_dir/autojump.bash"
+            export AUTOJUMP_PYTHON_BIN="$HAVE_PYTHON"
+            export AUTOJUMP_BIN="$autojump_dir/autojump"
+            break
+        fi
+    done
+    if [[ -n "$AUTOJUMP_BIN" && -n "$AUTOJUMP_PYTHON_BIN" ]]; then
+        eval $(echo "autojump() { '${AUTOJUMP_PYTHON_BIN}' '${AUTOJUMP_BIN}' \$@ ;" })
+    fi
+    unset autojump_dir AUTOJUMP_PYTHON_BIN AUTOJUMP_BIN
+    
+    ############
+    # pastebinit
+    ############
+    # Check if we have the configobj python module
+    "$DOTFILES_DIR/bin/test-python-import.py" configobj >/dev/null
+    if [[ $? -ne 0 ]]; then
+        # Add configobj library to $PYTHONPATH
+        case $PYTHONPATH in
+            *configobj*) ;;
+            *) export PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}$DOTFILES_DIR/libraries/configobj-4.7.2"
+        esac
+    fi
+    
+    ########
+    # Cheat
+    ########
+    export CHEATCOLORS=true
+    # Check if we have the argparse python module
+    "$DOTFILES_DIR/bin/test-python-import.py" argparse >/dev/null
+    if [[ $? -ne 0 ]]; then
+        # Add argparse library to $PYTHONPATH
+        case $PYTHONPATH in
+            *argparse*) ;;
+            *) export PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}$DOTFILES_DIR/libraries/argparse-1.2"
+        esac
+    fi
 fi
 
 #########
