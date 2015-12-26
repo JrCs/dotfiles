@@ -38,6 +38,20 @@ is_vim_shell() {
     [[ -n "$VIMRUNTIME" ]] && echo " [\[\e[0;33m\]vim shell\[\e[0m\]]"
 }
 
+# In container ?
+if [[ -f /proc/self/cgroup ]]; then
+    self_cgroup=$(sed -n 's/^[[:digit:]]:cpuset://p' /proc/self/cgroup)
+    if [[ "$self_cgroup" != / ]]; then
+        image="unknown"
+        cid=$(echo "$self_cgroup" | sed -nr 's@.*/docker-([^.]+).*@\1@p')
+        if [[ "$cid" && -n "$(type -P docker)" ]]; then
+            image=$(docker inspect --format '{{.Config.Image}}' $cid)
+        fi
+        in_container=$(echo " [\[\e[1;38;5;135m\]$image\[\e[0m\]]")
+    fi
+    unset self_cgroup image
+fi
+
 # GIT
 git_prompt_info() {
     return
@@ -147,7 +161,7 @@ dotfiles_prompt() {
     else
         local cl_prompt=${br_red}
     fi
-    local PS1_LINE1="$(window_title_info)$(chroot_prompt_info)<~~~ $(user_prompt_info)@$(server_prompt_info) ( \t )$(exitcode_prompt_info ${exit_code}) ${br_cyan}$(pwd -P)${normal} ~~~>"
+    local PS1_LINE1="$(window_title_info)$(chroot_prompt_info)<~~~ $(user_prompt_info)@$(server_prompt_info)${in_container} ( \t )$(exitcode_prompt_info ${exit_code}) ${br_cyan}$(pwd -P)${normal} ~~~>"
     local PS1_LINE2="$(path_prompt_info)$(git_prompt_info)$(is_vim_shell) ${cl_prompt}\\\$${normal} "
     PS1="$PS1_LINE1\n$PS1_LINE2"
 }
