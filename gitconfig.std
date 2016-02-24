@@ -51,6 +51,7 @@
 
 [fetch]
 	recurseSubmodules = on-demand
+	prune = true
 
 [grep]
 	extendedRegexp = true
