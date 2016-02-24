@@ -1,0 +1,14 @@
+[identity:work]
+  name = Connor Atherton
+  email = connor@work.com
+
+[identity:personal]
+  name = Connor Atherton
+  email = connor@personal.com
+
+[personal]
+  /Users/Connor/repos/personal/*
+  ~/repos/ideas/**/*
+
+[work]
+  ~/repos/work/

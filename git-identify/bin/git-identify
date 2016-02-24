@@ -1,0 +1,231 @@
+#!/bin/bash
+
+set -u
+
+# git-identify
+#
+# - Directory matches are case insensitive
+#   - Means ~/Repos/personal will match ~/repos/personal
+# - Comments are lines starting with '//'
+# - Globs must start with from the root directory or
+#   from the home directory.
+
+# The location of the file holding the identities
+IDENTITIES_FILE="${GIT_IDENTITIES:-$HOME/.git_identities}"
+
+# Final identities are stored in this form
+#
+# <identity_name>:email=<email>,name=<name>
+# <identity_name>:email=<email>,name=<name>
+#
+# This way we can add more attributes in the future if
+# we want too.
+IDENTITIES_LIST=()
+
+# Are we filling in an identity or not
+CHECKING_CURRENT_IDENTITY=0
+
+# The name of the current identity
+CURRENT_IDENTITY=""
+
+# List of checked attributes. Strings seperated by a string.
+CURRENT_IDENTITY_ATTRIBUTES=""
+
+# The representation of an identity string: a combination of the
+# identity name with all of it's attributes
+CURRENT_IDENTITY_STRING=""
+
+in_git_repo() {
+  git rev-parse --is-inside-work-tree
+}
+
+identity_contains() {
+  for key in $@; do
+    if [[ ! $CURRENT_IDENTITY_ATTRIBUTES =~ $key ]]; then
+      # return as soon as we know one of the keys are missing
+      return 1
+    fi
+  done
+
+  return 0
+}
+
+current_identity_full() {
+  identity_contains "email" "name" >/dev/null
+  return $?
+}
+
+error_if_parsing_identity() {
+  if [[ "$CHECKING_CURRENT_IDENTITY" = 1 ]]; then
+    error "Malformed .git_identities file: Have you specified a name and a username for $CURRENT_IDENTITY?"
+  fi
+}
+
+# Tranforms and prints the git identity
+#
+# 1 - the git identity in it's parsed form
+print_identity() {
+  local esc=$(printf '\033')
+  echo -e "$1" | sed "s/.*:name=\(.*\),email=\(.*\)/Committing as $esc[1m\1 <\2>$esc[0m/g"
+}
+
+# Checks to see whether a glob pattern matches our current directory.
+#
+# 1 - String - glob for a match rule
+matches_current_directory() {
+  local current_directory=$(pwd | tr '[:upper:]' '[:lower:]')
+  local glob=$(echo $1 | tr '[:upper:]' '[:lower:]')
+
+  if [[ $glob =~ "$current_directory" ]]; then
+    return "$?"
+  fi
+
+  return 1
+}
+
+# 1 - String - The identity name to match
+set_identity() {
+  local git_attributes=''
+  local search_identity=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+
+  # Used below as tmp variables
+  local key=''
+  local val=''
+
+  for identity in "${IDENTITIES_LIST[@]}"; do
+    if [[ -n $(echo "$identity" | sed -n "/^$search_identity:/p") ]]; then
+      print_identity "$identity"
+      git_attributes=$(echo "$identity" | sed "s/^$search_identity:\(.*\)$/\1/g")
+      break
+    fi
+  done
+
+  if [[ -z "$git_attributes" ]]; then
+    # No identity: return
+    error "No identity $CURRENT_IDENTITY. Did you declare it before writing your file paths?"
+  fi
+
+  while IFS=',' read -ra split_attributes; do
+    for attributes in "${split_attributes[@]}"; do
+      key=$(echo "$attributes" | awk -F "=" '{ print $1 }')
+      val=$(echo "$attributes" | awk -F "=" '{ print $2 }')
+
+      # NOTE: This only works for user config right now but can be extended
+      # by removing the prefix if the key is of the from ([a-z].[a-z]) and
+      # just using the full key directly.
+      git config --local "user.$key" "$val"
+    done
+  done <<< "$git_attributes"
+}
+
+main() {
+
+  FORCE_IDENTITY=$(echo ${1:-} | tr '[:upper:]' '[:lower:]')
+
+  if ! in_git_repo >/dev/null; then
+    # Git will display the corrext message if we exit like this
+    exit 1
+  fi
+
+  # check if the file exists
+  if [[ ! -f $IDENTITIES_FILE ]]; then
+    error "Add a ~/.git_identities file"
+  fi
+
+  while IFS='' read -r line || [[ -n "$line" ]]; do
+    local identity_name=
+
+    # - leading whitespace
+    # - trailing whitespace
+    # - empty lines
+    # - lines with only whitespace
+    # - removing space before and after *=*
+    line=$(echo "$line" | sed 's/^ *//; s/ *$//; /^$/d; /^\s*$/d; s/ *= */=/g')
+
+    # comment or empty line
+    if [[ "$line" =~ ^\/\/.*$ ]] || [[ -z "$line" ]]; then continue; fi
+
+    # [identity:name]
+    if [[ "$line" =~ ^\[identity:[a-zA-Z0-9]*\]$ ]]; then
+      error_if_parsing_identity
+
+      CURRENT_IDENTITY=$(echo "$line" | sed 's/\[identity:\([a-zA-Z0-9]*\)\]/\1/'| tr '[:upper:]' '[:lower:]')
+      CURRENT_IDENTITY_STRING+="$CURRENT_IDENTITY:"
+      CHECKING_CURRENT_IDENTITY=1
+      continue
+    fi
+
+    # attr=value
+    if [[ "$line" =~ ^(name|email)=(.*)$ ]]; then
+      local key=$(echo "$line" | awk -F "=" '{ print $1 }')
+
+      # duplicated entry for any of the keys
+      if identity_contains "$key"; then
+        error "Duplicated key $key for identity $CURRENT_IDENTITY"
+      fi
+
+      # push the key to the current identities attributes
+      CURRENT_IDENTITY_ATTRIBUTES+="$key "
+      CURRENT_IDENTITY_STRING+="$line,"
+
+      # If we have collected both the name and the email here then we
+      # are done with this identity
+      if current_identity_full; then
+        IDENTITIES_LIST+=("${CURRENT_IDENTITY_STRING/%?/}")
+
+        if [[ -n "$FORCE_IDENTITY" && "$CURRENT_IDENTITY" == "$FORCE_IDENTITY" ]]; then
+            set_identity "$CURRENT_IDENTITY"
+            break
+        fi
+
+        # reset everything
+        CHECKING_CURRENT_IDENTITY=0
+        CURRENT_IDENTITY_ATTRIBUTES=""
+        CURRENT_IDENTITY_STRING=""
+        CURRENT_IDENTITY=""
+      else
+        CHECKING_CURRENT_IDENTITY=1
+      fi
+
+      continue
+    fi
+
+    if [[ -n "$FORCE_IDENTITY" ]]; then
+        error "No identity found for '$FORCE_IDENTITY'"
+    fi
+
+    # [identity_name]
+    if [[ "$line" =~ ^\[[a-zA-Z0-9]*\]$ ]]; then
+      error_if_parsing_identity
+
+      CURRENT_IDENTITY=$(echo $line | sed -e 's/\[\([a-zA-Z0-9]*\)\]/\1/' | tr '[:upper:]' '[:lower:]')
+      continue
+    fi
+
+    # /path/to/dir
+    if [[ "$line" =~ ^([~|/].*)$ ]]; then
+      # We can short circuit if we find the correct path
+      match=$(
+        echo "$line" \
+        | sed -e 's/^\(.*\)$/\1/g' \
+        | sed -e "s_^\(~\)\(.*\)_$(echo "$HOME")\2_g"
+      )
+
+      if matches_current_directory "$match"; then
+        set_identity "$CURRENT_IDENTITY"
+      fi
+    fi
+
+    # No match if we are here
+  done < "$IDENTITIES_FILE"
+}
+
+error() {
+  echo "${1:-'git-identity error'}" >&2
+  exit ${2:-1}
+}
+
+#
+# Run
+#
+main "$@"

@@ -1,0 +1,9 @@
+sudo: required
+language: bash
+install:
+  - sudo add-apt-repository ppa:duggan/bats --yes
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq bats
+  - export PATH=$PATH:$PWD/bin/
+script:
+  - bats --tap tests/*.bats
