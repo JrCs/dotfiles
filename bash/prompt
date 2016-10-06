@@ -39,12 +39,12 @@ is_vim_shell() {
 }
 
 # In container ?
+in_container=''
 if [[ -f /proc/self/cgroup ]]; then
-    self_cgroup=$(sed -n 's/^[[:digit:]]:cpuset://p' /proc/self/cgroup)
-    if [[ "$self_cgroup" != / ]]; then
-        image="unknown"
-        cid=$(echo "$self_cgroup" | sed -nr 's@.*/docker-([^.]+).*@\1@p')
-        if [[ "$cid" && -n "$(type -P docker)" ]]; then
+    cid=$(cat /proc/self/cgroup | sed -nE 's/^.+docker[\/-]([a-f0-9]{64}).*/\1/p' | head -n 1)
+    if [[ -n "$cid" ]]; then
+        image='unknown'
+        if [[ -n "$(type -P docker)" ]]; then
             image=$(docker inspect --format '{{.Config.Image}}' $cid)
         fi
         in_container=$(echo " [\[\e[1;38;5;135m\]$image\[\e[0m\]]")
@@ -60,8 +60,8 @@ git_prompt_info() {
 # If __git_ps1 is not defined try to find and source git-prompt.sh
 if [[ -z $(type -t __git_ps1) ]];then
     for file in \
-     /usr/share/git-core/contrib/completion/git-prompt.sh \
-     /opt/local/share/git/git-prompt.sh; do
+        /usr/share/git-core/contrib/completion/git-prompt.sh \
+            /opt/local/share/git/git-prompt.sh; do
         [[ -f "$file" ]] && source $file && break
     done
 fi
@@ -172,11 +172,11 @@ PS2=">> "
 PS3=">> "
 
 case $PROMPT_COMMAND in
-   *prompt\ *)
-      ;;
-   *)
-      PROMPT_COMMAND="dotfiles_prompt ${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
-      ;;
+    *prompt\ *)
+    ;;
+    *)
+        PROMPT_COMMAND="dotfiles_prompt ${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
+        ;;
 esac
 
 # Local Variables:      #
