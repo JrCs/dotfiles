@@ -33,15 +33,16 @@
 	oops = commit --amend --no-edit
 	# Prune local tags
 	pt = "!f() { git fetch --prune $(git remote) +refs/tags/*:refs/tags/*; }; f"
+	scrub = "!f() { git branch --merged | grep -v master | xargs -r git branch -d; }; f"
 
 	# Show files ignored by git:
 	ign = ls-files -o -i --exclude-standard
 	unstage = reset HEAD --
 
-    # Checkout a pull request from origin (of a github repository)
-    pr = !"pr() { git fetch origin pull/$1/head:pr-$1; git checkout pr-$1; }; pr"
+	# Checkout a pull request from origin (of a github repository)
+	pr = !"pr() { git fetch origin pull/$1/head:pr-$1; git checkout pr-$1; }; pr"
 
-    addpr = "!f() { b=`git symbolic-ref -q --short HEAD` && \
+	addpr = "!f() { b=`git symbolic-ref -q --short HEAD` && \
 		echo \"Making branch for pull request #$1 [pr/$1]\" && \
 		git fetch origin pull/$1/head:pr/$1 && \
 		echo \"Rebasing pr/$1 onto $b...\" && \
@@ -51,7 +52,7 @@
 		git diff --stat $b..pr/$1 && echo && \
 		git log --oneline $b..pr/$1; \
 		git update-ref -d refs/PR_MERGE_HEAD; \
-    }; f"
+	}; f"
 
 [pager]
 	log	 = diff-highlight | less
