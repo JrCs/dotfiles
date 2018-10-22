@@ -149,22 +149,45 @@ path_prompt_info() {
 
 export PROMPT_DIRTRIM=2 # Number of trailing directory components to retain
 
-dotfiles_prompt() {
-    # Check exit code
-    local exit_code=$?
-    if [[ $exit_code -eq 0 ]]; then
-        if [[ "$USER" != 'root' ]]; then
-            local cl_prompt=${green_prompt}
-        else
-            local cl_prompt=${orange_user_prompt}
+if [[ "${PROMPT_TYPE}" == powerline && -e $GOPATH/bin/powerline-go ]]; then
+    PROMPT_POWERLINE_THEME="${DOTFILES_DIR}"/bash/prompt-powerline-theme.json
+    INTERACTIVE_BASHPID_TIMER="/tmp/${USER}.START.$$"
+    PS0='$(echo $SECONDS > "$INTERACTIVE_BASHPID_TIMER")'
+    export KUBE_POWERLINE_MODULE="${KUBE_POWERLINE_MODULE:-}"
+    alias kube_on="export KUBE_POWERLINE_MODULE='kube'"
+    alias kube_off="unset KUBE_POWERLINE_MODULE"
+    dotfiles_prompt() {
+        # Check exit code
+        local exit_code=$?
+        local __DURATION=0
+        if [[ -e $INTERACTIVE_BASHPID_TIMER ]]; then
+            local __END=$SECONDS
+            local __START=$(cat "$INTERACTIVE_BASHPID_TIMER")
+            __DURATION="$(($__END - ${__START:-__END}))"
+            rm -f "$INTERACTIVE_BASHPID_TIMER"
         fi
-    else
-        local cl_prompt=${br_red}
-    fi
-    local PS1_LINE1="$(window_title_info)$(chroot_prompt_info)<~~~ $(user_prompt_info)@$(server_prompt_info)${in_container} ( \t )$(exitcode_prompt_info ${exit_code}) ${br_cyan}$(pwd -P)${normal} ~~~>"
-    local PS1_LINE2="$(path_prompt_info)$(git_prompt_info)$(is_vim_shell) ${cl_prompt}\\\$${normal} "
-    PS1="$PS1_LINE1\n$PS1_LINE2"
-}
+        local PS1_LINE1=$($GOPATH/bin/powerline-go -theme $PROMPT_POWERLINE_THEME -path-aliases '~/workspace/GO/src=@GOPATH-SRC' -max-width 96 -cwd-max-depth 6 -cwd-mode fancy -duration $__DURATION -modules "venv,user,host,load,time,duration,${KUBE_POWERLINE_MODULE:+${KUBE_POWERLINE_MODULE},}exit,cwd" -error $exit_code)
+        local PS1_LINE2=$($GOPATH/bin/powerline-go -theme $PROMPT_POWERLINE_THEME -max-width 35 -cwd-mode dironly -modules "git,perms,jobs,cwd,root" -error $exit_code)
+        PS1="$PS1_LINE1\n$PS1_LINE2"
+    }
+else
+    dotfiles_prompt() {
+        # Check exit code
+        local exit_code=$?
+        if [[ $exit_code -eq 0 ]]; then
+            if [[ "$USER" != 'root' ]]; then
+                local cl_prompt=${green_prompt}
+            else
+                local cl_prompt=${orange_user_prompt}
+            fi
+        else
+            local cl_prompt=${br_red}
+        fi
+        local PS1_LINE1="$(window_title_info)$(chroot_prompt_info)<~~~ $(user_prompt_info)@$(server_prompt_info)${in_container} ( \t )$(exitcode_prompt_info ${exit_code}) ${br_cyan}$(pwd -P)${normal} ~~~>"
+        local PS1_LINE2="$(path_prompt_info)$(git_prompt_info)$(is_vim_shell) ${cl_prompt}\\\$${normal} "
+        PS1="$PS1_LINE1\n$PS1_LINE2"
+    }
+fi
 
 # PS2 is used when you don't close a string or use the line continuation marker (\ at the end of a line)
 PS2=">> "
@@ -174,9 +197,8 @@ PS3=">> "
 case $PROMPT_COMMAND in
     *prompt\ *)
     ;;
-    *)
-        PROMPT_COMMAND="dotfiles_prompt ${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
-        ;;
+    *) PROMPT_COMMAND="dotfiles_prompt ${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
+       ;;
 esac
 
 # Local Variables:      #
