@@ -40,3 +40,6 @@
 [submodule "git-radar"]
 	path = git-radar
 	url = https://github.com/michaeldfallen/git-radar.git
+[submodule "kube-ps1"]
+	path = kube-ps1
+	url = https://github.com/jonmosco/kube-ps1.git
