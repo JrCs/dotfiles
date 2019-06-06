@@ -129,6 +129,16 @@ if [[ -f "$HOME/.xssh_rc" ]];then
     alias ssh >/dev/null 2>&1 || alias ssh=xssh
 fi
 
+########
+# direnv
+########
+direnv_path=$(type -P direnv)
+if [[ -n "$direnv_path" ]]; then
+    eval "$($direnv_path hook bash)"
+    PROMPT_COMMAND=$(echo $PROMPT_COMMAND | sed -r 's/_direnv_hook\s*;//g') # Remove hook from PROMPT_COMMAND
+    PROMPT_COMMAND_FIRST=_direnv_hook${PROMPT_COMMAND_FIRST:+; $PROMPT_COMMAND_FIRST}
+fi
+unset direnv_path
 
 HAVE_PYTHON=$(type -P python2.7 python2.6 python | head -n 1)
 if [[ -n "$HAVE_PYTHON" ]]; then
