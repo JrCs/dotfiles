@@ -206,12 +206,15 @@ PS2=">> "
 # PS3 is used when you use the select builtin command.
 PS3=">> "
 
+# Set the PROMPT_COMMAND variable.
+# Use the PROMPT_COMMAND_FIRST variable to add commands to be execute first (see direnv example)
 case $PROMPT_COMMAND in
     *prompt\ *)
     ;;
-    *) PROMPT_COMMAND="dotfiles_prompt ${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
+    *) PROMPT_COMMAND="${PROMPT_COMMAND_FIRST:+$PROMPT_COMMAND_FIRST; }dotfiles_prompt ${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
        ;;
 esac
+unset PROMPT_COMMAND_FIRST
 
 # Local Variables:      #
 # mode: ksh             #
