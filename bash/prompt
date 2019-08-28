@@ -178,7 +178,10 @@ else
     export KUBE_PS1_CTX_COLOR=177
     export KUBE_PS1_NS_COLOR=81
     export KUBE_PS1_SUFFIX=') '
-
+    alias kube_on="export KUBE_PS1_ENABLED=on"
+    alias kube_off="export KUBE_PS1_ENABLED=off"
+    # Don't activate KUBE_PS1 if kubectl command is not present
+    [[ -z $(type -P kubectl) ]] && export KUBE_PS1_ENABLED=${KUBE_PS1_ENABLED:-off}
     dotfiles_prompt() { # This function will be call by PROMPT_COMMAND
         # Check exit code
         local exit_code=$?
