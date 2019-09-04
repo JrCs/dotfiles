@@ -1,15 +1,15 @@
-#!/bin/bash
+# -*- shell-script -*-
 
 # If not running interactively, don't do anything
 [[ -z "$PS1" ]] && return
 
 if [[ -f ~/.localrc.pre ]]; then
-  source ~/.localrc.pre
+    source ~/.localrc.pre
 fi
 
 # Source global definitions
 if [[ -f /etc/bashrc ]]; then
-  . /etc/bashrc
+    . /etc/bashrc
 fi
 
 # Declare dotfiles directory
@@ -26,21 +26,21 @@ source "$DOTFILES_DIR"/bash/aliases
 
 # use .localrc for settings specific to one system
 if [[ -f ~/.localrc ]]; then
-  source ~/.localrc
+    source ~/.localrc
 fi
 
 # Adapting PATH environment variable for use with perlbrew,
 # load RVM into a shell session *as a function*, and add completion
 if [[ -s "$HOME/perl5/perlbrew/etc/bashrc" ]]; then
-  source "$HOME/perl5/perlbrew/etc/bashrc"
-  [[ -r "$PERLBREW_ROOT"/etc/perlbrew-completion.bash ]] && \
-      . "$PERLBREW_ROOT"/etc/perlbrew-completion.bash
+    source "$HOME/perl5/perlbrew/etc/bashrc"
+    [[ -r "$PERLBREW_ROOT"/etc/perlbrew-completion.bash ]] && \
+        . "$PERLBREW_ROOT"/etc/perlbrew-completion.bash
 fi
 
 # Adapting PATH environment variable for use with RVM,
 # load RVM into a shell session *as a function*, and
 # add completion
 if [[ -s "$HOME/.rvm/scripts/rvm" ]]; then
-  source "$HOME/.rvm/scripts/rvm"
-  [[ -r "$rvm_path"/scripts/completion ]] && . "$rvm_path"/scripts/completion
+    source "$HOME/.rvm/scripts/rvm"
+    [[ -r "$rvm_path"/scripts/completion ]] && . "$rvm_path"/scripts/completion
 fi

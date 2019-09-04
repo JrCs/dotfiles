@@ -1,4 +1,4 @@
-# .bash_profile
+# -*- shell-script -*-
 
 if [ -f ~/.bashrc ]; then
     source ~/.bashrc

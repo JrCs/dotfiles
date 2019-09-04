@@ -113,9 +113,9 @@ fi
 # todo.txt-cli
 ##############
 if [[ -d "$HOME/.todo" && -f "$HOME/.todo.cfg" ]];then
-     export TODOTXT_CFG_FILE="$HOME/.todo.cfg"
-     alias t='todo.sh'
-     complete -F _todo t
+    export TODOTXT_CFG_FILE="$HOME/.todo.cfg"
+    alias t='todo.sh'
+    complete -F _todo t
 fi
 
 ######
@@ -129,8 +129,8 @@ fi
 ########
 # direnv
 ########
-DIRENV_PATH=$(type -P direnv) # variable will be use when setting
-                              # PROMPT_COMMAND environment variable
+# DIRENV_PATH variable will be use when setting PROMPT_COMMAND environment variable
+DIRENV_PATH=$(type -P direnv)
 
 ########
 # python
