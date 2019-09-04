@@ -142,8 +142,6 @@ if [[ -n "$HAVE_PYTHON" ]]; then
     ##########
     for autojump_dir in "$DOTFILES_DIR/autojump" "$DOTFILES_DIR/autojump/bin";do
         if [[ -f "$autojump_dir/autojump.bash" ]];then
-            [[ -z "$AUTOJUMP_IGNORE_CASE" ]]   && export AUTOJUMP_IGNORE_CASE=1
-            [[ -z "$AUTOJUMP_KEEP_SYMLINKS" ]] && export AUTOJUMP_KEEP_SYMLINKS=1
             source "$autojump_dir/autojump.bash"
             export AUTOJUMP_PYTHON_BIN="$HAVE_PYTHON"
             export AUTOJUMP_BIN="$autojump_dir/autojump"
