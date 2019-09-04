@@ -1,6 +1,6 @@
 [submodule "autojump"]
 	path = autojump
-	url = https://github.com/joelthelion/autojump.git
+	url = https://github.com/wting/autojump.git
 [submodule "git-tools/git-bzr-ng"]
 	path = git-tools/git-bzr-ng
 	url = https://github.com/termie/git-bzr-ng.git
@@ -40,3 +40,6 @@
 [submodule "kube-ps1"]
 	path = kube-ps1
 	url = https://github.com/jonmosco/kube-ps1.git
+[submodule "git-tools/diff-so-fancy"]
+	path = git-tools/diff-so-fancy
+	url = https://github.com/so-fancy/diff-so-fancy.git

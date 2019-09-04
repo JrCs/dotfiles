@@ -1,6 +1,15 @@
 [color]
 	ui = auto
 	wtf = auto
+[color "diff"]
+	commit = 184
+	old = 9
+	new = green
+[color "diff-highlight"]
+	oldNormal = 9
+	oldHighlight = black 9
+	newNormal = green
+	newHighlight = black green
 [color "branch"]
 	current = green
 	local = yellow
@@ -9,9 +18,10 @@
 	added = yellow
 	changed = green
 	untracked = cyan
-
+[diff-so-fancy]
+	markEmptyLines = false
 [core]
-	pager = less -FRX
+	pager = diff-so-fancy | less --tabs=4 -RFX
 	excludesfile = ~/.gitignore
 
 [alias]
@@ -53,11 +63,6 @@
 		git log --oneline $b..pr/$1; \
 		git update-ref -d refs/PR_MERGE_HEAD; \
 	}; f"
-
-[pager]
-	log	 = diff-highlight | less
-	show = diff-highlight | less
-	diff = diff-highlight | less
 
 [diff]
 	mnemonicPrefix = true
