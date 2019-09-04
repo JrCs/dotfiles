@@ -33,7 +33,7 @@ echo
 answer=$(prompt "Is it correct [y/n] ?" "" "y" "n")
 [[ $(lc "$answer") != y* ]] && exit 0
 
-git filter-branch --env-filter '
+git filter-branch -f --env-filter '
 if [ "$GIT_COMMITTER_EMAIL" = "$OLD_EMAIL" ]
 then
     export GIT_COMMITTER_NAME="$CORRECT_NAME"
