@@ -173,7 +173,7 @@ if [[ "${PROMPT_TYPE}" == powerline && -e $GOPATH/bin/powerline-go ]]; then
 else
     # Configure kube-ps1
     source "$DOTFILES_DIR/kube-ps1/kube-ps1.sh"
-    PROMPT_COMMAND=$(echo $PROMPT_COMMAND | sed 's/;_kube_ps1_update_cache//g') # Fix PROMPT_COMMAND
+    PROMPT_COMMAND=$(echo $PROMPT_COMMAND | sed -r 's/\s*_kube_ps1_update_cache;//g') # Fix PROMPT_COMMAND
     export KUBE_PS1_SYMBOL_ENABLE=false
     export KUBE_PS1_CTX_COLOR=177
     export KUBE_PS1_NS_COLOR=81
@@ -207,14 +207,13 @@ PS2=">> "
 PS3=">> "
 
 # Set the PROMPT_COMMAND variable.
-# Use the PROMPT_COMMAND_FIRST variable to add commands to be execute first (see direnv example)
-case $PROMPT_COMMAND in
-    *prompt\ *)
-    ;;
-    *) PROMPT_COMMAND="${PROMPT_COMMAND_FIRST:+$PROMPT_COMMAND_FIRST; }dotfiles_prompt ${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
-       ;;
-esac
-unset PROMPT_COMMAND_FIRST
+if [[ ! "$PROMPT_COMMAND" =~ dotfiles_prompt ]]; then
+    PROMPT_COMMAND="dotfiles_prompt ${PROMPT_COMMAND:+; $PROMPT_COMMAND}"
+fi
+
+# If direnv command present add to the PROMPT_COMMAND
+[[ -n "$DIRENV_PATH" ]] && eval "$($DIRENV_PATH hook bash)"
+unset DIRENV_PATH
 
 # Local Variables:      #
 # mode: ksh             #

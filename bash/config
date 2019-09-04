@@ -73,12 +73,9 @@ unset HISTTIMEFORMAT
 # append to the history file, don't overwrite it
 shopt -s histappend
 # save history file after each command
-case $PROMPT_COMMAND in
-    *history\ -a*)
-       ;;
-    *) PROMPT_COMMAND="${PROMPT_COMMAND+$PROMPT_COMMAND ; }history -a"
-       ;;
-esac
+if [[ ! "$PROMPT_COMMAND" =~ 'history -a' ]]; then
+    PROMPT_COMMAND="${PROMPT_COMMAND+$PROMPT_COMMAND ; }history -a"
+fi
 
 ##########
 # Misc
@@ -132,13 +129,8 @@ fi
 ########
 # direnv
 ########
-direnv_path=$(type -P direnv)
-if [[ -n "$direnv_path" ]]; then
-    eval "$($direnv_path hook bash)"
-    PROMPT_COMMAND=$(echo $PROMPT_COMMAND | sed -r 's/_direnv_hook\s*;//g') # Remove hook from PROMPT_COMMAND
-    PROMPT_COMMAND_FIRST=_direnv_hook${PROMPT_COMMAND_FIRST:+; $PROMPT_COMMAND_FIRST}
-fi
-unset direnv_path
+DIRENV_PATH=$(type -P direnv) # variable will be use when setting
+                              # PROMPT_COMMAND environment variable
 
 ########
 # python
