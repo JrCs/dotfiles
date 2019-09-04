@@ -140,6 +140,9 @@ if [[ -n "$direnv_path" ]]; then
 fi
 unset direnv_path
 
+########
+# python
+########
 HAVE_PYTHON=$(type -P python2.7 python2.6 python | head -n 1)
 if [[ -n "$HAVE_PYTHON" ]]; then
     ##########
@@ -156,10 +159,11 @@ if [[ -n "$HAVE_PYTHON" ]]; then
         fi
     done
     if [[ -n "$AUTOJUMP_BIN" && -n "$AUTOJUMP_PYTHON_BIN" ]]; then
-        eval $(echo "autojump() { '${AUTOJUMP_PYTHON_BIN}' '${AUTOJUMP_BIN}' \$@ ;" })
+        eval $(echo "autojump() { '${AUTOJUMP_PYTHON_BIN}' '${AUTOJUMP_BIN}' \$@ ;}" )
     fi
+
     unset autojump_dir AUTOJUMP_PYTHON_BIN AUTOJUMP_BIN
-    
+
     ############
     # pastebinit
     ############
@@ -172,7 +176,7 @@ if [[ -n "$HAVE_PYTHON" ]]; then
             *) export PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}$DOTFILES_DIR/libraries/configobj-4.7.2"
         esac
     fi
-    
+
     ########
     # Cheat
     ########
