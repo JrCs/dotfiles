@@ -80,9 +80,12 @@ fi
 ##########
 # Misc
 ##########
-HAVE_VIM=$(type -P vim)
-[[ -n "$HAVE_VIM" ]] && export EDITOR=vim
-unset HAVE_VIM
+VI_EDITOR_PATH=$(type -P nvim vim vi | head -n 1)
+if [[ -n "$VI_EDITOR_PATH" ]];then
+    export EDITOR=${VI_EDITOR_PATH##*/}
+    alias vi="${VI_EDITOR_PATH}"
+fi
+unset VI_EDITOR_PATH
 
 HAVE_LESS=$(type -P less)
 if [[ -n "$HAVE_LESS" ]];then

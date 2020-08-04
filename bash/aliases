@@ -4,9 +4,6 @@
 # Will use the current active branch if it exists remotely, or falls back to master.
 alias github='br=$(git branch --contains HEAD | sed -En "s/^\* //p"); if ! git ls-remote . | grep -q -e "refs/remotes/.*/${br}"; then br="master"; fi; open $(git config -l | sed -En "s%remote.origin.url=git(@|://)(github.com)(:|/)(.+/.+).git%https://\2/\4/tree/${br}%p")'
 
-# set alias for vi, only if no alias is already set
-alias vi >/dev/null 2>&1 || alias vi=vim
-
 # misc
 alias reload='. ~/.bash_profile'
 alias profileme="history | awk '{print \$2}' | awk 'BEGIN{FS=\"|\"}{print \$1}' | sort | uniq -c | sort -n | tail -n 20 | sort -nr"
