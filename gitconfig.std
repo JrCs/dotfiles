@@ -39,6 +39,7 @@
 	lol = log --graph --decorate --pretty=oneline --abbrev-commit --show-notes=*
 	lola = log --graph --decorate --pretty=oneline --abbrev-commit --all --show-notes=*
 	lr = log -g
+	sp = "!bash -ic 'fshow \"$@\"'"
 	ls = ls-files
 	oops = commit --amend --no-edit
 	# Prune local tags

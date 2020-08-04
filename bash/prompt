@@ -175,9 +175,7 @@ else
     source "$DOTFILES_DIR/kube-ps1/kube-ps1.sh"
     PROMPT_COMMAND=$(echo $PROMPT_COMMAND | sed -r 's/\s*_kube_ps1_update_cache;//g') # Fix PROMPT_COMMAND
     export KUBE_PS1_SYMBOL_ENABLE=false
-    export KUBE_PS1_CTX_COLOR=177
     export KUBE_PS1_NS_COLOR=81
-    export KUBE_PS1_SUFFIX=') '
     alias kube_on="export KUBE_PS1_ENABLED=on"
     alias kube_off="export KUBE_PS1_ENABLED=off"
     # Don't activate KUBE_PS1 if kubectl command is not present
@@ -193,6 +191,15 @@ else
             fi
         else
             local cl_prompt=${br_red}
+        fi
+        if [[ -n "$KUBECONFIG" ]]; then
+            export KUBE_PS1_CTX_COLOR=184
+            export KUBE_PS1_PREFIX='>'
+            export KUBE_PS1_SUFFIX='< '
+        else
+            export KUBE_PS1_CTX_COLOR=177
+            export KUBE_PS1_PREFIX='('
+            export KUBE_PS1_SUFFIX=') '
         fi
         _kube_ps1_update_cache # Update kube_ps1 cache
         local PS1_LINE1="$(window_title_info)$(chroot_prompt_info)<~~~ $(user_prompt_info)@$(server_prompt_info)${in_container} ( \t )$(exitcode_prompt_info ${exit_code}) $(kube_ps1)${br_cyan}$(pwd -P)${normal} ~~~>"
