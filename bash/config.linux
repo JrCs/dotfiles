@@ -1,19 +1,8 @@
 #!/bin/bash
 
-# Start DBUS if needed
-if [[ -x /usr/bin/dbus-launch ]] &&   \
-   [[ -z $DBUS_SESSION_BUS_ADDRESS || \
-      -z $DBUS_SESSION_BUS_PID     || ! -d /proc/$DBUS_SESSION_BUS_PID  ]]; then
-   if [[ -n "$DISPLAY" ]]; then
-      eval $( /usr/bin/dbus-launch --sh-syntax --autolaunch=$(dbus-uuidgen --get) )
-   else
-      eval $( /usr/bin/dbus-launch --sh-syntax)
-   fi
+# Add DISPLAY environment to DBUS
+if [[ -x /usr/bin/dbus-update-activation-environment && \
+          -n $DBUS_SESSION_BUS_ADDRESS && \
+          -n $DISPLAY ]]; then
+    /usr/bin/dbus-update-activation-environment --systemd DISPLAY
 fi
-
-#if [[ -x /usr/bin/gnome-keyring-daemon ]]; then
-#   eval $(/usr/bin/gnome-keyring-daemon --start --components=secrets,ssh,gpg)
-#   [[ -n "$GNOME_KEYRING_CONTROL" ]] && export GNOME_KEYRING_CONTROL
-#   [[ -n "$SSH_AUTH_SOCK" ]]  && export SSH_AUTH_SOCK
-#   [[ -n "$GPG_AGENT_INFO" ]] && export GPG_AGENT_INFO
-#fi
