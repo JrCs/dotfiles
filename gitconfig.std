@@ -138,3 +138,6 @@
 
 [url "git://gist.github.com/"]
 	insteadOf = "gist:"
+
+[url "git@gitlab.cnp.recouv"]
+	insteadOf = "https://gitlab.cnp.recouv"
