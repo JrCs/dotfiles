@@ -1,3 +1,5 @@
+# -*- shell-script -*-
+
 # Bash alias to open Github page for project in current working directory.
 # Will use the current active branch if it exists remotely, or falls back to master.
 alias github='br=$(git branch --contains HEAD | sed -En "s/^\* //p"); if ! git ls-remote . | grep -q -e "refs/remotes/.*/${br}"; then br="master"; fi; open $(git config -l | sed -En "s%remote.origin.url=git(@|://)(github.com)(:|/)(.+/.+).git%https://\2/\4/tree/${br}%p")'
@@ -27,6 +29,8 @@ function ssh-reagent () {
   fi
   echo Cannot find ssh agent - maybe you should reconnect and forward it?
 }
+
+[[ -f ~/.local_aliases ]] && source ~/.local_aliases
 
 # Local Variables:      #
 # mode: ksh             #
