@@ -12,7 +12,8 @@ declare -r LINKS=(       \
  todo.cfg todo.actions.d \
  vim vimrc               \
  pastebin.d              \
- railsrc)
+ railsrc                 \
+ tmux.conf tmux.conf.local)
 
 
 function md5() {
