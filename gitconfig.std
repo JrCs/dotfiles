@@ -44,7 +44,7 @@
 	oops = commit --amend --no-edit
 	# Prune local tags
 	pt = "!f() { git fetch --prune $(git remote) +refs/tags/*:refs/tags/*; }; f"
-	scrub = "!f() { git branch --merged | grep -v master | xargs -r git branch -d; }; f"
+	scrub = "!f() { git branch --merged | sed -r '/^([+*]|\\s*master).*/d' | xargs -r git branch -d; }; f"
 
 	# Show files ignored by git:
 	ign = ls-files -o -i --exclude-standard
@@ -88,6 +88,7 @@
 	abbrevCommit = true
 	decorate = short
 	date = local
+	follow = true
 
 [rebase]
 	autosquash = true
@@ -106,7 +107,7 @@
 	# rebase = true
 	# WARNING! This option, which does away with the one gotcha of
 	# auto-rebasing on pulls, is only available from 1.8.5 onwards.
-	rebase = preserve
+	rebase = merges
 
 [push]
 	default = upstream
