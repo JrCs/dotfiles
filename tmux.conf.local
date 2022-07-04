@@ -350,6 +350,11 @@ set -g history-limit 10000
 # set -g prefix C-a
 # bind C-a send-prefix
 
+# unbind C-a
+set -gu prefix2
+unbind C-a
+bind C-a send -X start-of-line
+
 # move status line to top
 #set -g status-position top
 
