@@ -1,3 +1,6 @@
+[checkout]
+	guess = true
+
 [color]
 	ui = auto
 	wtf = auto
@@ -40,6 +43,7 @@
 	lola = log --graph --decorate --pretty=oneline --abbrev-commit --all --show-notes=*
 	lr = log -g
 	sp = "!bash -ic 'fshow \"$@\"'"
+	sw = "switch"
 	ls = ls-files
 	oops = commit --amend --no-edit
 	# Prune local tags
