@@ -13,7 +13,7 @@ declare -r LINKS=(       \
  vim vimrc               \
  pastebin.d              \
  railsrc                 \
- tmux.conf tmux.conf.local)
+ tmux tmux.conf tmux.conf.local)
 
 
 function md5() {

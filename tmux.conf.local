@@ -20,21 +20,25 @@
 # new window retains current path, possible values are:
 #   - true
 #   - false (default)
+#   - disabled (do not modify new-window bindings)
 tmux_conf_new_window_retain_current_path=false
 
 # new pane retains current path, possible values are:
 #   - true (default)
 #   - false
+#   - disabled (do not modify split-window bindings)
 tmux_conf_new_pane_retain_current_path=true
 
-# new pane tries to reconnect ssh sessions (experimental), possible values are:
+# new pane tries to reconnect ssh sessions, possible values are:
 #   - true
 #   - false (default)
+#   - disabled (do not modify split-window bindings)
 tmux_conf_new_pane_reconnect_ssh=false
 
 # prompt for session name when creating a new session, possible values are:
 #   - true
 #   - false (default)
+#   - disabled (do not modify new-session bindings)
 tmux_conf_new_session_prompt=false
 
 
@@ -324,6 +328,7 @@ tmux_conf_theme_clock_style="24"
 # in copy mode, copying selection also copies to the OS clipboard
 #   - true
 #   - false (default)
+#   - disabled
 # on macOS, this requires installing reattach-to-user-namespace, see README.md
 # on Linux, this requires xsel or xclip
 tmux_conf_copy_to_os_clipboard=true
@@ -349,6 +354,9 @@ set -g history-limit 10000
 # unbind C-b
 # set -g prefix C-a
 # bind C-a send-prefix
+
+# if you don't want Oh my tmux! to alter a binding, use #!important
+# bind v new-window -c #{pane_current_path} #!important
 
 # unbind C-a
 set -gu prefix2
@@ -392,6 +400,14 @@ tmux_conf_uninstall_plugins_on_reload=true
 # /!\ do not add set -g @plugin 'tmux-plugins/tpm'
 # /!\ do not add run '~/.tmux/plugins/tpm/tpm'
 
+# to enable a plugin, use the 'set -g @plugin' syntax:
+# visit https://github.com/tmux-plugins for available plugins
+#set -g @plugin 'tmux-plugins/tmux-copycat'
+#set -g @plugin 'tmux-plugins/tmux-cpu'
+#set -g @plugin 'tmux-plugins/tmux-resurrect'
+#set -g @plugin 'tmux-plugins/tmux-continuum'
+#set -g @continuum-restore 'on'
+
 # -- JrCs Override -------------------------------------------------------------
 
 # Use screen-256color as terminal to get the colors
@@ -422,17 +438,17 @@ bind-key -n MouseDown3Status new-window -a -t=
 
 bind-key -n MouseDrag1Status swap-window -t=
 
-bind-key -n WheelUpPane \
-	if-shell -Ft= "#{?pane_in_mode,1,#{mouse_button_flag}}" \
-		"send-keys -M" \
-		"if-shell -Ft= '#{alternate_on}' \
-			'send-keys Up Up Up' \
-			'copy-mode'"
-
-bind-key -n WheelDownPane \
-	if-shell -Ft= "#{?pane_in_mode,1,#{mouse_button_flag}}" \
-		"send-keys -M" \
-		"send-keys Down Down Down"
+# bind-key -n WheelUpPane \
+#	if-shell -Ft= "#{?pane_in_mode,1,#{mouse_button_flag}}" \
+#		"send-keys -M" \
+#		"if-shell -Ft= '#{alternate_on}' \
+#			'send-keys Up Up Up' \
+#			'copy-mode'"
+#
+# bind-key -n WheelDownPane \
+#	if-shell -Ft= "#{?pane_in_mode,1,#{mouse_button_flag}}" \
+#		"send-keys -M" \
+#		"send-keys Down Down Down"
 
 # urlview
 bind u run "cut -c3- ~/.tmux.conf | sh -s _urlview #{pane_id}"
@@ -445,7 +461,6 @@ if -b 'command -v xsel  > /dev/null 2>&1' 'bind-key -n MouseDown2Pane run "xsel 
 
 # [tpm] to enable a plugin, use the 'set -g @plugin' syntax:
 # visit https://github.com/tmux-plugins for available plugins
-set -g @plugin 'tmux-plugins/tmux-yank'
 
 # [tpm] restore update plugins key binding
 #   - installing plugins: <prefix> + I
@@ -468,9 +483,9 @@ set -g '@tpm-update' 'U'
 #
 # # /!\ do not "uncomment" the functions: the leading "# " characters are needed
 #
-# weather() {
-#   curl -m 1 wttr.in?format=3 2>/dev/null
-#   sleep 900 # sleep for 15 minutes, throttle network requests whatever the value of status-interval
+# weather() {                                         # see https://github.com/chubin/wttr.in#one-line-output
+#   curl -f -s -m 2 'wttr.in?format=3' || printf '\n' # /!\ make sure curl is installed
+#   sleep 900                                         # sleep for 15 minutes, throttle network requests whatever the value of status-interval
 # }
 #
 # online() {

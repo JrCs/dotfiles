@@ -43,3 +43,6 @@
 [submodule "git-tools/diff-so-fancy"]
 	path = git-tools/diff-so-fancy
 	url = https://github.com/so-fancy/diff-so-fancy.git
+[submodule "tmux"]
+	path = tmux
+	url = https://github.com/gpakosz/.tmux.git
