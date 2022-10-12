@@ -1,18 +1,56 @@
+# -*- shell-script -*-
+
 if [[ -n "$BASH_VERSION" && -z "$BASH_COMPLETION_COMPAT_DIR" ]]; then
-	for file in \
-	 /etc/bash_completion \
-	 /usr/share/bash-completion/bash_completion \
-	 /usr/local/share/bash-completion/bash_completion; do
-		if [[ -f "$file" ]]; then
-			source "$file" && break
-		fi
-	done
+    for file in \
+        /etc/bash_completion \
+            /usr/share/bash-completion/bash_completion \
+            /usr/local/share/bash-completion/bash_completion; do
+        if [[ -f "$file" ]]; then
+            source "$file" && break
+        fi
+    done
 fi
 
 # MacPorts completions
 if [[ -f /opt/local/share/bash-completion/bash_completion ]]; then
     . /opt/local/share/bash-completion/bash_completion
 fi
+
+# The next line enables shell command completion and alias for kubectl.
+if test $(type -P kubectl); then
+    source <(kubectl completion bash)
+    alias k="kubectl"
+    complete -o default -F __start_kubectl k
+    command -v kubecolor >/dev/null 2>&1 && alias kubectl="kubecolor"
+
+    alias ka="kubectl --all-namespaces"
+    complete -o default -F __start_kubectl ka
+
+    # [kall] get all pods
+    alias kall="kubectl get pods --all-namespaces"
+fi
+
+# The next line enables shell command completion for stern.
+test $(type -P stern) && source <($(type -P stern) --completion=bash)
+
+# The next line enables shell command completion for terraform.
+test $(type -P terraform) && complete -C $(type -P terraform) terraform
+
+# The next line enables shell command completion for helm.
+test $(type -P helm) && source <(helm completion bash)
+
+# The next line enables shell command completion for kustomize.
+test $(type -P kustomize) && source <($(type -P kustomize) completion bash)
+
+# The next line enables shell command completion for kind.
+test $(type -P kind) && source <(kind completion bash)
+
+# The next line enables shell command completion for velero.
+test $(type -P velero) && source <(velero completion bash)
+
+# e next line enables shell command completion for smallstep cli (aka step)
+test $(type -P step) && source "$DOTFILES_DIR/bash/completion_scripts/step"
+
 
 if [[ -n "$HAVE_RUBY" ]];then
     # rake
