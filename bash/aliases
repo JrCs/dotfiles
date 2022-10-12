@@ -8,13 +8,14 @@ alias github='br=$(git branch --contains HEAD | sed -En "s/^\* //p"); if ! git l
 alias reload='. ~/.bash_profile'
 alias profileme="history | awk '{print \$2}' | awk 'BEGIN{FS=\"|\"}{print \$1}' | sort | uniq -c | sort -n | tail -n 20 | sort -nr"
 alias cleanup="find . -name '*~' -print0 | xargs -0 -I@ sh -c \"echo 'Removing @'; rm -f '@'\""
+alias es="env | rg -i $@"
 
 # ls aliases
 alias lr="ls -ltra"
 
 if [[ -n "$(type -P pv)" ]]; then
-    speed_ssh() { if [ -z "$1" ];then echo 'Vous devez specifier le nom du serveur distant'; else yes | pv | ssh "$1" "cat >/dev/null"; fi }
-    typeset -f _ssh >/dev/null && shopt -u hostcomplete && complete -F _ssh speed_ssh
+  speed_ssh() { if [ -z "$1" ];then echo 'Vous devez specifier le nom du serveur distant'; else yes | pv | ssh "$1" "cat >/dev/null"; fi }
+  typeset -f _ssh >/dev/null && shopt -u hostcomplete && complete -F _ssh speed_ssh
 fi
 
 function ssh-reagent () {
