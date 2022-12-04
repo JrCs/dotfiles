@@ -126,6 +126,16 @@ for link in ${LINKS[@]}; do
     ln -sf "$dest" "$source"
 done
 
+distribution_id=$(lsb_release -is 2>/dev/null || true)
+if [[ -n "$distribution_id" && -d "$DOTFILES_DIR/init/$distribution_id" ]]; then
+    echo "Add default files for $distribution_id"
+    shopt -s nullglob
+    for f in "$DOTFILES_DIR/init/$distribution_id"/{*,.??*}; do
+        file=${f##*/}
+        dest="$HOME/$file"
+        [[ ! -f "$dest" ]] && cp -v "$f" "$dest"
+    done
+fi
 # Local Variables:      #
 # mode: ksh             #
 # tab-width: 4          #

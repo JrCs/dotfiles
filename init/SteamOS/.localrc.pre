@@ -1,0 +1,2 @@
+# Unset PROMPT_COMMAND from steamdec to remove PS1 definition
+[[ $(echo $PROMPT_COMMAND | grep -c -E '^__steamos_prompt_command') -eq 1 ]] && unset PROMPT_COMMAND
