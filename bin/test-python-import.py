@@ -7,9 +7,9 @@ import sys
 
 try:
       __import__(sys.argv[1])
-      print "Sucessfully import", sys.argv[1]
+      print ("Sucessfully import", sys.argv[1])
 except:
-      print "Error!"
+      print ("Error!")
       sys.exit(4)
       
 sys.exit(0)
