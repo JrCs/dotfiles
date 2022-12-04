@@ -1,7 +1,7 @@
 # -*- shell-script -*-
 
 # If not running interactively, don't do anything
-[[ -z "$PS1" ]] && return
+[[ $- != *i* ]] && return
 
 if [[ -f ~/.localrc.pre ]]; then
     source ~/.localrc.pre
