@@ -52,6 +52,7 @@ unset gnu_ls
 # GREP
 if echo "test" | grep -q --color=auto 'test' 2>/dev/null; then
     export GREP_COLOR='3;32'
+    export GREP_COLORS='mt=3;32'
     alias grep='grep --color=auto'
 fi
 
