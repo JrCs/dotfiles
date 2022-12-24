@@ -1,0 +1,2 @@
+alias dedup-sdcard='sudo duperemove -r -d -h --hashfile=/home/duperemove-sdcard.hash --skip-zeroes --lookup-extents=no /run/media/mmcblk0p1'
+alias dedup-home='sudo duperemove -r -d -h --hashfile=/home/duperemove-home.hash --skip-zeroes --lookup-extents=no /home'
