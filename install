@@ -68,6 +68,7 @@ function populate_gitconfig {
 
 source "$DOTFILES_DIR"/libraries/bash_library.sh
 
+echo "======== SYNC REPOSITORIES ========"
 if [[ -n "$(type -P git)" ]]; then
     # Do an upgrade first
     git pull --rebase --ff-only || exit $?
@@ -92,8 +93,9 @@ else
     fi
 fi
 
+echo
+echo "======== CREATE LINKS ========"
 YES=0
-
 for link in ${LINKS[@]}; do
     source="$HOME/.$link"
     source_txt=$(echo "$source" | sed "s@$HOME@~@")
@@ -129,12 +131,17 @@ done
 
 distribution_id=$(lsb_release -is 2>/dev/null || true)
 if [[ -n "$distribution_id" && -d "$DOTFILES_DIR/init/$distribution_id" ]]; then
-    echo "Add default files for $distribution_id"
+    echo
+    echo "======== CREATEING DEFAULT FILES for $distribution_id ========"
     shopt -s nullglob
     for f in "$DOTFILES_DIR/init/$distribution_id"/{*,.??*}; do
         file=${f##*/}
         dest="$HOME/$file"
-        [[ ! -f "$dest" ]] && cp -v "$f" "$dest"
+        if [[ ! -f "$dest" ]]; then
+            cp -v "$f" "$dest"
+        else
+            echo "Warn: file '$dest' already exists. Not overwitting with '$f' file."
+        fi
     done
 fi
 # Local Variables:      #
