@@ -7,6 +7,7 @@ declare -r LINKS=(       \
  bash_profile bashrc     \
  dircolors gvimrc        \
  gitignore gitconfig.std \
+ git_identities          \
  irbrc                   \
  terminfo                \
  todo.cfg todo.actions.d \
