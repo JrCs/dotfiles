@@ -143,7 +143,7 @@ main() {
     line=$(echo "$line" | sed 's/^ *//; s/ *$//; /^$/d; /^\s*$/d; s/ *= */=/g')
 
     # comment or empty line
-    if [[ "$line" =~ ^\/\/.*$ ]] || [[ -z "$line" ]]; then continue; fi
+    [[ "$line" =~ ^\/\/.*$ || -z "$line" ]] && continue
 
     # [identity:name]
     if [[ "$line" =~ ^\[identity:[a-zA-Z0-9]*\]$ ]]; then
