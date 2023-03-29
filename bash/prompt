@@ -144,7 +144,7 @@ exitcode_prompt_info() {
 
 # PATH (so it can be overwritten)
 path_prompt_info() {
-    echo "${br_cyan}\w${normal}"
+    echo "${br_cyan}\w${normal}\[\e]1337;CurrentDir=$(pwd)\a\]"
 }
 
 export PROMPT_DIRTRIM=2 # Number of trailing directory components to retain
