@@ -21,13 +21,7 @@ if test $(type -P kubectl); then
     source <(kubectl completion bash)
     alias k="kubectl"
     complete -o default -F __start_kubectl k
-    command -v kubecolor >/dev/null 2>&1 && alias kubectl="kubecolor"
-
-    alias ka="kubectl --all-namespaces"
-    complete -o default -F __start_kubectl ka
-
-    # [kall] get all pods
-    alias kall="kubectl get pods --all-namespaces"
+    command -v kubecolor >/dev/null 2>&1 && alias k="kubecolor"
 fi
 
 # The next line enables shell command completion for stern.
