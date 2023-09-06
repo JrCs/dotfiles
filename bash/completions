@@ -11,6 +11,18 @@ if [[ -n "$BASH_VERSION" && -z "$BASH_COMPLETION_COMPAT_DIR" ]]; then
     done
 fi
 
+# The next lines enables shell command completion and alias for brew.
+if type brew &>/dev/null; then
+  HOMEBREW_PREFIX="$(brew --prefix)"
+  if [[ -r "${HOMEBREW_PREFIX}/etc/profile.d/bash_completion.sh" ]]; then
+      source "${HOMEBREW_PREFIX}/etc/profile.d/bash_completion.sh"
+  else
+      for COMPLETION in "${HOMEBREW_PREFIX}/etc/bash_completion.d/"*; do
+          [[ -r "${COMPLETION}" ]] && source "${COMPLETION}"
+      done
+  fi
+fi
+
 # MacPorts completions
 if [[ -f /opt/local/share/bash-completion/bash_completion ]]; then
     . /opt/local/share/bash-completion/bash_completion
@@ -47,13 +59,13 @@ test $(type -P step) && source "$DOTFILES_DIR/bash/completion_scripts/step"
 
 
 if [[ -n "$HAVE_RUBY" ]];then
-    # rake
-    complete -C "$DOTFILES_DIR/bash/completion_scripts/rake_completion" -o default rake
+   # rake
+   complete -C "$DOTFILES_DIR/bash/completion_scripts/rake_completion" -o default rake
 fi
-
+   
 if [[ -n "$HAVE_PERL" ]];then
-    # ack
-    source "$DOTFILES_DIR/ack/completion.bash"
+   # ack
+   source "$DOTFILES_DIR/ack/completion.bash"
 fi
 
 # git flow
@@ -63,8 +75,8 @@ source "$DOTFILES_DIR/bash/completion_scripts/git-flow-completion/git-flow-compl
 [[ -f "$DOTFILES_DIR/todo.txt-cli/todo_completion" ]] && source "$DOTFILES_DIR/todo.txt-cli/todo_completion"
 
 if [[ -n "$HAVE_PYTHON" ]];then
-    # cheat
-    [[ -f "$DOTFILES_DIR/cheat/autocompletion/cheat.bash" ]] && source "$DOTFILES_DIR/cheat/autocompletion/cheat.bash"
+   # cheat
+   [[ -f "$DOTFILES_DIR/cheat/autocompletion/cheat.bash" ]] && source "$DOTFILES_DIR/cheat/autocompletion/cheat.bash"
 fi
 
 # git-extras
