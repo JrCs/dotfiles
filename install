@@ -4,6 +4,7 @@ declare -r self="${0##*/}"
 declare DOTFILES_DIR="$(cd "$(dirname "$0")" && echo "$PWD")"
 
 declare -r LINKS=(       \
+ asdfrc                  \
  bash_profile bashrc     \
  dircolors gvimrc        \
  gitignore gitconfig.std \
