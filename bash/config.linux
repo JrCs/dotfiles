@@ -1,5 +1,21 @@
 #!/bin/bash
 
+# Homebrew
+if [[ -z "$HOMEBREW_PREFIX" ]]; then
+    if [[ -x $HOME/.linuxbrew/bin/brew ]]; then
+        eval $($HOME/.linuxbrew/bin/brew shellenv)
+    else
+        [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]] && eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
+    fi
+fi
+
+# ASDF
+if [[ -d $HOME/.asdf ]]; then
+    export ASDF_FORCE_PREPEND=yes
+    source $HOME/.asdf/asdf.sh
+    source $HOME/.asdf/completions/asdf.bash
+fi
+
 # Add DISPLAY environment to DBUS
 if [[ -x /usr/bin/dbus-update-activation-environment && \
           -n $DBUS_SESSION_BUS_ADDRESS && \

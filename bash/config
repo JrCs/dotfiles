@@ -131,12 +131,6 @@ if [[ -f "$HOME/.xssh_rc" ]];then
 fi
 
 ########
-# direnv
-########
-# DIRENV_PATH variable will be use when setting PROMPT_COMMAND environment variable
-DIRENV_PATH=$(type -P direnv)
-
-########
 # python
 ########
 HAVE_PYTHON=$(type -P python2.7 python2.6 python | head -n 1)

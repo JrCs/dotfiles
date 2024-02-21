@@ -219,8 +219,13 @@ if [[ ! "$PROMPT_COMMAND" =~ dotfiles_prompt ]]; then
 fi
 
 # If direnv command present add to the PROMPT_COMMAND
-[[ -n "$DIRENV_PATH" ]] && eval "$($DIRENV_PATH hook bash)"
-unset DIRENV_PATH
+if [[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/asdf-direnv/bashrc" ]]; then
+    source "${XDG_CONFIG_HOME:-$HOME/.config}/asdf-direnv/bashrc"
+else
+    DIRENV_PATH=$(type -P direnv)
+    [[ -n "$DIRENV_PATH" ]] && eval "$($DIRENV_PATH hook bash)"
+    unset DIRENV_PATH
+fi
 
 # Local Variables:      #
 # mode: ksh             #

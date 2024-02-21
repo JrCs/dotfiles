@@ -24,7 +24,6 @@ pathmunge "$DOTFILES_DIR/bin"
 # Add local bin directory to PATH environment
 [[ -d ~/bin ]] && pathmunge ~/bin
 
-
 ## MANPATH
 
 [[ -d /usr/local/man ]] && export MANPATH="/usr/local/man:$MANPATH"
