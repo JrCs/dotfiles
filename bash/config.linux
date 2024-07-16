@@ -16,6 +16,17 @@ if [[ -d $HOME/.asdf ]]; then
     source $HOME/.asdf/completions/asdf.bash
 fi
 
+# nix
+[[ -e $HOME/.nix-profile/etc/profile.d/nix.sh ]] && $HOME/.nix-profile/etc/profile.d/nix.sh
+
+# devbox
+[[ -f /usr/share/Modules/init/bash ]] && unset -f _module_raw ml module scl
+if [[ -n $(type -P devbox) ]]; then
+    eval "$(devbox global shellenv)"
+    eval "$(devbox completion bash)"
+fi
+#[[ -f /usr/share/Modules/init/bash ]] && source /usr/share/Modules/init/bash
+
 # Add DISPLAY environment to DBUS
 if [[ -x /usr/bin/dbus-update-activation-environment && \
           -n $DBUS_SESSION_BUS_ADDRESS && \
