@@ -8,20 +8,20 @@
 # Turn case-insensitive matching temporarily on, if necessary.
 nocasematchWasOff=0
 shopt nocasematch >/dev/null || nocasematchWasOff=1
-(( nocasematchWasOff )) && shopt -s nocasematch
+((nocasematchWasOff)) && shopt -s nocasematch
 
 configOS=''
 case "${OSTYPE}" in
-    linux*)  configOS='linux'  ;;
+    linux*) configOS='linux' ;;
     darwin*) configOS='darwin' ;;
 esac
 
 # Restore state of 'nocasematch' option, if necessary.
-(( nocasematchWasOff )) && shopt -u nocasematch
+((nocasematchWasOff)) && shopt -u nocasematch
 unset nocasematchWasOff
 
-[[ -n "$configOS" && -f "$DOTFILES_DIR"/bash/config.$configOS ]] && \
- source "$DOTFILES_DIR"/bash/config.$configOS
+[[ -n "$configOS" && -f "$DOTFILES_DIR"/bash/config.$configOS ]] &&
+    source "$DOTFILES_DIR"/bash/config.$configOS
 unset configOS
 
 ##########
@@ -31,11 +31,11 @@ ls --color /dev/null >/dev/null 2>&1 && gnu_ls=1 || gnu_ls=0
 if [[ "$gnu_ls" -eq 1 ]]; then
     # GNU ls
     DIRCOLORS_BIN=$(type -P dircolors gdircolors | head -n 1)
-    if [ -n "$DIRCOLORS_BIN" ];then
+    if [ -n "$DIRCOLORS_BIN" ]; then
         test -r ~/.dircolors && eval "$($DIRCOLORS_BIN -b ~/.dircolors)" || eval "$($DIRCOLORS_BIN -b)"
     fi
 
-    if [ -n "$LS_COLORS" ];then
+    if [ -n "$LS_COLORS" ]; then
         # LS
         alias ll='ls -al --color=auto'
         alias ls='ls --color=auto'
@@ -83,14 +83,14 @@ fi
 # Misc
 ##########
 VI_EDITOR_PATH=$(type -P nvim vim vi | head -n 1)
-if [[ -n "$VI_EDITOR_PATH" ]];then
+if [[ -n "$VI_EDITOR_PATH" ]]; then
     export EDITOR=${VI_EDITOR_PATH##*/}
     alias vi="${VI_EDITOR_PATH}"
 fi
 unset VI_EDITOR_PATH
 
 HAVE_LESS=$(type -P less)
-if [[ -n "$HAVE_LESS" ]];then
+if [[ -n "$HAVE_LESS" ]]; then
     export LESS='-FiRX'
     PAGER='less -FiRX'
     MANPAGER='less -FiRsX'
@@ -103,7 +103,7 @@ unset HAVE_LESS
 
 # lesspipe.sh & code2color
 LESSPIPESH_BIN=$(type -P lesspipe.sh)
-if [[ -n $(type -P code2color) && -n "$LESSPIPESH_BIN" ]];then
+if [[ -n $(type -P code2color) && -n "$LESSPIPESH_BIN" ]]; then
     export LESSOPEN="|$LESSPIPESH_BIN %s"
 fi
 
@@ -117,7 +117,7 @@ fi
 ##############
 # todo.txt-cli
 ##############
-if [[ -d "$HOME/.todo" && -f "$HOME/.todo.cfg" ]];then
+if [[ -d "$HOME/.todo" && -f "$HOME/.todo.cfg" ]]; then
     export TODOTXT_CFG_FILE="$HOME/.todo.cfg"
     alias t='todo.sh'
     complete -F _todo t
@@ -126,7 +126,7 @@ fi
 ######
 # xssh
 ######
-if [[ -f "$HOME/.xssh_rc" ]];then
+if [[ -f "$HOME/.xssh_rc" ]]; then
     source "$DOTFILES_DIR/xssh/xssh.sh"
     alias ssh >/dev/null 2>&1 || alias ssh=xssh
 fi
@@ -139,8 +139,8 @@ if [[ -n "$HAVE_PYTHON" ]]; then
     ##########
     # Autojump
     ##########
-    for autojump_dir in "$DOTFILES_DIR/autojump" "$DOTFILES_DIR/autojump/bin";do
-        if [[ -f "$autojump_dir/autojump.bash" ]];then
+    for autojump_dir in "$DOTFILES_DIR/autojump" "$DOTFILES_DIR/autojump/bin"; do
+        if [[ -f "$autojump_dir/autojump.bash" ]]; then
             source "$autojump_dir/autojump.bash"
             export AUTOJUMP_PYTHON_BIN="$HAVE_PYTHON"
             export AUTOJUMP_BIN="$autojump_dir/autojump"
@@ -148,7 +148,7 @@ if [[ -n "$HAVE_PYTHON" ]]; then
         fi
     done
     if [[ -n "$AUTOJUMP_BIN" && -n "$AUTOJUMP_PYTHON_BIN" ]]; then
-        eval $(echo "autojump() { '${AUTOJUMP_PYTHON_BIN}' '${AUTOJUMP_BIN}' \$@ ;}" )
+        eval $(echo "autojump() { '${AUTOJUMP_PYTHON_BIN}' '${AUTOJUMP_BIN}' \$@ ;}")
     fi
 
     unset autojump_dir AUTOJUMP_PYTHON_BIN AUTOJUMP_BIN
@@ -162,7 +162,7 @@ if [[ -n "$HAVE_PYTHON" ]]; then
         # Add configobj library to $PYTHONPATH
         case $PYTHONPATH in
             *configobj*) ;;
-            *) export PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}$DOTFILES_DIR/libraries/configobj-4.7.2"
+            *) export PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}$DOTFILES_DIR/libraries/configobj-4.7.2" ;;
         esac
     fi
 
@@ -176,7 +176,7 @@ if [[ -n "$HAVE_PYTHON" ]]; then
         # Add argparse library to $PYTHONPATH
         case $PYTHONPATH in
             *argparse*) ;;
-            *) export PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}$DOTFILES_DIR/libraries/argparse-1.2"
+            *) export PYTHONPATH="${PYTHONPATH:+$PYTHONPATH:}$DOTFILES_DIR/libraries/argparse-1.2" ;;
         esac
     fi
 fi
@@ -184,8 +184,8 @@ fi
 #########
 # PROMPT
 #########
-#  Don't set PS1 for remote emacs, want full when running inside emacs
-if [[ ! -z "$TERM" && ("$TERM" != "dumb" || ! -z "$INSIDE_EMACS") ]]; then
+#  Don't set PS1 for remote emacs and Cline AI agent
+if [[ -z "$CLINE_ACTIVE" && "$OPENCODE" != "1" && ! -z "$TERM" && ("$TERM" != "dumb" || ! -z "$INSIDE_EMACS") ]]; then
     source $DOTFILES_DIR/bash/prompt
 fi
 
@@ -194,6 +194,44 @@ fi
 #################################
 unset command_not_found_handle
 
+###########
+# Agents IA
+###########
+if [[ "${CLINE_ACTIVE:-}" == true || "$OPENCODE" == "1" ]]; then
+    # Désactive les couleurs et les animations de barre de progression
+    export PRE_COMMIT_COLOR=never
+
+    # Désactive les notifications système (si utilisées par certains hooks)
+    export NO_COLOR=1
+
+    # Désactiver les confirmations interactives
+    export DEBIAN_FRONTEND=noninteractive
+
+    # Force Git à ne jamais ouvrir d'éditeur interactif dans ce shell
+    export GIT_EDITOR=true
+
+    # Ignorer les fichiers de configuration git globale et système
+    export GIT_CONFIG_GLOBAL=~/.gitconfig_agents
+    export GIT_CONFIG_SYSTEM=/dev/null
+
+    # Forcer les outils à ne pas attendre de TTY
+    export GIT_TERMINAL_PROMPT=0
+    export NPM_CONFIG_YES=true
+
+    # Pour pip
+    export PIP_NO_INPUT=1
+
+    # Timeout pour éviter les commandes qui restent bloquées
+    export TMOUT=0 # désactive le timeout automatique du shell
+
+    # Disable "pagers"
+    export PAGER=cat
+    export GIT_PAGER=cat
+    export MANPAGER=cat
+
+    # Git & Hooks
+    export PRE_COMMIT_COLOR=never
+fi
 
 # Local Variables:      #
 # mode: ksh             #
