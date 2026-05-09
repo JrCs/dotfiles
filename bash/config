@@ -75,7 +75,8 @@ unset HISTTIMEFORMAT
 shopt -s histappend
 # save history file after each command
 if [[ ! "$PROMPT_COMMAND" =~ 'history -a' ]]; then
-    PROMPT_COMMAND="${PROMPT_COMMAND+$PROMPT_COMMAND ; }history -a"
+    PROMPT_COMMAND="$(printf '%s' "$PROMPT_COMMAND" | sed -E 's/[[:space:]]*;[[:space:]]*$//')"
+    PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND ; }history -a"
 fi
 
 ##########
