@@ -185,7 +185,7 @@ fi
 # PROMPT
 #########
 #  Don't set PS1 for remote emacs and Cline AI agent
-if [[ -z "$CLINE_ACTIVE" && "$OPENCODE" != "1" && ! -z "$TERM" && ("$TERM" != "dumb" || ! -z "$INSIDE_EMACS") ]]; then
+if [[ -z "$CLINE_ACTIVE" && "$OPENCODE" != "1" && -z "$VSCODE_AGENT" && ! -z "$TERM" && ("$TERM" != "dumb" || ! -z "$INSIDE_EMACS") ]]; then
     source $DOTFILES_DIR/bash/prompt
 fi
 
@@ -197,7 +197,7 @@ unset command_not_found_handle
 ###########
 # Agents IA
 ###########
-if [[ "${CLINE_ACTIVE:-}" == true || "$OPENCODE" == "1" ]]; then
+if [[ "${CLINE_ACTIVE:-}" == true || "$OPENCODE" == "1" || -n "$VSCODE_AGENT" ]]; then
     # Désactive les couleurs et les animations de barre de progression
     export PRE_COMMIT_COLOR=never
 
