@@ -21,9 +21,6 @@ for HOMEBREW_BIN in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.
 done
 unset HOMEBREW_BIN
 
-# Charger l'activation de mise
-type -P mise >/dev/null && eval "$(mise activate bash)"
-
 # Adapting PATH environment variable for use with MacPorts.
 [[ -d /opt/local/bin ]] && pathmunge /opt/local/sbin && pathmunge /opt/local/bin
 
@@ -35,6 +32,10 @@ pathmunge "$DOTFILES_DIR/bin"
 
 # Add local bin directory to PATH environment
 [[ -d ~/bin ]] && pathmunge ~/bin
+
+# Charger l'activation de mise (après l'ajout de ~/bin au PATH : sur certains
+# systèmes, le binaire mise y est installé)
+type -P mise >/dev/null && eval "$(mise activate bash)"
 
 ## MANPATH
 
