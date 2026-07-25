@@ -12,6 +12,15 @@ pathmunge () {
 
 ## PATH
 
+# Homebrew (Apple Silicon, Intel Mac, or Linuxbrew)
+for HOMEBREW_BIN in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
+    if [[ -x "$HOMEBREW_BIN" ]]; then
+        eval "$("$HOMEBREW_BIN" shellenv)"
+        break
+    fi
+done
+unset HOMEBREW_BIN
+
 # Adapting PATH environment variable for use with MacPorts.
 [[ -d /opt/local/bin ]] && pathmunge /opt/local/sbin && pathmunge /opt/local/bin
 
