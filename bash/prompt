@@ -171,15 +171,16 @@ if [[ "${PROMPT_TYPE}" == powerline && -e $GOPATH/bin/powerline-go ]]; then
         PS1="$PS1_LINE1\n$PS1_LINE2"
     }
 else
-    # Configure kube-ps1
-    source "$DOTFILES_DIR/kube-ps1/kube-ps1.sh"
-    PROMPT_COMMAND="$(printf '%s' "$PROMPT_COMMAND" | sed -E 's/^[[:space:]]*_kube_ps1_prompt_update;[[:space:]]*//')" # Fix PROMPT_COMMAND
-    export KUBE_PS1_SYMBOL_ENABLE=false
-    export KUBE_PS1_NS_COLOR=81
-    alias kube_on="export KUBE_PS1_ENABLED=on"
-    alias kube_off="export KUBE_PS1_ENABLED=off"
-    # Don't activate KUBE_PS1 if kubectl command is not present
-    [[ -z $(type -P kubectl) ]] && export KUBE_PS1_ENABLED=${KUBE_PS1_ENABLED:-off}
+    # Configure kube-ps1 (only if kubectl is available)
+    HAVE_KUBECTL=$(type -P kubectl)
+    if [[ -n "$HAVE_KUBECTL" ]]; then
+        source "$DOTFILES_DIR/kube-ps1/kube-ps1.sh"
+        PROMPT_COMMAND="$(printf '%s' "$PROMPT_COMMAND" | sed -E 's/^[[:space:]]*_kube_ps1_prompt_update;[[:space:]]*//')" # Fix PROMPT_COMMAND
+        export KUBE_PS1_SYMBOL_ENABLE=false
+        export KUBE_PS1_NS_COLOR=81
+        alias kube_on="export KUBE_PS1_ENABLED=on"
+        alias kube_off="export KUBE_PS1_ENABLED=off"
+    fi
     dotfiles_prompt() { # This function will be call by PROMPT_COMMAND
         # Check exit code
         local exit_code=$?
@@ -192,17 +193,19 @@ else
         else
             local cl_prompt=${br_red}
         fi
-        if [[ -n "$KUBECONFIG" ]]; then
-            export KUBE_PS1_CTX_COLOR=184
-            export KUBE_PS1_PREFIX='>'
-            export KUBE_PS1_SUFFIX='< '
-        else
-            export KUBE_PS1_CTX_COLOR=177
-            export KUBE_PS1_PREFIX='('
-            export KUBE_PS1_SUFFIX=') '
+        if [[ -n "$HAVE_KUBECTL" ]]; then
+            if [[ -n "$KUBECONFIG" ]]; then
+                export KUBE_PS1_CTX_COLOR=184
+                export KUBE_PS1_PREFIX='>'
+                export KUBE_PS1_SUFFIX='< '
+            else
+                export KUBE_PS1_CTX_COLOR=177
+                export KUBE_PS1_PREFIX='('
+                export KUBE_PS1_SUFFIX=') '
+            fi
+            _kube_ps1_prompt_update # Update kube_ps1 cache
         fi
-        _kube_ps1_prompt_update # Update kube_ps1 cache
-        local PS1_LINE1="$(window_title_info)$(chroot_prompt_info)<~~~ $(user_prompt_info)@$(server_prompt_info)${in_container} ( \t )$(exitcode_prompt_info ${exit_code}) $(kube_ps1)${br_cyan}$(pwd -P)${normal} ~~~>"
+        local PS1_LINE1="$(window_title_info)$(chroot_prompt_info)<~~~ $(user_prompt_info)@$(server_prompt_info)${in_container} ( \t )$(exitcode_prompt_info ${exit_code}) ${HAVE_KUBECTL:+$(kube_ps1)}${br_cyan}$(pwd -P)${normal} ~~~>"
         local PS1_LINE2="$(path_prompt_info)$(git_prompt_info)$(is_vim_shell) ${cl_prompt}\\\$${normal} "
         PS1="$PS1_LINE1\n$PS1_LINE2"
     }
