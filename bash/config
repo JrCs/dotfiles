@@ -132,27 +132,37 @@ if [[ -f "$HOME/.xssh_rc" ]]; then
 fi
 
 ########
+# zoxide
+########
+HAVE_ZOXIDE=$(type -P zoxide)
+if [[ -n "$HAVE_ZOXIDE" ]]; then
+		export _ZO_ECHO=1
+		eval "$(zoxide init bash)"
+fi
+
+########
 # python
 ########
 HAVE_PYTHON=$(type -P python2.7 python2.6 python | head -n 1)
 if [[ -n "$HAVE_PYTHON" ]]; then
-    ##########
-    # Autojump
-    ##########
-    for autojump_dir in "$DOTFILES_DIR/autojump" "$DOTFILES_DIR/autojump/bin"; do
-        if [[ -f "$autojump_dir/autojump.bash" ]]; then
-            source "$autojump_dir/autojump.bash"
-            export AUTOJUMP_PYTHON_BIN="$HAVE_PYTHON"
-            export AUTOJUMP_BIN="$autojump_dir/autojump"
-            break
-        fi
-    done
-    if [[ -n "$AUTOJUMP_BIN" && -n "$AUTOJUMP_PYTHON_BIN" ]]; then
-        eval $(echo "autojump() { '${AUTOJUMP_PYTHON_BIN}' '${AUTOJUMP_BIN}' \$@ ;}")
-    fi
+		if [[ -z "$HAVE_ZOXIDE" ]]; then
+			##########
+			# Autojump
+			##########
+			for autojump_dir in "$DOTFILES_DIR/autojump" "$DOTFILES_DIR/autojump/bin"; do
+					if [[ -f "$autojump_dir/autojump.bash" ]]; then
+							source "$autojump_dir/autojump.bash"
+							export AUTOJUMP_PYTHON_BIN="$HAVE_PYTHON"
+							export AUTOJUMP_BIN="$autojump_dir/autojump"
+							break
+					fi
+			done
+			if [[ -n "$AUTOJUMP_BIN" && -n "$AUTOJUMP_PYTHON_BIN" ]]; then
+					eval $(echo "autojump() { '${AUTOJUMP_PYTHON_BIN}' '${AUTOJUMP_BIN}' \$@ ;}")
+			fi
 
-    unset autojump_dir AUTOJUMP_PYTHON_BIN AUTOJUMP_BIN
-
+			unset autojump_dir AUTOJUMP_PYTHON_BIN AUTOJUMP_BIN
+		fi
     ############
     # pastebinit
     ############
