@@ -173,7 +173,7 @@ if [[ "${PROMPT_TYPE}" == powerline && -e $GOPATH/bin/powerline-go ]]; then
 else
     # Configure kube-ps1
     source "$DOTFILES_DIR/kube-ps1/kube-ps1.sh"
-    PROMPT_COMMAND="$(printf '%s' "$PROMPT_COMMAND" | sed -E 's/^[[:space:]]*_kube_ps1_update_cache;[[:space:]]*//')" # Fix PROMPT_COMMAND
+    PROMPT_COMMAND="$(printf '%s' "$PROMPT_COMMAND" | sed -E 's/^[[:space:]]*_kube_ps1_prompt_update;[[:space:]]*//')" # Fix PROMPT_COMMAND
     export KUBE_PS1_SYMBOL_ENABLE=false
     export KUBE_PS1_NS_COLOR=81
     alias kube_on="export KUBE_PS1_ENABLED=on"
@@ -201,7 +201,7 @@ else
             export KUBE_PS1_PREFIX='('
             export KUBE_PS1_SUFFIX=') '
         fi
-        _kube_ps1_update_cache # Update kube_ps1 cache
+        _kube_ps1_prompt_update # Update kube_ps1 cache
         local PS1_LINE1="$(window_title_info)$(chroot_prompt_info)<~~~ $(user_prompt_info)@$(server_prompt_info)${in_container} ( \t )$(exitcode_prompt_info ${exit_code}) $(kube_ps1)${br_cyan}$(pwd -P)${normal} ~~~>"
         local PS1_LINE2="$(path_prompt_info)$(git_prompt_info)$(is_vim_shell) ${cl_prompt}\\\$${normal} "
         PS1="$PS1_LINE1\n$PS1_LINE2"
