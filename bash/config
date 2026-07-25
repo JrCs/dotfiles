@@ -243,6 +243,11 @@ if [[ "${CLINE_ACTIVE:-}" == true || "$OPENCODE" == "1" || -n "$VSCODE_AGENT" ||
     export PRE_COMMIT_COLOR=never
 fi
 
+###########
+# The Fuck
+###########
+type -p thefuck >/dev/null 2>&1 && eval "$(thefuck --alias)" || true
+
 # Local Variables:      #
 # mode: ksh             #
 # tab-width: 4          #
