@@ -3,6 +3,17 @@
 # If not running interactively, don't do anything
 [[ $- != *i* ]] && return
 
+# Some systems (e.g. Synology DSM) force the login shell to /bin/sh, which is
+# actually bash but invoked under that name: it then behaves like sh and loses
+# bash extensions this configuration relies on, process substitution in
+# particular. POSIX mode is a reliable proxy for that state on those systems;
+# escape it by re-execing a real bash login shell.
+if shopt -qo posix; then
+	__real_bash=$(type -P bash)
+	[[ -n "$__real_bash" ]] && exec "$__real_bash" --login
+	unset __real_bash
+fi
+
 if [[ -f ~/.localrc.pre ]]; then
 	source ~/.localrc.pre
 fi
