@@ -1,0 +1,5 @@
+[tools]
+pre-commit = "latest"
+shellcheck = "latest"
+shfmt = "latest"
+yamllint = "latest"

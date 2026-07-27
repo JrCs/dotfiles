@@ -1,0 +1,35 @@
+---
+fail_fast: true
+minimum_pre_commit_version: "4.6.0"
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-executables-have-shebangs
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-symlinks
+
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.38.0
+    hooks:
+      - id: yamllint
+        files: '.*\.ya?ml(\.in)?$'
+        types: ['text']
+        #exclude: '(^|/)(controlplane|worker|secrets)\.yaml$'
+
+  - repo: https://github.com/jumanjihouse/pre-commit-hooks
+    rev: 3.0.0
+    hooks:
+      - id: forbid-binary
+      - id: shellcheck
+        # .envrc est toujours sourcé par direnv (jamais exécuté), et utilise des
+        # builtins direnv (source_up, log_status...) inconnus de shellcheck.
+        exclude: '(^|/)\.envrc$'
+      - id: shfmt
+        args: ['-l', '-i', '4', '-ci', '-kp', '-w']
+        exclude: '(^|/)\.envrc$'
