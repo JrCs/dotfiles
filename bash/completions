@@ -54,18 +54,20 @@ test $(type -P kind) && source <(kind completion bash)
 # Charger l'activation et la complétion de mise
 test $(type -P mise) && source <(mise completion bash)
 
-# e next line enables shell command completion for smallstep cli (aka step)
+# The next line enables shell command completion for smallstep cli (aka step)
 test $(type -P step) && source "$DOTFILES_DIR/bash/completion_scripts/step"
 
+# The next line enables shell command completion for rg (ripgrep)
+test $(type -P rg) && source <($(type -P rg) --generate=complete-bash)
 
 if [[ -n "$HAVE_RUBY" ]];then
-   # rake
-   complete -C "$DOTFILES_DIR/bash/completion_scripts/rake_completion" -o default rake
+  # rake
+  complete -C "$DOTFILES_DIR/bash/completion_scripts/rake_completion" -o default rake
 fi
 
 if [[ -n "$HAVE_PERL" ]];then
-   # ack
-   source "$DOTFILES_DIR/ack/completion.bash"
+  # ack
+  source "$DOTFILES_DIR/ack/completion.bash"
 fi
 
 # git flow
