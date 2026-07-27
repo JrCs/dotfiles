@@ -2,34 +2,28 @@
 
 # Homebrew
 if [[ -z "$HOMEBREW_PREFIX" ]]; then
-    if [[ -x $HOME/.linuxbrew/bin/brew ]]; then
-        eval $($HOME/.linuxbrew/bin/brew shellenv)
+    if [[ -x "$HOME"/.linuxbrew/bin/brew ]]; then
+        eval "$("$HOME"/.linuxbrew/bin/brew shellenv)"
     else
-        [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]] && eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
+        [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]] && eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
     fi
 fi
 
-# ASDF
-if [[ -d $HOME/.asdf ]]; then
-    export ASDF_FORCE_PREPEND=yes
-    source $HOME/.asdf/asdf.sh
-    source $HOME/.asdf/completions/asdf.bash
+# Activate mise if present
+if type -P mise &>/dev/null; then
+    eval "$(mise activate bash)"
+    eval "$(mise completion bash)"
+else
+    # Activate asdf if present
+    if [[ -d $HOME/.asdf ]]; then
+        export ASDF_FORCE_PREPEND=yes
+        pathmunge ~/.asdf/shims
+    fi
 fi
-
-# nix
-[[ -e $HOME/.nix-profile/etc/profile.d/nix.sh ]] && $HOME/.nix-profile/etc/profile.d/nix.sh
-
-# devbox
-[[ -f /usr/share/Modules/init/bash ]] && unset -f _module_raw ml module scl
-if [[ -n $(type -P devbox) ]]; then
-    eval "$(devbox global shellenv)"
-    eval "$(devbox completion bash)"
-fi
-#[[ -f /usr/share/Modules/init/bash ]] && source /usr/share/Modules/init/bash
 
 # Add DISPLAY environment to DBUS
-if [[ -x /usr/bin/dbus-update-activation-environment && \
-          -n $DBUS_SESSION_BUS_ADDRESS && \
+if [[ -x /usr/bin/dbus-update-activation-environment &&
+          -n $DBUS_SESSION_BUS_ADDRESS &&
           -n $DISPLAY ]]; then
     /usr/bin/dbus-update-activation-environment --systemd DISPLAY
 fi
