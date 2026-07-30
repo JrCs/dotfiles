@@ -9,11 +9,8 @@ if [[ -z "$HOMEBREW_PREFIX" ]]; then
     fi
 fi
 
-# Activate mise if present
-if type -P mise &>/dev/null; then
-    eval "$(mise activate bash)"
-    eval "$(mise completion bash)"
-else
+# Activate asdf if mise not present
+if ! type -P mise &>/dev/null; then
     # Activate asdf if present
     if [[ -d $HOME/.asdf ]]; then
         export ASDF_FORCE_PREPEND=yes

@@ -35,7 +35,7 @@ pathmunge "$DOTFILES_DIR/bin"
 
 # Charger l'activation de mise (après l'ajout de ~/bin au PATH : sur certains
 # systèmes, le binaire mise y est installé)
-type -P mise >/dev/null && eval "$(mise activate bash)"
+type -P mise >/dev/null && source <(mise activate --shims bash)
 
 ## MANPATH
 
