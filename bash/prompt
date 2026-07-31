@@ -205,7 +205,9 @@ else
 			fi
 			_kube_ps1_prompt_update # Update kube_ps1 cache
 		fi
-		local PS1_LINE1="$(window_title_info)$(chroot_prompt_info)🍺 $(user_prompt_info)@$(server_prompt_info)${in_container} ( \t )$(exitcode_prompt_info ${exit_code}) $(kube_ps1)${br_cyan}$(pwd -P)${normal} 🍺"
+		local end_icon=' 👍'
+		[[ $exit_code -ne 0 ]] && end_icon='💥'
+		local PS1_LINE1="$(window_title_info)$(chroot_prompt_info)🍺 $(user_prompt_info)@$(server_prompt_info)${in_container} ( \t )$(exitcode_prompt_info ${exit_code}) $(kube_ps1)${br_cyan}$(pwd -P)${normal}${end_icon}"
 		local PS1_LINE2="$(path_prompt_info)$(git_prompt_info)$(is_vim_shell) ${cl_prompt}\\\$${normal} "
 		PS1="$PS1_LINE1\n$PS1_LINE2"
 	}
