@@ -12,7 +12,7 @@
 # Light Gray  0;37     White         1;37
 
 # use colortest -w -s to get code to pass to extended_color
-function extended_color () { echo -ne "\[\033[38;5;$1m\]"; }
+function extended_color() { echo -ne "\[\033[38;5;$1m\]"; }
 
 normal='\[\e[0m\]'
 cyan='\[\e[0;36m\]'
@@ -35,180 +35,180 @@ orange_user_prompt=$(extended_color 166)
 
 # VIM
 is_vim_shell() {
-    [[ -n "$VIMRUNTIME" ]] && echo " [\[\e[0;33m\]vim shell\[\e[0m\]]"
+	[[ -n "$VIMRUNTIME" ]] && echo " [\[\e[0;33m\]vim shell\[\e[0m\]]"
 }
 
 # In container ?
 in_container=''
 if [[ -f /proc/self/cgroup ]]; then
-    cid=$(cat /proc/self/cgroup | sed -nE 's/^.+docker[\/-]([a-f0-9]{64}).*/\1/p' | head -n 1)
-    if [[ -n "$cid" ]]; then
-        image='unknown'
-        if [[ -n "$(type -P docker)" ]]; then
-            image=$(docker inspect --format '{{.Config.Image}}' $cid)
-        fi
-        in_container=$(echo " [\[\e[1;38;5;135m\]$image\[\e[0m\]]")
-    fi
-    unset self_cgroup image
+	cid=$(cat /proc/self/cgroup | sed -nE 's/^.+docker[\/-]([a-f0-9]{64}).*/\1/p' | head -n 1)
+	if [[ -n "$cid" ]]; then
+		image='unknown'
+		if [[ -n "$(type -P docker)" ]]; then
+			image=$(docker inspect --format '{{.Config.Image}}' $cid)
+		fi
+		in_container=$(echo " [\[\e[1;38;5;135m\]$image\[\e[0m\]]")
+	fi
+	unset self_cgroup image
 fi
 
 # GIT
 git_prompt_info() {
-    return
+	return
 }
 
 # If __git_ps1 is not defined try to find and source git-prompt.sh
-if [[ -z $(type -t __git_ps1) ]];then
-    for file in \
-        /usr/share/git-core/contrib/completion/git-prompt.sh \
-            /opt/local/share/git/git-prompt.sh; do
-        [[ -f "$file" ]] && source $file && break
-    done
+if [[ -z $(type -t __git_ps1) ]]; then
+	for file in \
+		/usr/share/git-core/contrib/completion/git-prompt.sh \
+		/opt/local/share/git/git-prompt.sh; do
+		[[ -f "$file" ]] && source $file && break
+	done
 fi
 
 # If __git_ps1 is defined then redefined git_prompt_info function
 
-if [[ -n $(type -t __git_ps1) ]];then
-    if [[ "$GIT_PROMPT_USE_GIT_RADAR" == true ]]; then
-        # " \\x01\\033[1;30m\\x02git:(\\x01\\033[0m\\x02%{remote: }%{branch}%{ :local}\\x01\\033[1;30m\\x02)\\x01\\033[0m\\x02%{ :stash}%{ :changes}"}"
-        export GIT_RADAR_COLOR_CHANGES_UNSTAGED="\\033[38;5;48m"
-        export GIT_RADAR_COLOR_CHANGES_STAGED="\\033[0;33m"
-        export GIT_RADAR_COLOR_CHANGES_UNTRACKED="\\033[0;36m"
-        export GIT_RADAR_COLOR_STASH="\\033[38;5;208m"
-        export GIT_RADAR_FORMAT=" $normal(%{remote: }%{branch}%{ :local}%{ :stash}%{ :changes}$normal)"
-        git_prompt_info() {
-            git-radar --bash --fetch
-        }
-    else
-        git_prompt_info() {
-            git_ps1=$(__git_ps1)
-            if [[ -n "$git_ps1" ]];then
-                git_ps1=${git_ps1//\*/${green_git_prompt}*${normal}}
-                git_ps1=${git_ps1//+/${yellow_git_prompt}+${normal}}
-                git_ps1=${git_ps1//$/${orange_git_prompt}\$${normal}}
-                git_ps1=${git_ps1//%/${cyan_git_prompt}%${normal}}
-                echo "$git_ps1"
-            fi
-        }
+if [[ -n $(type -t __git_ps1) ]]; then
+	if [[ "$GIT_PROMPT_USE_GIT_RADAR" == true ]]; then
+		# " \\x01\\033[1;30m\\x02git:(\\x01\\033[0m\\x02%{remote: }%{branch}%{ :local}\\x01\\033[1;30m\\x02)\\x01\\033[0m\\x02%{ :stash}%{ :changes}"}"
+		export GIT_RADAR_COLOR_CHANGES_UNSTAGED="\\033[38;5;48m"
+		export GIT_RADAR_COLOR_CHANGES_STAGED="\\033[0;33m"
+		export GIT_RADAR_COLOR_CHANGES_UNTRACKED="\\033[0;36m"
+		export GIT_RADAR_COLOR_STASH="\\033[38;5;208m"
+		export GIT_RADAR_FORMAT=" $normal(%{remote: }%{branch}%{ :local}%{ :stash}%{ :changes}$normal)"
+		git_prompt_info() {
+			git-radar --bash --fetch
+		}
+	else
+		git_prompt_info() {
+			git_ps1=$(__git_ps1)
+			if [[ -n "$git_ps1" ]]; then
+				git_ps1=${git_ps1//\*/${green_git_prompt}*${normal}}
+				git_ps1=${git_ps1//+/${yellow_git_prompt}+${normal}}
+				git_ps1=${git_ps1//$/${orange_git_prompt}\$${normal}}
+				git_ps1=${git_ps1//%/${cyan_git_prompt}%${normal}}
+				echo "$git_ps1"
+			fi
+		}
 
-        export GIT_PS1_SHOWDIRTYSTATE=true
-        export GIT_PS1_SHOWSTASHSTATE=true
-        export GIT_PS1_SHOWUNTRACKEDFILES=true
-        export GIT_PS1_SHOWUPSTREAM="verbose"
-    fi
+		export GIT_PS1_SHOWDIRTYSTATE=true
+		export GIT_PS1_SHOWSTASHSTATE=true
+		export GIT_PS1_SHOWUNTRACKEDFILES=true
+		export GIT_PS1_SHOWUPSTREAM="verbose"
+	fi
 fi
 
 # USER
 user_prompt_info() {
-    if [[ "$USER" != 'root' ]]; then
-        echo "${br_yellow}\u${normal}"
-    else
-        echo "${orange_user_prompt}\u${normal}"
-    fi
+	if [[ "$USER" != 'root' ]]; then
+		echo "${br_yellow}\u${normal}"
+	else
+		echo "${orange_user_prompt}\u${normal}"
+	fi
 }
 
 # SERVER
 
-dotfiles_host="${HOSTNAME%%.*}"  # Can be overwrite
+dotfiles_host="${HOSTNAME%%.*}"                        # Can be overwrite
 dotfiles_domain=$(echo "$HOSTNAME" | sed 's/^[^.]*//') # Can be overwrite
 dotfiles_domain_prompt="${dotfiles_domain:+${normal}.${blue}${dotfiles_domain#.}}"
 
 server_prompt_info() {
-    if [[ "$USER" != 'root' ]]; then
-        echo "${br_green}${dotfiles_host}${dotfiles_domain_prompt}${normal}"
-    else
-        echo "${br_blue}${dotfiles_host}${dotfiles_domain_prompt}${normal}"
-    fi
+	if [[ "$USER" != 'root' ]]; then
+		echo "${br_green}${dotfiles_host}${dotfiles_domain_prompt}${normal}"
+	else
+		echo "${br_blue}${dotfiles_host}${dotfiles_domain_prompt}${normal}"
+	fi
 }
 
 # CHROOT
 chroot_prompt_info() {
-    echo "${debian_chroot:+($debian_chroot) }"
+	echo "${debian_chroot:+($debian_chroot) }"
 }
 
 # WINDOW TITLE
 window_title_info() {
-    case "$TERM" in
-        linux*|xterm*|rxvt*)
-            echo "\[\e]0;${debian_chroot:+($debian_chroot)}${window_title:-$dotfiles_host}\a\]"
-            ;;
-        *)
-            ;;
-    esac
+	case "$TERM" in
+	linux* | xterm* | rxvt*)
+		echo "\[\e]0;${debian_chroot:+($debian_chroot)}${window_title:-$dotfiles_host}\a\]"
+		;;
+	*)
+		;;
+	esac
 }
 
 # EXITCODE
 exitcode_prompt_info() {
-    [[ "$1" -ne 0 ]] && echo " [${br_red}${1}${normal}]"
+	[[ "$1" -ne 0 ]] && echo " [${br_red}${1}${normal}]"
 }
 
 # PATH (so it can be overwritten)
 path_prompt_info() {
-    echo "${br_cyan}\w${normal}\[\e]1337;CurrentDir=$(pwd)\a\]"
+	echo "${br_cyan}\w${normal}\[\e]1337;CurrentDir=$(pwd)\a\]"
 }
 
 export PROMPT_DIRTRIM=2 # Number of trailing directory components to retain
 
 if [[ "${PROMPT_TYPE}" == powerline && -e $GOPATH/bin/powerline-go ]]; then
-    PROMPT_POWERLINE_THEME="${DOTFILES_DIR}"/bash/prompt-powerline-theme.json
-    INTERACTIVE_BASHPID_TIMER="/tmp/${USER}.START.$$"
-    PS0='$(echo $SECONDS > "$INTERACTIVE_BASHPID_TIMER")'
-    export KUBE_POWERLINE_MODULE="${KUBE_POWERLINE_MODULE:-}"
-    alias kube_on="export KUBE_POWERLINE_MODULE='kube'"
-    alias kube_off="unset KUBE_POWERLINE_MODULE"
-    dotfiles_prompt() {
-        # Check exit code
-        local exit_code=$?
-        local __DURATION=0
-        if [[ -e $INTERACTIVE_BASHPID_TIMER ]]; then
-            local __END=$SECONDS
-            local __START=$(cat "$INTERACTIVE_BASHPID_TIMER")
-            __DURATION="$(($__END - ${__START:-__END}))"
-            rm -f "$INTERACTIVE_BASHPID_TIMER"
-        fi
-        local PS1_LINE1=$($GOPATH/bin/powerline-go -theme $PROMPT_POWERLINE_THEME -path-aliases '~/workspace/GO/src=@GOPATH-SRC' -max-width 96 -cwd-max-depth 6 -cwd-mode fancy -duration $__DURATION -modules "venv,user,host,load,time,duration,${KUBE_POWERLINE_MODULE:+${KUBE_POWERLINE_MODULE},}exit,cwd" -error $exit_code)
-        local PS1_LINE2=$($GOPATH/bin/powerline-go -theme $PROMPT_POWERLINE_THEME -max-width 35 -cwd-mode dironly -modules "git,perms,jobs,cwd,root" -error $exit_code)
-        PS1="$PS1_LINE1\n$PS1_LINE2"
-    }
+	PROMPT_POWERLINE_THEME="${DOTFILES_DIR}"/bash/prompt-powerline-theme.json
+	INTERACTIVE_BASHPID_TIMER="/tmp/${USER}.START.$$"
+	PS0='$(echo $SECONDS > "$INTERACTIVE_BASHPID_TIMER")'
+	export KUBE_POWERLINE_MODULE="${KUBE_POWERLINE_MODULE:-}"
+	alias kube_on="export KUBE_POWERLINE_MODULE='kube'"
+	alias kube_off="unset KUBE_POWERLINE_MODULE"
+	dotfiles_prompt() {
+		# Check exit code
+		local exit_code=$?
+		local __DURATION=0
+		if [[ -e $INTERACTIVE_BASHPID_TIMER ]]; then
+			local __END=$SECONDS
+			local __START=$(cat "$INTERACTIVE_BASHPID_TIMER")
+			__DURATION="$(($__END - ${__START:-__END}))"
+			rm -f "$INTERACTIVE_BASHPID_TIMER"
+		fi
+		local PS1_LINE1=$($GOPATH/bin/powerline-go -theme $PROMPT_POWERLINE_THEME -path-aliases '~/workspace/GO/src=@GOPATH-SRC' -max-width 96 -cwd-max-depth 6 -cwd-mode fancy -duration $__DURATION -modules "venv,user,host,load,time,duration,${KUBE_POWERLINE_MODULE:+${KUBE_POWERLINE_MODULE},}exit,cwd" -error $exit_code)
+		local PS1_LINE2=$($GOPATH/bin/powerline-go -theme $PROMPT_POWERLINE_THEME -max-width 35 -cwd-mode dironly -modules "git,perms,jobs,cwd,root" -error $exit_code)
+		PS1="$PS1_LINE1\n$PS1_LINE2"
+	}
 else
-    # Configure kube-ps1 (only if kubectl is available)
-    HAVE_KUBECTL=$(type -P kubectl)
-    if [[ -n "$HAVE_KUBECTL" ]]; then
-        source "$DOTFILES_DIR/kube-ps1/kube-ps1.sh"
-        PROMPT_COMMAND="$(printf '%s' "$PROMPT_COMMAND" | sed -E 's/^[[:space:]]*_kube_ps1_prompt_update;[[:space:]]*//')" # Fix PROMPT_COMMAND
-        export KUBE_PS1_SYMBOL_ENABLE=false
-        export KUBE_PS1_NS_COLOR=81
-        alias kube_on="export KUBE_PS1_ENABLED=on"
-        alias kube_off="export KUBE_PS1_ENABLED=off"
-    fi
-    dotfiles_prompt() { # This function will be call by PROMPT_COMMAND
-        # Check exit code
-        local exit_code=$?
-        if [[ $exit_code -eq 0 ]]; then
-            if [[ "$USER" != 'root' ]]; then
-                local cl_prompt=${green_prompt}
-            else
-                local cl_prompt=${orange_user_prompt}
-            fi
-        else
-            local cl_prompt=${br_red}
-        fi
-        if [[ -n "$HAVE_KUBECTL" ]]; then
-            if [[ -n "$KUBECONFIG" ]]; then
-                export KUBE_PS1_CTX_COLOR=184
-                export KUBE_PS1_PREFIX='>'
-                export KUBE_PS1_SUFFIX='< '
-            else
-                export KUBE_PS1_CTX_COLOR=177
-                export KUBE_PS1_PREFIX='('
-                export KUBE_PS1_SUFFIX=') '
-            fi
-            _kube_ps1_prompt_update # Update kube_ps1 cache
-        fi
-        local PS1_LINE1="$(window_title_info)$(chroot_prompt_info)🦊 $(user_prompt_info)@$(server_prompt_info)${in_container} ( \t )$(exitcode_prompt_info ${exit_code}) $(kube_ps1)${br_cyan}$(pwd -P)${normal} 🦊"
-        local PS1_LINE2="$(path_prompt_info)$(git_prompt_info)$(is_vim_shell) ${cl_prompt}\\\$${normal} "
-        PS1="$PS1_LINE1\n$PS1_LINE2"
-    }
+	# Configure kube-ps1 (only if kubectl is available)
+	HAVE_KUBECTL=$(type -P kubectl)
+	if [[ -n "$HAVE_KUBECTL" ]]; then
+		source "$DOTFILES_DIR/kube-ps1/kube-ps1.sh"
+		PROMPT_COMMAND="$(printf '%s' "$PROMPT_COMMAND" | sed -E 's/^[[:space:]]*_kube_ps1_prompt_update;[[:space:]]*//')" # Fix PROMPT_COMMAND
+		export KUBE_PS1_SYMBOL_ENABLE=false
+		export KUBE_PS1_NS_COLOR=81
+		alias kube_on="export KUBE_PS1_ENABLED=on"
+		alias kube_off="export KUBE_PS1_ENABLED=off"
+	fi
+	dotfiles_prompt() { # This function will be call by PROMPT_COMMAND
+		# Check exit code
+		local exit_code=$?
+		if [[ $exit_code -eq 0 ]]; then
+			if [[ "$USER" != 'root' ]]; then
+				local cl_prompt=${green_prompt}
+			else
+				local cl_prompt=${orange_user_prompt}
+			fi
+		else
+			local cl_prompt=${br_red}
+		fi
+		if [[ -n "$HAVE_KUBECTL" ]]; then
+			if [[ -n "$KUBECONFIG" ]]; then
+				export KUBE_PS1_CTX_COLOR=184
+				export KUBE_PS1_PREFIX='>'
+				export KUBE_PS1_SUFFIX='< '
+			else
+				export KUBE_PS1_CTX_COLOR=177
+				export KUBE_PS1_PREFIX='('
+				export KUBE_PS1_SUFFIX=') '
+			fi
+			_kube_ps1_prompt_update # Update kube_ps1 cache
+		fi
+		local PS1_LINE1="$(window_title_info)$(chroot_prompt_info)🍺 $(user_prompt_info)@$(server_prompt_info)${in_container} ( \t )$(exitcode_prompt_info ${exit_code}) $(kube_ps1)${br_cyan}$(pwd -P)${normal} 🍺"
+		local PS1_LINE2="$(path_prompt_info)$(git_prompt_info)$(is_vim_shell) ${cl_prompt}\\\$${normal} "
+		PS1="$PS1_LINE1\n$PS1_LINE2"
+	}
 fi
 
 # PS2 is used when you don't close a string or use the line continuation marker (\ at the end of a line)
@@ -218,8 +218,8 @@ PS3=">> "
 
 # Set the PROMPT_COMMAND variable.
 if [[ ! "$PROMPT_COMMAND" =~ dotfiles_prompt ]]; then
-    PROMPT_COMMAND="$(printf '%s' "$PROMPT_COMMAND" | sed -E 's/[[:space:]]*;[[:space:]]*$//')"
-    PROMPT_COMMAND="dotfiles_prompt${PROMPT_COMMAND:+ ; $PROMPT_COMMAND}"
+	PROMPT_COMMAND="$(printf '%s' "$PROMPT_COMMAND" | sed -E 's/[[:space:]]*;[[:space:]]*$//')"
+	PROMPT_COMMAND="dotfiles_prompt${PROMPT_COMMAND:+ ; $PROMPT_COMMAND}"
 fi
 
 # If direnv command present add to the PROMPT_COMMAND
