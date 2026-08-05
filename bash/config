@@ -248,6 +248,11 @@ fi
 ###########
 type -p thefuck >/dev/null 2>&1 && eval "$(thefuck --alias)" || true
 
+###########
+# RIPGrep
+###########
+test -f "$HOME/.ripgreprc" && export RIPGREP_CONFIG_PATH="$HOME/.ripgreprc"
+
 # Local Variables:      #
 # mode: ksh             #
 # tab-width: 4          #

@@ -14,6 +14,7 @@ declare -r LINKS=(       \
  todo.cfg todo.actions.d \
  vim vimrc               \
  pastebin.d              \
+ ripgreprc               \
  railsrc                 \
  tmux tmux.conf tmux.conf.local)
 
