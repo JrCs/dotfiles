@@ -8,7 +8,7 @@ alias github='br=$(git branch --contains HEAD | sed -En "s/^\* //p"); if ! git l
 alias reload='. ~/.bash_profile'
 alias profileme="history | awk '{print \$2}' | awk 'BEGIN{FS=\"|\"}{print \$1}' | sort | uniq -c | sort -n | tail -n 20 | sort -nr"
 alias cleanup="find . -name '*~' -print0 | xargs -0 -I@ sh -c \"echo 'Removing @'; rm -f '@'\""
-alias es="env | rg -i $@"
+alias es='/usr/bin/env | rg -i "$@"'
 
 # ls aliases
 alias lr="ls -ltra"
