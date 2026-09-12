@@ -30,8 +30,9 @@ unset HOMEBREW_BIN
 # Add dotfiles bin directory to PATH environment
 pathmunge "$DOTFILES_DIR/bin"
 
-# Add local bin directory to PATH environment
+# Add local bin directories to PATH environment
 [[ -d ~/bin ]] && pathmunge ~/bin
+[[ -d ~/.local/bin ]] && pathmunge ~/.local/bin
 
 # Charger l'activation de mise (après l'ajout de ~/bin au PATH : sur certains
 # systèmes, le binaire mise y est installé)
