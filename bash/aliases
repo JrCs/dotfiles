@@ -19,13 +19,16 @@ if [[ -n "$(type -P pv)" ]]; then
 fi
 
 function ssh-reagent () {
-  export SSH_AUTH_SOCK=$(find /tmp/ssh-* -user $(whoami) -name agent\* -printf '%T@ %p\n' 2>/dev/null | sort -k 1nr | sed 's/^[^ ]* //' | head -n 1)
-  if ssh-add -l 2&>1 > /dev/null; then
-    echo Found working SSH Agent:
+  local socket
+  socket=$(find /tmp/ssh-* -user "$USER" -name 'agent.*' -printf '%T@ %p\n' 2>/dev/null | sort -k 1nr | head -n 1 | cut -d' ' -f2-)
+  [[ -n "$socket" ]] && export SSH_AUTH_SOCK="$socket"
+  if ssh-add -l >/dev/null; then
+    echo "Found working SSH agent (SSH_AUTH_SOCK=${SSH_AUTH_SOCK:-unset}):"
     ssh-add -l
-    return
+    return 0
   fi
-  echo Cannot find ssh agent - maybe you should reconnect and forward it?
+  echo "Cannot find a working SSH agent - maybe you should reconnect and forward it?"
+  return 1
 }
 
 [[ -f ~/.local_aliases ]] && source ~/.local_aliases
